@@ -38,6 +38,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Thelia\Model\Country;
 use Thelia\Model\CountryQuery;
 use Thelia\Model\LangQuery;
+use Thelia\Model\Map\CountryI18nTableMap;
 use Thelia\Model\StateQuery;
 use Twig\Environment;
 
@@ -68,7 +69,10 @@ final class CountryController
         }
 
         $locale = $this->defaultLocale();
-        $countries = CountryQuery::create()->orderByTitle()->find();
+        $countries = CountryQuery::create()
+            ->joinWithI18n($locale)
+            ->orderBy(CountryI18nTableMap::COL_TITLE)
+            ->find();
         $rows = [];
         foreach ($countries as $country) {
             \assert($country instanceof Country);
