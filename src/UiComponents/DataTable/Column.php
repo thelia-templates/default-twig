@@ -19,7 +19,7 @@ final readonly class Column
     /**
      * @param string $cellAlign Bootstrap text-alignment utility, one of: 'start', 'center', 'end'.
      * @param array<string, mixed> $options Kind-specific options. Schemas per ColumnKind:
-     *   - TOGGLE: { url_key: string, icon_on: string, icon_off: string }
+     *   - TOGGLE: { url_key: string|null, icon_on: string, icon_off: string } (null url_key → readonly)
      *   - BADGE:  { variants: array<scalar, string> mapping row value → Bootstrap variant }
      *   - TEXT / HTML / ACTIONS: empty
      */

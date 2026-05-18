@@ -48,7 +48,7 @@ final class DataTableExtension extends AbstractExtension
     public function toggleColumn(
         string $key,
         string $label,
-        string $urlKey,
+        ?string $urlKey,
         string $cellAlign = 'center',
         string $iconOn = 'bi-check-circle-fill text-success',
         string $iconOff = 'bi-circle text-secondary',
