@@ -35,6 +35,8 @@ use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
 use Thelia\Model\CountryQuery;
 use Thelia\Model\LangQuery;
+use Thelia\Model\Map\CountryI18nTableMap;
+use Thelia\Model\Map\StateI18nTableMap;
 use Thelia\Model\State;
 use Thelia\Model\StateQuery;
 use Twig\Environment;
@@ -67,7 +69,9 @@ final class StateController
 
         $locale = $this->defaultLocale();
         $countryFilter = (int) $request->query->get('country_id', 0);
-        $query = StateQuery::create()->orderByTitle();
+        $query = StateQuery::create()
+            ->joinWithI18n($locale)
+            ->orderBy(StateI18nTableMap::COL_TITLE);
         if ($countryFilter > 0) {
             $query->filterByCountryId($countryFilter);
         }
@@ -246,7 +250,10 @@ final class StateController
     /** @return list<array{id: int, title: string}> */
     private function countryChoices(string $locale): array
     {
-        $countries = CountryQuery::create()->orderByTitle()->find();
+        $countries = CountryQuery::create()
+            ->joinWithI18n($locale)
+            ->orderBy(CountryI18nTableMap::COL_TITLE)
+            ->find();
         $rows = [];
         foreach ($countries as $country) {
             $country->setLocale($locale);
