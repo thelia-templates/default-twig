@@ -26,11 +26,21 @@ ddev exec bash -c "bin/console template:set backOffice default-twig && bin/conso
 ddev exec bash -c "bin/console template:set backOffice default && bin/console cache:clear -e dev"
 ```
 
-Mécanique : `BackOfficeDefaultTwigBundle::loadExtension()` early-return si `%thelia_admin_template% !== 'default-twig'`. Si le bundle Twig est actif, `BackOfficeTwigOnlyCompilerPass` peut **optionnellement** désactiver `router.admin` (routes XML legacy) via `strictRoutingOverride = true`. Par défaut **`false`** — cohabitation routing : les routes legacy XML restent actives.
+Mécanique : `BackOfficeDefaultTwigBundle::loadExtension()` early-return si `%thelia_admin_template% !== 'default-twig'`. Le compiler pass `BackOfficeTwigOnlyCompilerPass` priorise le parser Twig et peut **optionnellement** supprimer la définition `router.admin` (routes XML legacy) via le flag `strictRoutingOverride = true` du constructeur. Par défaut **`false`** — cohabitation : les routes legacy XML restent actives quand `BackOfficeDefaultBundle` est aussi chargé.
 
-### Sous `default-twig`, quelles routes sont natives vs legacy ?
+### Trois modes d'activation
 
-Au moment de la première release alpha, environ **62%** des routes admin sont natives BO Twig. Les routes restantes sont gérées par les controllers legacy et leurs templates Smarty (cohabitation `router.admin`). Le portage progressif est planifié sur les releases suivantes.
+| Mode | `bin/install --backoffice_theme=` | Bundles actifs | Routes admin |
+|------|-----------------------------------|----------------|---------------|
+| **default-twig only** (recommandé en alpha) | `default-twig` | `BackOfficeDefaultTwigBundle` uniquement (le bundle Smarty est désactivé par `removeBundlesForNonSelectedThemes`) | 100 % BO Twig natives |
+| **default only** (legacy) | `default` | `BackOfficeDefaultBundle` uniquement | 100 % routes XML legacy |
+| **cohabitation** (transition manuelle, dev) | n/a — re-ajouter les deux dans `config/bundles.php` à la main | les deux bundles | routes BO Twig prioritaires + fallback `router.admin` XML legacy |
+
+Le flag `strictRoutingOverride = true` ne sert que pour le **mode cohabitation** : il force le BO Twig à supprimer `router.admin` au boot, désactivant le fallback legacy. C'est utile pour valider qu'un module tiers n'a pas de dépendance cachée à `admin.xml` avant de désinstaller `BackOfficeDefaultBundle` définitivement.
+
+### Couverture des routes
+
+À la première release alpha, **toutes les routes admin sont natives BO Twig** sous `default-twig`. Aucune dépendance résiduelle sur `router.admin` legacy hors du mode cohabitation transitoire.
 
 ## 2. Changements de patterns côté core BO
 
