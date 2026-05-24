@@ -85,7 +85,7 @@
                                data-bo-sortable-token-value="{{ av_position_token }}"
                                data-bo-sortable-param-name-value="featureav_id">
                             {% for av in feature_avs %}
-                                <tr data-id="{{ av.id }}" data-testid="featureav-row-{{ av.id }}">
+                                <tr data-row-id="{{ av.id }}" data-testid="featureav-row-{{ av.id }}">
                                     <td>
                                         <input type="text" name="feature_values[{{ av.id }}]" value="{{ av.title }}" class="form-control form-control-sm" data-testid="featureav-input-{{ av.id }}">
                                     </td>

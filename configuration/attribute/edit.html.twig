@@ -89,7 +89,7 @@
                                data-bo-sortable-token-value="{{ av_position_token }}"
                                data-bo-sortable-param-name-value="attributeav_id">
                             {% for av in attribute_avs %}
-                                <tr data-id="{{ av.id }}" data-testid="attributeav-row-{{ av.id }}">
+                                <tr data-row-id="{{ av.id }}" data-testid="attributeav-row-{{ av.id }}">
                                     <td>{{ av.title }}</td>
                                     <td class="text-center">{{ av.position }}</td>
                                     <td class="text-end">

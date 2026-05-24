@@ -67,7 +67,7 @@
                    data-bo-sortable-token-value="{{ update_position_token }}"
                    data-bo-sortable-param-name-value="module_hook_id">
                 {% for row in rows %}
-                    <tr data-id="{{ row.id }}" data-testid="module-hook-row-{{ row.id }}">
+                    <tr data-row-id="{{ row.id }}" data-testid="module-hook-row-{{ row.id }}">
                         <td>{{ row.id }}</td>
                         <td>{{ row.module }}</td>
                         <td>{{ row.hook }}</td>
