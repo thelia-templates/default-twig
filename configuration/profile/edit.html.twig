@@ -55,7 +55,10 @@
             </div>
 
             <div class="tab-pane fade" id="tab-resources" role="tabpanel">
-                <form action="{{ path('admin.configuration.profiles.saveResourceAccess') }}" method="post" data-testid="profile-resource-access-form">
+                <form action="{{ path('admin.configuration.profiles.saveResourceAccess') }}"
+                      method="post"
+                      data-testid="profile-resource-access-form"
+                      data-controller="bo-permission-matrix">
                     <input type="hidden" name="profile_id" value="{{ profile.id }}">
                     <div class="card">
                         <div class="table-responsive">
@@ -66,6 +69,16 @@
                                         {% for value, label in access_codes %}
                                             <th class="text-center">{{ label|trans }}</th>
                                         {% endfor %}
+                                        <th class="text-center" style="width: 3rem;">
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-secondary"
+                                                    data-action="bo-permission-matrix#toggleAll"
+                                                    data-testid="profile-resource-toggle-all"
+                                                    title="{{ 'Toggle all rights'|trans }}"
+                                                    aria-label="{{ 'Toggle all rights'|trans }}">
+                                                <i class="bi bi-arrow-left-right" aria-hidden="true"></i>
+                                            </button>
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -83,6 +96,16 @@
                                                            {% if value in granted %}checked{% endif %}>
                                                 </td>
                                             {% endfor %}
+                                            <td class="text-center">
+                                                <button type="button"
+                                                        class="btn btn-sm btn-outline-secondary"
+                                                        data-action="bo-permission-matrix#toggleLine"
+                                                        data-testid="profile-resource-toggle-line"
+                                                        title="{{ 'Toggle line'|trans }}"
+                                                        aria-label="{{ 'Toggle line'|trans }}">
+                                                    <i class="bi bi-arrow-left-right" aria-hidden="true"></i>
+                                                </button>
+                                            </td>
                                         </tr>
                                     {% endfor %}
                                 </tbody>
@@ -98,7 +121,10 @@
             </div>
 
             <div class="tab-pane fade" id="tab-modules" role="tabpanel">
-                <form action="{{ path('admin.configuration.profiles.saveModuleAccess') }}" method="post" data-testid="profile-module-access-form">
+                <form action="{{ path('admin.configuration.profiles.saveModuleAccess') }}"
+                      method="post"
+                      data-testid="profile-module-access-form"
+                      data-controller="bo-permission-matrix">
                     <input type="hidden" name="profile_id" value="{{ profile.id }}">
                     <div class="card">
                         <div class="table-responsive">
@@ -109,6 +135,16 @@
                                         {% for value, label in access_codes %}
                                             <th class="text-center">{{ label|trans }}</th>
                                         {% endfor %}
+                                        <th class="text-center" style="width: 3rem;">
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-secondary"
+                                                    data-action="bo-permission-matrix#toggleAll"
+                                                    data-testid="profile-module-toggle-all"
+                                                    title="{{ 'Toggle all rights'|trans }}"
+                                                    aria-label="{{ 'Toggle all rights'|trans }}">
+                                                <i class="bi bi-arrow-left-right" aria-hidden="true"></i>
+                                            </button>
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -126,6 +162,16 @@
                                                            {% if value in granted %}checked{% endif %}>
                                                 </td>
                                             {% endfor %}
+                                            <td class="text-center">
+                                                <button type="button"
+                                                        class="btn btn-sm btn-outline-secondary"
+                                                        data-action="bo-permission-matrix#toggleLine"
+                                                        data-testid="profile-module-toggle-line"
+                                                        title="{{ 'Toggle line'|trans }}"
+                                                        aria-label="{{ 'Toggle line'|trans }}">
+                                                    <i class="bi bi-arrow-left-right" aria-hidden="true"></i>
+                                                </button>
+                                            </td>
                                         </tr>
                                     {% endfor %}
                                 </tbody>
