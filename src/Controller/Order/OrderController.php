@@ -355,12 +355,16 @@ final class OrderController
     {
         $items = [];
         foreach ($order->getOrderProducts() as $product) {
+            $tax = 0.0;
+            foreach ($product->getOrderProductTaxes() as $orderProductTax) {
+                $tax += (float) $orderProductTax->getAmount();
+            }
             $items[] = [
                 'ref' => (string) $product->getProductRef(),
                 'title' => (string) $product->getTitle(),
                 'quantity' => (float) $product->getQuantity(),
                 'price' => (float) $product->getPrice(),
-                'tax' => (float) $product->getPriceTax(),
+                'tax' => $tax,
             ];
         }
 
@@ -424,7 +428,7 @@ final class OrderController
     private function countryChoices(string $locale): array
     {
         $items = [];
-        foreach (CountryQuery::create()->filterByVisible(1)->orderByPosition()->find() as $country) {
+        foreach (CountryQuery::create()->filterByVisible(1)->orderById()->find() as $country) {
             $country->setLocale($locale);
             $items[] = ['id' => (int) $country->getId(), 'title' => (string) $country->getTitle()];
         }
