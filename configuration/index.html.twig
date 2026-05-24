@@ -14,28 +14,54 @@
 
 {% set sections = [
     {
-        title: 'Store'|trans,
+        title: 'Product catalog'|trans,
+        hookTop: 'configuration.catalog-top',
+        hookBottom: 'configuration.catalog-bottom',
         items: [
-            { route: 'admin.configuration.store.default', label: 'Store info'|trans, icon: 'bi-shop' },
-        ],
-    },
-    {
-        title: 'System'|trans,
-        items: [
-            { route: 'admin.configuration.languages.default', label: 'Languages'|trans, icon: 'bi-translate' },
-            { route: 'admin.configuration.currencies.default', label: 'Currencies'|trans, icon: 'bi-currency-exchange' },
-            { route: 'admin.configuration.variables.default', label: 'System variables'|trans, icon: 'bi-sliders' },
-            { route: 'admin.configuration.admin-logs.view', label: 'Administration logs'|trans, icon: 'bi-clipboard-data' },
-            { route: 'admin.configuration.profiles.list', label: 'Profiles'|trans, icon: 'bi-shield-lock' },
-            { route: 'admin.configuration.administrators.view', label: 'Administrators'|trans, icon: 'bi-people' },
-            { route: 'admin.configuration.advanced', label: 'Advanced configuration'|trans, icon: 'bi-tools' },
+            { route: 'admin.configuration.templates.default', label: 'Product templates'|trans, icon: 'bi-collection', resource: 'admin.configuration.template' },
+            { route: 'admin.configuration.attributes.default', label: 'Product attributes'|trans, icon: 'bi-tags', resource: 'admin.configuration.attribute' },
+            { route: 'admin.configuration.features.default', label: 'Product features'|trans, icon: 'bi-list-stars', resource: 'admin.configuration.feature' },
+            { route: 'admin.configuration.messages.default', label: 'Mailing templates'|trans, icon: 'bi-envelope-paper', resource: 'admin.configuration.message' },
+            { route: 'admin.configuration.currencies.default', label: 'Currencies'|trans, icon: 'bi-currency-exchange', resource: 'admin.configuration.currency' },
+            { route: 'admin.configuration.taxes-rules.list', label: 'Tax rules'|trans, icon: 'bi-receipt', resource: 'admin.configuration.tax-rule' },
         ],
     },
     {
         title: 'Shipping'|trans,
+        hookTop: 'configuration.shipping-top',
+        hookBottom: 'configuration.shipping-bottom',
         items: [
-            { route: 'admin.configuration.shipping-zones.default', label: 'Shipping configuration'|trans, icon: 'bi-truck' },
-            { route: 'admin.configuration.shipping-configuration.default', label: 'Shipping zones management'|trans, icon: 'bi-map' },
+            { route: 'admin.configuration.countries.default', label: 'Countries'|trans, icon: 'bi-globe2', resource: 'admin.configuration.country' },
+            { route: 'admin.configuration.states.default', label: 'States / Provinces'|trans, icon: 'bi-pin-map', resource: 'admin.configuration.state' },
+            { route: 'admin.configuration.shipping-zones.default', label: 'Shipping configuration'|trans, icon: 'bi-truck', resource: 'admin.configuration.shipping-zone' },
+            { route: 'admin.configuration.shipping-configuration.default', label: 'Shipping zones management'|trans, icon: 'bi-map', resource: 'admin.configuration.shipping-configuration' },
+        ],
+    },
+    {
+        title: 'Order path'|trans,
+        hookTop: 'configuration.order-path.top',
+        hookBottom: 'configuration.order-path.bottom',
+        items: [
+            { route: 'admin.order-status.default', label: 'Order status'|trans, icon: 'bi-list-check', resource: 'admin.configuration.order-status' },
+        ],
+    },
+    {
+        title: 'System'|trans,
+        hookTop: 'configuration.system-top',
+        hookBottom: 'configuration.system-bottom',
+        items: [
+            { route: 'admin.configuration.store.default', label: 'Store info'|trans, icon: 'bi-shop', resource: 'admin.configuration.store' },
+            { route: 'admin.configuration.variables.default', label: 'System variables'|trans, icon: 'bi-sliders', resource: 'admin.configuration.variable' },
+            { route: 'admin.configuration.profiles.list', label: 'Administration profiles'|trans, icon: 'bi-shield-lock', resource: 'admin.configuration.profile' },
+            { route: 'admin.configuration.administrators.view', label: 'Administrators'|trans, icon: 'bi-people', resource: 'admin.configuration.administrator' },
+            { route: 'admin.configuration.languages.default', label: 'Languages and URLs'|trans, icon: 'bi-translate', resource: 'admin.configuration.language' },
+            { route: 'admin.configuration.translations', label: 'Translations'|trans, icon: 'bi-globe', resource: 'admin.configuration.translations' },
+            { route: 'admin.configuration.translations-customers-title', label: 'Customer title translations'|trans, icon: 'bi-person-badge', resource: 'admin.configuration.translations' },
+            { route: 'admin.mailingSystem.default', label: 'Mailing system'|trans, icon: 'bi-envelope-gear', resource: 'admin.configuration.mailing-system' },
+            { route: 'admin.configuration.admin-logs.view', label: 'Administration logs'|trans, icon: 'bi-clipboard-data', resource: 'admin.configuration.admin-logs' },
+            { route: 'admin.configuration.advanced', label: 'Advanced configuration'|trans, icon: 'bi-tools', resource: 'admin.configuration.advanced' },
+            { route: 'admin.hook', label: 'Hooks'|trans, icon: 'bi-plug', resource: 'admin.hook' },
+            { route: 'admin.module-hook', label: 'Modules attachments'|trans, icon: 'bi-puzzle', resource: 'admin.module-hook' },
         ],
     },
 ] %}
@@ -47,19 +73,24 @@
         <h1 class="h3 mb-4">{{ 'Configuration'|trans }}</h1>
 
         {% for section in sections %}
-            <h2 class="h5 text-muted mb-3">{{ section.title }}</h2>
-            <div class="row g-3 mb-4" data-testid="configuration-section">
-                {% for item in section.items %}
-                    <div class="col-md-3">
-                        <a href="{{ path(item.route) }}" class="card text-decoration-none h-100" data-testid="configuration-link-{{ item.route }}">
-                            <div class="card-body d-flex align-items-center gap-3">
-                                <i class="bi {{ item.icon }} fs-3 text-primary" aria-hidden="true"></i>
-                                <span class="fw-medium text-body">{{ item.label }}</span>
-                            </div>
-                        </a>
-                    </div>
-                {% endfor %}
-            </div>
+            {% set visible_items = section.items|filter((item) => is_granted('VIEW', item.resource)) %}
+            {% if visible_items|length > 0 or section.hookTop is defined %}
+                <h2 class="h5 text-muted mb-3">{{ section.title }}</h2>
+                {% if section.hookTop is defined %}{{ safe_hook(section.hookTop) }}{% endif %}
+                <div class="row g-3 mb-4" data-testid="configuration-section">
+                    {% for item in visible_items %}
+                        <div class="col-md-3">
+                            <a href="{{ path(item.route) }}" class="card text-decoration-none h-100" data-testid="configuration-link-{{ item.route }}">
+                                <div class="card-body d-flex align-items-center gap-3">
+                                    <i class="bi {{ item.icon }} fs-3 text-primary" aria-hidden="true"></i>
+                                    <span class="fw-medium text-body">{{ item.label }}</span>
+                                </div>
+                            </a>
+                        </div>
+                    {% endfor %}
+                </div>
+                {% if section.hookBottom is defined %}{{ safe_hook(section.hookBottom) }}{% endif %}
+            {% endif %}
         {% endfor %}
     </div>
 
