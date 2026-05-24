@@ -14,6 +14,12 @@ declare(strict_types=1);
 
 namespace BackOfficeDefaultTwigBundle\Service\Product;
 
+use Propel\Runtime\ActiveQuery\Criteria;
+use Thelia\Model\Attribute;
+use Thelia\Model\AttributeAv;
+use Thelia\Model\AttributeAvQuery;
+use Thelia\Model\AttributeQuery;
+use Thelia\Model\AttributeTemplateQuery;
 use Thelia\Model\Currency;
 use Thelia\Model\CurrencyQuery;
 use Thelia\Model\LangQuery;
@@ -33,7 +39,8 @@ final readonly class CombinationsTabContextBuilder
      *     default_pse: array<string, mixed>|null,
      *     tax_rule_id: int,
      *     tax_rules: list<array{id: int, title: string}>,
-     *     currency: array{id: int, symbol: string, name: string, code: string, is_default: bool}
+     *     currency: array{id: int, symbol: string, name: string, code: string, is_default: bool},
+     *     template_attributes: list<array{id: int, title: string, values: list<array{id: int, title: string}>}>
      * }
      */
     public function build(Product $product): array
@@ -104,7 +111,69 @@ final readonly class CombinationsTabContextBuilder
                 'code' => (string) $currency->getCode(),
                 'is_default' => (bool) $currency->getByDefault(),
             ],
+            'template_attributes' => $this->collectTemplateAttributes($product, $locale),
         ];
+    }
+
+    /**
+     * @return list<array{id: int, title: string, values: list<array{id: int, title: string}>}>
+     */
+    private function collectTemplateAttributes(Product $product, string $locale): array
+    {
+        $templateId = (int) ($product->getTemplateId() ?? 0);
+        if ($templateId <= 0) {
+            return [];
+        }
+
+        $attributeIds = [];
+        foreach (AttributeTemplateQuery::create()->filterByTemplateId($templateId)->orderByPosition()->find() as $entry) {
+            $attributeIds[] = (int) $entry->getAttributeId();
+        }
+        if ($attributeIds === []) {
+            return [];
+        }
+
+        $attributes = AttributeQuery::create()->filterById($attributeIds, Criteria::IN)->find();
+        $byId = [];
+        foreach ($attributes as $attribute) {
+            \assert($attribute instanceof Attribute);
+            $attribute->setLocale($locale);
+            $byId[(int) $attribute->getId()] = $attribute;
+        }
+
+        $items = [];
+        foreach ($attributeIds as $attributeId) {
+            if (!isset($byId[$attributeId])) {
+                continue;
+            }
+            $attribute = $byId[$attributeId];
+
+            $values = [];
+            $avRecords = AttributeAvQuery::create()
+                ->filterByAttributeId($attributeId)
+                ->orderByPosition()
+                ->find();
+            foreach ($avRecords as $av) {
+                \assert($av instanceof AttributeAv);
+                $av->setLocale($locale);
+                $values[] = [
+                    'id' => (int) $av->getId(),
+                    'title' => (string) $av->getTitle(),
+                ];
+            }
+
+            if ($values === []) {
+                continue;
+            }
+
+            $items[] = [
+                'id' => $attributeId,
+                'title' => (string) $attribute->getTitle(),
+                'values' => $values,
+            ];
+        }
+
+        return $items;
     }
 
     /**

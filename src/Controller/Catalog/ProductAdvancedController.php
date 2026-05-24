@@ -535,7 +535,18 @@ final class ProductAdvancedController
             return new RedirectResponse($this->urls->generate('admin.products.default'));
         }
 
-        $event = new ProductCombinationGenerationEvent($product, $this->defaultCurrencyId(), []);
+        $combinations = $this->expandCombinations((array) $request->request->all('attribute_av'));
+        $reference = trim((string) $request->request->get('reference', ''));
+        $event = new ProductCombinationGenerationEvent($product, $this->defaultCurrencyId(), $combinations);
+        $event
+            ->setReference($reference !== '' ? $reference : (string) $product->getRef())
+            ->setPrice((float) $request->request->get('price', 0))
+            ->setWeight((float) $request->request->get('weight', 0))
+            ->setQuantity((float) $request->request->get('quantity', 0))
+            ->setSalePrice((float) $request->request->get('sale_price', 0))
+            ->setOnsale((bool) $request->request->get('onsale', false))
+            ->setIsnew((bool) $request->request->get('isnew', false))
+            ->setEanCode((string) $request->request->get('ean_code', ''));
 
         return $this->action->tokenAction(
             resource: self::RESOURCE,
@@ -547,6 +558,48 @@ final class ProductAdvancedController
             successRoute: self::EDIT_ROUTE,
             successParameters: ['product_id' => (int) $product->getId(), 'current_tab' => 'pse'],
         );
+    }
+
+    /**
+     * Group `attribute_av` tokens (`attrId:avId`) by attribute, then build the cartesian
+     * product so each output entry lists one AttributeAv id per chosen attribute.
+     *
+     * @param list<string> $tokens
+     *
+     * @return list<list<int>>
+     */
+    private function expandCombinations(array $tokens): array
+    {
+        $grouped = [];
+        foreach ($tokens as $token) {
+            if (!\is_string($token) || !str_contains($token, ':')) {
+                continue;
+            }
+            [$attributeId, $avId] = explode(':', $token, 2);
+            $attributeId = (int) $attributeId;
+            $avId = (int) $avId;
+            if ($attributeId <= 0 || $avId <= 0) {
+                continue;
+            }
+            $grouped[$attributeId][] = $avId;
+        }
+
+        if ($grouped === []) {
+            return [];
+        }
+
+        $combinations = [[]];
+        foreach ($grouped as $avIds) {
+            $next = [];
+            foreach ($combinations as $partial) {
+                foreach ($avIds as $avId) {
+                    $next[] = [...$partial, $avId];
+                }
+            }
+            $combinations = $next;
+        }
+
+        return $combinations;
     }
 
     #[Route('/admin/product/default-price/update', name: 'admin.product.combination.defaut-price.update', methods: ['POST', 'GET'])]
