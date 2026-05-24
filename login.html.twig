@@ -6,7 +6,7 @@
 
 {% block flash %}
     {{ parent() }}
-    {{ hook('index.top') }}
+    {{ safe_hook('index.top') }}
 {% endblock %}
 
 {% block auth_content %}
@@ -68,10 +68,10 @@
         </a>
     </div>
 
-    {{ hook('index.middle') }}
+    {{ safe_hook('index.middle') }}
 {% endblock %}
 
 {% block body %}
     {{ parent() }}
-    {{ hook('index.bottom') }}
+    {{ safe_hook('index.bottom') }}
 {% endblock %}
