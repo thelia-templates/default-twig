@@ -52,7 +52,7 @@ export default class extends Controller {
         }
 
         const url = (this.listUrlTemplateValue || '')
-            .replace('TYPE', this.type)
+            .replace('/image/', `/${this.type}/`)
             .replace(/\/0(?!\d)/, `/${this.pseId}`);
 
         try {
@@ -125,7 +125,7 @@ export default class extends Controller {
 
     async onItemClick(card, item) {
         const url = (this.toggleUrlTemplateValue || '')
-            .replace('TYPE', this.type)
+            .replace('/image/', `/${this.type}/`)
             .replace(/\/0\//, `/${this.pseId}/`)
             .replace(/\/0$/, `/${item.id}`);
 
