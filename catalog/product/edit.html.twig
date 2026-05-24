@@ -104,7 +104,12 @@
                             </div>
                             <div class="mb-3">
                                 {{ form_label(form.template_id) }}
-                                <select name="{{ form.template_id.vars.full_name }}" class="form-select" data-testid="product-edit-template">
+                                <select name="{{ form.template_id.vars.full_name }}"
+                                        class="form-select"
+                                        data-testid="product-edit-template"
+                                        data-controller="bo-template-notice"
+                                        data-bo-template-notice-modal-value="#product-template-notice-modal"
+                                        data-action="change->bo-template-notice#warn">
                                     {% for tpl in available_templates %}
                                         <option value="{{ tpl.id }}" {% if tpl.id == product.templateId %}selected{% endif %}>{{ tpl.name }}</option>
                                     {% endfor %}
@@ -193,6 +198,23 @@
     </div>
 
     {% include '@BackOfficeDefaultTwig/catalog/product/_pse_assoc.html.twig' %}
+
+    <div class="modal fade" id="product-template-notice-modal" tabindex="-1" aria-hidden="true" data-testid="product-template-notice">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5"><i class="bi bi-exclamation-triangle text-warning me-2" aria-hidden="true"></i>{{ 'Warning'|trans }}</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'Close'|trans }}"></button>
+                </div>
+                <div class="modal-body">
+                    <p>{{ 'If you change the product template, some of the product attribute combinations may be deleted, and you may have to reconfigure some of the product prices.'|trans }}</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">{{ 'OK'|trans }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     {{ safe_hook('product-edit.bottom', { product_id: product.id }) }}
 {% endblock %}
