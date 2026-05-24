@@ -16,6 +16,7 @@ namespace BackOfficeDefaultTwigBundle\Controller\Catalog;
 
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
+use BackOfficeDefaultTwigBundle\Service\Product\CombinationsTabContextBuilder;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -78,6 +79,7 @@ final class ProductAdvancedController
         private readonly AdminAccessChecker $access,
         private readonly Environment $twig,
         private readonly UrlGeneratorInterface $urls,
+        private readonly CombinationsTabContextBuilder $combinationsTabContextBuilder,
     ) {
     }
 
@@ -519,48 +521,10 @@ final class ProductAdvancedController
             return $denied;
         }
 
-        $pseRecords = ProductSaleElementsQuery::create()
-            ->filterByProductId($productId)
-            ->orderById()
-            ->find();
-
-        $rows = [];
-        foreach ($pseRecords as $pse) {
-            $price = $pse->getPricesByCurrency(CurrencyQuery::create()->findPk($this->defaultCurrencyId()));
-
-            $combinationLabels = [];
-            foreach ($pse->getAttributeCombinations() as $combination) {
-                $attribute = $combination->getAttribute();
-                $attributeAv = $combination->getAttributeAv();
-                if ($attribute === null || $attributeAv === null) {
-                    continue;
-                }
-                $attribute->setLocale($this->defaultLocale());
-                $attributeAv->setLocale($this->defaultLocale());
-                $combinationLabels[] = (string) $attribute->getTitle().': '.(string) $attributeAv->getTitle();
-            }
-
-            $rows[] = [
-                'id' => (int) $pse->getId(),
-                'label' => $combinationLabels === [] ? 'default' : implode(' / ', $combinationLabels),
-                'ref' => (string) $pse->getRef(),
-                'price' => $price ? (float) $price->getPrice() : 0.0,
-                'sale_price' => $price ? (float) $price->getPromoPrice() : 0.0,
-                'quantity' => (float) $pse->getQuantity(),
-                'weight' => (float) $pse->getWeight(),
-                'ean_code' => (string) $pse->getEanCode(),
-                'onsale' => (bool) $pse->getPromo(),
-                'isnew' => (bool) $pse->getNewness(),
-                'isdefault' => (bool) $pse->getIsDefault(),
-            ];
-        }
-
-        return new Response($this->twig->render('@BackOfficeDefaultTwig/catalog/product/_combinations_tab.html.twig', [
-            'product' => $product,
-            'pse_rows' => $rows,
-            'tax_rule_id' => (int) $product->getTaxRuleId(),
-            'currency_id' => $this->defaultCurrencyId(),
-        ]));
+        return new Response($this->twig->render(
+            '@BackOfficeDefaultTwig/catalog/product/_combinations_tab.html.twig',
+            $this->combinationsTabContextBuilder->build($product),
+        ));
     }
 
     #[Route('/admin/product/combination/build', name: 'admin.product.combination.build', methods: ['POST', 'GET'])]

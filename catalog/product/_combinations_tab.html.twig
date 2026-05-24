@@ -1,15 +1,11 @@
 <div data-testid="product-combinations-tab">
     {{ safe_hook('product.combinations-tab.top', { product: product.id }) }}
 
-    {% if pse_rows is empty %}
-        <div class="alert alert-info" data-testid="combinations-empty">
-            {{ 'No combination yet. Use the combination builder below to generate combinations from attribute values.'|trans }}
-        </div>
-    {% else %}
+    {% if has_combinations %}
         <form method="post" action="{{ path('admin.product.combination.update') }}?_token={{ assignToken() }}" data-testid="combinations-form">
             <input type="hidden" name="product_id" value="{{ product.id }}">
             <input type="hidden" name="tax_rule" value="{{ tax_rule_id }}">
-            <input type="hidden" name="currency" value="{{ currency_id }}">
+            <input type="hidden" name="currency" value="{{ currency.id }}">
             <input type="hidden" name="use_exchange_rate" value="0">
 
             <div class="table-responsive">
@@ -62,6 +58,136 @@
                 <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save all combinations'|trans }}
             </button>
         </form>
+    {% else %}
+        {% if default_pse is null %}
+            <div class="alert alert-warning" data-testid="default-pse-missing">
+                {{ 'No default product sale element. Please contact your administrator.'|trans }}
+            </div>
+        {% else %}
+            <form method="post" action="{{ path('admin.product.combination.defaut-price.update') }}?_token={{ assignToken() }}" data-testid="default-pse-form">
+                <input type="hidden" name="product_id" value="{{ product.id }}">
+                <input type="hidden" name="product_sale_element_id" value="{{ default_pse.id }}">
+                <input type="hidden" name="isdefault" value="1">
+                <input type="hidden" name="reference" value="{{ default_pse.ref }}">
+                <input type="hidden" name="currency" value="{{ currency.id }}">
+                <input type="hidden" name="current_tab" value="pse">
+
+                <p class="text-muted">{{ 'The default pricing is used when no combination is defined.'|trans }}</p>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label" for="default_pse_tax_rule">{{ 'Tax rule'|trans }}</label>
+                        <select class="form-select" id="default_pse_tax_rule" name="tax_rule" required>
+                            <option value="">{{ 'Select a tax rule'|trans }}</option>
+                            {% for rule in tax_rules %}
+                                <option value="{{ rule.id }}" {% if rule.id == tax_rule_id %}selected{% endif %}>{{ rule.title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <span class="text-muted small">{{ 'Currency'|trans }} : <strong>{{ currency.name }}</strong> ({{ currency.symbol }})</span>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h2 class="h6 mb-3" data-testid="default-pse-pricing-title">{{ 'Pricing'|trans }}</h2>
+
+                                <div class="mb-3">
+                                    <label class="form-label" for="default_pse_price">{{ 'Product price excluding taxes'|trans }}</label>
+                                    <div class="input-group">
+                                        <input type="number" step="0.0001" id="default_pse_price" name="price" value="{{ default_pse.price }}" class="form-control" required>
+                                        <span class="input-group-text">{{ currency.symbol }}</span>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label" for="default_pse_price_with_tax">{{ 'Product price including taxes'|trans }}</label>
+                                    <div class="input-group">
+                                        <input type="number" step="0.0001" id="default_pse_price_with_tax" name="price_with_tax" value="" class="form-control" placeholder="{{ 'Auto-computed from price + tax rule'|trans }}">
+                                        <span class="input-group-text">{{ currency.symbol }}</span>
+                                    </div>
+                                </div>
+
+                                {{ safe_hook('product.details-pricing-form', { product: product.id, location: 'product_details_pricing_form' }) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h2 class="h6 mb-3" data-testid="default-pse-stock-title">{{ 'Stock'|trans }}</h2>
+
+                                <div class="mb-3">
+                                    <label class="form-label" for="default_pse_ean">{{ 'EAN Code'|trans }}</label>
+                                    <input type="text" id="default_pse_ean" name="ean_code" value="{{ default_pse.ean_code }}" class="form-control" placeholder="{{ 'Product EAN code'|trans }}">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label" for="default_pse_weight">{{ 'Weight'|trans }}</label>
+                                    <div class="input-group">
+                                        <input type="number" step="0.0001" id="default_pse_weight" name="weight" value="{{ default_pse.weight }}" class="form-control">
+                                        <span class="input-group-text">{{ 'Kg'|trans }}</span>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label" for="default_pse_quantity">{{ 'Stock quantity'|trans }}</label>
+                                    <input type="number" step="0.01" id="default_pse_quantity" name="quantity" value="{{ default_pse.quantity }}" class="form-control" required>
+                                </div>
+
+                                {{ safe_hook('product.details-details-form', { product: product.id, location: 'product_details_details_form' }) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h2 class="h6 mb-3" data-testid="default-pse-promo-title">{{ 'Promotion'|trans }}</h2>
+
+                                <div class="mb-3">
+                                    <label class="form-label" for="default_pse_sale_price">{{ 'Sale price excluding taxes'|trans }}</label>
+                                    <div class="input-group">
+                                        <input type="number" step="0.0001" id="default_pse_sale_price" name="sale_price" value="{{ default_pse.sale_price }}" class="form-control" required>
+                                        <span class="input-group-text">{{ currency.symbol }}</span>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label" for="default_pse_sale_price_with_tax">{{ 'Sale price including taxes'|trans }}</label>
+                                    <div class="input-group">
+                                        <input type="number" step="0.0001" id="default_pse_sale_price_with_tax" name="sale_price_with_tax" value="" class="form-control" placeholder="{{ 'Auto-computed from sale price + tax rule'|trans }}">
+                                        <span class="input-group-text">{{ currency.symbol }}</span>
+                                    </div>
+                                </div>
+
+                                <div class="form-check mb-2">
+                                    <input type="checkbox" class="form-check-input" id="default_pse_onsale" name="onsale" value="1" {% if default_pse.onsale %}checked{% endif %}>
+                                    <label class="form-check-label" for="default_pse_onsale">{{ 'On sale'|trans }}</label>
+                                </div>
+
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="default_pse_isnew" name="isnew" value="1" {% if default_pse.isnew %}checked{% endif %}>
+                                    <label class="form-check-label" for="default_pse_isnew">{{ 'New product'|trans }}</label>
+                                </div>
+
+                                {{ safe_hook('product.details-promotion-form', { product: product.id, location: 'product_details_promotion_form' }) }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-end mt-3">
+                    <button type="submit" class="btn btn-primary" data-testid="default-pse-submit">
+                        <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save'|trans }}
+                    </button>
+                </div>
+            </form>
+        {% endif %}
     {% endif %}
 
     <div class="modal fade" id="pse-delete-modal" tabindex="-1" aria-hidden="true"
