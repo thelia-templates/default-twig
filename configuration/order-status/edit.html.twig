@@ -15,7 +15,7 @@
 {% endblock %}
 
 {% block content %}
-    {{ safe_hook('order-status.top', { order_status: status.id }) }}
+    {{ safe_hook('order-status-edit.top', { order_status_id: status.id }) }}
 
     {% set extra_tabs = hook_block('order-status.tab', { order_status: status.id, id: status.id }) %}
 
@@ -95,5 +95,5 @@
         </div>
     </div>
 
-    {{ safe_hook('order-status.bottom', { order_status: status.id }) }}
+    {{ safe_hook('order-status-edit.bottom', { order_status_id: status.id }) }}
 {% endblock %}

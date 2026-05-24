@@ -14,7 +14,7 @@
 {% endblock %}
 
 {% block content %}
-    {{ safe_hook('brand.top', { brand: brand.id }) }}
+    {{ safe_hook('brand-edit.top', { brand_id: brand.id }) }}
 
     {% set extra_tabs = hook_block('brand.tab', { brand: brand.id, id: brand.id }) %}
 
@@ -140,5 +140,5 @@
         </div>
     </div>
 
-    {{ safe_hook('brand.bottom', { brand: brand.id }) }}
+    {{ safe_hook('brand-edit.bottom', { brand_id: brand.id }) }}
 {% endblock %}

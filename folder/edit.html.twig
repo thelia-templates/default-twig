@@ -14,7 +14,7 @@
 {% endblock %}
 
 {% block content %}
-    {{ safe_hook('folder.top', { folder: folder.id }) }}
+    {{ safe_hook('folder-edit.top', { folder_id: folder.id }) }}
 
     {% set extra_tabs = hook_block('folder.tab', { folder: folder.id, id: folder.id }) %}
 
@@ -143,5 +143,5 @@
         </div>
     </div>
 
-    {{ safe_hook('folder.bottom', { folder: folder.id }) }}
+    {{ safe_hook('folder-edit.bottom', { folder_id: folder.id }) }}
 {% endblock %}

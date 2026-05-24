@@ -17,7 +17,7 @@
 {% endblock %}
 
 {% block content %}
-    {{ safe_hook('content.top', { content: content.id }) }}
+    {{ safe_hook('content-edit.top', { content_id: content.id }) }}
 
     {% set extra_tabs = hook_block('content.tab', { content: content.id, id: content.id }) %}
 
@@ -106,5 +106,5 @@
         </div>
     </div>
 
-    {{ safe_hook('content.bottom', { content: content.id }) }}
+    {{ safe_hook('content-edit.bottom', { content_id: content.id }) }}
 {% endblock %}

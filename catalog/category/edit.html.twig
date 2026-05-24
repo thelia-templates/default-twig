@@ -14,7 +14,7 @@
 {% endblock %}
 
 {% block content %}
-    {{ safe_hook('category.top', { category: category.id }) }}
+    {{ safe_hook('category-edit.top', { category_id: category.id }) }}
 
     {% set extra_tabs = hook_block('category.tab', { category: category.id, id: category.id }) %}
 
@@ -292,5 +292,5 @@
         </div>
     </div>
 
-    {{ safe_hook('category.bottom', { category: category.id }) }}
+    {{ safe_hook('category-edit.bottom', { category_id: category.id }) }}
 {% endblock %}

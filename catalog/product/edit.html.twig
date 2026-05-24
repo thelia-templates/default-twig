@@ -14,7 +14,7 @@
 {% endblock %}
 
 {% block content %}
-    {{ safe_hook('product.top', { product: product.id }) }}
+    {{ safe_hook('product-edit.top', { product_id: product.id }) }}
 
     {% set extra_tabs = hook_block('product.tab', { product: product.id, id: product.id }) %}
 
@@ -180,5 +180,5 @@
 
     {% include '@BackOfficeDefaultTwig/catalog/product/_pse_assoc.html.twig' %}
 
-    {{ safe_hook('product.bottom', { product: product.id }) }}
+    {{ safe_hook('product-edit.bottom', { product_id: product.id }) }}
 {% endblock %}

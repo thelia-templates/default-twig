@@ -15,7 +15,7 @@
 {% endblock %}
 
 {% block content %}
-    {{ safe_hook('attribute.top', { attribute: attribute.id }) }}
+    {{ safe_hook('attribute-edit.top', { attribute_id: attribute.id }) }}
 
     <div class="container-fluid" data-testid="attribute-edit-page">
         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -108,7 +108,7 @@
         </div>
     </div>
 
-    {{ safe_hook('attribute.bottom', { attribute: attribute.id }) }}
+    {{ safe_hook('attribute-edit.bottom', { attribute_id: attribute.id }) }}
 
     <div class="modal fade" id="attribute-av-create-modal" tabindex="-1" aria-labelledby="attribute-av-create-modal-title" aria-hidden="true">
         <div class="modal-dialog">

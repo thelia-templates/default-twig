@@ -15,7 +15,7 @@
 {% endblock %}
 
 {% block content %}
-    {{ safe_hook('template.top', { template: template.id }) }}
+    {{ safe_hook('template-edit.top', { template_id: template.id }) }}
 
     <div class="container-fluid" data-testid="template-edit-page">
         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -87,5 +87,5 @@
         </div>
     </div>
 
-    {{ safe_hook('template.bottom', { template: template.id }) }}
+    {{ safe_hook('template-edit.bottom', { template_id: template.id }) }}
 {% endblock %}
