@@ -113,7 +113,7 @@ final readonly class CombinationsTabContextBuilder
     private function collectTaxRules(string $locale): array
     {
         $rules = [];
-        foreach (TaxRuleQuery::create()->orderByPosition()->find() as $taxRule) {
+        foreach (TaxRuleQuery::create()->orderById()->find() as $taxRule) {
             \assert($taxRule instanceof TaxRule);
             $taxRule->setLocale($locale);
             $rules[] = [
