@@ -179,10 +179,10 @@ final class ModuleController
     }
 
     #[Route('/module/install', name: 'module.install', methods: ['POST'])]
-    public function install(Request $request): RedirectResponse
+    public function install(Request $request): Response
     {
-        if ($this->access->check(self::RESOURCE, [], AccessManager::CREATE)) {
-            return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
+        if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::CREATE)) {
+            return $denied;
         }
 
         try {
