@@ -25,6 +25,8 @@ The following modules need a confirmed pass under `BO_TEMPLATE=default-twig` bef
 | `Tinymce` | ⚠️ partial | Admin update page renders. The `wysiwyg.js` hook (sole integration point) is **not** called from BO Twig product/category/content edit forms, so the rich text editor does not replace the textareas. Editing still works through the raw textarea. |
 | `MailingTemplate` | ⏸️ not available locally | Module is not shipped with `vendor/thelia/modules`. Skipped in the cohabitation smoke. |
 | `NewsletterCustomConfig` | ⏸️ not available locally | Module is not shipped with `vendor/thelia/modules`. Skipped in the cohabitation smoke. |
+| `BetterSeo` | ❌ broken (upstream module) | `module:activate` crashes : `BetterSeo.php` imports `Thelia\Install\Database`, which moved to `Thelia\Core\Install\Database` in Thelia 3. Once activated through the DB layer the module's `module:update` admin page renders, but the SEO hooks (`SeoUpdateFormHook`, `MetaHook`) inject their Smarty templates (`hook-seo-update-form.html`) which are not picked up by the BO Twig parser. Needs an upstream migration of `BetterSeo` to the Thelia 3 namespaces and a Twig-aware hook view. |
+| `ColissimoLabel` | ❌ broken (upstream module) | All admin routes (`/admin/module/ColissimoLabel/configuration`, `/bordereaux`, `/labels`, …) 500 because the module's Smarty templates extend `admin-layout.tpl`, which only exists in the legacy `default` Smarty tree. Same incompatibility class as `CustomerFamily`. Requires a Twig-aware module configuration / dashboard view shipped upstream. |
 
 ## Known incompatibilities
 
