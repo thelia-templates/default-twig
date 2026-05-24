@@ -109,3 +109,90 @@
         {{- block('checkbox_radio_label', 'bootstrap_5_layout.html.twig') -}}
     {%- endif -%}
 {%- endblock checkbox_label -%}
+
+{# The blocks below mirror those overridden by @formTwig/flexy_form_theme.html.twig
+   so that a back-office form does not pick up a Flexy widget wrapper (e.g. the
+   <div data-controller="password"> wrapper breaks Bootstrap input-group layout
+   on the login form). Each block defers to bootstrap_5_layout on /admin and to
+   the Flexy theme everywhere else, mirroring the form_widget_simple pattern. #}
+
+{%- block password_widget -%}
+    {%- if app is defined and app.request and app.request.pathInfo starts with '/admin' -%}
+        {%- set type = type|default('password') -%}
+        {{- block('form_widget_simple', 'bootstrap_5_layout.html.twig') -}}
+    {%- else -%}
+        {{- block('password_widget', '@formTwig/flexy_form_theme.html.twig') -}}
+    {%- endif -%}
+{%- endblock password_widget -%}
+
+{%- block textarea_widget -%}
+    {%- if app is defined and app.request and app.request.pathInfo starts with '/admin' -%}
+        {{- block('textarea_widget', 'bootstrap_5_layout.html.twig') -}}
+    {%- else -%}
+        {{- block('textarea_widget', '@formTwig/flexy_form_theme.html.twig') -}}
+    {%- endif -%}
+{%- endblock textarea_widget -%}
+
+{%- block money_widget -%}
+    {%- if app is defined and app.request and app.request.pathInfo starts with '/admin' -%}
+        {{- block('money_widget', 'bootstrap_5_layout.html.twig') -}}
+    {%- else -%}
+        {{- block('money_widget', '@formTwig/flexy_form_theme.html.twig') -}}
+    {%- endif -%}
+{%- endblock money_widget -%}
+
+{%- block percent_widget -%}
+    {%- if app is defined and app.request and app.request.pathInfo starts with '/admin' -%}
+        {{- block('percent_widget', 'bootstrap_5_layout.html.twig') -}}
+    {%- else -%}
+        {{- block('percent_widget', '@formTwig/flexy_form_theme.html.twig') -}}
+    {%- endif -%}
+{%- endblock percent_widget -%}
+
+{%- block choice_widget_collapsed -%}
+    {%- if app is defined and app.request and app.request.pathInfo starts with '/admin' -%}
+        {{- block('choice_widget_collapsed', 'bootstrap_5_layout.html.twig') -}}
+    {%- else -%}
+        {{- block('choice_widget_collapsed', '@formTwig/flexy_form_theme.html.twig') -}}
+    {%- endif -%}
+{%- endblock choice_widget_collapsed -%}
+
+{%- block choice_widget_expanded -%}
+    {%- if app is defined and app.request and app.request.pathInfo starts with '/admin' -%}
+        {{- block('choice_widget_expanded', 'bootstrap_5_layout.html.twig') -}}
+    {%- else -%}
+        {{- block('choice_widget_expanded', '@formTwig/flexy_form_theme.html.twig') -}}
+    {%- endif -%}
+{%- endblock choice_widget_expanded -%}
+
+{%- block radio_widget -%}
+    {%- if app is defined and app.request and app.request.pathInfo starts with '/admin' -%}
+        {{- block('radio_widget', 'bootstrap_5_layout.html.twig') -}}
+    {%- else -%}
+        {{- block('radio_widget', '@formTwig/flexy_form_theme.html.twig') -}}
+    {%- endif -%}
+{%- endblock radio_widget -%}
+
+{%- block range_widget -%}
+    {%- if app is defined and app.request and app.request.pathInfo starts with '/admin' -%}
+        {{- block('range_widget', 'bootstrap_5_layout.html.twig') -}}
+    {%- else -%}
+        {{- block('range_widget', '@formTwig/flexy_form_theme.html.twig') -}}
+    {%- endif -%}
+{%- endblock range_widget -%}
+
+{%- block file_widget -%}
+    {%- if app is defined and app.request and app.request.pathInfo starts with '/admin' -%}
+        {{- block('file_widget', 'bootstrap_5_layout.html.twig') -}}
+    {%- else -%}
+        {{- block('file_widget', '@formTwig/flexy_form_theme.html.twig') -}}
+    {%- endif -%}
+{%- endblock file_widget -%}
+
+{%- block submit_widget -%}
+    {%- if app is defined and app.request and app.request.pathInfo starts with '/admin' -%}
+        {{- block('submit_widget', 'bootstrap_5_layout.html.twig') -}}
+    {%- else -%}
+        {{- block('submit_widget', '@formTwig/flexy_form_theme.html.twig') -}}
+    {%- endif -%}
+{%- endblock submit_widget -%}

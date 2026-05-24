@@ -18,10 +18,10 @@
         <input type="hidden" name="{{ field_name(login_form.success_url) }}" value="{{ path('admin') }}">
 
         {% if login_form.vars.errors|length > 0 %}
+            {# Render a single generic message so the form does not leak whether
+               the username exists or the password is wrong (account enumeration). #}
             <div class="alert alert-danger" role="alert" data-testid="login-error">
-                {% for error in login_form.vars.errors %}
-                    <div>{{ error.message }}</div>
-                {% endfor %}
+                {{ 'Invalid credentials.'|trans({}, 'bo.default-twig') }}
             </div>
         {% endif %}
 

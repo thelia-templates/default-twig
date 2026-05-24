@@ -33,6 +33,16 @@
                 </button>
             </li>
             <li class="nav-item" role="presentation">
+                <button class="nav-link {% if current_tab == 'images' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-images" type="button" role="tab" data-testid="brand-tab-images">
+                    {{ 'Images'|trans }}
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link {% if current_tab == 'documents' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-documents" type="button" role="tab" data-testid="brand-tab-documents">
+                    {{ 'Documents'|trans }}
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
                 <button class="nav-link {% if current_tab == 'seo' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-seo" type="button" role="tab" data-testid="brand-tab-seo">
                     {{ 'SEO'|trans }}
                 </button>
@@ -95,6 +105,14 @@
                         </button>
                     </div>
                 {{ form_end(form) }}
+            </div>
+
+            <div class="tab-pane fade {% if current_tab == 'images' %}show active{% endif %}" id="tab-images" role="tabpanel">
+                {{ render(controller('BackOfficeDefaultTwigBundle\\Controller\\File\\FileController::imageForm', { parentType: 'brand', parentId: brand.id })) }}
+            </div>
+
+            <div class="tab-pane fade {% if current_tab == 'documents' %}show active{% endif %}" id="tab-documents" role="tabpanel">
+                {{ render(controller('BackOfficeDefaultTwigBundle\\Controller\\File\\FileController::documentForm', { parentType: 'brand', parentId: brand.id })) }}
             </div>
 
             <div class="tab-pane fade {% if current_tab == 'seo' %}show active{% endif %}" id="tab-seo" role="tabpanel">

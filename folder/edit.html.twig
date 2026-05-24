@@ -37,6 +37,16 @@
                     {{ 'Subfolders'|trans }} <span class="badge bg-secondary">{{ children|length }}</span>
                 </button>
             </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link {% if current_tab == 'images' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-images" type="button" data-testid="folder-tab-images">
+                    {{ 'Images'|trans }}
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link {% if current_tab == 'documents' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-documents" type="button" data-testid="folder-tab-documents">
+                    {{ 'Documents'|trans }}
+                </button>
+            </li>
             {% for block in extra_tabs %}
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" data-bs-toggle="tab" data-bs-target="#{{ block.id }}"
@@ -125,6 +135,14 @@
                         {% endfor %}
                     </tbody>
                 </table>
+            </div>
+
+            <div class="tab-pane fade {% if current_tab == 'images' %}show active{% endif %}" id="tab-images" role="tabpanel">
+                {{ render(controller('BackOfficeDefaultTwigBundle\\Controller\\File\\FileController::imageForm', { parentType: 'folder', parentId: folder.id })) }}
+            </div>
+
+            <div class="tab-pane fade {% if current_tab == 'documents' %}show active{% endif %}" id="tab-documents" role="tabpanel">
+                {{ render(controller('BackOfficeDefaultTwigBundle\\Controller\\File\\FileController::documentForm', { parentType: 'folder', parentId: folder.id })) }}
             </div>
 
             {% for block in extra_tabs %}
