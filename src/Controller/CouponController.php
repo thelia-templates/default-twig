@@ -56,6 +56,7 @@ final class CouponController
     private const EDIT_TEMPLATE = '@BackOfficeDefaultTwig/coupon/edit.html.twig';
     private const CONDITIONS_TEMPLATE = '@BackOfficeDefaultTwig/coupon/conditions.html.twig';
     private const CONDITION_INPUT_TEMPLATE = '@BackOfficeDefaultTwig/coupon/condition-input-ajax.html.twig';
+    private const PAGE_SIZE = 25;
 
     public function __construct(
         private readonly AdminFormAction $action,
@@ -77,15 +78,22 @@ final class CouponController
     }
 
     #[Route('', name: 'default', methods: ['GET'])]
-    public function list(): Response
+    public function list(Request $request): Response
     {
         if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::VIEW)) {
             return $denied;
         }
 
         $locale = $this->defaultLocale();
+        $page = max(1, (int) $request->query->get('page', 1));
+
+        $query = CouponQuery::create()->orderByCode();
+        $total = (int) $query->count();
+        $pages = max(1, (int) ceil($total / self::PAGE_SIZE));
+        $page = min($page, $pages);
+
         $rows = [];
-        foreach (CouponQuery::create()->orderByCode()->find() as $coupon) {
+        foreach ($query->offset(($page - 1) * self::PAGE_SIZE)->limit(self::PAGE_SIZE)->find() as $coupon) {
             \assert($coupon instanceof Coupon);
             $coupon->setLocale($locale);
             $rows[] = $this->couponToRow($coupon);
@@ -93,6 +101,9 @@ final class CouponController
 
         return new Response($this->twig->render(self::LIST_TEMPLATE, [
             'rows' => $rows,
+            'total' => $total,
+            'pages' => $pages,
+            'current_page' => $page,
         ]));
     }
 

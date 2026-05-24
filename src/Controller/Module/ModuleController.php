@@ -179,10 +179,10 @@ final class ModuleController
     }
 
     #[Route('/module/install', name: 'module.install', methods: ['POST'])]
-    public function install(Request $request): RedirectResponse
+    public function install(Request $request): Response
     {
-        if ($this->access->check(self::RESOURCE, [], AccessManager::CREATE)) {
-            return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
+        if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::CREATE)) {
+            return $denied;
         }
 
         try {
@@ -284,10 +284,10 @@ final class ModuleController
     }
 
     #[Route('/module/{module_code}', name: 'module.configure', methods: ['GET', 'POST'], requirements: ['module_code' => '[A-Za-z][A-Za-z0-9_-]*'])]
-    public function configure(string $module_code): RedirectResponse
+    public function configure(string $module_code): Response
     {
         if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::VIEW)) {
-            return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
+            return $denied;
         }
 
         $module = ModuleQuery::create()->findOneByCode($module_code);

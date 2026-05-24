@@ -21,7 +21,7 @@
     </div>
 {% endblock %}
 
-{% block javascript_last_call %}
+{% block scripts_extra %}
     {{ safe_hook('module.config-js', { location: 'module-config-js', modulecode: module_code }) }}
     {{ safe_hook('wysiwyg.js', { location: 'wysiwyg-module-config-js' }) }}
 {% endblock %}

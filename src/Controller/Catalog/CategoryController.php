@@ -277,6 +277,20 @@ final class CategoryController
             return new JsonResponse(['error' => 'cannot make a category its own parent'], Response::HTTP_BAD_REQUEST);
         }
 
+        $ancestorId = $newParent;
+        $depth = 0;
+        while ($ancestorId > 0 && $depth < 1000) {
+            $ancestor = CategoryQuery::create()->findPk($ancestorId);
+            if ($ancestor === null) {
+                break;
+            }
+            if ((int) $ancestor->getId() === $categoryId) {
+                return new JsonResponse(['error' => 'cannot move a category into one of its descendants'], Response::HTTP_BAD_REQUEST);
+            }
+            $ancestorId = (int) $ancestor->getParent();
+            ++$depth;
+        }
+
         $category->setParent($newParent)->save();
 
         if ($position > 0) {

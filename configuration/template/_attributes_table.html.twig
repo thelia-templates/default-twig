@@ -12,7 +12,7 @@
            data-bo-sortable-param-name-value="attribute_id"
            data-bo-sortable-extra-params-value='{"template_id": {{ template.id }}}'>
         {% for attribute in attributes %}
-            <tr data-id="{{ attribute.id }}" data-testid="template-attribute-row-{{ attribute.id }}">
+            <tr data-row-id="{{ attribute.id }}" data-testid="template-attribute-row-{{ attribute.id }}">
                 <td>{{ attribute.title }}</td>
                 <td class="text-center">{{ attribute.position }}</td>
                 <td class="text-end">
