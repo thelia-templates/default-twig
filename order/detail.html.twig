@@ -93,6 +93,82 @@
             </div>
 
             <div class="col-md-4">
+                <div class="card mb-3" data-testid="order-totals">
+                    <div class="card-header">{{ 'Totals'|trans }}</div>
+                    <ul class="list-group list-group-flush small">
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>{{ 'Subtotal (excl. tax)'|trans }}</span>
+                            <strong data-testid="order-totals-subtotal-ht">{{ totals.subtotal_ht|number_format(2, '.', ' ') }} {{ currency.symbol }}</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>{{ 'Taxes'|trans }}</span>
+                            <strong data-testid="order-totals-taxes">{{ totals.subtotal_taxes|number_format(2, '.', ' ') }} {{ currency.symbol }}</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>{{ 'Subtotal (incl. tax)'|trans }}</span>
+                            <strong data-testid="order-totals-subtotal-ttc">{{ totals.subtotal_ttc|number_format(2, '.', ' ') }} {{ currency.symbol }}</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>{{ 'Shipping'|trans }}</span>
+                            <strong data-testid="order-totals-postage">{{ totals.postage_ttc|number_format(2, '.', ' ') }} {{ currency.symbol }}</strong>
+                        </li>
+                        {% if totals.discount > 0 %}
+                            <li class="list-group-item d-flex justify-content-between text-danger">
+                                <span>{{ 'Discount'|trans }}</span>
+                                <strong data-testid="order-totals-discount">- {{ totals.discount|number_format(2, '.', ' ') }} {{ currency.symbol }}</strong>
+                            </li>
+                        {% endif %}
+                        <li class="list-group-item d-flex justify-content-between bg-light">
+                            <span class="fw-bold">{{ 'Grand total'|trans }}</span>
+                            <strong data-testid="order-totals-grand">{{ totals.grand_total|number_format(2, '.', ' ') }} {{ currency.symbol }}</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between text-muted">
+                            <span>{{ 'Total weight'|trans }}</span>
+                            <span data-testid="order-totals-weight">{{ weight|number_format(2, '.', ' ') }} {{ 'kg'|trans }}</span>
+                        </li>
+                    </ul>
+                </div>
+
+                {% if customer %}
+                    <div class="card mb-3" data-testid="order-customer">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span>{{ 'Customer'|trans }}</span>
+                            <a href="{{ customer.edit_url }}" class="btn btn-sm btn-outline-secondary" data-testid="order-customer-edit">
+                                <i class="bi bi-pencil-square" aria-hidden="true"></i> {{ 'Open'|trans }}
+                            </a>
+                        </div>
+                        <div class="card-body small">
+                            <p class="mb-1"><strong>{{ customer.firstname }} {{ customer.lastname }}</strong>{% if customer.ref %} <span class="text-muted">({{ customer.ref }})</span>{% endif %}</p>
+                            {% if customer.email %}
+                                <p class="mb-0"><a href="mailto:{{ customer.email }}" data-testid="order-customer-email">{{ customer.email }}</a></p>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+
+                <div class="card mb-3" data-testid="order-payment">
+                    <div class="card-header">{{ 'Payment'|trans }}</div>
+                    <div class="card-body small">
+                        <p class="mb-1"><strong>{{ payment.module_title|default('—') }}</strong></p>
+                        {% if payment.transaction_ref %}
+                            <p class="mb-1 text-muted">{{ 'Transaction ref'|trans }}: <code>{{ payment.transaction_ref }}</code></p>
+                        {% endif %}
+                        {% if payment.invoice_ref %}
+                            <p class="mb-0 text-muted">{{ 'Invoice ref'|trans }}: <code>{{ payment.invoice_ref }}</code></p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="card mb-3" data-testid="order-delivery">
+                    <div class="card-header">{{ 'Delivery'|trans }}</div>
+                    <div class="card-body small">
+                        <p class="mb-1"><strong>{{ delivery.module_title|default('—') }}</strong></p>
+                        {% if delivery.delivery_ref %}
+                            <p class="mb-0 text-muted">{{ 'Tracking ref'|trans }}: <code>{{ delivery.delivery_ref }}</code></p>
+                        {% endif %}
+                    </div>
+                </div>
+
                 <div class="card mb-3">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <span>{{ 'Invoice address'|trans }}</span>

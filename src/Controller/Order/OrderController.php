@@ -16,6 +16,7 @@ namespace BackOfficeDefaultTwigBundle\Controller\Order;
 
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
+use BackOfficeDefaultTwigBundle\Service\Order\OrderDetailContextBuilder;
 use BackOfficeDefaultTwigBundle\Service\Pdf\OrderPdfRenderer;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
 use Propel\Runtime\ActiveQuery\Criteria;
@@ -61,6 +62,7 @@ final class OrderController
         private readonly TranslatorInterface $translator,
         private readonly \Symfony\Component\Form\FormFactoryInterface $formFactory,
         private readonly OrderPdfRenderer $pdfRenderer,
+        private readonly OrderDetailContextBuilder $detailContextBuilder,
     ) {
     }
 
@@ -100,18 +102,21 @@ final class OrderController
 
         $locale = $this->defaultLocale();
 
-        return new Response($this->twig->render(self::DETAIL_TEMPLATE, [
-            'order' => $order,
-            'order_items' => $this->orderItems($order),
-            'order_addresses' => $this->orderAddresses($order),
-            'available_statuses' => $this->statusChoices(),
-            'customer_titles' => $this->customerTitleChoices($locale),
-            'countries' => $this->countryChoices($locale),
-            'states' => $this->stateChoices($locale),
-            'invoice_url' => $this->urls->generate('admin.order.pdf.invoice', ['order_id' => $order_id, 'browser' => 1]),
-            'delivery_url' => $this->urls->generate('admin.order.pdf.delivery', ['order_id' => $order_id, 'browser' => 1]),
-            'token' => $this->tokens->assignToken(),
-        ]));
+        return new Response($this->twig->render(self::DETAIL_TEMPLATE, array_merge(
+            $this->detailContextBuilder->build($order),
+            [
+                'order' => $order,
+                'order_items' => $this->orderItems($order),
+                'order_addresses' => $this->orderAddresses($order),
+                'available_statuses' => $this->statusChoices(),
+                'customer_titles' => $this->customerTitleChoices($locale),
+                'countries' => $this->countryChoices($locale),
+                'states' => $this->stateChoices($locale),
+                'invoice_url' => $this->urls->generate('admin.order.pdf.invoice', ['order_id' => $order_id, 'browser' => 1]),
+                'delivery_url' => $this->urls->generate('admin.order.pdf.delivery', ['order_id' => $order_id, 'browser' => 1]),
+                'token' => $this->tokens->assignToken(),
+            ],
+        )));
     }
 
     #[Route('/admin/order/update/status', name: 'admin.order.list.update.status', methods: ['POST', 'GET'])]
