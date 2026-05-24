@@ -19,6 +19,8 @@
 {% block content %}
     {{ safe_hook('content.top', { content: content.id }) }}
 
+    {% set extra_tabs = hook_block('content.tab', { content: content.id, id: content.id }) %}
+
     <div class="container-fluid" data-testid="content-edit-page">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h1 class="h3 mb-0">{{ 'Content'|trans }} <small class="text-muted">#{{ content.id }}</small></h1>
@@ -27,41 +29,79 @@
             </a>
         </div>
 
-        <div class="card">
-            <div class="card-body">
-                {{ form_start(form, { action: path('admin.content.save'), method: 'post', attr: { 'data-testid': 'content-edit-form' } }) }}
-                    <input type="hidden" name="content_id" value="{{ content.id }}">
-                    <div class="row g-3">
-                        <div class="col-md-8">
-                            {{ form_row(form.title) }}
-                            {{ form_row(form.chapo) }}
-                            {{ form_row(form.description) }}
-                            {{ form_row(form.postscriptum) }}
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-check mb-3">
-                                {{ form_widget(form.visible, { attr: { class: 'form-check-input' } }) }}
-                                {{ form_label(form.visible, null, { label_attr: { class: 'form-check-label' } }) }}
+        <ul class="nav nav-tabs mb-3" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link {% if current_tab|default('general') == 'general' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-general" type="button" data-testid="content-tab-general">
+                    {{ 'General'|trans }}
+                </button>
+            </li>
+            {% for block in extra_tabs %}
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#{{ block.id }}"
+                            {% if block.href is defined and block.href %}data-href="{{ block.href }}"{% endif %}
+                            type="button" data-testid="content-tab-{{ block.id }}">{{ block.title }}</button>
+                </li>
+            {% endfor %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link {% if current_tab|default('') == 'modules' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-modules" type="button" data-testid="content-tab-modules">
+                    {{ 'Modules'|trans }}
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <div class="tab-pane fade {% if current_tab|default('general') == 'general' %}show active{% endif %}" id="tab-general" role="tabpanel">
+                <div class="card">
+                    <div class="card-body">
+                        {{ form_start(form, { action: path('admin.content.save'), method: 'post', attr: { 'data-testid': 'content-edit-form' } }) }}
+                            <input type="hidden" name="content_id" value="{{ content.id }}">
+                            <div class="row g-3">
+                                <div class="col-md-8">
+                                    {{ form_row(form.title) }}
+                                    {{ form_row(form.chapo) }}
+                                    {{ form_row(form.description) }}
+                                    {{ form_row(form.postscriptum) }}
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check mb-3">
+                                        {{ form_widget(form.visible, { attr: { class: 'form-check-input' } }) }}
+                                        {{ form_label(form.visible, null, { label_attr: { class: 'form-check-label' } }) }}
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label" for="content_default_folder">{{ 'Default folder'|trans }}</label>
+                                        <select name="thelia_content_modification[default_folder]" id="content_default_folder" class="form-select" data-testid="content-default-folder">
+                                            {% for folder in folders %}
+                                                <option value="{{ folder.id }}" {% if folder.id == content.defaultFolderId %}selected{% endif %}>{{ folder.title }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label" for="content_default_folder">{{ 'Default folder'|trans }}</label>
-                                <select name="thelia_content_modification[default_folder]" id="content_default_folder" class="form-select" data-testid="content-default-folder">
-                                    {% for folder in folders %}
-                                        <option value="{{ folder.id }}" {% if folder.id == content.defaultFolderId %}selected{% endif %}>{{ folder.title }}</option>
-                                    {% endfor %}
-                                </select>
+                            {{ form_widget(form.id) }}
+                            {{ form_widget(form.locale) }}
+                            {{ safe_hook('content.update-form', { content: content.id }) }}
+                            <div class="mt-3">
+                                <button type="submit" class="btn btn-primary" data-testid="content-edit-submit">
+                                    <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save'|trans }}
+                                </button>
                             </div>
-                        </div>
+                        {{ form_end(form, { render_rest: false }) }}
                     </div>
-                    {{ form_widget(form.id) }}
-                    {{ form_widget(form.locale) }}
-                    {{ safe_hook('content.update-form', { content: content.id }) }}
-                    <div class="mt-3">
-                        <button type="submit" class="btn btn-primary" data-testid="content-edit-submit">
-                            <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save'|trans }}
-                        </button>
-                    </div>
-                {{ form_end(form, { render_rest: false }) }}
+                </div>
+            </div>
+
+            {% for block in extra_tabs %}
+                <div class="tab-pane fade" id="{{ block.id }}" role="tabpanel">
+                    {% if block.href is defined and block.href %}
+                        <div class="text-center"><span class="loading">{{ 'Please wait, loading'|trans }}</span></div>
+                    {% else %}
+                        {{ block.content|raw }}
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            <div class="tab-pane fade {% if current_tab|default('') == 'modules' %}show active{% endif %}" id="tab-modules" role="tabpanel">
+                {{ safe_hook('content.tab-content', { content: content.id, content_id: content.id, location: 'content-edit', view: 'content' }) }}
             </div>
         </div>
     </div>
