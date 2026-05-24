@@ -16,7 +16,7 @@ namespace BackOfficeDefaultTwigBundle\Controller\Module;
 
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
-use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
+use BackOfficeDefaultTwigBundle\Service\Module\ModuleListPresenter;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -35,7 +35,6 @@ use Thelia\Core\Event\UpdatePositionEvent;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
 use Thelia\Model\LangQuery;
-use Thelia\Model\Module;
 use Thelia\Model\ModuleQuery;
 use Thelia\Module\Validator\ModuleValidator;
 use Thelia\Tools\TokenProvider;
@@ -58,6 +57,7 @@ final class ModuleController
         private readonly TokenProvider $tokens,
         private readonly EventDispatcherInterface $events,
         private readonly TranslatorInterface $translator,
+        private readonly ModuleListPresenter $listPresenter,
     ) {
     }
 
@@ -68,7 +68,10 @@ final class ModuleController
             return $denied;
         }
 
-        return new Response($this->twig->render(self::LIST_TEMPLATE, $this->buildListContext()));
+        return new Response($this->twig->render(
+            self::LIST_TEMPLATE,
+            $this->listPresenter->buildListContext($this->defaultLocale()),
+        ));
     }
 
     #[Route('/module/update/{module_id}', name: 'module.update', methods: ['GET'], requirements: ['module_id' => '\d+'])]
@@ -298,82 +301,10 @@ final class ModuleController
         return new RedirectResponse($this->urls->generate(self::EDIT_ROUTE, ['module_id' => (int) $module->getId()]));
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    private function buildListContext(): array
-    {
-        $locale = $this->defaultLocale();
-        $modules = ModuleQuery::create()->orderByPosition()->find();
-        $rows = [];
-        foreach ($modules as $module) {
-            \assert($module instanceof Module);
-            $module->setLocale($locale);
-            $rows[] = $this->moduleToRow($module);
-        }
-
-        return [
-            'rows' => $rows,
-            'update_position_url' => $this->urls->generate('admin.module.update-position'),
-            'update_position_token' => $this->tokens->assignToken(),
-        ];
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function moduleToRow(Module $module): array
-    {
-        $id = (int) $module->getId();
-        $activated = (bool) $module->getActivate();
-
-        $actions = [
-            new RowAction(
-                kind: 'edit',
-                label: $this->translator->trans('Edit module info'),
-                href: $this->urls->generate(self::EDIT_ROUTE, ['module_id' => $id]),
-                grantedAttribute: AccessManager::UPDATE,
-                grantedSubject: self::RESOURCE,
-            ),
-            new RowAction(
-                kind: 'delete',
-                label: $this->translator->trans('Delete this module'),
-                modalTarget: '#module-delete-modal',
-                grantedAttribute: AccessManager::DELETE,
-                grantedSubject: self::RESOURCE,
-                dataAttributes: ['module-id' => $id, 'module-label' => (string) $module->getTitle()],
-            ),
-        ];
-
-        return [
-            'id' => $id,
-            'code' => (string) $module->getCode(),
-            'title' => (string) $module->getTitle(),
-            'type' => (string) $module->getType(),
-            'version' => (string) $module->getVersion(),
-            'activated' => $activated,
-            'position' => (int) $module->getPosition(),
-            'toggle_url' => $this->tokenizedUrl('admin.module.toggle-activation', ['module_id' => $id]),
-            'configure_url' => $this->urls->generate('admin.module.configure', ['module_code' => (string) $module->getCode()]),
-            '_actions' => $actions,
-        ];
-    }
-
     private function defaultLocale(): string
     {
         $defaultLang = LangQuery::create()->findOneByByDefault(true);
 
         return $defaultLang?->getLocale() ?? 'en_US';
-    }
-
-    /**
-     * @param array<string, scalar> $parameters
-     */
-    private function tokenizedUrl(string $route, array $parameters): string
-    {
-        $url = $this->urls->generate($route, $parameters);
-        $separator = str_contains($url, '?') ? '&' : '?';
-
-        return $url.$separator.'_token='.$this->tokens->assignToken();
     }
 }

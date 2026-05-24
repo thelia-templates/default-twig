@@ -13,32 +13,45 @@
 {% endblock %}
 
 {% block content %}
-    {{ safe_hook('modules.top') }}
+    {{ safe_hook('modules.top', { location: 'modules_top' }) }}
 
     <div class="container-fluid" data-testid="modules-page">
         <h1 class="h3 mb-3">{{ 'Modules management'|trans }}</h1>
 
-        {{ component('BoDataTable', {
-            id: 'modules',
-            columns: [
-                column('id', 'ID'|trans),
-                column('code', 'Code'|trans),
-                column('title', 'Title'|trans),
-                column('type', 'Type'|trans),
-                column('version', 'Version'|trans),
-                column_toggle('activated', 'Active'|trans, 'toggle_url'),
-                column('position', 'Position'|trans, 'center'),
-                column_actions('_actions', 'Actions'|trans),
-            ],
-            rows: rows,
-            emptyMessage: 'No module installed.'|trans,
-            tbodyAttributes: {
-                'data-controller': 'bo-sortable',
-                'data-bo-sortable-url-value': update_position_url,
-                'data-bo-sortable-token-value': update_position_token,
-                'data-bo-sortable-param-name-value': 'module_id',
-            },
-        }) }}
+        {% for type, group in groups %}
+            <section class="mb-4" data-testid="modules-block-{{ type }}">
+                <h2 class="h5 mb-2">{{ group.label }}</h2>
+                {{ component('BoDataTable', {
+                    id: 'modules-' ~ type,
+                    columns: [
+                        column('id', 'ID'|trans),
+                        column('code', 'Code'|trans),
+                        column('title', 'Title'|trans),
+                        column('version', 'Version'|trans),
+                        column_toggle('activated', 'Active'|trans, 'toggle_url'),
+                        column('position', 'Position'|trans, 'center'),
+                        column_actions('_actions', 'Actions'|trans),
+                    ],
+                    rows: group.rows,
+                    emptyMessage: 'No module of this type installed.'|trans,
+                    tbodyAttributes: {
+                        'data-controller': 'bo-sortable',
+                        'data-bo-sortable-url-value': update_position_url,
+                        'data-bo-sortable-token-value': update_position_token,
+                        'data-bo-sortable-param-name-value': 'module_id',
+                    },
+                }) }}
+            </section>
+        {% endfor %}
+
+        <div class="d-flex justify-content-end gap-2 mb-4">
+            <a href="{{ path('admin.hook') }}" class="btn btn-outline-primary" data-testid="modules-manage-hooks">
+                {{ 'Manage hooks'|trans }} <i class="bi bi-chevron-right" aria-hidden="true"></i>
+            </a>
+            <a href="{{ path('admin.module-hook') }}" class="btn btn-outline-primary" data-testid="modules-manage-modules-hooks">
+                {{ 'Manage modules attachements'|trans }} <i class="bi bi-chevron-right" aria-hidden="true"></i>
+            </a>
+        </div>
 
         <form action="{{ path('admin.module.install') }}" method="post" enctype="multipart/form-data" class="mt-4" data-testid="module-install-form">
             <input type="hidden" name="_token" value="{{ assignToken() }}">
@@ -56,6 +69,8 @@
             </div>
         </form>
     </div>
+
+    {{ safe_hook('modules.bottom', { location: 'modules_bottom' }) }}
 
     <div class="modal fade" id="module-delete-modal" tabindex="-1" aria-hidden="true"
          data-controller="bo-prefill-modal"
@@ -80,4 +95,8 @@
             </div>
         </div>
     </div>
+{% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('modules.js', { location: 'modules-js' }) }}
 {% endblock %}
