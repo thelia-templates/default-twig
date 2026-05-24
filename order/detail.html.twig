@@ -18,9 +18,21 @@
 
     {% set extra_tabs = hook_block('order.tab', { order: order.id, id: order.id }) %}
 
+    {% set current_status_label = '' %}
+    {% for s in available_statuses %}{% if s.id == order.statusId %}{% set current_status_label = s.title %}{% endif %}{% endfor %}
     <div class="container-fluid" data-testid="order-detail-page">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h1 class="h3 mb-0">{{ 'Order'|trans }} <small class="text-muted">#{{ order.ref }}</small></h1>
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+                <h1 class="h3 mb-1">{{ 'Order'|trans }} <small class="text-muted">#{{ order.ref }}</small></h1>
+                <div class="d-flex gap-2 align-items-center small text-muted">
+                    {% if current_status_label %}
+                        <span class="badge bg-secondary" data-testid="order-status-badge">{{ current_status_label }}</span>
+                    {% endif %}
+                    {% if order.createdAt %}
+                        <span data-testid="order-created-at"><i class="bi bi-calendar3"></i> {{ order.createdAt|date('Y-m-d H:i') }}</span>
+                    {% endif %}
+                </div>
+            </div>
             <div class="d-flex gap-2">
                 <a href="{{ invoice_url }}" target="_blank" class="btn btn-outline-secondary" data-testid="order-invoice-link">
                     <i class="bi bi-file-pdf" aria-hidden="true"></i> {{ 'Invoice'|trans }}
@@ -35,27 +47,41 @@
             <div class="col-md-8">
                 <div class="card mb-3">
                     <div class="card-header">{{ 'Order items'|trans }}</div>
-                    <table class="table mb-0" data-testid="order-items-table">
+                    <table class="table mb-0 align-middle" data-testid="order-items-table">
                         <thead>
                             <tr>
                                 <th>{{ 'Reference'|trans }}</th>
                                 <th>{{ 'Title'|trans }}</th>
                                 <th class="text-end">{{ 'Quantity'|trans }}</th>
-                                <th class="text-end">{{ 'Unit price'|trans }}</th>
+                                <th class="text-end">{{ 'Unit price (excl. tax)'|trans }}</th>
+                                <th class="text-end">{{ 'Tax'|trans }}</th>
+                                <th class="text-end">{{ 'Line total (incl. tax)'|trans }}</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for item in order_items %}
+                                {% set line_ht = item.price * item.quantity %}
+                                {% set line_tax = item.tax * item.quantity %}
                                 <tr>
-                                    <td>{{ item.ref }}</td>
+                                    <td><code>{{ item.ref }}</code></td>
                                     <td>{{ item.title }}</td>
                                     <td class="text-end">{{ item.quantity }}</td>
-                                    <td class="text-end">{{ item.price|number_format(2) }}</td>
+                                    <td class="text-end">{{ item.price|number_format(2, '.', ' ') }} {{ currency.symbol }}</td>
+                                    <td class="text-end">{{ item.tax|number_format(2, '.', ' ') }} {{ currency.symbol }}</td>
+                                    <td class="text-end fw-semibold">{{ (line_ht + line_tax)|number_format(2, '.', ' ') }} {{ currency.symbol }}</td>
                                 </tr>
                             {% else %}
-                                <tr><td colspan="4" class="text-muted text-center">{{ 'No item.'|trans }}</td></tr>
+                                <tr><td colspan="6" class="text-muted text-center">{{ 'No item.'|trans }}</td></tr>
                             {% endfor %}
                         </tbody>
+                        {% if order_items|length > 0 %}
+                            <tfoot class="table-light">
+                                <tr>
+                                    <td colspan="5" class="text-end fw-bold">{{ 'Items subtotal (incl. tax)'|trans }}</td>
+                                    <td class="text-end fw-bold" data-testid="order-items-subtotal">{{ totals.subtotal_ttc|number_format(2, '.', ' ') }} {{ currency.symbol }}</td>
+                                </tr>
+                            </tfoot>
+                        {% endif %}
                     </table>
                 </div>
 
@@ -88,6 +114,61 @@
                             <input type="text" name="delivery_ref" value="{{ order.deliveryRef }}" class="form-control" data-testid="order-delivery-ref-input">
                             <button type="submit" class="btn btn-primary" data-testid="order-delivery-ref-submit">{{ 'Update'|trans }}</button>
                         </form>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <span>{{ 'Invoice address'|trans }}</span>
+                                {% if order_addresses.invoice %}
+                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                            data-bs-toggle="modal" data-bs-target="#order-address-modal"
+                                            data-address-payload="{{ order_addresses.invoice|json_encode|e('html_attr') }}"
+                                            data-address-kind="invoice"
+                                            data-testid="order-invoice-address-edit">
+                                        <i class="bi bi-pencil-square" aria-hidden="true"></i> {{ 'Edit'|trans }}
+                                    </button>
+                                {% endif %}
+                            </div>
+                            <div class="card-body" data-testid="order-invoice-address">
+                                {% if order_addresses.invoice %}
+                                    <p class="mb-1">{{ order_addresses.invoice.firstname }} {{ order_addresses.invoice.lastname }}</p>
+                                    {% if order_addresses.invoice.company %}<p class="mb-1">{{ order_addresses.invoice.company }}</p>{% endif %}
+                                    <p class="mb-1">{{ order_addresses.invoice.address1 }}<br>{{ order_addresses.invoice.zipcode }} {{ order_addresses.invoice.city }}</p>
+                                    {% if order_addresses.invoice.phone %}<p class="mb-0 text-muted">{{ order_addresses.invoice.phone }}</p>{% endif %}
+                                {% else %}
+                                    <p class="text-muted mb-0">{{ 'No invoice address.'|trans }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <span>{{ 'Delivery address'|trans }}</span>
+                                {% if order_addresses.delivery %}
+                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                            data-bs-toggle="modal" data-bs-target="#order-address-modal"
+                                            data-address-payload="{{ order_addresses.delivery|json_encode|e('html_attr') }}"
+                                            data-address-kind="delivery"
+                                            data-testid="order-delivery-address-edit">
+                                        <i class="bi bi-pencil-square" aria-hidden="true"></i> {{ 'Edit'|trans }}
+                                    </button>
+                                {% endif %}
+                            </div>
+                            <div class="card-body" data-testid="order-delivery-address">
+                                {% if order_addresses.delivery %}
+                                    <p class="mb-1">{{ order_addresses.delivery.firstname }} {{ order_addresses.delivery.lastname }}</p>
+                                    {% if order_addresses.delivery.company %}<p class="mb-1">{{ order_addresses.delivery.company }}</p>{% endif %}
+                                    <p class="mb-1">{{ order_addresses.delivery.address1 }}<br>{{ order_addresses.delivery.zipcode }} {{ order_addresses.delivery.city }}</p>
+                                    {% if order_addresses.delivery.phone %}<p class="mb-0 text-muted">{{ order_addresses.delivery.phone }}</p>{% endif %}
+                                {% else %}
+                                    <p class="text-muted mb-0">{{ 'No delivery address.'|trans }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -169,54 +250,6 @@
                     </div>
                 </div>
 
-                <div class="card mb-3">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <span>{{ 'Invoice address'|trans }}</span>
-                        {% if order_addresses.invoice %}
-                            <button type="button" class="btn btn-sm btn-outline-secondary"
-                                    data-bs-toggle="modal" data-bs-target="#order-address-modal"
-                                    data-address-payload="{{ order_addresses.invoice|json_encode|e('html_attr') }}"
-                                    data-address-kind="invoice"
-                                    data-testid="order-invoice-address-edit">
-                                <i class="bi bi-pencil-square" aria-hidden="true"></i> {{ 'Edit'|trans }}
-                            </button>
-                        {% endif %}
-                    </div>
-                    <div class="card-body" data-testid="order-invoice-address">
-                        {% if order_addresses.invoice %}
-                            <p>{{ order_addresses.invoice.firstname }} {{ order_addresses.invoice.lastname }}</p>
-                            {% if order_addresses.invoice.company %}<p>{{ order_addresses.invoice.company }}</p>{% endif %}
-                            <p>{{ order_addresses.invoice.address1 }}<br>{{ order_addresses.invoice.zipcode }} {{ order_addresses.invoice.city }}</p>
-                            <p>{{ order_addresses.invoice.phone }}</p>
-                        {% else %}
-                            <p class="text-muted">{{ 'No invoice address.'|trans }}</p>
-                        {% endif %}
-                    </div>
-                </div>
-                <div class="card mb-3">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <span>{{ 'Delivery address'|trans }}</span>
-                        {% if order_addresses.delivery %}
-                            <button type="button" class="btn btn-sm btn-outline-secondary"
-                                    data-bs-toggle="modal" data-bs-target="#order-address-modal"
-                                    data-address-payload="{{ order_addresses.delivery|json_encode|e('html_attr') }}"
-                                    data-address-kind="delivery"
-                                    data-testid="order-delivery-address-edit">
-                                <i class="bi bi-pencil-square" aria-hidden="true"></i> {{ 'Edit'|trans }}
-                            </button>
-                        {% endif %}
-                    </div>
-                    <div class="card-body" data-testid="order-delivery-address">
-                        {% if order_addresses.delivery %}
-                            <p>{{ order_addresses.delivery.firstname }} {{ order_addresses.delivery.lastname }}</p>
-                            {% if order_addresses.delivery.company %}<p>{{ order_addresses.delivery.company }}</p>{% endif %}
-                            <p>{{ order_addresses.delivery.address1 }}<br>{{ order_addresses.delivery.zipcode }} {{ order_addresses.delivery.city }}</p>
-                            <p>{{ order_addresses.delivery.phone }}</p>
-                        {% else %}
-                            <p class="text-muted">{{ 'No delivery address.'|trans }}</p>
-                        {% endif %}
-                    </div>
-                </div>
             </div>
         </div>
     </div>
