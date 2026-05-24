@@ -89,14 +89,12 @@ final class TaxRuleController
         $createTaxForm = $this->formFactory->createNamed(self::CREATE_TAX_FORM_NAME, TaxType::class, [
             'locale' => $locale,
         ], [
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         $createTaxRuleForm = $this->formFactory->createNamed(self::CREATE_TAX_RULE_FORM_NAME, TaxRuleType::class, [
             'locale' => $locale,
         ], [
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         return new Response($this->twig->render(self::LIST_TEMPLATE, [
             'tax_rows' => $this->taxRows($locale),
@@ -150,8 +148,7 @@ final class TaxRuleController
     public function add(): Response
     {
         $form = $this->formFactory->createNamed(self::CREATE_TAX_RULE_FORM_NAME, TaxRuleType::class, null, [
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         return $this->action->submit(
             resource: self::RESOURCE,
@@ -305,8 +302,7 @@ final class TaxRuleController
     {
         return $this->formFactory->createNamed(self::UPDATE_TAX_RULE_FORM_NAME, TaxRuleType::class, $data, [
             'include_id' => true,
-            'csrf_protection' => false,
-        ]);
+            ]);
     }
 
     private function buildCreationEvent(FormInterface $validated): TaxRuleEvent

@@ -73,7 +73,7 @@ final class CustomerTitleController
 
         $createForm = $this->formFactory->createNamed('thelia_customer_title_create', CustomerTitleType::class, [
             'locale' => $locale,
-        ], ['csrf_protection' => false]);
+        ], []);
 
         return new Response($this->twig->render(self::LIST_TEMPLATE, [
             'rows' => $rows,
@@ -86,7 +86,7 @@ final class CustomerTitleController
     {
         $form = $this->formFactory->createNamed('thelia_customer_title_create', CustomerTitleType::class, [
             'locale' => $this->defaultLocale(),
-        ], ['csrf_protection' => false]);
+        ], []);
 
         return $this->action->submit(
             resource: self::RESOURCE,
@@ -126,8 +126,7 @@ final class CustomerTitleController
     {
         $form = $this->formFactory->createNamed('thelia_customer_title_update', CustomerTitleType::class, null, [
             'include_id' => true,
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         $titleId = (int) $request->request->get('customer_title_id', 0);
 
@@ -224,8 +223,7 @@ final class CustomerTitleController
             'default' => (bool) $title->getByDefault(),
         ], [
             'include_id' => true,
-            'csrf_protection' => false,
-        ]);
+            ]);
     }
 
     /** @return array<string, mixed> */

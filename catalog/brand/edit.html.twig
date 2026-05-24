@@ -14,7 +14,9 @@
 {% endblock %}
 
 {% block content %}
-    {{ safe_hook('brand.top', { brand: brand.id }) }}
+    {{ safe_hook('brand-edit.top', { brand_id: brand.id }) }}
+
+    {% set extra_tabs = hook_block('brand.tab', { brand: brand.id, id: brand.id }) %}
 
     <div class="container-fluid" data-testid="brand-edit-page">
         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -33,6 +35,18 @@
             <li class="nav-item" role="presentation">
                 <button class="nav-link {% if current_tab == 'seo' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-seo" type="button" role="tab" data-testid="brand-tab-seo">
                     {{ 'SEO'|trans }}
+                </button>
+            </li>
+            {% for block in extra_tabs %}
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#{{ block.id }}"
+                            {% if block.href is defined and block.href %}data-href="{{ block.href }}"{% endif %}
+                            type="button" data-testid="brand-tab-{{ block.id }}">{{ block.title }}</button>
+                </li>
+            {% endfor %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link {% if current_tab == 'modules' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-modules" type="button" role="tab" data-testid="brand-tab-modules">
+                    {{ 'Modules'|trans }}
                 </button>
             </li>
         </ul>
@@ -109,8 +123,22 @@
                     </button>
                 {{ form_end(seo_form) }}
             </div>
+
+            {% for block in extra_tabs %}
+                <div class="tab-pane fade" id="{{ block.id }}" role="tabpanel">
+                    {% if block.href is defined and block.href %}
+                        <div class="text-center"><span class="loading">{{ 'Please wait, loading'|trans }}</span></div>
+                    {% else %}
+                        {{ block.content|raw }}
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            <div class="tab-pane fade {% if current_tab == 'modules' %}show active{% endif %}" id="tab-modules" role="tabpanel">
+                {{ safe_hook('brand.tab-content', { brand: brand.id, location: 'brand-edit', view: 'brand' }) }}
+            </div>
         </div>
     </div>
 
-    {{ safe_hook('brand.bottom', { brand: brand.id }) }}
+    {{ safe_hook('brand-edit.bottom', { brand_id: brand.id }) }}
 {% endblock %}

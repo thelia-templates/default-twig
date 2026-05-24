@@ -78,8 +78,7 @@ final class BrandController
         $form = $this->formFactory->createNamed('thelia_brand_creation', BrandType::class, [
             'locale' => $this->defaultLocale(),
         ], [
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         return $this->action->submit(
             resource: self::RESOURCE,
@@ -126,8 +125,7 @@ final class BrandController
         $form = $this->formFactory->createNamed('thelia_brand_modification', BrandType::class, null, [
             'include_id' => true,
             'include_description' => true,
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         return $this->action->submit(
             resource: self::RESOURCE,
@@ -147,8 +145,7 @@ final class BrandController
     public function processSeo(Request $request): Response
     {
         $form = $this->formFactory->createNamed('thelia_brand_seo_modification', BrandSeoType::class, null, [
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         $brandId = (int) $request->request->get('brand_id', $request->request->get('id', 0));
         if ($brandId === 0 && $request->request->has('thelia_brand_seo_modification')) {
@@ -237,8 +234,7 @@ final class BrandController
         ], [
             'include_id' => true,
             'include_description' => true,
-            'csrf_protection' => false,
-        ]);
+            ]);
     }
 
     private function buildSeoForm(Brand $brand, string $locale): FormInterface
@@ -251,8 +247,7 @@ final class BrandController
             'meta_description' => $brand->getMetaDescription(),
             'meta_keywords' => $brand->getMetaKeywords(),
         ], [
-            'csrf_protection' => false,
-        ]);
+            ]);
     }
 
     private function createEvent(FormInterface $validated): BrandCreateEvent
@@ -348,8 +343,7 @@ final class BrandController
         $createForm = $this->formFactory->createNamed('thelia_brand_creation', BrandType::class, [
             'locale' => $locale,
         ], [
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         return [
             'rows' => $rows,

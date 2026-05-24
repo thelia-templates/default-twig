@@ -15,7 +15,7 @@
 {% endblock %}
 
 {% block content %}
-    {{ safe_hook('feature.top', { feature: feature.id }) }}
+    {{ safe_hook('feature-edit.top', { feature_id: feature.id }) }}
 
     <div class="container-fluid" data-testid="feature-edit-page">
         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -109,10 +109,10 @@
                 <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save'|trans }}
             </button>
         </div>
-        {{ form_end(form, { render_rest: false }) }}
+        {{ form_end(form) }}
     </div>
 
-    {{ safe_hook('feature.bottom', { feature: feature.id }) }}
+    {{ safe_hook('feature-edit.bottom', { feature_id: feature.id }) }}
 
     <div class="modal fade" id="feature-av-create-modal" tabindex="-1" aria-labelledby="feature-av-create-modal-title" aria-hidden="true">
         <div class="modal-dialog">

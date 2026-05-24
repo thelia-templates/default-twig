@@ -90,7 +90,7 @@ final class CountryController
     {
         $form = $this->formFactory->createNamed('thelia_country_create', CountryType::class, [
             'locale' => $this->defaultLocale(),
-        ], ['csrf_protection' => false]);
+        ], []);
 
         return $this->action->submit(
             resource: self::RESOURCE,
@@ -130,8 +130,7 @@ final class CountryController
     {
         $form = $this->formFactory->createNamed('thelia_country_update', CountryType::class, null, [
             'include_id' => true,
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         $countryId = (int) $request->request->get('country_id', 0);
 
@@ -293,8 +292,7 @@ final class CountryController
             'has_states' => (bool) $country->getHasStates(),
         ], [
             'include_id' => true,
-            'csrf_protection' => false,
-        ]);
+            ]);
     }
 
     /** @return array<string, mixed> */

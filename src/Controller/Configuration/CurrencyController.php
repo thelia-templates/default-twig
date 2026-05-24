@@ -78,8 +78,7 @@ final class CurrencyController
     public function create(): Response
     {
         $form = $this->formFactory->createNamed('thelia_currency_create', CurrencyType::class, null, [
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         return $this->action->submit(
             resource: self::RESOURCE,
@@ -110,8 +109,7 @@ final class CurrencyController
     {
         $form = $this->formFactory->createNamed('thelia_currency_update', CurrencyType::class, null, [
             'include_id' => true,
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         return $this->action->submit(
             resource: self::RESOURCE,
@@ -304,8 +302,7 @@ final class CurrencyController
         }
 
         $createForm = $this->formFactory->createNamed('thelia_currency_create', CurrencyType::class, null, [
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         return [
             'rows' => $rows,
@@ -377,8 +374,7 @@ final class CurrencyController
             'rate' => $currency->getRate(),
         ], [
             'include_id' => true,
-            'csrf_protection' => false,
-        ]);
+            ]);
     }
 
     /**

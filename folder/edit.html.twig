@@ -14,7 +14,9 @@
 {% endblock %}
 
 {% block content %}
-    {{ safe_hook('folder.top', { folder: folder.id }) }}
+    {{ safe_hook('folder-edit.top', { folder_id: folder.id }) }}
+
+    {% set extra_tabs = hook_block('folder.tab', { folder: folder.id, id: folder.id }) %}
 
     <div class="container-fluid" data-testid="folder-edit-page">
         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -33,6 +35,18 @@
             <li class="nav-item" role="presentation">
                 <button class="nav-link {% if current_tab == 'children' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-children" type="button" data-testid="folder-tab-children">
                     {{ 'Subfolders'|trans }} <span class="badge bg-secondary">{{ children|length }}</span>
+                </button>
+            </li>
+            {% for block in extra_tabs %}
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#{{ block.id }}"
+                            {% if block.href is defined and block.href %}data-href="{{ block.href }}"{% endif %}
+                            type="button" data-testid="folder-tab-{{ block.id }}">{{ block.title }}</button>
+                </li>
+            {% endfor %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link {% if current_tab == 'modules' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-modules" type="button" data-testid="folder-tab-modules">
+                    {{ 'Modules'|trans }}
                 </button>
             </li>
         </ul>
@@ -113,8 +127,21 @@
                 </table>
             </div>
 
+            {% for block in extra_tabs %}
+                <div class="tab-pane fade" id="{{ block.id }}" role="tabpanel">
+                    {% if block.href is defined and block.href %}
+                        <div class="text-center"><span class="loading">{{ 'Please wait, loading'|trans }}</span></div>
+                    {% else %}
+                        {{ block.content|raw }}
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            <div class="tab-pane fade {% if current_tab == 'modules' %}show active{% endif %}" id="tab-modules" role="tabpanel">
+                {{ safe_hook('folder.tab-content', { folder: folder.id, folder_id: folder.id, location: 'folder-edit', view: 'folder' }) }}
+            </div>
         </div>
     </div>
 
-    {{ safe_hook('folder.bottom', { folder: folder.id }) }}
+    {{ safe_hook('folder-edit.bottom', { folder_id: folder.id }) }}
 {% endblock %}

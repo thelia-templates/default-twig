@@ -74,7 +74,7 @@ final class MessageController
 
         $createForm = $this->formFactory->createNamed('thelia_message_create', MessageType::class, [
             'locale' => $locale,
-        ], ['csrf_protection' => false]);
+        ], []);
 
         return new Response($this->twig->render(self::LIST_TEMPLATE, [
             'rows' => $rows,
@@ -87,7 +87,7 @@ final class MessageController
     {
         $form = $this->formFactory->createNamed('thelia_message_create', MessageType::class, [
             'locale' => $this->defaultLocale(),
-        ], ['csrf_protection' => false]);
+        ], []);
 
         return $this->action->submit(
             resource: self::RESOURCE,
@@ -132,8 +132,7 @@ final class MessageController
         $form = $this->formFactory->createNamed('thelia_message_update', MessageType::class, null, [
             'include_id' => true,
             'include_body' => true,
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         $messageId = (int) $request->request->get('message_id', 0);
 
@@ -205,8 +204,7 @@ final class MessageController
         ], [
             'include_id' => true,
             'include_body' => true,
-            'csrf_protection' => false,
-        ]);
+            ]);
     }
 
     /** @return array<string, mixed> */

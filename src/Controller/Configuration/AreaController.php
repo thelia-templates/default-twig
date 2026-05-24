@@ -76,7 +76,7 @@ final class AreaController
             $rows[] = $this->areaToRow($area, $locale);
         }
 
-        $createForm = $this->formFactory->createNamed('thelia_area_create', AreaType::class, null, ['csrf_protection' => false]);
+        $createForm = $this->formFactory->createNamed('thelia_area_create', AreaType::class, null, []);
 
         return new Response($this->twig->render(self::LIST_TEMPLATE, [
             'rows' => $rows,
@@ -87,7 +87,7 @@ final class AreaController
     #[Route('/create', name: 'create', methods: ['POST'])]
     public function create(): Response
     {
-        $form = $this->formFactory->createNamed('thelia_area_create', AreaType::class, null, ['csrf_protection' => false]);
+        $form = $this->formFactory->createNamed('thelia_area_create', AreaType::class, null, []);
 
         return $this->action->submit(
             resource: self::RESOURCE,
@@ -122,7 +122,7 @@ final class AreaController
             'thelia_area_modification',
             AreaType::class,
             ['area_id' => $area->getId(), 'name' => $area->getName()],
-            ['include_id' => true, 'csrf_protection' => false],
+            ['include_id' => true],
         );
 
         return new Response($this->twig->render(self::EDIT_TEMPLATE, [
@@ -140,8 +140,7 @@ final class AreaController
     {
         $form = $this->formFactory->createNamed('thelia_area_modification', AreaType::class, null, [
             'include_id' => true,
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         return $this->action->submit(
             resource: self::RESOURCE,

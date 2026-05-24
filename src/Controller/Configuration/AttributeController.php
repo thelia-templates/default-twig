@@ -82,8 +82,7 @@ final class AttributeController
             'locale' => $this->defaultLocale(),
         ], [
             'include_creation_extras' => true,
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         return $this->action->submit(
             resource: self::RESOURCE,
@@ -130,8 +129,7 @@ final class AttributeController
         $form = $this->formFactory->createNamed('thelia_attribute_modification', AttributeType::class, null, [
             'include_id' => true,
             'include_description' => true,
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         $attributeId = (int) $request->request->get('attribute_id', 0);
 
@@ -308,8 +306,7 @@ final class AttributeController
             'locale' => $locale,
         ], [
             'include_creation_extras' => true,
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         return [
             'rows' => $rows,
@@ -367,8 +364,7 @@ final class AttributeController
         ], [
             'include_id' => true,
             'include_description' => true,
-            'csrf_protection' => false,
-        ]);
+            ]);
     }
 
     private function buildAvCreateForm(int $attributeId, string $locale): FormInterface
@@ -377,8 +373,7 @@ final class AttributeController
             'attribute_id' => $attributeId,
             'locale' => $locale,
         ], [
-            'csrf_protection' => false,
-        ]);
+            ]);
     }
 
     /**

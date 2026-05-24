@@ -95,7 +95,7 @@ final class StateController
     {
         $form = $this->formFactory->createNamed('thelia_state_create', StateType::class, [
             'locale' => $this->defaultLocale(),
-        ], ['csrf_protection' => false]);
+        ], []);
 
         return $this->action->submit(
             resource: self::RESOURCE,
@@ -136,8 +136,7 @@ final class StateController
     {
         $form = $this->formFactory->createNamed('thelia_state_update', StateType::class, null, [
             'include_id' => true,
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         $stateId = (int) $request->request->get('state_id', 0);
 
@@ -224,8 +223,7 @@ final class StateController
             'visible' => (bool) $state->getVisible(),
         ], [
             'include_id' => true,
-            'csrf_protection' => false,
-        ]);
+            ]);
     }
 
     /** @return array<string, mixed> */

@@ -115,8 +115,7 @@ final class ConfigStoreController
     {
         return $this->formFactory->createNamed(self::FORM_NAME, ConfigStoreType::class, $this->readStoreData(), [
             'country_choices' => $this->countryChoices($locale),
-            'csrf_protection' => false,
-        ]);
+            ]);
     }
 
     /**

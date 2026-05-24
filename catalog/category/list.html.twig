@@ -20,7 +20,7 @@
 {% endblock %}
 
 {% block content %}
-    {{ safe_hook('catalog.top') }}
+    {{ safe_hook('categories.top', { location: 'categories_top' }) }}
 
     <div class="container-fluid" data-testid="categories-page">
         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -69,7 +69,7 @@
         {% endfor %}
     </div>
 
-    {{ safe_hook('catalog.bottom') }}
+    {{ safe_hook('categories.bottom', { location: 'categories_bottom' }) }}
 
     <div class="modal fade" id="category-create-modal" tabindex="-1" aria-labelledby="category-create-modal-title" aria-hidden="true">
         <div class="modal-dialog">

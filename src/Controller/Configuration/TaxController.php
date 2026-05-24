@@ -90,8 +90,7 @@ final class TaxController
         }
 
         $form = $this->formFactory->createNamed(self::CREATE_FORM_NAME, TaxType::class, null, [
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         try {
             $validated = $this->validator->validate($form);
@@ -192,8 +191,7 @@ final class TaxController
     {
         return $this->formFactory->createNamed(self::UPDATE_FORM_NAME, TaxType::class, $data, [
             'include_id' => true,
-            'csrf_protection' => false,
-        ]);
+            ]);
     }
 
     private function renderEdit(FormInterface $form, Tax $tax, int $status = Response::HTTP_OK): Response

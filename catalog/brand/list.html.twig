@@ -55,5 +55,5 @@
 {% endblock %}
 
 {% block scripts_extra %}
-    {{ safe_hook('brands.js') }}
+    {{ safe_hook('brand.js', { location: 'brand_js' }) }}
 {% endblock %}

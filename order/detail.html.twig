@@ -16,6 +16,8 @@
 {% block content %}
     {{ safe_hook('order-edit.top', { order: order.id }) }}
 
+    {% set extra_tabs = hook_block('order.tab', { order: order.id, id: order.id }) %}
+
     <div class="container-fluid" data-testid="order-detail-page">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h1 class="h3 mb-0">{{ 'Order'|trans }} <small class="text-muted">#{{ order.ref }}</small></h1>
@@ -142,6 +144,39 @@
             </div>
         </div>
     </div>
+
+    {% if extra_tabs|length > 0 or has_hook('order.tab-content') %}
+        <div class="container-fluid mt-4" data-testid="order-detail-modules">
+            <ul class="nav nav-tabs mb-3" role="tablist">
+                {% for block in extra_tabs %}
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link {% if loop.first %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#{{ block.id }}"
+                                {% if block.href is defined and block.href %}data-href="{{ block.href }}"{% endif %}
+                                type="button" data-testid="order-tab-{{ block.id }}">{{ block.title }}</button>
+                    </li>
+                {% endfor %}
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link {% if extra_tabs|length == 0 %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-modules" type="button" data-testid="order-tab-modules">
+                        {{ 'Modules'|trans }}
+                    </button>
+                </li>
+            </ul>
+            <div class="tab-content">
+                {% for block in extra_tabs %}
+                    <div class="tab-pane fade {% if loop.first %}show active{% endif %}" id="{{ block.id }}" role="tabpanel">
+                        {% if block.href is defined and block.href %}
+                            <div class="text-center"><span class="loading">{{ 'Please wait, loading'|trans }}</span></div>
+                        {% else %}
+                            {{ block.content|raw }}
+                        {% endif %}
+                    </div>
+                {% endfor %}
+                <div class="tab-pane fade {% if extra_tabs|length == 0 %}show active{% endif %}" id="tab-modules" role="tabpanel">
+                    {{ safe_hook('order.tab-content', { order: order.id, order_id: order.id, location: 'order-edit', view: 'order' }) }}
+                </div>
+            </div>
+        </div>
+    {% endif %}
 
     {% if order_addresses.invoice or order_addresses.delivery %}
         {% include '@BackOfficeDefaultTwig/order/_address_modal.html.twig' with {
