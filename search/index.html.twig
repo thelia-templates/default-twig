@@ -48,10 +48,52 @@
 
                 <div class="col-md-6">
                     <div class="card">
+                        <div class="card-header">{{ 'Folders'|trans }} <span class="badge bg-secondary ms-1">{{ folders|length }}</span></div>
+                        <ul class="list-group list-group-flush">
+                            {% for folder in folders %}
+                                <li class="list-group-item"><a class="text-decoration-none" href="{{ path('admin.folders.update', { folder_id: folder.id }) }}">{{ folder.title }}</a></li>
+                            {% else %}
+                                <li class="list-group-item text-muted small">{{ 'No folder match.'|trans }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">{{ 'Contents'|trans }} <span class="badge bg-secondary ms-1">{{ contents|length }}</span></div>
+                        <ul class="list-group list-group-flush">
+                            {% for content in contents %}
+                                <li class="list-group-item"><a class="text-decoration-none" href="{{ path('admin.content.update', { content_id: content.id }) }}">{{ content.title }}</a></li>
+                            {% else %}
+                                <li class="list-group-item text-muted small">{{ 'No content match.'|trans }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">{{ 'Brands'|trans }} <span class="badge bg-secondary ms-1">{{ brands|length }}</span></div>
+                        <ul class="list-group list-group-flush">
+                            {% for brand in brands %}
+                                <li class="list-group-item"><a class="text-decoration-none" href="{{ path('admin.brand.update', { brand_id: brand.id }) }}">{{ brand.title }}</a></li>
+                            {% else %}
+                                <li class="list-group-item text-muted small">{{ 'No brand match.'|trans }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card">
                         <div class="card-header">{{ 'Customers'|trans }} <span class="badge bg-secondary ms-1">{{ customers|length }}</span></div>
                         <ul class="list-group list-group-flush">
                             {% for customer in customers %}
-                                <li class="list-group-item"><a class="text-decoration-none" href="{{ path('admin.customer.update.view', { customer_id: customer.id }) }}">{{ customer.firstname }} {{ customer.lastname }}</a> <span class="text-muted small">{{ customer.email }}</span></li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span><a class="text-decoration-none" href="{{ path('admin.customer.update.view', { customer_id: customer.id }) }}">{{ customer.firstname }} {{ customer.lastname }}</a>{% if customer.ref %} <span class="text-muted small">({{ customer.ref }})</span>{% endif %}</span>
+                                    {% if customer.email %}<a href="mailto:{{ customer.email }}" class="text-muted small text-decoration-none">{{ customer.email }}</a>{% endif %}
+                                </li>
                             {% else %}
                                 <li class="list-group-item text-muted small">{{ 'No customer match.'|trans }}</li>
                             {% endfor %}

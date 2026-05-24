@@ -15,8 +15,11 @@ declare(strict_types=1);
 namespace BackOfficeDefaultTwigBundle\Service\Search;
 
 use BackOfficeDefaultTwigBundle\Repository\SearchRepository;
+use Thelia\Model\Brand;
 use Thelia\Model\Category;
+use Thelia\Model\Content;
 use Thelia\Model\Customer;
+use Thelia\Model\Folder;
 use Thelia\Model\Order;
 use Thelia\Model\Product;
 
@@ -28,7 +31,7 @@ final readonly class SearchResultsPresenter
     }
 
     /**
-     * @return array{term: string, products: list<array<string, mixed>>, categories: list<array<string, mixed>>, customers: list<array<string, mixed>>, orders: list<array<string, mixed>>}
+     * @return array{term: string, products: list<array<string, mixed>>, categories: list<array<string, mixed>>, folders: list<array<string, mixed>>, contents: list<array<string, mixed>>, brands: list<array<string, mixed>>, customers: list<array<string, mixed>>, orders: list<array<string, mixed>>}
      */
     public function buildResults(string $term, string $locale): array
     {
@@ -36,6 +39,9 @@ final readonly class SearchResultsPresenter
             'term' => $term,
             'products' => [],
             'categories' => [],
+            'folders' => [],
+            'contents' => [],
+            'brands' => [],
             'customers' => [],
             'orders' => [],
         ];
@@ -60,6 +66,33 @@ final readonly class SearchResultsPresenter
             $results['categories'][] = [
                 'id' => (int) $category->getId(),
                 'title' => (string) $category->getTitle(),
+            ];
+        }
+
+        foreach ($this->search->findFolders($term) as $folder) {
+            \assert($folder instanceof Folder);
+            $folder->setLocale($locale);
+            $results['folders'][] = [
+                'id' => (int) $folder->getId(),
+                'title' => (string) $folder->getTitle(),
+            ];
+        }
+
+        foreach ($this->search->findContents($term) as $content) {
+            \assert($content instanceof Content);
+            $content->setLocale($locale);
+            $results['contents'][] = [
+                'id' => (int) $content->getId(),
+                'title' => (string) $content->getTitle(),
+            ];
+        }
+
+        foreach ($this->search->findBrands($term) as $brand) {
+            \assert($brand instanceof Brand);
+            $brand->setLocale($locale);
+            $results['brands'][] = [
+                'id' => (int) $brand->getId(),
+                'title' => (string) $brand->getTitle(),
             ];
         }
 

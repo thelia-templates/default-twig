@@ -16,8 +16,11 @@ namespace BackOfficeDefaultTwigBundle\Repository;
 
 use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\Collection\ObjectCollection;
+use Thelia\Model\BrandQuery;
 use Thelia\Model\CategoryQuery;
+use Thelia\Model\ContentQuery;
 use Thelia\Model\CustomerQuery;
+use Thelia\Model\FolderQuery;
 use Thelia\Model\OrderQuery;
 use Thelia\Model\ProductQuery;
 
@@ -40,6 +43,39 @@ final readonly class SearchRepository
     {
         return CategoryQuery::create()
             ->useCategoryI18nQuery()
+                ->filterByTitle('%'.$term.'%', Criteria::LIKE)
+            ->endUse()
+            ->distinct()
+            ->limit(self::SEARCH_LIMIT)
+            ->find();
+    }
+
+    public function findFolders(string $term): ObjectCollection
+    {
+        return FolderQuery::create()
+            ->useFolderI18nQuery()
+                ->filterByTitle('%'.$term.'%', Criteria::LIKE)
+            ->endUse()
+            ->distinct()
+            ->limit(self::SEARCH_LIMIT)
+            ->find();
+    }
+
+    public function findContents(string $term): ObjectCollection
+    {
+        return ContentQuery::create()
+            ->useContentI18nQuery()
+                ->filterByTitle('%'.$term.'%', Criteria::LIKE)
+            ->endUse()
+            ->distinct()
+            ->limit(self::SEARCH_LIMIT)
+            ->find();
+    }
+
+    public function findBrands(string $term): ObjectCollection
+    {
+        return BrandQuery::create()
+            ->useBrandI18nQuery()
                 ->filterByTitle('%'.$term.'%', Criteria::LIKE)
             ->endUse()
             ->distinct()
