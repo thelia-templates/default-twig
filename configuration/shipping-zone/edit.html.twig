@@ -119,6 +119,6 @@
     </div>
 {% endblock %}
 
-{% block javascript_last_call %}
+{% block scripts_extra %}
     {{ safe_hook('shipping-zones.edit-js', { module_id: delivery_module_id, location: 'shipping-zones-edit-js' }) }}
 {% endblock %}

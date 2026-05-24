@@ -79,6 +79,6 @@
     {{ safe_hook('shipping-zones.bottom', { location: 'shipping_zones_bottom' }) }}
 {% endblock %}
 
-{% block javascript_last_call %}
+{% block scripts_extra %}
     {{ safe_hook('shipping-zones.js', { location: 'shipping-zones-js' }) }}
 {% endblock %}

@@ -105,6 +105,6 @@
     {{ safe_hook('shipping-configuration-edit.bottom', { area_id: area_id }) }}
 {% endblock %}
 
-{% block javascript_last_call %}
+{% block scripts_extra %}
     {{ safe_hook('shipping-configuration.edit-js', { area_id: area_id, location: 'shipping-configuration-edit-js' }) }}
 {% endblock %}
