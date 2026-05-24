@@ -53,6 +53,13 @@ $bo-side-nav-hover-bg: rgba(255, 255, 255, .07);
 }
 
 .bo-side-nav {
+    // Override Bootstrap offcanvas CSS variables so the responsive offcanvas-md
+    // wrapper keeps the same dark theme as the desktop sidebar.
+    --bs-offcanvas-bg: #{$bo-side-nav-bg};
+    --bs-offcanvas-color: #{$bo-side-nav-text};
+    --bs-offcanvas-width: #{$bo-side-nav-width};
+    --bs-offcanvas-border-width: 0;
+
     width: $bo-side-nav-width;
     background-color: $bo-side-nav-bg;
     color: $bo-side-nav-text;
