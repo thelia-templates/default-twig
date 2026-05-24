@@ -16,6 +16,7 @@ namespace BackOfficeDefaultTwigBundle\Form\Configuration;
 
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
@@ -63,9 +64,33 @@ final class MessageType extends AbstractType
                     'required' => false,
                     'label' => $this->translator->trans('Mail subject'),
                 ])
+                ->add('html_layout_file_name', ChoiceType::class, [
+                    'required' => false,
+                    'placeholder' => $this->translator->trans('Use default layout'),
+                    'choices' => $this->choices($options['layout_choices']),
+                    'label' => $this->translator->trans('HTML layout file'),
+                ])
+                ->add('html_template_file_name', ChoiceType::class, [
+                    'required' => false,
+                    'placeholder' => $this->translator->trans('Use HTML message defined below'),
+                    'choices' => $this->choices($options['html_template_choices']),
+                    'label' => $this->translator->trans('HTML template file'),
+                ])
                 ->add('html_message', TextareaType::class, [
                     'required' => false,
                     'label' => $this->translator->trans('HTML message body'),
+                ])
+                ->add('text_layout_file_name', ChoiceType::class, [
+                    'required' => false,
+                    'placeholder' => $this->translator->trans('Use default layout'),
+                    'choices' => $this->choices($options['layout_choices']),
+                    'label' => $this->translator->trans('Text layout file'),
+                ])
+                ->add('text_template_file_name', ChoiceType::class, [
+                    'required' => false,
+                    'placeholder' => $this->translator->trans('Use text message defined below'),
+                    'choices' => $this->choices($options['text_template_choices']),
+                    'label' => $this->translator->trans('Text template file'),
                 ])
                 ->add('text_message', TextareaType::class, [
                     'required' => false,
@@ -77,8 +102,33 @@ final class MessageType extends AbstractType
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver
-            ->setDefaults(['include_id' => false, 'include_body' => false, 'csrf_token_id' => 'admin.message'])
+            ->setDefaults([
+                'include_id' => false,
+                'include_body' => false,
+                'csrf_token_id' => 'admin.message',
+                'layout_choices' => [],
+                'html_template_choices' => [],
+                'text_template_choices' => [],
+            ])
             ->setAllowedTypes('include_id', 'bool')
-            ->setAllowedTypes('include_body', 'bool');
+            ->setAllowedTypes('include_body', 'bool')
+            ->setAllowedTypes('layout_choices', 'array')
+            ->setAllowedTypes('html_template_choices', 'array')
+            ->setAllowedTypes('text_template_choices', 'array');
+    }
+
+    /**
+     * @param list<string> $files
+     *
+     * @return array<string, string>
+     */
+    private function choices(array $files): array
+    {
+        $choices = [];
+        foreach ($files as $name) {
+            $choices[$name] = $name;
+        }
+
+        return $choices;
     }
 }

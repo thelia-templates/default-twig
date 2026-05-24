@@ -54,14 +54,35 @@
                                 <div class="col-md-4">{{ form_row(form.message_name) }}</div>
                                 <div class="col-md-8">{{ form_row(form.title) }}</div>
                                 <div class="col-12">{{ form_row(form.subject) }}</div>
+
                                 <div class="col-12">
-                                    <label class="form-label small text-uppercase text-muted">{{ 'HTML version of this message'|trans }}</label>
+                                    <h2 class="h6 mt-2" data-testid="message-html-section-title">{{ 'HTML version of this message'|trans }}</h2>
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form_row(form.html_layout_file_name, { attr: { 'data-testid': 'message-html-layout' } }) }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form_row(form.html_template_file_name, { attr: { 'data-testid': 'message-html-template' } }) }}
+                                    <p class="form-text">{{ 'When a template file is selected the body below is ignored.'|trans }}</p>
+                                </div>
+                                <div class="col-12">
                                     {{ form_widget(form.html_message, { attr: { rows: 12, 'data-testid': 'message-html', class: 'form-control text-monospace' } }) }}
                                 </div>
+
                                 <div class="col-12">
-                                    <label class="form-label small text-uppercase text-muted">{{ 'Text version of this message'|trans }}</label>
+                                    <h2 class="h6 mt-2" data-testid="message-text-section-title">{{ 'Text version of this message'|trans }}</h2>
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form_row(form.text_layout_file_name, { attr: { 'data-testid': 'message-text-layout' } }) }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form_row(form.text_template_file_name, { attr: { 'data-testid': 'message-text-template' } }) }}
+                                    <p class="form-text">{{ 'When a template file is selected the body below is ignored.'|trans }}</p>
+                                </div>
+                                <div class="col-12">
                                     {{ form_widget(form.text_message, { attr: { rows: 10, 'data-testid': 'message-text', class: 'form-control text-monospace' } }) }}
                                 </div>
+
                                 <div class="col-12">
                                     <div class="form-check">
                                         {{ form_widget(form.secured, { attr: { class: 'form-check-input' } }) }}

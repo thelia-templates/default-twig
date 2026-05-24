@@ -17,6 +17,7 @@ namespace BackOfficeDefaultTwigBundle\Controller\Configuration;
 use BackOfficeDefaultTwigBundle\Form\Configuration\MessageType;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
+use BackOfficeDefaultTwigBundle\Service\Configuration\EmailTemplateFileLister;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
@@ -54,6 +55,7 @@ final class MessageController
         private readonly FormFactoryInterface $formFactory,
         private readonly UrlGeneratorInterface $urls,
         private readonly TranslatorInterface $translator,
+        private readonly EmailTemplateFileLister $fileLister,
     ) {
     }
 
@@ -129,10 +131,12 @@ final class MessageController
     #[Route('/save', name: 'save', methods: ['POST'])]
     public function processUpdate(Request $request): Response
     {
-        $form = $this->formFactory->createNamed('thelia_message_update', MessageType::class, null, [
-            'include_id' => true,
-            'include_body' => true,
-            ]);
+        $form = $this->formFactory->createNamed(
+            'thelia_message_update',
+            MessageType::class,
+            null,
+            ['include_id' => true, 'include_body' => true] + $this->fileChoiceOptions(),
+        );
 
         $messageId = (int) $request->request->get('message_id', 0);
 
@@ -185,26 +189,50 @@ final class MessageController
             ->setSecured((bool) ($data['secured'] ?? false))
             ->setSubject((string) ($data['subject'] ?? ''))
             ->setHtmlMessage((string) ($data['html_message'] ?? ''))
-            ->setTextMessage((string) ($data['text_message'] ?? ''));
+            ->setHtmlLayoutFileName((string) ($data['html_layout_file_name'] ?? ''))
+            ->setHtmlTemplateFileName((string) ($data['html_template_file_name'] ?? ''))
+            ->setTextMessage((string) ($data['text_message'] ?? ''))
+            ->setTextLayoutFileName((string) ($data['text_layout_file_name'] ?? ''))
+            ->setTextTemplateFileName((string) ($data['text_template_file_name'] ?? ''));
 
         return $event;
     }
 
     private function buildUpdateForm(Message $message, string $locale): FormInterface
     {
-        return $this->formFactory->createNamed('thelia_message_update', MessageType::class, [
-            'id' => $message->getId(),
-            'locale' => $locale,
-            'message_name' => $message->getName(),
-            'title' => $message->getTitle(),
-            'secured' => (bool) $message->getSecured(),
-            'subject' => $message->getSubject(),
-            'html_message' => $message->getHtmlMessage(),
-            'text_message' => $message->getTextMessage(),
-        ], [
-            'include_id' => true,
-            'include_body' => true,
-            ]);
+        return $this->formFactory->createNamed(
+            'thelia_message_update',
+            MessageType::class,
+            [
+                'id' => $message->getId(),
+                'locale' => $locale,
+                'message_name' => $message->getName(),
+                'title' => $message->getTitle(),
+                'secured' => (bool) $message->getSecured(),
+                'subject' => $message->getSubject(),
+                'html_message' => $message->getHtmlMessage(),
+                'html_layout_file_name' => $message->getHtmlLayoutFileName(),
+                'html_template_file_name' => $message->getHtmlTemplateFileName(),
+                'text_message' => $message->getTextMessage(),
+                'text_layout_file_name' => $message->getTextLayoutFileName(),
+                'text_template_file_name' => $message->getTextTemplateFileName(),
+            ],
+            ['include_id' => true, 'include_body' => true] + $this->fileChoiceOptions(),
+        );
+    }
+
+    /**
+     * @return array{layout_choices: list<string>, html_template_choices: list<string>, text_template_choices: list<string>}
+     */
+    private function fileChoiceOptions(): array
+    {
+        $files = $this->fileLister->listForActiveTheme();
+
+        return [
+            'layout_choices' => $files['layouts'],
+            'html_template_choices' => $files['html_templates'],
+            'text_template_choices' => $files['text_templates'],
+        ];
     }
 
     /** @return array<string, mixed> */
