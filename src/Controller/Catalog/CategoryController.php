@@ -18,7 +18,7 @@ use BackOfficeDefaultTwigBundle\Form\Catalog\CategorySeoType;
 use BackOfficeDefaultTwigBundle\Form\Catalog\CategoryType;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
-use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
+use BackOfficeDefaultTwigBundle\Service\Catalog\CategoryListPresenter;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -65,6 +65,7 @@ final class CategoryController
         private readonly UrlGeneratorInterface $urls,
         private readonly TokenProvider $tokens,
         private readonly TranslatorInterface $translator,
+        private readonly CategoryListPresenter $listPresenter,
     ) {
     }
 
@@ -76,8 +77,13 @@ final class CategoryController
         }
 
         $parentId = (int) $request->query->get('category_id', 0);
+        $productPage = max(1, (int) $request->query->get('page', 1));
+        $locale = $this->defaultLocale();
 
-        return new Response($this->twig->render(self::LIST_TEMPLATE, $this->buildListContext($parentId)));
+        $context = $this->listPresenter->buildListContext($parentId, $productPage, $locale);
+        $context['create_form'] = $this->buildCreateForm($locale, $parentId)->createView();
+
+        return new Response($this->twig->render(self::LIST_TEMPLATE, $context));
     }
 
     #[Route('/create', name: 'create', methods: ['POST'])]
@@ -396,91 +402,12 @@ final class CategoryController
         return [\sprintf('Category SEO (ID %d) modified', (int) $event->getObjectId()), (int) $event->getObjectId()];
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    private function buildListContext(int $parentId): array
+    private function buildCreateForm(string $locale, int $parentId): FormInterface
     {
-        $locale = $this->defaultLocale();
-
-        $categories = CategoryQuery::create()->filterByParent($parentId)->orderByPosition()->find();
-        $rows = [];
-        foreach ($categories as $category) {
-            \assert($category instanceof Category);
-            $category->setLocale($locale);
-            $rows[] = $this->categoryToRow($category);
-        }
-
-        $current = $parentId > 0 ? CategoryQuery::create()->findPk($parentId) : null;
-        $breadcrumb = [];
-        if ($current !== null) {
-            $current->setLocale($locale);
-            $node = $current;
-            while ($node !== null && (int) $node->getId() !== 0) {
-                $node->setLocale($locale);
-                array_unshift($breadcrumb, [
-                    'id' => (int) $node->getId(),
-                    'title' => (string) $node->getTitle(),
-                ]);
-                $parent = (int) $node->getParent();
-                $node = $parent > 0 ? CategoryQuery::create()->findPk($parent) : null;
-            }
-        }
-
-        $createForm = $this->formFactory->createNamed('thelia_category_creation', CategoryType::class, [
+        return $this->formFactory->createNamed('thelia_category_creation', CategoryType::class, [
             'locale' => $locale,
             'parent' => $parentId,
-        ], [
-            ]);
-
-        return [
-            'rows' => $rows,
-            'parent_id' => $parentId,
-            'breadcrumb_path' => $breadcrumb,
-            'create_form' => $createForm->createView(),
-            'update_position_url' => $this->urls->generate('admin.categories.update-position'),
-            'update_position_token' => $this->tokens->assignToken(),
-        ];
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function categoryToRow(Category $category): array
-    {
-        $id = (int) $category->getId();
-
-        $actions = [
-            new RowAction(
-                kind: 'edit',
-                label: $this->translator->trans('Edit this category'),
-                href: $this->urls->generate(self::EDIT_ROUTE, ['category_id' => $id]),
-                grantedAttribute: AccessManager::UPDATE,
-                grantedSubject: self::RESOURCE,
-            ),
-            new RowAction(
-                kind: 'delete',
-                label: $this->translator->trans('Delete this category'),
-                modalTarget: '#category-delete-modal',
-                grantedAttribute: AccessManager::DELETE,
-                grantedSubject: self::RESOURCE,
-                dataAttributes: [
-                    'category-id' => $id,
-                    'category-label' => (string) $category->getTitle(),
-                ],
-            ),
-        ];
-
-        return [
-            'id' => $id,
-            'title' => (string) $category->getTitle(),
-            'visible' => (bool) $category->getVisible(),
-            'position' => (int) $category->getPosition(),
-            'parent' => (int) $category->getParent(),
-            'toggle_visible_url' => $this->tokenizedUrl('admin.categories.set-default', ['category_id' => $id]),
-            'children_url' => $this->urls->generate(self::LIST_ROUTE, ['category_id' => $id]),
-            '_actions' => $actions,
-        ];
+        ], []);
     }
 
     private function buildUpdateForm(Category $category, string $locale): FormInterface
