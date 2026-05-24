@@ -13,7 +13,11 @@
 {% endmacro %}
 {% import _self as nav %}
 
-<aside class="bo-side-nav d-none d-md-flex flex-column" data-testid="bo-main-nav" aria-label="{{ 'Main navigation'|trans }}">
+<aside class="bo-side-nav offcanvas-md offcanvas-start d-md-flex flex-column" id="bo-side-nav-offcanvas" tabindex="-1" data-testid="bo-main-nav" aria-label="{{ 'Main navigation'|trans }}">
+    <div class="offcanvas-header d-md-none">
+        <h2 class="h5 offcanvas-title text-white mb-0">{{ 'Menu'|trans }}</h2>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="{{ 'Close'|trans }}"></button>
+    </div>
     <a class="bo-side-nav__header" href="{{ path('admin.home') }}" aria-label="Thelia">
         {% include '@BackOfficeDefaultTwig/_thelia_logo.html.twig' with { variant: 'light', height: '32' } only %}
     </a>
