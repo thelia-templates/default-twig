@@ -75,8 +75,7 @@ final class OrderStatusController
         $form = $this->formFactory->createNamed('thelia_order_status_creation', OrderStatusType::class, [
             'locale' => $this->defaultLocale(),
         ], [
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         return $this->action->submit(
             resource: self::RESOURCE,
@@ -117,8 +116,7 @@ final class OrderStatusController
         $form = $this->formFactory->createNamed('thelia_order_status_modification', OrderStatusType::class, null, [
             'include_id' => true,
             'include_description' => true,
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         return $this->action->submit(
             resource: self::RESOURCE,
@@ -216,8 +214,7 @@ final class OrderStatusController
         $createForm = $this->formFactory->createNamed('thelia_order_status_creation', OrderStatusType::class, [
             'locale' => $locale,
         ], [
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         return [
             'rows' => $rows,
@@ -280,8 +277,7 @@ final class OrderStatusController
         ], [
             'include_id' => true,
             'include_description' => true,
-            'csrf_protection' => false,
-        ]);
+            ]);
     }
 
     private function defaultLocale(): string

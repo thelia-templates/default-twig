@@ -87,8 +87,7 @@ final class ProfileController
     public function add(): Response
     {
         $form = $this->formFactory->createNamed('thelia_profile_create', ProfileType::class, null, [
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         return $this->action->submit(
             resource: self::RESOURCE,
@@ -119,8 +118,7 @@ final class ProfileController
     {
         $form = $this->formFactory->createNamed('thelia_profile_update', ProfileType::class, null, [
             'include_id' => true,
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         $profileId = (int) $request->request->get('thelia_profile_update', ['id' => 0])['id'];
 
@@ -260,8 +258,7 @@ final class ProfileController
         $createForm = $this->formFactory->createNamed('thelia_profile_create', ProfileType::class, [
             'locale' => $defaultLocale,
         ], [
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         return [
             'rows' => $rows,
@@ -287,8 +284,7 @@ final class ProfileController
             'postscriptum' => $profile->getPostscriptum(),
         ], [
             'include_id' => true,
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         return [
             'profile' => $profile,

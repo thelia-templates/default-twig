@@ -85,8 +85,7 @@ final class TemplateController
         $form = $this->formFactory->createNamed('thelia_template_creation', TemplateType::class, [
             'locale' => $this->defaultLocale(),
         ], [
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         return $this->action->submit(
             resource: self::RESOURCE,
@@ -136,8 +135,7 @@ final class TemplateController
         $form = $this->formFactory->createNamed('thelia_template_modification', TemplateType::class, null, [
             'include_id' => true,
             'include_description' => true,
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         $templateId = (int) $request->request->get('template_id', 0);
 
@@ -385,8 +383,7 @@ final class TemplateController
         $createForm = $this->formFactory->createNamed('thelia_template_creation', TemplateType::class, [
             'locale' => $locale,
         ], [
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         return [
             'rows' => $rows,
@@ -446,8 +443,7 @@ final class TemplateController
         ], [
             'include_id' => true,
             'include_description' => true,
-            'csrf_protection' => false,
-        ]);
+            ]);
     }
 
     /**

@@ -109,7 +109,7 @@
                 <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save'|trans }}
             </button>
         </div>
-        {{ form_end(form, { render_rest: false }) }}
+        {{ form_end(form) }}
     </div>
 
     {{ safe_hook('feature-edit.bottom', { feature_id: feature.id }) }}

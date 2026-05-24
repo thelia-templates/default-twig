@@ -207,7 +207,7 @@ final class OrderController
                 'thelia_order_address',
                 \BackOfficeDefaultTwigBundle\Form\Order\OrderAddressType::class,
                 null,
-                ['csrf_protection' => false],
+                [],
             );
             $form->handleRequest($request);
             $data = ($form->isSubmitted() && $form->isValid()) ? ($form->getData() ?? []) : $request->request->all();

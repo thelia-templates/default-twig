@@ -86,8 +86,7 @@ final class CategoryController
         $form = $this->formFactory->createNamed('thelia_category_creation', CategoryType::class, [
             'locale' => $this->defaultLocale(),
         ], [
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         return $this->action->submit(
             resource: self::RESOURCE,
@@ -139,8 +138,7 @@ final class CategoryController
         $form = $this->formFactory->createNamed('thelia_category_modification', CategoryType::class, null, [
             'include_id' => true,
             'include_description' => true,
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         $categoryId = (int) $request->request->get('category_id', 0);
 
@@ -162,8 +160,7 @@ final class CategoryController
     public function processSeo(Request $request): Response
     {
         $form = $this->formFactory->createNamed('thelia_category_seo', CategorySeoType::class, null, [
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         $categoryId = (int) $request->request->get('category_id', $request->request->get('id', 0));
         if ($categoryId === 0 && $request->request->has('thelia_category_seo')) {
@@ -434,8 +431,7 @@ final class CategoryController
             'locale' => $locale,
             'parent' => $parentId,
         ], [
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         return [
             'rows' => $rows,
@@ -502,8 +498,7 @@ final class CategoryController
         ], [
             'include_id' => true,
             'include_description' => true,
-            'csrf_protection' => false,
-        ]);
+            ]);
     }
 
     private function buildSeoForm(Category $category, string $locale): FormInterface
@@ -516,8 +511,7 @@ final class CategoryController
             'meta_description' => $category->getMetaDescription(),
             'meta_keywords' => $category->getMetaKeywords(),
         ], [
-            'csrf_protection' => false,
-        ]);
+            ]);
     }
 
     /**

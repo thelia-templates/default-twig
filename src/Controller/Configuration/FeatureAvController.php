@@ -54,8 +54,7 @@ final class FeatureAvController
     public function create(Request $request): Response
     {
         $form = $this->formFactory->createNamed('thelia_featureav_creation', FeatureAvType::class, null, [
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         $featureId = (int) $request->request->get('feature_id', 0);
 
@@ -85,8 +84,7 @@ final class FeatureAvController
     {
         $form = $this->formFactory->createNamed('thelia_featureav_modification', FeatureAvType::class, null, [
             'include_id' => true,
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         $featureId = (int) $request->request->get('feature_id', 0);
 

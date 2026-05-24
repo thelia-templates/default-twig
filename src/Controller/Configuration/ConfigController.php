@@ -90,8 +90,7 @@ final class ConfigController
     public function create(): Response
     {
         $form = $this->formFactory->createNamed('thelia_config_create', ConfigType::class, null, [
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         return $this->action->submit(
             resource: self::RESOURCE,
@@ -128,8 +127,7 @@ final class ConfigController
     {
         $form = $this->formFactory->createNamed('thelia_config_update', ConfigType::class, null, [
             'include_id' => true,
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         return $this->action->submit(
             resource: self::RESOURCE,
@@ -231,8 +229,7 @@ final class ConfigController
         $createForm = $this->formFactory->createNamed('thelia_config_create', ConfigType::class, [
             'locale' => $defaultLocale,
         ], [
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         return [
             'rows' => $rows,
@@ -330,8 +327,7 @@ final class ConfigController
             'postscriptum' => $config->getPostscriptum(),
         ], [
             'include_id' => true,
-            'csrf_protection' => false,
-        ]);
+            ]);
     }
 
     private function resolveDefaultLocale(): string

@@ -189,8 +189,7 @@ final class ProductController
     {
         $form = $this->formFactory->createNamed('thelia_product_modification', ProductType::class, null, [
             'include_id' => true,
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         $productId = (int) $request->request->get('product_id', 0);
 
@@ -212,8 +211,7 @@ final class ProductController
     public function processSeo(Request $request): Response
     {
         $form = $this->formFactory->createNamed('thelia_product_seo', ProductSeoType::class, null, [
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         $productId = (int) $request->request->get('product_id', 0);
         if ($productId === 0 && $request->request->has('thelia_product_seo')) {
@@ -294,15 +292,13 @@ final class ProductController
         return $this->formFactory->createNamed('thelia_product_creation', ProductType::class, [
             'locale' => $this->defaultLocale(),
         ], [
-            'csrf_protection' => false,
-        ]);
+            ]);
     }
 
     private function buildCloneForm(): FormInterface
     {
         return $this->formFactory->createNamed('thelia_product_clone', ProductCloneType::class, null, [
-            'csrf_protection' => false,
-        ]);
+            ]);
     }
 
     private function buildUpdateForm(Product $product, string $locale): FormInterface
@@ -323,8 +319,7 @@ final class ProductController
             'virtual_document_id' => null,
         ], [
             'include_id' => true,
-            'csrf_protection' => false,
-        ]);
+            ]);
     }
 
     private function buildSeoForm(Product $product, string $locale): FormInterface
@@ -337,8 +332,7 @@ final class ProductController
             'meta_description' => $product->getMetaDescription(),
             'meta_keywords' => $product->getMetaKeywords(),
         ], [
-            'csrf_protection' => false,
-        ]);
+            ]);
     }
 
     private function createEvent(FormInterface $validated): ProductCreateEvent

@@ -117,8 +117,7 @@ final class CustomerController
             [
                 'title_choices' => $this->titleService->getTitleAsFormChoices(),
                 'country_choices' => $this->countryChoices($this->defaultLocale()),
-                'csrf_protection' => false,
-            ],
+                ],
         );
 
         return new Response($this->twig->render(self::EDIT_TEMPLATE, [
@@ -215,8 +214,7 @@ final class CustomerController
         return $this->formFactory->createNamed(self::CREATE_FORM_NAME, CustomerType::class, [
             'discount' => 0,
         ], array_merge($this->formOptions($locale), [
-            'csrf_protection' => false,
-        ]));
+            ]));
     }
 
     /**
@@ -228,8 +226,7 @@ final class CustomerController
             'include_id' => true,
             'include_password' => true,
             'password_required' => false,
-            'csrf_protection' => false,
-        ]));
+            ]));
     }
 
     /**

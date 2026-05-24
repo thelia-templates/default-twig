@@ -84,8 +84,7 @@ final class LangController
     {
         $form = $this->formFactory->createNamed('thelia_lang_update', LangType::class, null, [
             'include_id' => true,
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         return $this->action->submit(
             resource: self::RESOURCE,
@@ -109,8 +108,7 @@ final class LangController
     public function add(): Response
     {
         $form = $this->formFactory->createNamed('thelia_language_create', LangType::class, null, [
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         return $this->action->submit(
             resource: self::RESOURCE,
@@ -194,8 +192,7 @@ final class LangController
     public function defaultBehavior(): Response
     {
         $form = $this->formFactory->createNamed('thelia_lang_defaultBehavior', LangDefaultBehaviorType::class, null, [
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         return $this->action->submit(
             resource: self::RESOURCE,
@@ -216,8 +213,7 @@ final class LangController
     {
         $form = $this->formFactory->createNamed('thelia_language_url', LangUrlType::class, null, [
             'languages' => $this->buildLanguageUrlOptions(),
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         return $this->action->submit(
             resource: self::RESOURCE,
@@ -330,19 +326,16 @@ final class LangController
         }
 
         $createForm = $this->formFactory->createNamed('thelia_language_create', LangType::class, null, [
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         $defaultBehaviorForm = $this->formFactory->createNamed('thelia_lang_defaultBehavior', LangDefaultBehaviorType::class, [
             'behavior' => ConfigQuery::getDefaultLangWhenNoTranslationAvailable(),
         ], [
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         $urlForm = $this->formFactory->createNamed('thelia_language_url', LangUrlType::class, null, [
             'languages' => $this->buildLanguageUrlOptions(),
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         return [
             'rows' => $rows,
@@ -414,8 +407,7 @@ final class LangController
             'decimals' => $lang->getDecimals(),
         ], [
             'include_id' => true,
-            'csrf_protection' => false,
-        ]);
+            ]);
     }
 
     /**

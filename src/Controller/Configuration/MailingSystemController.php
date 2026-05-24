@@ -59,7 +59,7 @@ final class MailingSystemController
             return $denied;
         }
 
-        $form = $this->formFactory->createNamed('thelia_mailing_system_modification', MailingSystemType::class, $this->loadConfig(), ['csrf_protection' => false]);
+        $form = $this->formFactory->createNamed('thelia_mailing_system_modification', MailingSystemType::class, $this->loadConfig(), []);
 
         return new Response($this->twig->render(self::LIST_TEMPLATE, [
             'form' => $form->createView(),
@@ -72,8 +72,7 @@ final class MailingSystemController
     public function save(): Response
     {
         $form = $this->formFactory->createNamed('thelia_mailing_system_modification', MailingSystemType::class, null, [
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         return $this->action->submit(
             resource: self::RESOURCE,

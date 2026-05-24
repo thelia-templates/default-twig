@@ -78,7 +78,7 @@ final class FolderController
     {
         $form = $this->formFactory->createNamed('thelia_folder_creation', FolderType::class, [
             'locale' => $this->defaultLocale(),
-        ], ['csrf_protection' => false]);
+        ], []);
 
         return $this->action->submit(
             resource: self::RESOURCE,
@@ -119,8 +119,7 @@ final class FolderController
         $form = $this->formFactory->createNamed('thelia_folder_modification', FolderType::class, null, [
             'include_id' => true,
             'include_description' => true,
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         $folderId = (int) $request->request->get('folder_id', 0);
 
@@ -263,7 +262,7 @@ final class FolderController
         $createForm = $this->formFactory->createNamed('thelia_folder_creation', FolderType::class, [
             'locale' => $locale,
             'parent' => $parentId,
-        ], ['csrf_protection' => false]);
+        ], []);
 
         return [
             'rows' => $rows,
@@ -310,8 +309,7 @@ final class FolderController
         ], [
             'include_id' => true,
             'include_description' => true,
-            'csrf_protection' => false,
-        ]);
+            ]);
     }
 
     private function defaultLocale(): string

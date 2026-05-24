@@ -113,7 +113,7 @@ final class HookController
             'active' => true,
             'native' => '0',
             'type' => $type,
-        ], ['csrf_protection' => false]);
+        ], []);
 
         return new Response($this->twig->render(self::LIST_TEMPLATE, [
             'rows' => $rows,
@@ -131,7 +131,7 @@ final class HookController
     #[Route('/admin/hooks/create', name: 'admin.hook.create', methods: ['POST'])]
     public function create(): Response
     {
-        $form = $this->formFactory->createNamed('thelia_hook_create', HookType::class, null, ['csrf_protection' => false]);
+        $form = $this->formFactory->createNamed('thelia_hook_create', HookType::class, null, []);
 
         return $this->action->submit(
             resource: self::RESOURCE,
@@ -175,7 +175,7 @@ final class HookController
                 'chapo' => (string) $hook->getChapo(),
                 'description' => (string) $hook->getDescription(),
             ],
-            ['include_id' => true, 'csrf_protection' => false],
+            ['include_id' => true],
         );
 
         return new Response($this->twig->render(self::EDIT_TEMPLATE, [
@@ -192,7 +192,7 @@ final class HookController
             'thelia_hook_update',
             HookType::class,
             null,
-            ['include_id' => true, 'csrf_protection' => false],
+            ['include_id' => true],
         );
 
         return $this->action->submit(

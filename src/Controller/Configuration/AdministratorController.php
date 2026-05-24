@@ -75,8 +75,7 @@ final class AdministratorController
     {
         $form = $this->formFactory->createNamed('thelia_administrator_create', AdministratorType::class, null, [
             'profile_choices' => $this->profileChoices(),
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         return $this->action->submit(
             resource: self::RESOURCE,
@@ -109,8 +108,7 @@ final class AdministratorController
         $form = $this->formFactory->createNamed('thelia_administrator_update', AdministratorType::class, null, [
             'include_id' => true,
             'profile_choices' => $this->profileChoices(),
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         return $this->action->submit(
             resource: self::RESOURCE,
@@ -197,8 +195,7 @@ final class AdministratorController
             'locale' => $defaultLocale,
         ], [
             'profile_choices' => $profileChoices,
-            'csrf_protection' => false,
-        ]);
+            ]);
 
         return [
             'rows' => $rows,
@@ -259,8 +256,7 @@ final class AdministratorController
         ], [
             'include_id' => true,
             'profile_choices' => $profileChoices,
-            'csrf_protection' => false,
-        ]);
+            ]);
     }
 
     /**
