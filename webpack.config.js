@@ -26,7 +26,14 @@ Encore
         pattern: /\.(png|jpe?g|svg|webp)$/,
     })
 
-    .enableSassLoader()
+    .enableSassLoader((options) => {
+        options.api = 'modern-compiler';
+        options.sassOptions = {
+            ...(options.sassOptions || {}),
+            quietDeps: true,
+            silenceDeprecations: ['import'],
+        };
+    })
 
     .configureBabelPresetEnv((config) => {
         config.useBuiltIns = 'usage';
