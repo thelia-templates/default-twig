@@ -53,6 +53,11 @@
                     {{ 'Documents'|trans }}
                 </button>
             </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link {% if current_tab == 'seo' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-seo" type="button" data-testid="folder-tab-seo">
+                    {{ 'SEO'|trans }}
+                </button>
+            </li>
             {% for block in extra_tabs %}
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" data-bs-toggle="tab" data-bs-target="#{{ block.id }}"
@@ -149,6 +154,33 @@
 
             <div class="tab-pane fade {% if current_tab == 'documents' %}show active{% endif %}" id="tab-documents" role="tabpanel">
                 {{ render(controller('BackOfficeDefaultTwigBundle\\Controller\\File\\FileController::documentForm', { parentType: 'folder', parentId: folder.id })) }}
+            </div>
+
+            <div class="tab-pane fade {% if current_tab == 'seo' %}show active{% endif %}" id="tab-seo" role="tabpanel">
+                {{ safe_hook('folder.seo.update-form', { folder_id: folder.id, id: folder.id }) }}
+                {{ form_start(seo_form, { action: path('admin.folders.seo.save'), method: 'post', attr: { 'data-testid': 'folder-seo-form' } }) }}
+                    <div class="mb-3">
+                        {{ form_label(seo_form.url) }}
+                        {{ form_widget(seo_form.url, { attr: { class: 'form-control' } }) }}
+                    </div>
+                    <div class="mb-3">
+                        {{ form_label(seo_form.meta_title) }}
+                        {{ form_widget(seo_form.meta_title, { attr: { class: 'form-control' } }) }}
+                    </div>
+                    <div class="mb-3">
+                        {{ form_label(seo_form.meta_description) }}
+                        {{ form_widget(seo_form.meta_description, { attr: { class: 'form-control', rows: 3 } }) }}
+                    </div>
+                    <div class="mb-3">
+                        {{ form_label(seo_form.meta_keywords) }}
+                        {{ form_widget(seo_form.meta_keywords, { attr: { class: 'form-control', rows: 2 } }) }}
+                    </div>
+                    {{ form_widget(seo_form.id) }}
+                    {{ form_widget(seo_form.locale) }}
+                    <button type="submit" class="btn btn-primary" data-testid="folder-seo-submit">
+                        <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save'|trans }}
+                    </button>
+                {{ form_end(seo_form) }}
             </div>
 
             {% for block in extra_tabs %}

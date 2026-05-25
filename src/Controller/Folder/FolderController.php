@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace BackOfficeDefaultTwigBundle\Controller\Folder;
 
+use BackOfficeDefaultTwigBundle\Form\Folder\FolderSeoType;
 use BackOfficeDefaultTwigBundle\Form\Folder\FolderType;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
@@ -114,6 +115,8 @@ final class FolderController
         return new Response($this->twig->render(self::EDIT_TEMPLATE, [
             'folder' => $folder,
             'form' => $this->buildUpdateForm($folder, $locale)->createView(),
+            'seo_form' => $this->buildSeoForm($folder, $locale)->createView(),
+            'current_tab' => (string) $request->query->get('current_tab', 'general'),
             'edit_language_id' => (int) $editLang->getId(),
         ]));
     }
@@ -144,29 +147,25 @@ final class FolderController
     #[Route('/seo/save', name: 'seo.save', methods: ['POST'])]
     public function processSeo(Request $request): Response
     {
-        if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::UPDATE)) {
-            return $denied;
-        }
+        $form = $this->formFactory->createNamed('thelia_folder_seo', FolderSeoType::class, null, [
+        ]);
 
         $folderId = (int) $request->request->get('folder_id', $request->request->get('id', 0));
-        $event = new UpdateSeoEvent(
-            $folderId,
-            (string) $request->request->get('locale', $this->defaultLocale()),
-            $request->request->get('url') !== null ? (string) $request->request->get('url') : null,
-            $request->request->get('meta_title') !== null ? (string) $request->request->get('meta_title') : null,
-            $request->request->get('meta_description') !== null ? (string) $request->request->get('meta_description') : null,
-            $request->request->get('meta_keywords') !== null ? (string) $request->request->get('meta_keywords') : null,
-        );
+        if ($folderId === 0 && $request->request->has('thelia_folder_seo')) {
+            $raw = (array) $request->request->all('thelia_folder_seo');
+            $folderId = (int) ($raw['id'] ?? 0);
+        }
 
-        return $this->action->tokenAction(
+        return $this->action->submit(
             resource: self::RESOURCE,
             access: AccessManager::UPDATE,
-            request: $request,
-            event: $event,
+            form: $form,
             eventName: TheliaEvents::FOLDER_UPDATE_SEO,
+            eventFactory: $this->seoEvent(...),
             actionLabel: 'Folder SEO update',
             successRoute: self::EDIT_ROUTE,
-            successParameters: ['folder_id' => $folderId],
+            successParameters: ['folder_id' => $folderId, 'current_tab' => 'seo'],
+            renderError: fn (): RedirectResponse => new RedirectResponse($this->urls->generate(self::EDIT_ROUTE, ['folder_id' => $folderId, 'current_tab' => 'seo'])),
         );
     }
 
@@ -315,6 +314,33 @@ final class FolderController
             'include_id' => true,
             'include_description' => true,
             ]);
+    }
+
+    private function buildSeoForm(Folder $folder, string $locale): FormInterface
+    {
+        return $this->formFactory->createNamed('thelia_folder_seo', FolderSeoType::class, [
+            'id' => $folder->getId(),
+            'locale' => $locale,
+            'url' => $folder->getRewrittenUrl($locale),
+            'meta_title' => $folder->getMetaTitle(),
+            'meta_description' => $folder->getMetaDescription(),
+            'meta_keywords' => $folder->getMetaKeywords(),
+        ], [
+        ]);
+    }
+
+    private function seoEvent(FormInterface $validated): UpdateSeoEvent
+    {
+        $data = $validated->getData() ?? [];
+
+        return new UpdateSeoEvent(
+            (int) ($data['id'] ?? 0),
+            (string) ($data['locale'] ?? $this->defaultLocale()),
+            $this->stringOrNull($data['url'] ?? null),
+            $this->stringOrNull($data['meta_title'] ?? null),
+            $this->stringOrNull($data['meta_description'] ?? null),
+            $this->stringOrNull($data['meta_keywords'] ?? null),
+        );
     }
 
     private function defaultLocale(): string

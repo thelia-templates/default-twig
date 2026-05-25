@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace BackOfficeDefaultTwigBundle\Controller\Folder;
 
+use BackOfficeDefaultTwigBundle\Form\Content\ContentSeoType;
 use BackOfficeDefaultTwigBundle\Form\Content\ContentType;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
@@ -104,7 +105,12 @@ final class ContentController
         return new Response($this->twig->render(self::EDIT_TEMPLATE, [
             'content' => $content,
             'form' => $this->buildUpdateForm($content, $locale)->createView(),
+            'seo_form' => $this->buildSeoForm($content, $locale)->createView(),
             'folders' => $this->folderChoices($locale),
+            'additional_folders' => $this->additionalFolderRows($content, $locale),
+            'available_additional_folders' => $this->availableAdditionalFolders($content, $locale),
+            'additional_folder_delete_token' => $this->tokens->assignToken(),
+            'current_tab' => (string) $request->query->get('current_tab', 'general'),
             'edit_language_id' => (int) $editLang->getId(),
         ]));
     }
@@ -135,29 +141,25 @@ final class ContentController
     #[Route('/seo/save', name: 'seo.save', methods: ['POST'])]
     public function processSeo(Request $request): Response
     {
-        if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::UPDATE)) {
-            return $denied;
-        }
+        $form = $this->formFactory->createNamed('thelia_content_seo', ContentSeoType::class, null, [
+        ]);
 
         $contentId = (int) $request->request->get('content_id', $request->request->get('id', 0));
-        $event = new UpdateSeoEvent(
-            $contentId,
-            (string) $request->request->get('locale', $this->defaultLocale()),
-            $request->request->get('url') !== null ? (string) $request->request->get('url') : null,
-            $request->request->get('meta_title') !== null ? (string) $request->request->get('meta_title') : null,
-            $request->request->get('meta_description') !== null ? (string) $request->request->get('meta_description') : null,
-            $request->request->get('meta_keywords') !== null ? (string) $request->request->get('meta_keywords') : null,
-        );
+        if ($contentId === 0 && $request->request->has('thelia_content_seo')) {
+            $raw = (array) $request->request->all('thelia_content_seo');
+            $contentId = (int) ($raw['id'] ?? 0);
+        }
 
-        return $this->action->tokenAction(
+        return $this->action->submit(
             resource: self::RESOURCE,
             access: AccessManager::UPDATE,
-            request: $request,
-            event: $event,
+            form: $form,
             eventName: TheliaEvents::CONTENT_UPDATE_SEO,
+            eventFactory: $this->seoEvent(...),
             actionLabel: 'Content SEO update',
             successRoute: self::EDIT_ROUTE,
-            successParameters: ['content_id' => $contentId],
+            successParameters: ['content_id' => $contentId, 'current_tab' => 'seo'],
+            renderError: fn (): RedirectResponse => new RedirectResponse($this->urls->generate(self::EDIT_ROUTE, ['content_id' => $contentId, 'current_tab' => 'seo'])),
         );
     }
 
@@ -295,6 +297,77 @@ final class ContentController
             'include_id' => true,
             'include_description' => true,
             ]);
+    }
+
+    private function buildSeoForm(Content $content, string $locale): FormInterface
+    {
+        return $this->formFactory->createNamed('thelia_content_seo', ContentSeoType::class, [
+            'id' => $content->getId(),
+            'locale' => $locale,
+            'url' => $content->getRewrittenUrl($locale),
+            'meta_title' => $content->getMetaTitle(),
+            'meta_description' => $content->getMetaDescription(),
+            'meta_keywords' => $content->getMetaKeywords(),
+        ], [
+        ]);
+    }
+
+    private function seoEvent(FormInterface $validated): UpdateSeoEvent
+    {
+        $data = $validated->getData() ?? [];
+
+        return new UpdateSeoEvent(
+            (int) ($data['id'] ?? 0),
+            (string) ($data['locale'] ?? $this->defaultLocale()),
+            $this->stringOrNull($data['url'] ?? null),
+            $this->stringOrNull($data['meta_title'] ?? null),
+            $this->stringOrNull($data['meta_description'] ?? null),
+            $this->stringOrNull($data['meta_keywords'] ?? null),
+        );
+    }
+
+    /** @return list<array{id: int, title: string, is_default: bool, delete_url: string}> */
+    private function additionalFolderRows(Content $content, string $locale): array
+    {
+        $defaultFolderId = (int) $content->getDefaultFolderId();
+        $folders = $content->getFolders();
+        $rows = [];
+        foreach ($folders as $folder) {
+            $folderId = (int) $folder->getId();
+            $folder->setLocale($locale);
+            $rows[] = [
+                'id' => $folderId,
+                'title' => (string) $folder->getTitle(),
+                'is_default' => $folderId === $defaultFolderId,
+                'delete_url' => $this->urls->generate('admin.content.additional-folder.delete', [
+                    'content_id' => (int) $content->getId(),
+                    'additional_folder_id' => $folderId,
+                ]),
+            ];
+        }
+
+        return $rows;
+    }
+
+    /** @return list<array{id: int, title: string}> */
+    private function availableAdditionalFolders(Content $content, string $locale): array
+    {
+        $taken = [];
+        foreach ($content->getFolders() as $folder) {
+            $taken[(int) $folder->getId()] = true;
+        }
+
+        $rows = [];
+        foreach (FolderQuery::create()->orderByPosition()->find() as $folder) {
+            $id = (int) $folder->getId();
+            if (isset($taken[$id])) {
+                continue;
+            }
+            $folder->setLocale($locale);
+            $rows[] = ['id' => $id, 'title' => (string) $folder->getTitle()];
+        }
+
+        return $rows;
     }
 
     /** @return list<array{id: int, title: string}> */
