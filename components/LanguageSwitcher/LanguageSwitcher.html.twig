@@ -1,0 +1,32 @@
+{#
+    BoLanguageSwitcher — flag buttons to edit an entity's i18n fields in another language.
+
+    Reloads the current URL with ?edit_language_id=<id> (preserving the other query params, e.g.
+    current_tab), mirroring the legacy inner-form-toolbar switcher. The controller reads the param
+    through EditLocaleResolver to load/save the i18n fields in the chosen language.
+
+    Props:
+        currentLanguageId  id of the language currently edited (required, marks the active flag)
+        editParam          query parameter carrying the language id (default: edit_language_id)
+        label              leading label, |trans (default: Edit in)
+#}
+{% set dist = '/templates-assets/backOffice/default-twig/dist' %}
+{% set languages = bo_languages() %}
+{% if languages|length > 1 %}
+    <div class="d-flex align-items-center gap-2 flex-wrap" data-testid="bo-language-switcher">
+        <span class="text-body-secondary small">{{ label|trans }}</span>
+        <div class="btn-group btn-group-sm" role="group" aria-label="{{ 'Edit language'|trans }}">
+            {% for lang in languages %}
+                {% set active = lang.id == currentLanguageId %}
+                <a class="btn {{ active ? 'btn-primary' : 'btn-outline-secondary' }} d-inline-flex align-items-center"
+                   href="{{ app.request.pathInfo }}?{{ app.request.query.all|merge({ (editParam): lang.id })|url_encode }}"
+                   title="{{ 'Edit information in %lang'|trans({ '%lang': lang.title }) }}"
+                   data-testid="bo-language-switcher-{{ lang.code }}"
+                   {{ active ? 'aria-current="true"' : '' }}>
+                    <img src="{{ dist }}/img/svgFlags/{{ lang.code }}.svg" alt="{{ lang.title }}" width="20" height="14" class="me-1">
+                    <span>{{ lang.code|upper }}</span>
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+{% endif %}

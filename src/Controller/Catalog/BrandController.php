@@ -18,6 +18,7 @@ use BackOfficeDefaultTwigBundle\Form\Brand\BrandSeoType;
 use BackOfficeDefaultTwigBundle\Form\Brand\BrandType;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
+use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
@@ -59,6 +60,7 @@ final class BrandController
         private readonly UrlGeneratorInterface $urls,
         private readonly TokenProvider $tokens,
         private readonly TranslatorInterface $translator,
+        private readonly EditLocaleResolver $editLocale,
     ) {
     }
 
@@ -105,7 +107,8 @@ final class BrandController
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }
 
-        $locale = $this->defaultLocale();
+        $editLang = $this->editLocale->resolveFromRequest($request);
+        $locale = $editLang->getLocale() ?? 'en_US';
         $brand->setLocale($locale);
 
         $form = $this->buildUpdateForm($brand, $locale);
@@ -116,6 +119,7 @@ final class BrandController
             'form' => $form->createView(),
             'seo_form' => $seoForm->createView(),
             'current_tab' => (string) $request->query->get('current_tab', 'general'),
+            'edit_language_id' => (int) $editLang->getId(),
         ]));
     }
 
