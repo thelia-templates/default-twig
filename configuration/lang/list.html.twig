@@ -36,7 +36,7 @@
                 column('locale', 'Locale'|trans),
                 column_toggle('visible', 'Visible in front'|trans, 'toggle_visible_url'),
                 column_toggle('active', 'Active'|trans, 'toggle_active_url'),
-                column_toggle('default', 'Default'|trans, 'toggle_default_url'),
+                column_radio('default', 'Default'|trans, 'lang_default', 'id', 'default', null, 'toggle_default_url'),
                 column_actions('_actions', 'Actions'|trans),
             ],
             rows: rows,

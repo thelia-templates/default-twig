@@ -4,13 +4,16 @@
 {% set valueKey = column.options.value_key|default(column.key) %}
 {% set checkedWhenKey = column.options.checked_when_key|default(null) %}
 {% set labelKey = column.options.label_key|default(null) %}
+{% set urlKey = column.options.url_key|default(null) %}
+{% set href = urlKey ? row[urlKey]|default(null) : null %}
 {% set inputId = ('datatable-' ~ column.key ~ '-' ~ row[valueKey])|replace({'.': '-', '_': '-'}) %}
 {% set checked = checkedWhenKey ? row[checkedWhenKey]|default(false) : false %}
-<div class="form-check {{ column.cellAlign == 'center' ? 'd-inline-flex justify-content-center' : '' }} mb-0">
+<div class="form-check {{ column.cellAlign == 'center' ? 'd-inline-flex justify-content-center' : '' }} mb-0"{% if href %} data-controller="bo-default-radio"{% endif %}>
     <input class="form-check-input" type="radio"
            id="{{ inputId }}"
            name="{{ name }}"
            value="{{ row[valueKey] }}"
+           {% if href %} data-bo-default-radio-url-value="{{ href }}" data-action="change->bo-default-radio#select"{% endif %}
            {% if checked %} checked{% endif %}>
     {% if labelKey %}
         <label class="form-check-label" for="{{ inputId }}">{{ row[labelKey] }}</label>

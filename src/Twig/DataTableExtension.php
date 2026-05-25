@@ -92,6 +92,7 @@ final class DataTableExtension extends AbstractExtension
         string $valueKey = 'id',
         ?string $checkedWhenKey = null,
         ?string $labelKey = null,
+        ?string $urlKey = null,
         string $cellAlign = 'center',
     ): Column {
         return new Column(
@@ -99,7 +100,7 @@ final class DataTableExtension extends AbstractExtension
             $label,
             ColumnKind::RADIO,
             $cellAlign,
-            ['name' => $name, 'value_key' => $valueKey, 'checked_when_key' => $checkedWhenKey, 'label_key' => $labelKey],
+            ['name' => $name, 'value_key' => $valueKey, 'checked_when_key' => $checkedWhenKey, 'label_key' => $labelKey, 'url_key' => $urlKey],
         );
     }
 

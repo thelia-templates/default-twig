@@ -26,7 +26,7 @@
                 column('isoalpha3', 'ISO-3'|trans, 'center'),
                 column('isocode', 'Numeric'|trans, 'center'),
                 column_toggle('visible', 'Online'|trans, null),
-                column_toggle('default', 'Default'|trans, null),
+                column_radio('default', 'Default'|trans, 'country_default', 'id', 'default', null, 'toggle_default_url'),
                 column_actions('_actions', 'Actions'|trans),
             ],
             rows: rows,

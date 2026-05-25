@@ -53,7 +53,7 @@
                 column('symbol', 'Symbol'|trans, 'center'),
                 column('rate', 'Exchange rate'|trans, 'center'),
                 column_toggle('visible', 'Visible'|trans, 'toggle_visible_url'),
-                column_toggle('default', 'Default'|trans, 'toggle_default_url'),
+                column_radio('default', 'Default'|trans, 'currency_default', 'id', 'default', null, 'toggle_default_url'),
                 column('position', 'Position'|trans, 'center'),
                 column_actions('_actions', 'Actions'|trans),
             ],

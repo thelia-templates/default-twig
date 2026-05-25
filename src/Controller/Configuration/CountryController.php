@@ -41,6 +41,7 @@ use Thelia\Model\CountryQuery;
 use Thelia\Model\LangQuery;
 use Thelia\Model\Map\CountryI18nTableMap;
 use Thelia\Model\StateQuery;
+use Thelia\Tools\TokenProvider;
 use Twig\Environment;
 
 #[Route('/admin/configuration/countries', name: 'admin.configuration.countries.')]
@@ -60,6 +61,7 @@ final class CountryController
         private readonly UrlGeneratorInterface $urls,
         private readonly TranslatorInterface $translator,
         private readonly EditLocaleResolver $editLocale,
+        private readonly TokenProvider $tokens,
     ) {
     }
 
@@ -316,8 +318,20 @@ final class CountryController
             'isocode' => (string) $country->getIsocode(),
             'visible' => (bool) $country->getVisible(),
             'default' => (bool) $country->getByDefault(),
+            'toggle_default_url' => $this->tokenizedUrl('admin.configuration.countries.toggle-default', ['country_id' => $id]),
             '_actions' => $actions,
         ];
+    }
+
+    /**
+     * @param array<string, scalar> $parameters
+     */
+    private function tokenizedUrl(string $route, array $parameters): string
+    {
+        $url = $this->urls->generate($route, $parameters);
+        $separator = str_contains($url, '?') ? '&' : '?';
+
+        return $url.$separator.'_token='.$this->tokens->assignToken();
     }
 
     private function defaultLocale(): string
