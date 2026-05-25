@@ -16,15 +16,19 @@
     {{ safe_hook('customer.top') }}
 
     <div class="container-fluid" data-testid="customers-page">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h1 class="h3 mb-0">{{ 'Customers'|trans }} <span class="badge bg-secondary ms-2" data-testid="customers-count">{{ total }}</span></h1>
-            {% if is_granted('CREATE', 'admin.customer') %}
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#customer-create-modal" data-testid="customer-create-button">
-                    <i class="bi bi-plus-lg" aria-hidden="true"></i>
-                    {{ 'Add a new customer'|trans }}
-                </button>
-            {% endif %}
-        </div>
+        {% embed '@BackOfficeDefaultTwig/_page_header.html.twig' with { title: 'Customers'|trans } %}
+            {% block title %}
+                {{ 'Customers'|trans }} <span class="badge bg-secondary" data-testid="customers-count">{{ total }}</span>
+            {% endblock %}
+            {% block actions %}
+                {% if is_granted('CREATE', 'admin.customer') %}
+                    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#customer-create-modal" data-testid="customer-create-button">
+                        <i class="bi bi-plus-lg" aria-hidden="true"></i>
+                        {{ 'Add a new customer'|trans }}
+                    </button>
+                {% endif %}
+            {% endblock %}
+        {% endembed %}
 
         <form method="get" action="{{ path('admin.customers') }}" class="row g-2 mb-3" data-testid="customers-search-form">
             <div class="col-md-9">

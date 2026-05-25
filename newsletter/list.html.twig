@@ -14,12 +14,13 @@
 
 {% block content %}
     <div class="container-fluid" data-testid="newsletter-page">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h1 class="h3 mb-0">{{ 'Newsletter subscribers'|trans }}</h1>
-            <a href="{{ export_url }}" class="btn btn-outline-primary" data-testid="newsletter-export-button">
-                <i class="bi bi-download" aria-hidden="true"></i> {{ 'Export CSV'|trans }}
-            </a>
-        </div>
+        {% embed '@BackOfficeDefaultTwig/_page_header.html.twig' with { title: 'Newsletter subscribers'|trans } %}
+            {% block actions %}
+                <a href="{{ export_url }}" class="btn btn-outline-primary btn-sm" data-testid="newsletter-export-button">
+                    <i class="bi bi-download" aria-hidden="true"></i> {{ 'Export CSV'|trans }}
+                </a>
+            {% endblock %}
+        {% endembed %}
 
         {{ component('BoDataTable', {
             id: 'newsletter',

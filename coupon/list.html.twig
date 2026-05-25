@@ -16,14 +16,15 @@
     {{ safe_hook('coupon.top') }}
 
     <div class="container-fluid" data-testid="coupons-page">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h1 class="h3 mb-0">{{ 'Coupons'|trans }}</h1>
-            {% if is_granted('CREATE', 'admin.coupon') %}
-                <a href="{{ path('admin.coupon.create') }}" class="btn btn-primary" data-testid="coupon-create-button">
-                    <i class="bi bi-plus-circle"></i> {{ 'Create a new coupon'|trans }}
-                </a>
-            {% endif %}
-        </div>
+        {% embed '@BackOfficeDefaultTwig/_page_header.html.twig' with { title: 'Coupons'|trans } %}
+            {% block actions %}
+                {% if is_granted('CREATE', 'admin.coupon') %}
+                    <a href="{{ path('admin.coupon.create') }}" class="btn btn-primary btn-sm" data-testid="coupon-create-button">
+                        <i class="bi bi-plus-circle"></i> {{ 'Create a new coupon'|trans }}
+                    </a>
+                {% endif %}
+            {% endblock %}
+        {% endembed %}
 
         {{ safe_hook('coupon.list-caption') }}
 

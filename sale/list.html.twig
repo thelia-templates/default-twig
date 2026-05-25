@@ -16,22 +16,21 @@
     {{ safe_hook('sales.top', { location: 'sales_top' }) }}
 
     <div class="container-fluid" data-testid="sales-page">
-        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-            <h1 class="h3 mb-0">{{ 'Sales & promotions'|trans }}</h1>
-            <div class="d-flex gap-2">
-                <a href="{{ global_actions.check_url }}" class="btn btn-outline-secondary" data-testid="sales-check-activation"
+        {% embed '@BackOfficeDefaultTwig/_page_header.html.twig' with { title: 'Sales & promotions'|trans } %}
+            {% block actions %}
+                <a href="{{ global_actions.check_url }}" class="btn btn-outline-secondary btn-sm" data-testid="sales-check-activation"
                    title="{{ 'Refresh the active status of every sale according to its dates.'|trans }}">
                     <i class="bi bi-arrow-repeat" aria-hidden="true"></i> {{ 'Check activation'|trans }}
                 </a>
-                <a href="{{ global_actions.reset_url }}" class="btn btn-outline-secondary" data-testid="sales-reset-status"
+                <a href="{{ global_actions.reset_url }}" class="btn btn-outline-secondary btn-sm" data-testid="sales-reset-status"
                    title="{{ 'Remove the sale flag from every product before recomputing it.'|trans }}">
                     <i class="bi bi-eraser" aria-hidden="true"></i> {{ 'Reset status'|trans }}
                 </a>
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#sale-create-modal" data-testid="sale-create-btn">
+                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#sale-create-modal" data-testid="sale-create-btn">
                     <i class="bi bi-plus-circle" aria-hidden="true"></i> {{ 'New sale'|trans }}
                 </button>
-            </div>
-        </div>
+            {% endblock %}
+        {% endembed %}
 
         <div class="card">
             <div class="table-responsive">

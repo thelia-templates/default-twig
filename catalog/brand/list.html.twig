@@ -16,17 +16,16 @@
     {{ safe_hook('brands.top') }}
 
     <div class="container-fluid" data-testid="brands-page">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h1 class="h3 mb-0">{{ 'Brands management'|trans }}</h1>
-            <div class="d-flex gap-2">
+        {% embed '@BackOfficeDefaultTwig/_page_header.html.twig' with { title: 'Brands management'|trans } %}
+            {% block actions %}
                 {% if is_granted('CREATE', 'admin.brand') %}
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#brand-create-modal" data-testid="brand-create-button">
+                    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#brand-create-modal" data-testid="brand-create-button">
                         <i class="bi bi-plus-lg" aria-hidden="true"></i>
                         {{ 'Add a new brand'|trans }}
                     </button>
                 {% endif %}
-            </div>
-        </div>
+            {% endblock %}
+        {% endembed %}
 
         {{ component('BoDataTable', {
             id: 'brands',

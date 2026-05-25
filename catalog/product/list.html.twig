@@ -16,14 +16,15 @@
     {{ safe_hook('products.top') }}
 
     <div class="container-fluid" data-testid="products-page">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h1 class="h3 mb-0">{{ 'Products management'|trans }}</h1>
-            {% if is_granted('CREATE', 'admin.product') %}
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#product-create-modal" data-testid="product-create-button">
-                    <i class="bi bi-plus-lg" aria-hidden="true"></i> {{ 'Add a new product'|trans }}
-                </button>
-            {% endif %}
-        </div>
+        {% embed '@BackOfficeDefaultTwig/_page_header.html.twig' with { title: 'Products management'|trans } %}
+            {% block actions %}
+                {% if is_granted('CREATE', 'admin.product') %}
+                    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#product-create-modal" data-testid="product-create-button">
+                        <i class="bi bi-plus-lg" aria-hidden="true"></i> {{ 'Add a new product'|trans }}
+                    </button>
+                {% endif %}
+            {% endblock %}
+        {% endembed %}
 
         <form method="get" action="{{ path('admin.products.default') }}" class="row g-2 mb-3" data-testid="product-search-form">
             <div class="col-md-4">

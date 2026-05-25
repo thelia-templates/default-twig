@@ -16,7 +16,7 @@
     {{ safe_hook('modules.top', { location: 'modules_top' }) }}
 
     <div class="container-fluid" data-testid="modules-page">
-        <h1 class="h3 mb-3">{{ 'Modules management'|trans }}</h1>
+        {% include '@BackOfficeDefaultTwig/_page_header.html.twig' with { title: 'Modules management'|trans } only %}
 
         {% for type, group in groups %}
             <section class="mb-4" data-testid="modules-block-{{ type }}">

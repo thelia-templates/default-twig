@@ -23,25 +23,24 @@
     {{ safe_hook('categories.top', { location: 'categories_top' }) }}
 
     <div class="container-fluid" data-testid="categories-page">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h1 class="h3 mb-0">{{ 'Categories'|trans }}</h1>
-            <div class="d-flex gap-2">
-                <a href="{{ path('admin.categories.tree') }}" class="btn btn-outline-secondary" data-testid="category-tree-link">
+        {% embed '@BackOfficeDefaultTwig/_page_header.html.twig' with { title: 'Categories'|trans } %}
+            {% block actions %}
+                <a href="{{ path('admin.categories.tree') }}" class="btn btn-outline-secondary btn-sm" data-testid="category-tree-link">
                     <i class="bi bi-diagram-3" aria-hidden="true"></i> {{ 'Tree view'|trans }}
                 </a>
                 {% if parent_id > 0 %}
-                    <a href="{{ path('admin.categories.update', { category_id: parent_id }) }}" class="btn btn-outline-secondary" data-testid="category-edit-parent">
+                    <a href="{{ path('admin.categories.update', { category_id: parent_id }) }}" class="btn btn-outline-secondary btn-sm" data-testid="category-edit-parent">
                         <i class="bi bi-pencil-square" aria-hidden="true"></i> {{ 'Edit this category'|trans }}
                     </a>
                 {% endif %}
                 {% if is_granted('CREATE', 'admin.category') %}
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#category-create-modal" data-testid="category-create-button">
+                    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#category-create-modal" data-testid="category-create-button">
                         <i class="bi bi-plus-lg" aria-hidden="true"></i>
                         {{ 'Add a new category'|trans }}
                     </button>
                 {% endif %}
-            </div>
-        </div>
+            {% endblock %}
+        {% endembed %}
 
         {{ component('BoDataTable', {
             id: 'categories',
