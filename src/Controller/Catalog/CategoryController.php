@@ -80,7 +80,7 @@ final class CategoryController
 
         $parentId = (int) $request->query->get('category_id', 0);
         $productPage = max(1, (int) $request->query->get('page', 1));
-        $locale = $this->defaultLocale();
+        $locale = $request->getLocale();
 
         $context = $this->listPresenter->buildListContext($parentId, $productPage, $locale);
         $context['create_form'] = $this->buildCreateForm($locale, $parentId)->createView();
@@ -89,10 +89,11 @@ final class CategoryController
     }
 
     #[Route('/create', name: 'create', methods: ['POST'])]
-    public function create(): Response
+    public function create(Request $request): Response
     {
         $form = $this->formFactory->createNamed('thelia_category_creation', CategoryType::class, [
-            'locale' => $this->defaultLocale(),
+            'locale' => $request->getLocale(),
+            'visible' => true,
         ], [
             ]);
 

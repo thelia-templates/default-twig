@@ -93,10 +93,10 @@ final class StateController
     }
 
     #[Route('/create', name: 'create', methods: ['POST'])]
-    public function create(): Response
+    public function create(Request $request): Response
     {
         $form = $this->formFactory->createNamed('thelia_state_create', StateType::class, [
-            'locale' => $this->defaultLocale(),
+            'locale' => $request->getLocale(),
         ], []);
 
         return $this->action->submit(

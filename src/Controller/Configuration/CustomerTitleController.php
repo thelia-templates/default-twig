@@ -84,10 +84,10 @@ final class CustomerTitleController
     }
 
     #[Route('/create', name: 'create', methods: ['POST'])]
-    public function create(): Response
+    public function create(Request $request): Response
     {
         $form = $this->formFactory->createNamed('thelia_customer_title_create', CustomerTitleType::class, [
-            'locale' => $this->defaultLocale(),
+            'locale' => $request->getLocale(),
         ], []);
 
         return $this->action->submit(

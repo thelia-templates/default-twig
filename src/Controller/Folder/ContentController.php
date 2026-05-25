@@ -66,10 +66,11 @@ final class ContentController
     }
 
     #[Route('/create', name: 'create', methods: ['POST'])]
-    public function create(): Response
+    public function create(Request $request): Response
     {
         $form = $this->formFactory->createNamed('thelia_content_creation', ContentType::class, [
-            'locale' => $this->defaultLocale(),
+            'locale' => $request->getLocale(),
+            'visible' => true,
         ], []);
 
         return $this->action->submit(

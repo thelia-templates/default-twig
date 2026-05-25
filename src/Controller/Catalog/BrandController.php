@@ -65,20 +65,21 @@ final class BrandController
     }
 
     #[Route('', name: 'default', methods: ['GET'])]
-    public function list(): Response
+    public function list(Request $request): Response
     {
         if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::VIEW)) {
             return $denied;
         }
 
-        return new Response($this->twig->render(self::LIST_TEMPLATE, $this->buildListContext()));
+        return new Response($this->twig->render(self::LIST_TEMPLATE, $this->buildListContext($request)));
     }
 
     #[Route('/create', name: 'create', methods: ['POST'])]
-    public function create(): Response
+    public function create(Request $request): Response
     {
         $form = $this->formFactory->createNamed('thelia_brand_creation', BrandType::class, [
-            'locale' => $this->defaultLocale(),
+            'locale' => $request->getLocale(),
+            'visible' => true,
         ], [
             ]);
 
@@ -332,9 +333,9 @@ final class BrandController
     /**
      * @return array<string, mixed>
      */
-    private function buildListContext(): array
+    private function buildListContext(Request $request): array
     {
-        $locale = $this->defaultLocale();
+        $locale = $request->getLocale();
         $brands = BrandQuery::create()->orderByPosition()->find();
         $rows = [];
 
@@ -346,6 +347,7 @@ final class BrandController
 
         $createForm = $this->formFactory->createNamed('thelia_brand_creation', BrandType::class, [
             'locale' => $locale,
+            'visible' => true,
         ], [
             ]);
 

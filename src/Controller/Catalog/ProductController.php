@@ -93,7 +93,7 @@ final class ProductController
                 'current_category' => $categoryId,
                 'current_search' => $search,
                 'current_order' => $order,
-                'create_form' => $this->buildCreateForm()->createView(),
+                'create_form' => $this->buildCreateForm($request)->createView(),
                 'clone_form' => $this->buildCloneForm()->createView(),
                 'available_categories' => $this->categoryChoices(),
                 'available_currencies' => $this->currencyChoices(),
@@ -103,9 +103,9 @@ final class ProductController
     }
 
     #[Route('/create', name: 'create', methods: ['POST'])]
-    public function create(): Response
+    public function create(Request $request): Response
     {
-        $form = $this->buildCreateForm();
+        $form = $this->buildCreateForm($request);
 
         return $this->action->submit(
             resource: self::RESOURCE,
@@ -291,10 +291,11 @@ final class ProductController
         );
     }
 
-    private function buildCreateForm(): FormInterface
+    private function buildCreateForm(Request $request): FormInterface
     {
         return $this->formFactory->createNamed('thelia_product_creation', ProductType::class, [
-            'locale' => $this->defaultLocale(),
+            'locale' => $request->getLocale(),
+            'visible' => true,
         ], [
             ]);
     }

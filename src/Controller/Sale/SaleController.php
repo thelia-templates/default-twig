@@ -66,28 +66,32 @@ final class SaleController
     }
 
     #[Route('/sales', name: 'default', methods: ['GET'])]
-    public function list(): Response
+    public function list(Request $request): Response
     {
         if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::VIEW)) {
             return $denied;
         }
 
+        $locale = $request->getLocale();
+
         return new Response($this->twig->render(self::LIST_TEMPLATE, [
-            'rows' => $this->listPresenter->build($this->defaultLocale()),
+            'rows' => $this->listPresenter->build($locale),
             'global_actions' => $this->listPresenter->globalActions(),
-            'create_form' => $this->buildCreateForm()->createView(),
+            'create_form' => $this->buildCreateForm($locale)->createView(),
         ]));
     }
 
     #[Route('/sale/create', name: 'create', methods: ['POST'])]
-    public function create(): Response
+    public function create(Request $request): Response
     {
+        $locale = $request->getLocale();
+
         return $this->action->submit(
             resource: self::RESOURCE,
             access: AccessManager::CREATE,
-            form: $this->buildCreateForm(),
+            form: $this->buildCreateForm($locale),
             eventName: TheliaEvents::SALE_CREATE,
-            eventFactory: fn (FormInterface $validated): SaleCreateEvent => $this->eventFactory->createEvent((array) $validated->getData(), $this->defaultLocale()),
+            eventFactory: fn (FormInterface $validated): SaleCreateEvent => $this->eventFactory->createEvent((array) $validated->getData(), $locale),
             actionLabel: 'Sale creation',
             successRoute: self::LIST_ROUTE,
             renderError: fn (): RedirectResponse => new RedirectResponse($this->urls->generate(self::LIST_ROUTE)),
@@ -208,10 +212,10 @@ final class SaleController
         return new JsonResponse(['products' => $this->sales->findProductsInCategories($categoryIds, $this->defaultLocale())]);
     }
 
-    private function buildCreateForm(): FormInterface
+    private function buildCreateForm(string $locale): FormInterface
     {
         return $this->formFactory->createNamed('thelia_sale_creation', SaleCreateType::class, [
-            'locale' => $this->defaultLocale(),
+            'locale' => $locale,
         ]);
     }
 

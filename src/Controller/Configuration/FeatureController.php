@@ -78,10 +78,10 @@ final class FeatureController
     }
 
     #[Route('/create', name: 'create', methods: ['POST'])]
-    public function create(): Response
+    public function create(Request $request): Response
     {
         $form = $this->formFactory->createNamed('thelia_feature_creation', FeatureType::class, [
-            'locale' => $this->defaultLocale(),
+            'locale' => $request->getLocale(),
         ], [
             'include_creation_extras' => true,
             ]);
