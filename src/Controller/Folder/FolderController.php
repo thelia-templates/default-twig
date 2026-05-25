@@ -16,6 +16,7 @@ namespace BackOfficeDefaultTwigBundle\Controller\Folder;
 
 use BackOfficeDefaultTwigBundle\Form\Folder\FolderSeoType;
 use BackOfficeDefaultTwigBundle\Form\Folder\FolderType;
+use BackOfficeDefaultTwigBundle\Repository\FolderRepository;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
@@ -38,7 +39,6 @@ use Thelia\Core\Event\UpdateSeoEvent;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
 use Thelia\Model\Folder;
-use Thelia\Model\FolderQuery;
 use Thelia\Model\LangQuery;
 use Thelia\Tools\TokenProvider;
 use Twig\Environment;
@@ -61,6 +61,7 @@ final class FolderController
         private readonly TokenProvider $tokens,
         private readonly TranslatorInterface $translator,
         private readonly EditLocaleResolver $editLocale,
+        private readonly FolderRepository $folderRepository,
     ) {
     }
 
@@ -255,11 +256,8 @@ final class FolderController
     private function buildListContext(int $parentId): array
     {
         $locale = $this->defaultLocale();
-        $folders = FolderQuery::create()->filterByParent($parentId)->orderByPosition()->find();
         $rows = [];
-        foreach ($folders as $folder) {
-            \assert($folder instanceof Folder);
-            $folder->setLocale($locale);
+        foreach ($this->folderRepository->findChildrenOrderedByPosition($parentId, $locale) as $folder) {
             $rows[] = $this->folderToRow($folder);
         }
 
@@ -288,12 +286,20 @@ final class FolderController
             new RowAction(kind: 'delete', label: $this->translator->trans('Delete'), modalTarget: '#folder-delete-modal', grantedAttribute: AccessManager::DELETE, grantedSubject: self::RESOURCE, dataAttributes: ['folder-id' => $id, 'folder-label' => (string) $folder->getTitle()]),
         ];
 
+        $title = (string) $folder->getTitle();
+        $browseUrl = $this->urls->generate(self::LIST_ROUTE, ['folder_id' => $id]);
+
         return [
             'id' => $id,
-            'title' => (string) $folder->getTitle(),
+            'title' => $title,
+            'title_html' => \sprintf(
+                '<a href="%s" class="text-decoration-none fw-medium">%s</a>',
+                htmlspecialchars($browseUrl, \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8'),
+                htmlspecialchars($title, \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8'),
+            ),
             'visible' => (bool) $folder->getVisible(),
             'position' => (int) $folder->getPosition(),
-            'children_url' => $this->urls->generate(self::LIST_ROUTE, ['folder_id' => $id]),
+            'children_url' => $browseUrl,
             'toggle_visible_url' => $this->tokenizedUrl('admin.folders.toggle-online', ['folder_id' => $id]),
             '_actions' => $actions,
         ];

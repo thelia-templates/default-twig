@@ -43,7 +43,7 @@
             id: 'folders',
             columns: [
                 column('id', 'ID'|trans),
-                column('title', 'Title'|trans),
+                column_html('title_html', 'Title'|trans),
                 column_toggle('visible', 'Online'|trans, 'toggle_visible_url'),
                 column('position', 'Position'|trans, 'center'),
                 column_actions('_actions', 'Actions'|trans),
@@ -57,12 +57,6 @@
                 'data-bo-sortable-param-name-value': 'folder_id',
             },
         }) }}
-
-        {% for row in rows %}
-            <div class="d-none">
-                <a href="{{ row.children_url }}" data-testid="folder-children-link-{{ row.id }}">{{ 'Subfolders'|trans }}</a>
-            </div>
-        {% endfor %}
     </div>
 
     {{ safe_hook('folders.bottom') }}
