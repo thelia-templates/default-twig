@@ -1,0 +1,55 @@
+{#
+    BoConfirmDialog — modal confirmation/deletion dialog wrapping a POST form.
+
+    Replaces the repeated _delete_modal.html.twig pattern (bo-prefill-modal + assignToken + safe_hook).
+
+    Props:
+        id           the modal id (required)
+        title        header title, translated through |trans (required)
+        formAction   form action URL (required)
+        message      confirmation sentence shown in the body, |trans (default: none)
+        method       form method (default: post)
+        variant      confirm button colour: danger|primary|warning (default: danger)
+        confirmLabel confirm button label, |trans (default: Delete when danger, else Confirm)
+        cancelLabel  cancel button label, |trans (default: Cancel)
+        confirmIcon  confirm button icon class (default: bi-trash when danger, else bi-check2)
+        token        append ?_token= to the action (default: true)
+        size         modal-dialog size class, e.g. modal-lg (default: none)
+        testid       base data-testid: appends -form / -submit (default: none)
+        hook         a hook name rendered through safe_hook in the body (default: none)
+        prefillTrigger / prefillInput  wire bo-prefill-modal to inject the row id (default: none)
+
+    Override the body for custom hidden inputs:
+        {% component 'BoConfirmDialog' with { ... } %}{% block body %}…{% endblock %}{% endcomponent %}
+#}
+<div class="modal fade" id="{{ id }}" tabindex="-1" aria-labelledby="{{ id }}-title" aria-hidden="true"
+    {%- if prefillTrigger and prefillInput %}
+     data-controller="bo-prefill-modal"
+     data-bo-prefill-modal-source-trigger-value="{{ prefillTrigger }}"
+     data-bo-prefill-modal-target-input-value="{{ prefillInput }}"
+    {%- endif %}>
+    <div class="modal-dialog{% if size %} {{ size }}{% endif %}">
+        <div class="modal-content">
+            <form action="{{ formAction }}{% if token %}?_token={{ assignToken() }}{% endif %}" method="{{ method }}"{% if testid %} data-testid="{{ testid }}-form"{% endif %}>
+                <div class="modal-header">
+                    <h2 class="modal-title h5" id="{{ id }}-title">{{ title|trans }}</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'Close'|trans }}"></button>
+                </div>
+                <div class="modal-body">
+                    {% block body %}
+                        {% if message %}<p class="mb-0">{{ message|trans }}</p>{% endif %}
+                        {% if prefillInput %}<input type="hidden" name="{{ prefillInput }}" value="" data-bo-prefill-modal-target="input">{% endif %}
+                        {% if hook %}{{ safe_hook(hook) }}{% endif %}
+                    {% endblock %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ cancelLabel|trans }}</button>
+                    <button type="submit" class="btn btn-{{ variant }}"{% if testid %} data-testid="{{ testid }}-submit"{% endif %}>
+                        <i class="bi {{ confirmIcon ?? (variant == 'danger' ? 'bi-trash' : 'bi-check2') }}" aria-hidden="true"></i>
+                        {{ (confirmLabel ?? (variant == 'danger' ? 'Delete' : 'Confirm'))|trans }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
