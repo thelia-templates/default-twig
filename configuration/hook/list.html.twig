@@ -81,55 +81,37 @@
     {{ safe_hook('hooks.bottom', { location: 'hooks_bottom' }) }}
 
     {# Create modal #}
-    <div class="modal fade" id="hook-create-modal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                {{ form_start(create_form, { attr: { action: path('admin.hook.create'), 'data-testid': 'hook-create-form' } }) }}
-                    <div class="modal-header">
-                        <h5 class="modal-title">{{ 'Create a new Hook'|trans }}</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'Close'|trans }}"></button>
-                    </div>
-                    <div class="modal-body">
-                        {{ form_row(create_form.code) }}
-                        {{ form_row(create_form.type) }}
-                        {{ form_row(create_form.title) }}
-                        {{ form_row(create_form.active) }}
-                        {{ safe_hook('hook.create-form', { location: 'hook_create_form' }) }}
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'Cancel'|trans }}</button>
-                        <button type="submit" class="btn btn-primary">{{ 'Create this hook'|trans }}</button>
-                    </div>
-                {{ form_end(create_form) }}
-            </div>
-        </div>
-    </div>
+    {% component 'BoCreateDialog' with {
+        id: 'hook-create-modal',
+        title: 'Create a new Hook',
+        form: create_form,
+        formAction: path('admin.hook.create'),
+        submitLabel: 'Create this hook',
+        testid: 'hook-create',
+        hook: 'hook.create-form',
+        hookContext: { location: 'hook_create_form' },
+        size: '',
+    } %}
+        {% block fields %}
+            {{ form_row(create_form.code) }}
+            {{ form_row(create_form.type) }}
+            {{ form_row(create_form.title) }}
+            {{ form_row(create_form.active) }}
+        {% endblock %}
+    {% endcomponent %}
 
     {# Delete modal #}
-    <div class="modal fade" id="hook-delete-modal" tabindex="-1" aria-hidden="true"
-         data-controller="bo-prefill-modal"
-         data-bo-prefill-modal-source-trigger-value="data-hook-id"
-         data-bo-prefill-modal-target-input-value="hook_id">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <form method="POST" action="{{ path('admin.hook.delete') }}?_token={{ assignToken() }}" data-testid="hook-delete-form">
-                    <div class="modal-header">
-                        <h5 class="modal-title">{{ 'Delete hook'|trans }}</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'Close'|trans }}"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p>{{ 'Do you really want to delete this hook ?'|trans }}</p>
-                        <input type="hidden" name="hook_id" data-bo-prefill-modal-target="input">
-                        {{ safe_hook('hook.delete-form', { location: 'hook_delete_form' }) }}
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'Cancel'|trans }}</button>
-                        <button type="submit" class="btn btn-danger">{{ 'Delete'|trans }}</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+    {{ component('BoConfirmDialog', {
+        id: 'hook-delete-modal',
+        title: 'Delete hook',
+        formAction: path('admin.hook.delete'),
+        message: 'Do you really want to delete this hook ?',
+        testid: 'hook-delete',
+        hook: 'hook.delete-form',
+        hookContext: { location: 'hook_delete_form' },
+        prefillTrigger: 'data-hook-id',
+        prefillInput: 'hook_id',
+    }) }}
 {% endblock %}
 
 {% block scripts_extra %}

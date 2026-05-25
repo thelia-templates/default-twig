@@ -48,61 +48,37 @@
 
     {{ safe_hook('attributes.bottom') }}
 
-    <div class="modal fade" id="attribute-create-modal" tabindex="-1" aria-labelledby="attribute-create-modal-title" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                {{ form_start(create_form, { action: path('admin.configuration.attributes.create'), method: 'post', attr: { 'data-testid': 'attribute-create-form' } }) }}
-                    <div class="modal-header">
-                        <h2 class="modal-title h5" id="attribute-create-modal-title">{{ 'Create a new attribute'|trans }}</h2>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'Close'|trans }}"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            {{ form_label(create_form.title) }}
-                            {{ form_widget(create_form.title, { attr: { class: 'form-control' } }) }}
-                            {{ form_errors(create_form.title) }}
-                        </div>
-                        <div class="form-check mb-3">
-                            {{ form_widget(create_form.add_to_all, { attr: { class: 'form-check-input' } }) }}
-                            {{ form_label(create_form.add_to_all, null, { label_attr: { class: 'form-check-label' } }) }}
-                        </div>
-                        {{ form_widget(create_form.locale) }}
-                        {{ safe_hook('attribute.create-form') }}
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'Cancel'|trans }}</button>
-                        <button type="submit" class="btn btn-primary" data-testid="attribute-create-submit">
-                            <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Create'|trans }}
-                        </button>
-                    </div>
-                {{ form_end(create_form) }}
+    {% component 'BoCreateDialog' with {
+        id: 'attribute-create-modal',
+        title: 'Create a new attribute',
+        form: create_form,
+        formAction: path('admin.configuration.attributes.create'),
+        submitLabel: 'Create',
+        testid: 'attribute-create',
+        hook: 'attribute.create-form',
+        size: '',
+    } %}
+        {% block fields %}
+            <div class="mb-3">
+                {{ form_label(create_form.title) }}
+                {{ form_widget(create_form.title, { attr: { class: 'form-control' } }) }}
+                {{ form_errors(create_form.title) }}
             </div>
-        </div>
-    </div>
+            <div class="form-check mb-3">
+                {{ form_widget(create_form.add_to_all, { attr: { class: 'form-check-input' } }) }}
+                {{ form_label(create_form.add_to_all, null, { label_attr: { class: 'form-check-label' } }) }}
+            </div>
+            {{ form_widget(create_form.locale) }}
+        {% endblock %}
+    {% endcomponent %}
 
-    <div class="modal fade" id="attribute-delete-modal" tabindex="-1" aria-labelledby="attribute-delete-modal-title" aria-hidden="true"
-         data-controller="bo-prefill-modal"
-         data-bo-prefill-modal-source-trigger-value="data-attribute-id"
-         data-bo-prefill-modal-target-input-value="attribute_id">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <form action="{{ path('admin.configuration.attributes.delete') }}?_token={{ assignToken() }}" method="post" data-testid="attribute-delete-form">
-                    <div class="modal-header">
-                        <h2 class="modal-title h5" id="attribute-delete-modal-title">{{ 'Delete attribute'|trans }}</h2>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'Close'|trans }}"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p>{{ 'Do you really want to delete this attribute?'|trans }}</p>
-                        <input type="hidden" name="attribute_id" value="" data-bo-prefill-modal-target="input">
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'Cancel'|trans }}</button>
-                        <button type="submit" class="btn btn-danger" data-testid="attribute-delete-submit">
-                            <i class="bi bi-trash" aria-hidden="true"></i> {{ 'Delete'|trans }}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+    {{ component('BoConfirmDialog', {
+        id: 'attribute-delete-modal',
+        title: 'Delete attribute',
+        formAction: path('admin.configuration.attributes.delete'),
+        message: 'Do you really want to delete this attribute?',
+        testid: 'attribute-delete',
+        prefillTrigger: 'data-attribute-id',
+        prefillInput: 'attribute_id',
+    }) }}
 {% endblock %}

@@ -44,95 +44,62 @@
 
     {{ safe_hook('administrators.bottom') }}
 
-    <div class="modal fade" id="administrator-create-modal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content">
-                {{ form_start(create_form, { action: path('admin.configuration.administrators.add'), method: 'post', attr: { 'data-testid': 'administrator-create-form' } }) }}
-                    <div class="modal-header">
-                        <h2 class="modal-title h5">{{ 'Create a new administrator'|trans }}</h2>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'Close'|trans }}"></button>
-                    </div>
-                    <div class="modal-body">
-                        {{ form_widget(create_form.locale) }}
-                        <div class="row g-3">
-                            <div class="col-md-6">{{ form_row(create_form.login) }}</div>
-                            <div class="col-md-6">{{ form_row(create_form.email) }}</div>
-                            <div class="col-md-6">{{ form_row(create_form.firstname) }}</div>
-                            <div class="col-md-6">{{ form_row(create_form.lastname) }}</div>
-                            <div class="col-md-6">{{ form_row(create_form.password) }}</div>
-                            <div class="col-md-6">{{ form_row(create_form.profile) }}</div>
-                        </div>
-                        {{ safe_hook('administrator.create-form') }}
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'Cancel'|trans }}</button>
-                        <button type="submit" class="btn btn-primary" data-testid="administrator-create-submit">
-                            <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Create this administrator'|trans }}
-                        </button>
-                    </div>
-                {{ form_end(create_form) }}
+    {% component 'BoCreateDialog' with {
+        id: 'administrator-create-modal',
+        title: 'Create a new administrator',
+        form: create_form,
+        formAction: path('admin.configuration.administrators.add'),
+        submitLabel: 'Create this administrator',
+        testid: 'administrator-create',
+        hook: 'administrator.create-form',
+    } %}
+        {% block fields %}
+            {{ form_widget(create_form.locale) }}
+            <div class="row g-3">
+                <div class="col-md-6">{{ form_row(create_form.login) }}</div>
+                <div class="col-md-6">{{ form_row(create_form.email) }}</div>
+                <div class="col-md-6">{{ form_row(create_form.firstname) }}</div>
+                <div class="col-md-6">{{ form_row(create_form.lastname) }}</div>
+                <div class="col-md-6">{{ form_row(create_form.password) }}</div>
+                <div class="col-md-6">{{ form_row(create_form.profile) }}</div>
             </div>
-        </div>
-    </div>
+        {% endblock %}
+    {% endcomponent %}
 
     {% for admin_id, edit_form in edit_forms %}
-        <div class="modal fade" id="administrator-edit-modal-{{ admin_id }}" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-lg modal-dialog-scrollable">
-                <div class="modal-content">
-                    {{ form_start(edit_form, { action: path('admin.configuration.administrators.save'), method: 'post', attr: { 'data-testid': 'administrator-edit-form-' ~ admin_id } }) }}
-                        <div class="modal-header">
-                            <h2 class="modal-title h5">{{ 'Edit administrator'|trans }}</h2>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'Close'|trans }}"></button>
-                        </div>
-                        <div class="modal-body">
-                            {{ form_widget(edit_form.id) }}
-                            {{ form_widget(edit_form.locale) }}
-                            <div class="row g-3">
-                                <div class="col-md-6">{{ form_row(edit_form.login) }}</div>
-                                <div class="col-md-6">{{ form_row(edit_form.email) }}</div>
-                                <div class="col-md-6">{{ form_row(edit_form.firstname) }}</div>
-                                <div class="col-md-6">{{ form_row(edit_form.lastname) }}</div>
-                                <div class="col-md-6">{{ form_row(edit_form.password) }}</div>
-                                <div class="col-md-6">{{ form_row(edit_form.profile) }}</div>
-                            </div>
-                            {{ safe_hook('administrator.edit-form', { administrator_id: admin_id }) }}
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'Cancel'|trans }}</button>
-                            <button type="submit" class="btn btn-primary" data-testid="administrator-edit-submit-{{ admin_id }}">
-                                <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save changes'|trans }}
-                            </button>
-                        </div>
-                    {{ form_end(edit_form) }}
+        {% component 'BoCreateDialog' with {
+            id: 'administrator-edit-modal-' ~ admin_id,
+            title: 'Edit administrator',
+            form: edit_form,
+            formAction: path('admin.configuration.administrators.save'),
+            submitLabel: 'Save changes',
+            testid: 'administrator-edit-' ~ admin_id,
+            hook: 'administrator.edit-form',
+            hookContext: { administrator_id: admin_id },
+        } %}
+            {% block fields %}
+                {{ form_widget(edit_form.id) }}
+                {{ form_widget(edit_form.locale) }}
+                <div class="row g-3">
+                    <div class="col-md-6">{{ form_row(edit_form.login) }}</div>
+                    <div class="col-md-6">{{ form_row(edit_form.email) }}</div>
+                    <div class="col-md-6">{{ form_row(edit_form.firstname) }}</div>
+                    <div class="col-md-6">{{ form_row(edit_form.lastname) }}</div>
+                    <div class="col-md-6">{{ form_row(edit_form.password) }}</div>
+                    <div class="col-md-6">{{ form_row(edit_form.profile) }}</div>
                 </div>
-            </div>
-        </div>
+            {% endblock %}
+        {% endcomponent %}
     {% endfor %}
 
-    <div class="modal fade" id="administrator-delete-modal" tabindex="-1" aria-hidden="true"
-         data-controller="bo-prefill-modal"
-         data-bo-prefill-modal-source-trigger-value="data-administrator-id"
-         data-bo-prefill-modal-target-input-value="administrator_id">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <form action="{{ path('admin.configuration.administrators.delete') }}?_token={{ assignToken() }}" method="post" data-testid="administrator-delete-form">
-                    <div class="modal-header">
-                        <h2 class="modal-title h5">{{ 'Delete administrator'|trans }}</h2>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'Close'|trans }}"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p>{{ 'Do you really want to delete this administrator?'|trans }}</p>
-                        <input type="hidden" name="administrator_id" value="" data-bo-prefill-modal-target="input">
-                        {{ safe_hook('administrator.delete-form') }}
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'Cancel'|trans }}</button>
-                        <button type="submit" class="btn btn-danger" data-testid="administrator-delete-submit">
-                            <i class="bi bi-trash" aria-hidden="true"></i> {{ 'Delete'|trans }}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+    {{ component('BoConfirmDialog', {
+        id: 'administrator-delete-modal',
+        title: 'Delete administrator',
+        formAction: path('admin.configuration.administrators.delete'),
+        message: 'Do you really want to delete this administrator?',
+        testid: 'administrator-delete',
+        hook: 'administrator.delete-form',
+        prefillTrigger: 'data-administrator-id',
+        prefillInput: 'administrator_id',
+    }) }}
 {% endblock %}

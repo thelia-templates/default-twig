@@ -155,29 +155,15 @@
         </div>
     </div>
 
-    <div class="modal fade" id="product-delete-modal" tabindex="-1" aria-labelledby="product-delete-modal-title" aria-hidden="true"
-         data-controller="bo-prefill-modal"
-         data-bo-prefill-modal-source-trigger-value="data-product-id"
-         data-bo-prefill-modal-target-input-value="product_id">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <form action="{{ path('admin.products.delete') }}?_token={{ assignToken() }}" method="post" data-testid="product-delete-form">
-                    <div class="modal-header">
-                        <h2 class="modal-title h5" id="product-delete-modal-title">{{ 'Delete product'|trans }}</h2>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'Close'|trans }}"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p>{{ 'Do you really want to delete this product?'|trans }}</p>
-                        <input type="hidden" name="product_id" value="" data-bo-prefill-modal-target="input">
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'Cancel'|trans }}</button>
-                        <button type="submit" class="btn btn-danger" data-testid="product-delete-submit">{{ 'Delete'|trans }}</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+    {{ component('BoConfirmDialog', {
+        id: 'product-delete-modal',
+        title: 'Delete product',
+        formAction: path('admin.products.delete'),
+        message: 'Do you really want to delete this product?',
+        testid: 'product-delete',
+        prefillTrigger: 'data-product-id',
+        prefillInput: 'product_id',
+    }) }}
 
     <div class="modal fade" id="product-clone-modal" tabindex="-1" aria-hidden="true"
          data-controller="bo-prefill-modal"

@@ -65,30 +65,17 @@
     </div>
 
     {# Delete modal #}
-    <div class="modal fade" id="shipping-configuration-delete-modal" tabindex="-1" aria-hidden="true"
-         data-controller="bo-prefill-modal"
-         data-bo-prefill-modal-source-trigger-value="data-area-id"
-         data-bo-prefill-modal-target-input-value="area_id">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <form method="POST" action="{{ path('admin.configuration.shipping-configuration.delete') }}?_token={{ assignToken() }}" data-testid="shipping-configuration-delete-form">
-                    <div class="modal-header">
-                        <h5 class="modal-title">{{ 'Delete shipping zone'|trans }}</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'Close'|trans }}"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p>{{ 'Do you really want to delete this shipping zone ?'|trans }}</p>
-                        <input type="hidden" name="area_id" data-bo-prefill-modal-target="input">
-                        {{ safe_hook('shipping-configuration.delete-form', { location: 'shipping_configuration_delete_form' }) }}
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'Cancel'|trans }}</button>
-                        <button type="submit" class="btn btn-danger">{{ 'Delete'|trans }}</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+    {{ component('BoConfirmDialog', {
+        id: 'shipping-configuration-delete-modal',
+        title: 'Delete shipping zone',
+        formAction: path('admin.configuration.shipping-configuration.delete'),
+        message: 'Do you really want to delete this shipping zone ?',
+        testid: 'shipping-configuration-delete',
+        hook: 'shipping-configuration.delete-form',
+        hookContext: { location: 'shipping_configuration_delete_form' },
+        prefillTrigger: 'data-area-id',
+        prefillInput: 'area_id',
+    }) }}
 {% endblock %}
 
 {% block scripts_extra %}

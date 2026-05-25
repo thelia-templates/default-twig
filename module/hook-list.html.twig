@@ -241,25 +241,17 @@
         </div>
     </div>
 
-    <div class="modal fade" id="module-hook-delete-modal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <form method="post" action="{{ delete_url }}?_token={{ delete_token }}" data-testid="module-hook-delete-form">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h1 class="modal-title fs-5">{{ 'Delete a module hook'|trans }}</h1>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'Close'|trans }}"></button>
-                    </div>
-                    <div class="modal-body">
-                        <input type="hidden" name="module_hook_id" data-bo-module-hooks-target="deleteInput">
-                        <p>{{ 'Do you really want to remove this module from the hook?'|trans }}</p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'Cancel'|trans }}</button>
-                        <button type="submit" class="btn btn-danger" data-testid="module-hook-delete-confirm">{{ 'Delete'|trans }}</button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
+    {% component 'BoConfirmDialog' with {
+        id: 'module-hook-delete-modal',
+        title: 'Delete a module hook',
+        formAction: delete_url ~ '?_token=' ~ delete_token,
+        token: false,
+        testid: 'module-hook-delete',
+    } %}
+        {% block body %}
+            <p class="mb-0">{{ 'Do you really want to remove this module from the hook?'|trans }}</p>
+            <input type="hidden" name="module_hook_id" data-bo-module-hooks-target="deleteInput">
+        {% endblock %}
+    {% endcomponent %}
     </div>
 {% endblock %}

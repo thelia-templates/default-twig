@@ -207,30 +207,19 @@
         {% endif %}
     {% endif %}
 
-    <div class="modal fade" id="pse-delete-modal" tabindex="-1" aria-hidden="true"
-         data-controller="bo-prefill-modal"
-         data-bo-prefill-modal-source-trigger-value="data-pse-id"
-         data-bo-prefill-modal-target-input-value="product_sale_element_id">
-        <div class="modal-dialog">
-            <form method="post" action="{{ path('admin.product.combination.delete') }}?_token={{ assignToken() }}">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h1 class="modal-title fs-5">{{ 'Delete combination'|trans }}</h1>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'Close'|trans }}"></button>
-                    </div>
-                    <div class="modal-body">
-                        <input type="hidden" name="product_id" value="{{ product.id }}">
-                        <input type="hidden" name="product_sale_element_id" data-bo-prefill-modal-target="input">
-                        <p>{{ 'Are you sure you want to delete this combination?'|trans }}</p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'Cancel'|trans }}</button>
-                        <button type="submit" class="btn btn-danger">{{ 'Delete'|trans }}</button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
+    {% component 'BoConfirmDialog' with {
+        id: 'pse-delete-modal',
+        title: 'Delete combination',
+        formAction: path('admin.product.combination.delete'),
+        prefillTrigger: 'data-pse-id',
+        prefillInput: 'product_sale_element_id',
+    } %}
+        {% block body %}
+            <input type="hidden" name="product_id" value="{{ product.id }}">
+            <input type="hidden" name="product_sale_element_id" data-bo-prefill-modal-target="input">
+            <p class="mb-0">{{ 'Are you sure you want to delete this combination?'|trans }}</p>
+        {% endblock %}
+    {% endcomponent %}
 
     {% if template_attributes is not empty %}
         <div class="modal fade" id="combination-creation-modal" tabindex="-1" aria-hidden="true">

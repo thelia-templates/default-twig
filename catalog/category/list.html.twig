@@ -128,53 +128,25 @@
         </div>
     </div>
 
-    <div class="modal fade" id="category-delete-modal" tabindex="-1" aria-labelledby="category-delete-modal-title" aria-hidden="true"
-         data-controller="bo-prefill-modal"
-         data-bo-prefill-modal-source-trigger-value="data-category-id"
-         data-bo-prefill-modal-target-input-value="category_id">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <form action="{{ path('admin.categories.delete') }}?_token={{ assignToken() }}" method="post" data-testid="category-delete-form">
-                    <div class="modal-header">
-                        <h2 class="modal-title h5" id="category-delete-modal-title">{{ 'Delete category'|trans }}</h2>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'Close'|trans }}"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p>{{ 'Do you really want to delete this category? Subcategories and products are not deleted but become orphaned.'|trans }}</p>
-                        <input type="hidden" name="category_id" value="" data-bo-prefill-modal-target="input">
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'Cancel'|trans }}</button>
-                        <button type="submit" class="btn btn-danger" data-testid="category-delete-submit">{{ 'Delete'|trans }}</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+    {{ component('BoConfirmDialog', {
+        id: 'category-delete-modal',
+        title: 'Delete category',
+        formAction: path('admin.categories.delete'),
+        message: 'Do you really want to delete this category? Subcategories and products are not deleted but become orphaned.',
+        testid: 'category-delete',
+        prefillTrigger: 'data-category-id',
+        prefillInput: 'category_id',
+    }) }}
 
     {% if parent_id > 0 %}
-        <div class="modal fade" id="category-product-delete-modal" tabindex="-1" aria-labelledby="category-product-delete-modal-title" aria-hidden="true"
-             data-controller="bo-prefill-modal"
-             data-bo-prefill-modal-source-trigger-value="data-product-id"
-             data-bo-prefill-modal-target-input-value="product_id">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <form action="{{ path('admin.products.delete') }}?_token={{ assignToken() }}" method="post" data-testid="category-product-delete-form">
-                        <div class="modal-header">
-                            <h2 class="modal-title h5" id="category-product-delete-modal-title">{{ 'Delete product'|trans }}</h2>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'Close'|trans }}"></button>
-                        </div>
-                        <div class="modal-body">
-                            <p>{{ 'Do you really want to delete this product?'|trans }}</p>
-                            <input type="hidden" name="product_id" value="" data-bo-prefill-modal-target="input">
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'Cancel'|trans }}</button>
-                            <button type="submit" class="btn btn-danger" data-testid="category-product-delete-submit">{{ 'Delete'|trans }}</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
+        {{ component('BoConfirmDialog', {
+            id: 'category-product-delete-modal',
+            title: 'Delete product',
+            formAction: path('admin.products.delete'),
+            message: 'Do you really want to delete this product?',
+            testid: 'category-product-delete',
+            prefillTrigger: 'data-product-id',
+            prefillInput: 'product_id',
+        }) }}
     {% endif %}
 {% endblock %}

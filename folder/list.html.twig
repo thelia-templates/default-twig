@@ -98,27 +98,13 @@
         </div>
     </div>
 
-    <div class="modal fade" id="folder-delete-modal" tabindex="-1" aria-labelledby="folder-delete-modal-title" aria-hidden="true"
-         data-controller="bo-prefill-modal"
-         data-bo-prefill-modal-source-trigger-value="data-folder-id"
-         data-bo-prefill-modal-target-input-value="folder_id">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <form action="{{ path('admin.folders.delete') }}?_token={{ assignToken() }}" method="post" data-testid="folder-delete-form">
-                    <div class="modal-header">
-                        <h2 class="modal-title h5" id="folder-delete-modal-title">{{ 'Delete folder'|trans }}</h2>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'Close'|trans }}"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p>{{ 'Do you really want to delete this folder? Subfolders and products are not deleted but become orphaned.'|trans }}</p>
-                        <input type="hidden" name="folder_id" value="" data-bo-prefill-modal-target="input">
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'Cancel'|trans }}</button>
-                        <button type="submit" class="btn btn-danger" data-testid="folder-delete-submit">{{ 'Delete'|trans }}</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+    {{ component('BoConfirmDialog', {
+        id: 'folder-delete-modal',
+        title: 'Delete folder',
+        formAction: path('admin.folders.delete'),
+        message: 'Do you really want to delete this folder? Subfolders and products are not deleted but become orphaned.',
+        testid: 'folder-delete',
+        prefillTrigger: 'data-folder-id',
+        prefillInput: 'folder_id',
+    }) }}
 {% endblock %}

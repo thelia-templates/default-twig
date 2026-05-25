@@ -54,28 +54,14 @@
 
     {{ safe_hook('coupon.bottom') }}
 
-    <div class="modal fade" id="coupon-delete-modal" tabindex="-1" aria-labelledby="coupon-delete-modal-label" aria-hidden="true"
-         data-controller="bo-prefill-modal"
-         data-bo-prefill-modal-source-trigger-value="data-coupon-id"
-         data-bo-prefill-modal-target-input-value="coupon_id">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <form action="{{ path('admin.coupon.delete') }}?_token={{ assignToken() }}" method="post" data-testid="coupon-delete-form">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="coupon-delete-modal-label">{{ 'Delete coupon'|trans }}</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'Close'|trans }}"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p>{{ 'Do you really want to delete this coupon ?'|trans }}</p>
-                        <input type="hidden" name="coupon_id" value="" data-bo-prefill-modal-target="input">
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ 'Cancel'|trans }}</button>
-                        <button type="submit" class="btn btn-danger" data-testid="coupon-delete-submit">{{ 'Delete'|trans }}</button>
-                    </div>
-                    {{ safe_hook('coupon.delete-form') }}
-                </form>
-            </div>
-        </div>
-    </div>
+    {{ component('BoConfirmDialog', {
+        id: 'coupon-delete-modal',
+        title: 'Delete coupon',
+        formAction: path('admin.coupon.delete'),
+        message: 'Do you really want to delete this coupon ?',
+        testid: 'coupon-delete',
+        hook: 'coupon.delete-form',
+        prefillTrigger: 'data-coupon-id',
+        prefillInput: 'coupon_id',
+    }) }}
 {% endblock %}

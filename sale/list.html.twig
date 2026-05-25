@@ -116,29 +116,16 @@
         </div>
     </div>
 
-    <div class="modal fade" id="sale-delete-modal" tabindex="-1" aria-hidden="true"
-         data-controller="bo-prefill-modal"
-         data-bo-prefill-modal-source-trigger-value="data-sale-id"
-         data-bo-prefill-modal-target-input-value="sale_id">
-        <div class="modal-dialog">
-            <form method="post" action="{{ global_actions.delete_url }}?_token={{ global_actions.delete_token }}" data-testid="sale-delete-form">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h1 class="modal-title fs-5">{{ 'Delete sale'|trans }}</h1>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'Close'|trans }}"></button>
-                    </div>
-                    <div class="modal-body">
-                        <input type="hidden" name="sale_id" data-bo-prefill-modal-target="input">
-                        <p>{{ 'Do you really want to delete this sale?'|trans }}</p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'Cancel'|trans }}</button>
-                        <button type="submit" class="btn btn-danger" data-testid="sale-delete-confirm">{{ 'Delete'|trans }}</button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
+    {{ component('BoConfirmDialog', {
+        id: 'sale-delete-modal',
+        title: 'Delete sale',
+        formAction: global_actions.delete_url ~ '?_token=' ~ global_actions.delete_token,
+        token: false,
+        message: 'Do you really want to delete this sale?',
+        testid: 'sale-delete',
+        prefillTrigger: 'data-sale-id',
+        prefillInput: 'sale_id',
+    }) }}
 
     {{ safe_hook('sales.bottom', { location: 'sales_bottom' }) }}
 {% endblock %}
