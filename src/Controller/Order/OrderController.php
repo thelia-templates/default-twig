@@ -18,7 +18,8 @@ use BackOfficeDefaultTwigBundle\Repository\OrderRepository;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\Service\Order\OrderDetailContextBuilder;
-use BackOfficeDefaultTwigBundle\Service\Order\OrderListFilters;
+use BackOfficeDefaultTwigBundle\Service\Order\OrderFilterPresenter;
+use BackOfficeDefaultTwigBundle\Service\Order\OrderFilters;
 use BackOfficeDefaultTwigBundle\Service\Order\OrderListRowPresenter;
 use BackOfficeDefaultTwigBundle\Service\Pdf\OrderPdfRenderer;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
@@ -36,11 +37,9 @@ use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
 use Thelia\Model\CountryQuery;
 use Thelia\Model\CustomerTitleQuery;
-use Thelia\Model\LangQuery;
 use Thelia\Model\Order;
 use Thelia\Model\OrderAddressQuery;
 use Thelia\Model\OrderQuery;
-use Thelia\Model\OrderStatusQuery;
 use Thelia\Model\StateQuery;
 use Thelia\Tools\TokenProvider;
 use Twig\Environment;
@@ -67,7 +66,7 @@ final class OrderController
         private readonly OrderDetailContextBuilder $detailContextBuilder,
         private readonly OrderRepository $orderRepository,
         private readonly OrderListRowPresenter $rowPresenter,
-        private readonly OrderListFilters $listFilters,
+        private readonly OrderFilterPresenter $filterPresenter,
     ) {
     }
 
@@ -79,20 +78,10 @@ final class OrderController
         }
 
         $page = max(1, (int) $request->query->get('page', 1));
-        $statusId = (int) $request->query->get('status_id', 0);
-        $search = trim((string) $request->query->get('q', ''));
         $locale = $request->getLocale();
-        $filters = $this->listFilters->fromRequest($request);
+        $filters = OrderFilters::fromRequest($request);
 
-        $paginated = $this->orderRepository->findPaginated(
-            page: $page,
-            perPage: self::PAGE_SIZE,
-            statusId: $statusId > 0 ? $statusId : null,
-            search: $search !== '' ? $search : null,
-            orderBy: $filters['order'],
-            direction: $filters['direction'],
-            createdSince: $filters['created_since'],
-        );
+        $paginated = $this->orderRepository->findPaginated($filters, $page, self::PAGE_SIZE);
 
         $rows = [];
         foreach ($paginated['rows'] as $order) {
@@ -105,13 +94,8 @@ final class OrderController
             'total' => $paginated['total'],
             'pages' => $paginated['lastPage'],
             'current_page' => min($page, $paginated['lastPage']),
-            'current_status' => $statusId,
-            'current_search' => $search,
-            'current_period' => $filters['period'],
-            'current_order' => $filters['order'],
-            'current_direction' => $filters['direction'],
-            'quick_filters' => $filters['chips'],
-            'available_statuses' => $this->statusChoices($locale),
+            'filters' => $this->filterPresenter->present($filters, $locale),
+            'query_params' => $filters->toQueryParams(),
         ]));
     }
 
@@ -423,10 +407,4 @@ final class OrderController
         );
     }
 
-    private function defaultLocale(): string
-    {
-        $defaultLang = LangQuery::create()->findOneByByDefault(true);
-
-        return $defaultLang?->getLocale() ?? 'en_US';
-    }
 }

@@ -793,3 +793,135 @@ tr.bo-order-row--urgent {
 .bo-order-urgent {
     cursor: help;
 }
+
+// ---------- Order list filters ----------
+
+.bo-order-filters {
+    padding: 1.25rem 1.25rem 1rem;
+    background-color: var(--bs-body-bg);
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+
+    fieldset {
+        legend {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--bs-secondary-color);
+            margin-bottom: 0.5rem;
+            width: auto;
+        }
+    }
+}
+
+.bo-order-filters__toggle {
+    text-decoration: none;
+    color: var(--bs-body-color);
+    font-weight: 500;
+
+    &:hover {
+        color: var(--bs-primary);
+    }
+
+    &[aria-expanded="true"] .bo-order-filters__toggle-caret {
+        transform: rotate(180deg);
+    }
+}
+
+.bo-order-filters__toggle-caret {
+    display: inline-block;
+    transition: transform 0.15s ease;
+}
+
+.bo-order-filters__panel {
+    border-top: 1px dashed var(--bs-border-color-translucent, var(--bs-border-color));
+    margin-top: 0.75rem;
+}
+
+.bo-order-filters__pill {
+    --pill-color: var(--bs-secondary);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.85rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.12s ease;
+    user-select: none;
+    font-size: 0.875rem;
+    line-height: 1.2;
+    background-color: var(--bs-body-bg);
+
+    &:hover {
+        border-color: var(--pill-color);
+        color: var(--pill-color);
+    }
+
+    &:has(input:checked) {
+        background-color: var(--pill-color);
+        color: #fff;
+        border-color: var(--pill-color);
+    }
+
+    &:focus-within {
+        box-shadow: 0 0 0 0.2rem rgba(242, 96, 65, 0.25);
+    }
+}
+
+.bo-order-filters__pill-dot {
+    display: inline-block;
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 50%;
+    background-color: var(--pill-color);
+}
+
+.bo-order-filters__pill:has(input:checked) .bo-order-filters__pill-dot {
+    background-color: rgba(255, 255, 255, 0.95);
+}
+
+.bo-order-filters__active-chips {
+    padding: 0.75rem 1rem;
+    background-color: var(--bs-light, #f8f9fa);
+    border: 1px dashed var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+}
+
+.bo-order-filters__chip {
+    background-color: var(--bs-body-bg);
+    border: 1px solid var(--bs-border-color);
+    border-radius: 999px;
+    padding: 0.25rem 0.75rem;
+    color: var(--bs-body-color);
+    font-size: 0.85rem;
+    line-height: 1.4;
+    transition: all 0.12s ease;
+
+    &:hover {
+        background-color: var(--bs-danger-bg-subtle, #f8d7da);
+        border-color: var(--bs-danger);
+        color: var(--bs-danger);
+
+        .bo-order-filters__chip-label {
+            color: var(--bs-danger);
+        }
+    }
+}
+
+.bo-order-filters__chip-label {
+    color: var(--bs-secondary-color);
+    transition: color 0.12s ease;
+}
+
+.bo-order-filters__chip-value {
+    font-weight: 600;
+}
+
+.bo-order-filters__clear-all {
+    color: var(--bs-secondary-color);
+    font-weight: 500;
+
+    &:hover {
+        color: var(--bs-danger);
+    }
+}

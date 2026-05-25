@@ -14,9 +14,10 @@ declare(strict_types=1);
 
 namespace BackOfficeDefaultTwigBundle\Repository;
 
+use BackOfficeDefaultTwigBundle\Service\Order\OrderFilters;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\Collection\ObjectCollection;
-use Thelia\Model\Customer;
+use Propel\Runtime\Propel;
 use Thelia\Model\Order;
 use Thelia\Model\OrderProductQuery;
 use Thelia\Model\OrderQuery;
@@ -25,7 +26,6 @@ use Thelia\Model\OrderStatusQuery;
 
 /**
  * Centralised Propel queries for the order back-office screens.
- * Controllers stay thin by delegating filtering, counting and lookups here.
  */
 final readonly class OrderRepository
 {
@@ -39,25 +39,24 @@ final readonly class OrderRepository
     /**
      * @return array{rows: ObjectCollection<int, Order>, total: int, lastPage: int}
      */
-    public function findPaginated(
-        int $page,
-        int $perPage,
-        ?int $statusId = null,
-        ?string $search = null,
-        string $orderBy = 'created_at',
-        string $direction = 'desc',
-        ?\DateTimeInterface $createdSince = null,
-    ): array {
-        $query = $this->buildQuery($statusId, $search, $createdSince);
+    public function findPaginated(OrderFilters $filters, int $page, int $perPage): array
+    {
+        $query = $this->buildFilteredQuery($filters);
 
         $total = (clone $query)->count();
         $lastPage = max(1, (int) ceil($total / max(1, $perPage)));
         $page = max(1, min($page, $lastPage));
 
-        $sortColumn = self::SORT_FIELDS[$orderBy] ?? self::SORT_FIELDS['created_at'];
-        $sortDirection = strtolower($direction) === 'asc' ? Criteria::ASC : Criteria::DESC;
+        $sortColumn = self::SORT_FIELDS[$filters->sort] ?? self::SORT_FIELDS[OrderFilters::DEFAULT_SORT];
+        $sortDirection = $filters->direction === 'asc' ? Criteria::ASC : Criteria::DESC;
 
         $rows = $query
+            ->joinWithCustomer()
+            ->joinWithOrderAddressRelatedByDeliveryOrderAddressId()
+            ->joinModuleRelatedByPaymentModuleId('PaymentModule')
+            ->with('PaymentModule')
+            ->joinModuleRelatedByDeliveryModuleId('DeliveryModule')
+            ->with('DeliveryModule')
             ->orderBy('order.'.$sortColumn, $sortDirection)
             ->offset(($page - 1) * $perPage)
             ->limit($perPage)
@@ -85,8 +84,7 @@ final readonly class OrderRepository
     }
 
     /**
-     * Localised list of statuses suitable for a `<select>` filter.
-     * The first entry is a synthetic "all statuses" option (id = 0).
+     * First entry is a synthetic "all statuses" option (id = 0).
      *
      * @return list<array{id: int, title: string, code: string}>
      */
@@ -107,8 +105,28 @@ final readonly class OrderRepository
     }
 
     /**
-     * Statuses that currently host at least one order, with their localised
-     * title, native colour and order count. Used by the sidebar counters.
+     * Includes native colour. No synthetic "all" option (the multi-select handles it).
+     *
+     * @return list<array{id: int, title: string, code: string, color: string}>
+     */
+    public function findStatusesLocalized(string $locale): array
+    {
+        $items = [];
+        foreach (OrderStatusQuery::create()->orderByPosition()->find() as $status) {
+            $status->setLocale($locale);
+            $items[] = [
+                'id' => (int) $status->getId(),
+                'title' => (string) $status->getTitle(),
+                'code' => (string) $status->getCode(),
+                'color' => (string) ($status->getColor() ?: '#6c757d'),
+            ];
+        }
+
+        return $items;
+    }
+
+    /**
+     * Restricted to statuses currently hosting at least one order. Used by the sidebar counters.
      *
      * @return list<array{id: int, code: string, title: string, color: string, count: int}>
      */
@@ -143,32 +161,39 @@ final readonly class OrderRepository
         return OrderQuery::create()->count();
     }
 
-    private function buildQuery(?int $statusId, ?string $search, ?\DateTimeInterface $createdSince): OrderQuery
+    /**
+     * Restricted to countries actually appearing on a delivery address (avoids
+     * a 250+ entry dropdown).
+     *
+     * @return list<int>
+     */
+    public function findReferencedDeliveryCountryIds(): array
+    {
+        $sql = '
+            SELECT DISTINCT oa.country_id
+            FROM `order` o
+            JOIN order_address oa ON oa.id = o.delivery_order_address_id
+            WHERE oa.country_id IS NOT NULL
+        ';
+
+        $statement = Propel::getConnection()->prepare($sql);
+        $statement->execute();
+
+        $ids = [];
+        while (($row = $statement->fetch(\PDO::FETCH_NUM)) !== false) {
+            $id = (int) $row[0];
+            if ($id > 0) {
+                $ids[] = $id;
+            }
+        }
+
+        return $ids;
+    }
+
+    private function buildFilteredQuery(OrderFilters $filters): OrderQuery
     {
         $query = OrderQuery::create();
-
-        if ($statusId !== null && $statusId > 0) {
-            $query->filterByStatusId($statusId);
-        }
-
-        if ($createdSince !== null) {
-            $query->filterByCreatedAt($createdSince->format('Y-m-d H:i:s'), Criteria::GREATER_EQUAL);
-        }
-
-        if ($search !== null && $search !== '') {
-            $needle = '%'.$search.'%';
-            $query
-                ->_or()
-                ->filterByRef($needle, Criteria::LIKE)
-                ->_or()
-                ->useCustomerQuery()
-                    ->where(Customer::TABLE_MAP.'.firstname LIKE ?', $needle, \PDO::PARAM_STR)
-                    ->_or()
-                    ->where(Customer::TABLE_MAP.'.lastname LIKE ?', $needle, \PDO::PARAM_STR)
-                    ->_or()
-                    ->where(Customer::TABLE_MAP.'.email LIKE ?', $needle, \PDO::PARAM_STR)
-                ->endUse();
-        }
+        $filters->applyTo($query);
 
         return $query;
     }

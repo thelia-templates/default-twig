@@ -36,6 +36,31 @@ final readonly class ModuleRepository
         return $modules;
     }
 
+    /**
+     * @return list<array{id: int, title: string, code: string}>
+     */
+    public function findActiveByType(int $type, string $locale): array
+    {
+        $modules = ModuleQuery::create()
+            ->filterByType($type)
+            ->filterByActivate(1)
+            ->orderByPosition()
+            ->find();
+
+        $items = [];
+        foreach ($modules as $module) {
+            \assert($module instanceof Module);
+            $module->setLocale($locale);
+            $items[] = [
+                'id' => (int) $module->getId(),
+                'title' => (string) ($module->getTitle() ?: $module->getCode()),
+                'code' => (string) $module->getCode(),
+            ];
+        }
+
+        return $items;
+    }
+
     public function countHooksForModule(int $moduleId): int
     {
         return ModuleHookQuery::create()
