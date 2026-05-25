@@ -209,6 +209,17 @@ $bo-side-nav-hover-bg: rgba(255, 255, 255, .07);
     &__toggle[aria-expanded="true"] &__chevron,
     .nav-link.bo-side-nav__toggle[aria-expanded="true"] .bo-side-nav__chevron {
         transform: rotate(90deg);
+        color: var(--bs-primary);
+    }
+
+    // Expanded section → label, icon and chevron flip to the brand orange,
+    // matching the Smarty back-office "open menu" affordance.
+    .nav-link.bo-side-nav__toggle[aria-expanded="true"] {
+        color: var(--bs-primary);
+
+        > .bi:not(.bo-side-nav__chevron) {
+            color: var(--bs-primary);
+        }
     }
 
     // Sub-menu (collapse): stays inside its parent block — no border, slight
@@ -223,7 +234,7 @@ $bo-side-nav-hover-bg: rgba(255, 255, 255, .07);
     .nav.collapsing .nav-link {
         font-size: .88rem;
         font-weight: 400;
-        padding: .85rem 1.25rem .85rem 3.85rem;
+        padding: .85rem 1.25rem .85rem 2.75rem;
         margin-bottom: 0;
         background: transparent;
         box-shadow: none;
@@ -239,6 +250,45 @@ $bo-side-nav-hover-bg: rgba(255, 255, 255, .07);
     .nav.collapse li,
     .nav.collapsing li {
         list-style: none;
+    }
+
+    // Counter badges aligned to the right of a sub-item label.
+    .nav.collapse .nav-link,
+    .nav.collapsing .nav-link {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: .5rem;
+    }
+
+    &__badge {
+        min-width: 1.8rem;
+        padding: .15rem .45rem;
+        border-radius: 4px;
+        font-size: .72rem;
+        font-weight: 600;
+        text-align: center;
+        line-height: 1.2;
+
+        &--neutral {
+            background-color: rgba(255, 255, 255, .12);
+            color: rgba(255, 255, 255, .85);
+        }
+
+        &--warning {
+            background-color: #f0ad4e;
+            color: #2a1d0a;
+        }
+
+        &--success {
+            background-color: #5cb85c;
+            color: #ffffff;
+        }
+
+        &--info {
+            background-color: #5bc0de;
+            color: #ffffff;
+        }
     }
 }
 
