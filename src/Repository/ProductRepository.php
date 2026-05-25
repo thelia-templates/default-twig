@@ -30,6 +30,17 @@ final readonly class ProductRepository
     /**
      * @return ObjectCollection<int, Product>
      */
+    public function findByTemplateId(int $templateId): ObjectCollection
+    {
+        return ProductQuery::create()
+            ->filterByTemplateId($templateId)
+            ->orderByRef()
+            ->find();
+    }
+
+    /**
+     * @return ObjectCollection<int, Product>
+     */
     public function findInCategoryPage(int $categoryId, string $locale, int $offset, int $limit): ObjectCollection
     {
         $products = ProductQuery::create()

@@ -23,6 +23,17 @@ final readonly class CategoryRepository
     /**
      * @return ObjectCollection<int, Category>
      */
+    public function findByDefaultTemplateId(int $templateId): ObjectCollection
+    {
+        return CategoryQuery::create()
+            ->filterByDefaultTemplateId($templateId)
+            ->orderByPosition()
+            ->find();
+    }
+
+    /**
+     * @return ObjectCollection<int, Category>
+     */
     public function findChildrenOrderedByPosition(int $parentId, string $locale): ObjectCollection
     {
         $categories = CategoryQuery::create()

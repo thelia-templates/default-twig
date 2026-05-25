@@ -39,15 +39,15 @@ use Thelia\Core\Event\TheliaEvents;
 use Thelia\Core\Event\UpdatePositionEvent;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
+use BackOfficeDefaultTwigBundle\Repository\CategoryRepository;
+use BackOfficeDefaultTwigBundle\Repository\ProductRepository;
 use Thelia\Model\AttributeQuery;
 use Thelia\Model\AttributeTemplateQuery;
 use Thelia\Model\Category;
-use Thelia\Model\CategoryQuery;
 use Thelia\Model\FeatureQuery;
 use Thelia\Model\FeatureTemplateQuery;
 use Thelia\Model\LangQuery;
 use Thelia\Model\Product;
-use Thelia\Model\ProductQuery;
 use Thelia\Model\Template;
 use Thelia\Model\TemplateQuery;
 use Thelia\Tools\TokenProvider;
@@ -72,6 +72,8 @@ final class TemplateController
         private readonly TranslatorInterface $translator,
         private readonly \Symfony\Contracts\EventDispatcher\EventDispatcherInterface $events,
         private readonly EditLocaleResolver $editLocale,
+        private readonly ProductRepository $productRepository,
+        private readonly CategoryRepository $categoryRepository,
     ) {
     }
 
@@ -571,12 +573,7 @@ final class TemplateController
     private function productsUsingTemplate(Template $template, string $locale): array
     {
         $rows = [];
-        $products = ProductQuery::create()
-            ->filterByTemplateId((int) $template->getId())
-            ->orderByRef()
-            ->find();
-
-        foreach ($products as $product) {
+        foreach ($this->productRepository->findByTemplateId((int) $template->getId()) as $product) {
             \assert($product instanceof Product);
             $product->setLocale($locale);
             $rows[] = [
@@ -596,12 +593,7 @@ final class TemplateController
     private function categoriesDefaultingToTemplate(Template $template, string $locale): array
     {
         $rows = [];
-        $categories = CategoryQuery::create()
-            ->filterByDefaultTemplateId((int) $template->getId())
-            ->orderByPosition()
-            ->find();
-
-        foreach ($categories as $category) {
+        foreach ($this->categoryRepository->findByDefaultTemplateId((int) $template->getId()) as $category) {
             \assert($category instanceof Category);
             $category->setLocale($locale);
             $rows[] = [
