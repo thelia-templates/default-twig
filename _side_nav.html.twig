@@ -143,7 +143,7 @@
             {% endif %}
 
             {% if is_granted('VIEW', 'admin.tools') %}
-                {% set active = nav.is_section(current_path, ['/admin/tools', '/admin/coupon', '/admin/sales', '/admin/export', '/admin/import', '/admin/brand']) %}
+                {% set active = nav.is_section(current_path, ['/admin/tools', '/admin/coupon', '/admin/sale', '/admin/newsletter', '/admin/export', '/admin/import', '/admin/brand']) %}
                 <li class="nav-item" data-testid="bo-nav-tools">
                     <a href="#bo-nav-tools-collapse" data-bs-toggle="collapse" aria-expanded="{{ active ? 'true' : 'false' }}" class="nav-link bo-side-nav__toggle {{ active ? 'active' : '' }}">
                         <i class="bi bi-wrench-adjustable me-2" aria-hidden="true"></i>
