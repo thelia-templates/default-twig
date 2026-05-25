@@ -46,17 +46,24 @@
                 {% set active = nav.is_section(current_path, ['/admin/customer']) %}
                 {% set hookFragments = hook_block('main.top-menu-customer', { fields: 'id,class,url,title' }) %}
                 <li class="nav-item" data-testid="bo-nav-customer">
-                    <a href="#bo-nav-customer-collapse" data-bs-toggle="collapse" aria-expanded="{{ active ? 'true' : 'false' }}" class="nav-link bo-side-nav__toggle {{ active ? 'active' : '' }}">
-                        <i class="bi bi-people me-2" aria-hidden="true"></i>
-                        {{ 'Customers'|trans }}
-                        <i class="bi bi-chevron-right ms-auto bo-side-nav__chevron" aria-hidden="true"></i>
-                    </a>
-                    <ul class="nav flex-column collapse {{ active ? 'show' : '' }}" id="bo-nav-customer-collapse">
-                        <li><a class="nav-link" href="{{ path('admin.customers') }}">{{ 'Customers'|trans }}</a></li>
-                        {% for fragment in hookFragments %}
-                            <li><a class="nav-link" href="{{ fragment.url }}"{% if fragment.id %} id="{{ fragment.id }}"{% endif %}>{{ fragment.title }}</a></li>
-                        {% endfor %}
-                    </ul>
+                    {% if hookFragments is empty %}
+                        <a class="nav-link {{ active ? 'active' : '' }}" href="{{ path('admin.customers') }}">
+                            <i class="bi bi-people me-2" aria-hidden="true"></i>
+                            {{ 'Customers'|trans }}
+                        </a>
+                    {% else %}
+                        <a href="#bo-nav-customer-collapse" data-bs-toggle="collapse" aria-expanded="{{ active ? 'true' : 'false' }}" class="nav-link bo-side-nav__toggle {{ active ? 'active' : '' }}">
+                            <i class="bi bi-people me-2" aria-hidden="true"></i>
+                            {{ 'Customers'|trans }}
+                            <i class="bi bi-chevron-right ms-auto bo-side-nav__chevron" aria-hidden="true"></i>
+                        </a>
+                        <ul class="nav flex-column collapse {{ active ? 'show' : '' }}" id="bo-nav-customer-collapse">
+                            <li><a class="nav-link" href="{{ path('admin.customers') }}">{{ 'Customers'|trans }}</a></li>
+                            {% for fragment in hookFragments %}
+                                <li><a class="nav-link" href="{{ fragment.url }}"{% if fragment.id %} id="{{ fragment.id }}"{% endif %}>{{ fragment.title }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
                 </li>
             {% endif %}
 
