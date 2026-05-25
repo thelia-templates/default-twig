@@ -46,6 +46,12 @@
             </a>
         </div>
 
+        {% if is_update %}
+            <div class="d-flex justify-content-end mb-3">
+                {{ component('BoLanguageSwitcher', { currentLanguageId: edit_language_id }) }}
+            </div>
+        {% endif %}
+
         <form action="{{ form_action }}" method="POST" data-testid="coupon-edit-form">
             <input type="hidden" name="locale" value="{{ data.locale }}">
 

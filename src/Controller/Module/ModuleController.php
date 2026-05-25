@@ -16,6 +16,7 @@ namespace BackOfficeDefaultTwigBundle\Controller\Module;
 
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
+use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
 use BackOfficeDefaultTwigBundle\Service\Module\ModuleListPresenter;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -58,6 +59,7 @@ final class ModuleController
         private readonly EventDispatcherInterface $events,
         private readonly TranslatorInterface $translator,
         private readonly ModuleListPresenter $listPresenter,
+        private readonly EditLocaleResolver $editLocale,
     ) {
     }
 
@@ -75,7 +77,7 @@ final class ModuleController
     }
 
     #[Route('/module/update/{module_id}', name: 'module.update', methods: ['GET'], requirements: ['module_id' => '\d+'])]
-    public function updateView(int $module_id): Response
+    public function updateView(int $module_id, Request $request): Response
     {
         if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::VIEW)) {
             return $denied;
@@ -86,12 +88,14 @@ final class ModuleController
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }
 
-        $locale = $this->defaultLocale();
+        $editLang = $this->editLocale->resolveFromRequest($request);
+        $locale = $editLang->getLocale() ?? 'en_US';
         $module->setLocale($locale);
 
         return new Response($this->twig->render(self::EDIT_TEMPLATE, [
             'module' => $module,
             'locale' => $locale,
+            'edit_language_id' => (int) $editLang->getId(),
         ]));
     }
 

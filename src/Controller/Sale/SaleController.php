@@ -19,6 +19,7 @@ use BackOfficeDefaultTwigBundle\Form\Sale\SaleType;
 use BackOfficeDefaultTwigBundle\Repository\SaleRepository;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
+use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
 use BackOfficeDefaultTwigBundle\Service\Sale\SaleEditContextBuilder;
 use BackOfficeDefaultTwigBundle\Service\Sale\SaleEventFactory;
 use BackOfficeDefaultTwigBundle\Service\Sale\SaleListPresenter;
@@ -60,6 +61,7 @@ final class SaleController
         private readonly SaleListPresenter $listPresenter,
         private readonly SaleEditContextBuilder $editContextBuilder,
         private readonly SaleEventFactory $eventFactory,
+        private readonly EditLocaleResolver $editLocale,
     ) {
     }
 
@@ -94,7 +96,7 @@ final class SaleController
     }
 
     #[Route('/sale/update/{sale_id}', name: 'update', methods: ['GET'], requirements: ['sale_id' => '\d+'])]
-    public function updateView(int $sale_id): Response
+    public function updateView(int $sale_id, Request $request): Response
     {
         if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::VIEW)) {
             return $denied;
@@ -105,14 +107,15 @@ final class SaleController
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }
 
-        $locale = $this->defaultLocale();
+        $editLang = $this->editLocale->resolveFromRequest($request);
+        $locale = $editLang->getLocale() ?? 'en_US';
         $sale->setLocale($locale);
         $context = $this->editContextBuilder->build($sale, $locale);
         $form = $this->formFactory->createNamed('thelia_sale', SaleType::class, $context['form_data']);
 
         return new Response($this->twig->render(self::EDIT_TEMPLATE, array_merge(
             $context,
-            ['sale' => $sale, 'form' => $form->createView()],
+            ['sale' => $sale, 'form' => $form->createView(), 'edit_language_id' => (int) $editLang->getId()],
         )));
     }
 

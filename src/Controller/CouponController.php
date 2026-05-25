@@ -18,6 +18,7 @@ use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\Service\Coupon\CouponConditionsRenderer;
 use BackOfficeDefaultTwigBundle\Service\Coupon\CouponEditContextBuilder;
+use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -74,6 +75,7 @@ final class CouponController
         private readonly ConditionFactory $conditionFactory,
         #[Autowire(service: 'thelia.coupon.manager')]
         private readonly CouponManager $couponManager,
+        private readonly EditLocaleResolver $editLocale,
     ) {
     }
 
@@ -139,7 +141,9 @@ final class CouponController
             return $this->handleCreateOrUpdate($request, $coupon);
         }
 
-        $context = $this->contextBuilder->buildForUpdate($coupon, $this->defaultLocale());
+        $editLang = $this->editLocale->resolveFromRequest($request);
+        $context = $this->contextBuilder->buildForUpdate($coupon, $editLang->getLocale() ?? 'en_US');
+        $context['edit_language_id'] = (int) $editLang->getId();
 
         return new Response($this->twig->render(self::EDIT_TEMPLATE, $context));
     }

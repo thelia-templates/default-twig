@@ -17,6 +17,10 @@
     <div class="container-fluid" data-testid="module-edit-page">
         <h1 class="h3 mb-3">{{ module.title }} <small class="text-muted">{{ module.code }}</small></h1>
 
+        <div class="d-flex justify-content-end mb-3">
+            {{ component('BoLanguageSwitcher', { currentLanguageId: edit_language_id }) }}
+        </div>
+
         <form action="{{ path('admin.module.save') }}" method="post" data-testid="module-edit-form">
             <input type="hidden" name="module_id" value="{{ module.id }}">
             <input type="hidden" name="locale" value="{{ locale }}">
