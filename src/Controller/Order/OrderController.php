@@ -14,12 +14,13 @@ declare(strict_types=1);
 
 namespace BackOfficeDefaultTwigBundle\Controller\Order;
 
+use BackOfficeDefaultTwigBundle\Repository\OrderRepository;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\Service\Order\OrderDetailContextBuilder;
+use BackOfficeDefaultTwigBundle\Service\Order\OrderListRowPresenter;
 use BackOfficeDefaultTwigBundle\Service\Pdf\OrderPdfRenderer;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
-use Propel\Runtime\ActiveQuery\Criteria;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -63,6 +64,8 @@ final class OrderController
         private readonly \Symfony\Component\Form\FormFactoryInterface $formFactory,
         private readonly OrderPdfRenderer $pdfRenderer,
         private readonly OrderDetailContextBuilder $detailContextBuilder,
+        private readonly OrderRepository $orderRepository,
+        private readonly OrderListRowPresenter $rowPresenter,
     ) {
     }
 
@@ -76,16 +79,30 @@ final class OrderController
         $page = max(1, (int) $request->query->get('page', 1));
         $statusId = (int) $request->query->get('status_id', 0);
         $search = trim((string) $request->query->get('q', ''));
+        $locale = $request->getLocale();
 
-        return new Response($this->twig->render(self::LIST_TEMPLATE, array_merge(
-            $this->paginatedRows($statusId, $search, $page),
-            [
-                'current_page' => $page,
-                'current_status' => $statusId,
-                'current_search' => $search,
-                'available_statuses' => $this->statusChoices(),
-            ],
-        )));
+        $paginated = $this->orderRepository->findPaginated(
+            page: $page,
+            perPage: self::PAGE_SIZE,
+            statusId: $statusId > 0 ? $statusId : null,
+            search: $search !== '' ? $search : null,
+        );
+
+        $rows = [];
+        foreach ($paginated['rows'] as $order) {
+            \assert($order instanceof Order);
+            $rows[] = $this->rowPresenter->present($order, $locale);
+        }
+
+        return new Response($this->twig->render(self::LIST_TEMPLATE, [
+            'rows' => $rows,
+            'total' => $paginated['total'],
+            'pages' => $paginated['lastPage'],
+            'current_page' => min($page, $paginated['lastPage']),
+            'current_status' => $statusId,
+            'current_search' => $search,
+            'available_statuses' => $this->statusChoices(),
+        ]));
     }
 
     #[Route('/admin/order/update/{order_id}', name: 'admin.order.update.view', methods: ['GET'], requirements: ['order_id' => '\d+'])]
@@ -278,75 +295,6 @@ final class OrderController
         return $this->pdfRenderer->render($orderId, $kind, $browser);
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    private function paginatedRows(int $statusId, string $search, int $page): array
-    {
-        $query = OrderQuery::create()->orderByCreatedAt(Criteria::DESC);
-
-        if ($statusId > 0) {
-            $query->filterByStatusId($statusId);
-        }
-
-        if ($search !== '') {
-            $query->_or()
-                ->filterByRef('%'.$search.'%', Criteria::LIKE)
-                ->_or()
-                ->filterByTransactionRef('%'.$search.'%', Criteria::LIKE);
-        }
-
-        $total = (int) $query->count();
-        $pages = max(1, (int) ceil($total / self::PAGE_SIZE));
-        $page = min($page, $pages);
-
-        $orders = $query
-            ->offset(($page - 1) * self::PAGE_SIZE)
-            ->limit(self::PAGE_SIZE)
-            ->find();
-
-        $rows = [];
-        foreach ($orders as $order) {
-            \assert($order instanceof Order);
-            $rows[] = $this->orderToRow($order);
-        }
-
-        return [
-            'rows' => $rows,
-            'total' => $total,
-            'pages' => $pages,
-        ];
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function orderToRow(Order $order): array
-    {
-        $id = (int) $order->getId();
-        $status = OrderStatusQuery::create()->findPk((int) $order->getStatusId());
-        $statusTitle = $status?->setLocale($this->defaultLocale())->getTitle() ?? '—';
-
-        $actions = [
-            new RowAction(
-                kind: 'edit',
-                label: $this->translator->trans('View order'),
-                href: $this->urls->generate(self::DETAIL_ROUTE, ['order_id' => $id]),
-                grantedAttribute: AccessManager::VIEW,
-                grantedSubject: self::RESOURCE,
-            ),
-        ];
-
-        return [
-            'id' => $id,
-            'ref' => (string) $order->getRef(),
-            'status' => $statusTitle,
-            'total' => (float) $order->getTotalAmount(),
-            'currency' => (string) ($order->getCurrency() ? $order->getCurrency()->getSymbol() : ''),
-            'date' => $order->getCreatedAt()?->format('Y-m-d') ?? '—',
-            '_actions' => $actions,
-        ];
-    }
 
     /**
      * @return list<array<string, mixed>>

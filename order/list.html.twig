@@ -42,9 +42,8 @@
             columns: [
                 column('id', 'ID'|trans),
                 column('ref', 'Reference'|trans),
-                column('status', 'Status'|trans),
-                column('total', 'Total'|trans, 'end'),
-                column('currency', 'Currency'|trans, 'center'),
+                column_badge('status_code', 'Status'|trans, {}, 'start', 'status', 'status_color'),
+                column('amount', 'Total'|trans, 'end'),
                 column('date', 'Date'|trans),
                 column_actions('_actions', 'Actions'|trans),
             ],
