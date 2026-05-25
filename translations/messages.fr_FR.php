@@ -935,7 +935,6 @@ return [
     'See this customer orders' => 'Voir les commandes de ce client',
     'Subscribed' => 'Abonné',
     'Subscribed to the newsletter' => 'Abonné à la newsletter',
-    'Title' => 'Civilité',
     'Top spenders' => 'Plus gros acheteurs',
     'Total spent' => 'Total dépensé',
     'Unsubscribed' => 'Désabonné',

@@ -161,7 +161,7 @@ final readonly class CustomerFilterPresenter
             $chips[] = $this->chip(
                 $filters,
                 CustomerFilters::KEY_TITLE_IDS,
-                $this->translator->trans('Title'),
+                $this->translator->trans('Customer title'),
                 $this->joinTitles($filters->titleIds, $titleIndex),
             );
         }
