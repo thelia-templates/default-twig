@@ -101,6 +101,15 @@ final class BackOfficeDefaultTwigBundle extends AbstractBundle
             ],
         ]);
 
+        $translationsPath = $this->getViewsPath().'/translations';
+        if (is_dir($translationsPath)) {
+            $container->extension('framework', [
+                'translator' => [
+                    'paths' => [$translationsPath],
+                ],
+            ]);
+        }
+
         $packagesPath = $this->getConfigPath().'/packages';
         if (is_dir($packagesPath)) {
             $container->import($packagesPath.'/*.yaml');

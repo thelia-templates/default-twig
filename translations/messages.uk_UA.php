@@ -1,0 +1,25 @@
+<?php
+
+return [
+    'Active' => 'Активний',
+    'All countries' => 'Всі країни',
+    'Archive Format' => 'Формат архіву',
+    'Available shipping zones' => 'Доступні зони доставки',
+    'Back Office' => 'Панель керування',
+    'Brand' => 'Торгова марка',
+    'Brands' => 'Бренди',
+    'Category' => 'Категорія',
+    'Cellphone' => 'Мобільний телефон',
+    'Content' => 'Контент',
+    'Contents' => 'Зміст',
+    'Delivery' => 'Доставка',
+    'Disabled' => 'Відключено',
+    'Discount type' => 'Тип знижки',
+    'Do compress' => 'Стискати',
+    'Feature' => 'Функції',
+    'File format' => 'Формат файлу',
+    'Folder' => 'Каталог',
+    'Front Office' => 'Фронт-Офіс',
+    'Hook' => 'Хук',
+    'Hooks' => 'Хуки',
+];
