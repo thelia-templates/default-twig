@@ -17,6 +17,7 @@ namespace BackOfficeDefaultTwigBundle\Controller\Configuration;
 use BackOfficeDefaultTwigBundle\Form\Order\OrderStatusType;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
+use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
@@ -56,6 +57,7 @@ final class OrderStatusController
         private readonly UrlGeneratorInterface $urls,
         private readonly TokenProvider $tokens,
         private readonly TranslatorInterface $translator,
+        private readonly EditLocaleResolver $editLocale,
     ) {
     }
 
@@ -90,7 +92,7 @@ final class OrderStatusController
     }
 
     #[Route('/update/{order_status_id}', name: 'update', methods: ['GET'], requirements: ['order_status_id' => '\d+'])]
-    public function updateView(int $order_status_id): Response
+    public function updateView(int $order_status_id, Request $request): Response
     {
         if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::VIEW)) {
             return $denied;
@@ -101,12 +103,14 @@ final class OrderStatusController
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }
 
-        $locale = $this->defaultLocale();
+        $editLang = $this->editLocale->resolveFromRequest($request);
+        $locale = $editLang->getLocale() ?? 'en_US';
         $status->setLocale($locale);
 
         return new Response($this->twig->render(self::EDIT_TEMPLATE, [
             'status' => $status,
             'form' => $this->buildUpdateForm($status, $locale)->createView(),
+            'edit_language_id' => (int) $editLang->getId(),
         ]));
     }
 

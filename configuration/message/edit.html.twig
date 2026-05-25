@@ -31,6 +31,10 @@
             </a>
         </div>
 
+        <div class="d-flex justify-content-end mb-3">
+            {{ component('BoLanguageSwitcher', { currentLanguageId: edit_language_id }) }}
+        </div>
+
         <ul class="nav nav-tabs mb-3" id="message-edit-tabs" role="tablist">
             <li class="nav-item" role="presentation">
                 <button class="nav-link active" id="tab-data" data-bs-toggle="tab" data-bs-target="#data" type="button" role="tab" aria-controls="data" aria-selected="true">

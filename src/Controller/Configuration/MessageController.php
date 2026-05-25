@@ -18,6 +18,7 @@ use BackOfficeDefaultTwigBundle\Form\Configuration\MessageType;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\Service\Configuration\EmailTemplateFileLister;
+use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
@@ -56,6 +57,7 @@ final class MessageController
         private readonly UrlGeneratorInterface $urls,
         private readonly TranslatorInterface $translator,
         private readonly EmailTemplateFileLister $fileLister,
+        private readonly EditLocaleResolver $editLocale,
     ) {
     }
 
@@ -104,7 +106,7 @@ final class MessageController
     }
 
     #[Route('/update/{message_id}', name: 'update', methods: ['GET'], requirements: ['message_id' => '\d+'])]
-    public function updateView(int $message_id): Response
+    public function updateView(int $message_id, Request $request): Response
     {
         if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::VIEW)) {
             return $denied;
@@ -115,12 +117,14 @@ final class MessageController
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }
 
-        $locale = $this->defaultLocale();
+        $editLang = $this->editLocale->resolveFromRequest($request);
+        $locale = $editLang->getLocale() ?? 'en_US';
         $message->setLocale($locale);
 
         return new Response($this->twig->render(self::EDIT_TEMPLATE, [
             'message' => $message,
             'form' => $this->buildUpdateForm($message, $locale)->createView(),
+            'edit_language_id' => (int) $editLang->getId(),
             'preview_html_url' => $this->urls->generate('admin.email.preview_html', ['messageId' => $message_id]),
             'preview_text_url' => $this->urls->generate('admin.email.preview_text', ['messageId' => $message_id]),
             'send_test_url' => $this->urls->generate('admin.email.test_send', ['messageId' => $message_id]),

@@ -22,6 +22,10 @@
     <div class="container-fluid" data-testid="tax-edit-page">
         <h1 class="h3 mb-3">{{ 'Edit tax'|trans }}: <span class="text-muted" data-testid="tax-edit-title">{{ tax_title }}</span></h1>
 
+        <div class="d-flex justify-content-end mb-3">
+            {{ component('BoLanguageSwitcher', { currentLanguageId: edit_language_id }) }}
+        </div>
+
         {{ form_start(form, {
             action: path('admin.configuration.taxes.save'),
             method: 'post',

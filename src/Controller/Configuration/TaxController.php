@@ -20,6 +20,7 @@ use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormErrorRenderer;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormValidator;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminLogger;
+use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -33,7 +34,6 @@ use Thelia\Core\Event\Tax\TaxEvent;
 use Thelia\Core\Event\TheliaEvents;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
-use Thelia\Model\LangQuery;
 use Thelia\Model\Tax;
 use Thelia\Model\TaxQuery;
 use Twig\Environment;
@@ -59,6 +59,7 @@ final class TaxController
         private readonly UrlGeneratorInterface $urls,
         private readonly TranslatorInterface $translator,
         private readonly Environment $twig,
+        private readonly EditLocaleResolver $editLocale,
     ) {
     }
 
@@ -74,12 +75,13 @@ final class TaxController
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }
 
-        $locale = $this->editionLocale($request);
+        $editLang = $this->editLocale->resolveFromRequest($request);
+        $locale = $editLang->getLocale() ?? 'en_US';
         $tax->setLocale($locale);
 
         $form = $this->createUpdateForm($this->taxToFormData($tax, $locale, $this->withRequirements($tax)));
 
-        return $this->renderEdit($form, $tax);
+        return $this->renderEdit($form, $tax, Response::HTTP_OK, (int) $editLang->getId());
     }
 
     #[Route('/add', name: 'add', methods: ['POST'])]
@@ -194,12 +196,13 @@ final class TaxController
             ]);
     }
 
-    private function renderEdit(FormInterface $form, Tax $tax, int $status = Response::HTTP_OK): Response
+    private function renderEdit(FormInterface $form, Tax $tax, int $status = Response::HTTP_OK, int $editLanguageId = 0): Response
     {
         return new Response(
             $this->twig->render(self::EDIT_TEMPLATE, [
                 'form' => $form->createView(),
                 'tax' => $tax,
+                'edit_language_id' => $editLanguageId !== 0 ? $editLanguageId : (int) $this->editLocale->resolveLang(null)->getId(),
             ]),
             $status,
         );
@@ -273,12 +276,5 @@ final class TaxController
         }
 
         return $values;
-    }
-
-    private function editionLocale(Request $request): string
-    {
-        $defaultLang = LangQuery::create()->findOneByByDefault(true);
-
-        return $defaultLang?->getLocale() ?? 'en_US';
     }
 }

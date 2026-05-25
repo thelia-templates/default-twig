@@ -17,6 +17,7 @@ namespace BackOfficeDefaultTwigBundle\Controller\Configuration;
 use BackOfficeDefaultTwigBundle\Form\Configuration\HookType;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
+use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Form\FormFactoryInterface;
@@ -65,6 +66,7 @@ final class HookController
         private readonly EventDispatcherInterface $events,
         #[Autowire(service: 'thelia.hookHelper')]
         private readonly HookHelper $hookHelper,
+        private readonly EditLocaleResolver $editLocale,
     ) {
     }
 
@@ -146,7 +148,7 @@ final class HookController
     }
 
     #[Route('/admin/hook/update/{hook_id}', name: 'admin.hook.update', methods: ['GET'], requirements: ['hook_id' => '\d+'])]
-    public function updateView(int $hook_id): Response
+    public function updateView(int $hook_id, Request $request): Response
     {
         if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::VIEW)) {
             return $denied;
@@ -156,7 +158,8 @@ final class HookController
         if ($hook === null) {
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }
-        $locale = $this->defaultLocale();
+        $editLang = $this->editLocale->resolveFromRequest($request);
+        $locale = $editLang->getLocale() ?? 'en_US';
         $hook->setLocale($locale);
 
         $form = $this->formFactory->createNamed(
@@ -182,6 +185,7 @@ final class HookController
             'hook' => $hook,
             'hook_id' => $hook_id,
             'form' => $form->createView(),
+            'edit_language_id' => (int) $editLang->getId(),
         ]));
     }
 

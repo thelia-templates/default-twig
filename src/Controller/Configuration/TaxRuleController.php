@@ -21,6 +21,7 @@ use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormErrorRenderer;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormValidator;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminLogger;
+use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
@@ -74,6 +75,7 @@ final class TaxRuleController
         private readonly UrlGeneratorInterface $urls,
         private readonly TranslatorInterface $translator,
         private readonly TokenProvider $tokens,
+        private readonly EditLocaleResolver $editLocale,
     ) {
     }
 
@@ -107,13 +109,14 @@ final class TaxRuleController
     }
 
     #[Route('/update/{tax_rule_id}', name: 'update', methods: ['GET'], requirements: ['tax_rule_id' => '\d+'])]
-    public function update(int $tax_rule_id): Response
+    public function update(int $tax_rule_id, Request $request): Response
     {
         if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::VIEW)) {
             return $denied;
         }
 
-        $locale = $this->defaultLocale();
+        $editLang = $this->editLocale->resolveFromRequest($request);
+        $locale = $editLang->getLocale() ?? 'en_US';
         $taxRule = TaxRuleQuery::create()->findPk($tax_rule_id);
 
         if ($taxRule === null) {
@@ -135,6 +138,7 @@ final class TaxRuleController
         return new Response($this->twig->render(self::EDIT_TEMPLATE, [
             'form' => $form->createView(),
             'tax_rule' => $taxRule,
+            'edit_language_id' => (int) $editLang->getId(),
             'specification_rows' => $this->specificationRows($taxRuleId),
             'matrix_taxes' => $this->taxesByIdMap($locale),
             'matrix_countries_simple' => $this->countriesWithoutStates($locale),

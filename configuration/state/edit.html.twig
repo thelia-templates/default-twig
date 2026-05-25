@@ -18,6 +18,10 @@
     <div class="container-fluid" data-testid="state-edit-page">
         <h1 class="h3 mb-3">{{ 'State'|trans }} <small class="text-muted">{{ state.isocode }} — #{{ state.id }}</small></h1>
 
+        <div class="d-flex justify-content-end mb-3">
+            {{ component('BoLanguageSwitcher', { currentLanguageId: edit_language_id }) }}
+        </div>
+
         <div class="card">
             <div class="card-body">
                 {{ form_start(form, { action: path('admin.configuration.states.save'), method: 'post' }) }}

@@ -17,6 +17,7 @@ namespace BackOfficeDefaultTwigBundle\Controller\Configuration;
 use BackOfficeDefaultTwigBundle\Form\Configuration\StateType;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
+use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
@@ -57,6 +58,7 @@ final class StateController
         private readonly FormFactoryInterface $formFactory,
         private readonly UrlGeneratorInterface $urls,
         private readonly TranslatorInterface $translator,
+        private readonly EditLocaleResolver $editLocale,
     ) {
     }
 
@@ -110,7 +112,7 @@ final class StateController
     }
 
     #[Route('/update/{state_id}', name: 'update', methods: ['GET'], requirements: ['state_id' => '\d+'])]
-    public function updateView(int $state_id): Response
+    public function updateView(int $state_id, Request $request): Response
     {
         if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::VIEW)) {
             return $denied;
@@ -121,13 +123,15 @@ final class StateController
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }
 
-        $locale = $this->defaultLocale();
+        $editLang = $this->editLocale->resolveFromRequest($request);
+        $locale = $editLang->getLocale() ?? 'en_US';
         $state->setLocale($locale);
 
         return new Response($this->twig->render(self::EDIT_TEMPLATE, [
             'state' => $state,
             'form' => $this->buildUpdateForm($state, $locale)->createView(),
             'countries' => $this->countryChoices($locale),
+            'edit_language_id' => (int) $editLang->getId(),
         ]));
     }
 

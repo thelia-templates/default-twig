@@ -33,6 +33,10 @@
             </div>
         </div>
 
+        <div class="d-flex justify-content-end mb-3">
+            {{ component('BoLanguageSwitcher', { currentLanguageId: edit_language_id }) }}
+        </div>
+
         {{ form_start(form, { action: path('admin.configuration.features.save', { feature_id: feature.id }), method: 'post', attr: { 'data-testid': 'feature-edit-form' } }) }}
         <input type="hidden" name="feature_id" value="{{ feature.id }}">
         <div class="row">

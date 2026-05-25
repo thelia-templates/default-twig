@@ -17,6 +17,7 @@ namespace BackOfficeDefaultTwigBundle\Controller\Configuration;
 use BackOfficeDefaultTwigBundle\Form\Profile\ProfileType;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
+use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
@@ -31,6 +32,7 @@ use Thelia\Core\Event\Profile\ProfileEvent;
 use Thelia\Core\Event\TheliaEvents;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
+use Thelia\Model\Lang;
 use Thelia\Model\Profile;
 use Thelia\Model\ProfileQuery;
 use Thelia\Model\ResourceQuery;
@@ -55,6 +57,7 @@ final class ProfileController
         private readonly UrlGeneratorInterface $urls,
         private readonly TranslatorInterface $translator,
         private readonly EventDispatcherInterface $events,
+        private readonly EditLocaleResolver $editLocale,
     ) {
     }
 
@@ -69,7 +72,7 @@ final class ProfileController
     }
 
     #[Route('/update/{profile_id}', name: 'update', requirements: ['profile_id' => '\d+'], methods: ['GET'])]
-    public function edit(int $profile_id): Response
+    public function edit(int $profile_id, Request $request): Response
     {
         if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::UPDATE)) {
             return $denied;
@@ -80,7 +83,7 @@ final class ProfileController
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }
 
-        return new Response($this->twig->render(self::EDIT_TEMPLATE, $this->buildEditContext($profile)));
+        return new Response($this->twig->render(self::EDIT_TEMPLATE, $this->buildEditContext($profile, $this->editLocale->resolveFromRequest($request))));
     }
 
     #[Route('/add', name: 'add', methods: ['POST'])]
@@ -269,14 +272,14 @@ final class ProfileController
     /**
      * @return array<string, mixed>
      */
-    private function buildEditContext(Profile $profile): array
+    private function buildEditContext(Profile $profile, Lang $editLang): array
     {
-        $defaultLocale = $this->resolveDefaultLocale();
-        $profile->setLocale($defaultLocale);
+        $locale = $editLang->getLocale() ?? 'en_US';
+        $profile->setLocale($locale);
 
         $updateForm = $this->formFactory->createNamed('thelia_profile_update', ProfileType::class, [
             'id' => $profile->getId(),
-            'locale' => $defaultLocale,
+            'locale' => $locale,
             'code' => $profile->getCode(),
             'title' => $profile->getTitle(),
             'chapo' => $profile->getChapo(),
@@ -288,6 +291,7 @@ final class ProfileController
 
         return [
             'profile' => $profile,
+            'edit_language_id' => (int) $editLang->getId(),
             'update_form' => $updateForm->createView(),
             'resources' => ResourceQuery::create()->orderByCode()->find(),
             'modules' => ModuleQuery::create()->filterByActivate(1)->orderByCode()->find(),

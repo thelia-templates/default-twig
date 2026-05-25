@@ -18,6 +18,7 @@ use BackOfficeDefaultTwigBundle\Form\Feature\FeatureAvType;
 use BackOfficeDefaultTwigBundle\Form\Feature\FeatureType;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
+use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
@@ -62,6 +63,7 @@ final class FeatureController
         private readonly UrlGeneratorInterface $urls,
         private readonly TokenProvider $tokens,
         private readonly TranslatorInterface $translator,
+        private readonly EditLocaleResolver $editLocale,
     ) {
     }
 
@@ -110,11 +112,13 @@ final class FeatureController
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }
 
-        $locale = $this->defaultLocale();
+        $editLang = $this->editLocale->resolveFromRequest($request);
+        $locale = $editLang->getLocale() ?? 'en_US';
         $feature->setLocale($locale);
 
         return new Response($this->twig->render(self::EDIT_TEMPLATE, [
             'feature' => $feature,
+            'edit_language_id' => (int) $editLang->getId(),
             'form' => $this->buildUpdateForm($feature, $locale)->createView(),
             'av_create_form' => $this->buildAvCreateForm($featureId, $locale)->createView(),
             'feature_avs' => $this->avRows($feature, $locale),
