@@ -136,6 +136,7 @@ final class AttributeController
             ]);
 
         $attributeId = (int) $request->request->get('attribute_id', 0);
+        $closeAfterSave = $request->request->get('save_mode') === 'close';
 
         return $this->action->submit(
             resource: self::RESOURCE,
@@ -149,8 +150,8 @@ final class AttributeController
                 return $event;
             },
             actionLabel: 'Attribute update',
-            successRoute: self::EDIT_ROUTE,
-            successParameters: ['attribute_id' => $attributeId],
+            successRoute: $closeAfterSave ? self::LIST_ROUTE : self::EDIT_ROUTE,
+            successParameters: $closeAfterSave ? [] : ['attribute_id' => $attributeId],
             renderError: fn (): RedirectResponse => new RedirectResponse($this->urls->generate(self::EDIT_ROUTE, ['attribute_id' => $attributeId])),
             describeForLog: $this->describeUpdated(...),
         );

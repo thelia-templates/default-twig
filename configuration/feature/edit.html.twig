@@ -108,11 +108,10 @@
                 </div>
             </div>
         </div>
-        <div class="mt-3">
-            <button type="submit" class="btn btn-primary" data-testid="feature-edit-submit">
-                <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save'|trans }}
-            </button>
-        </div>
+        {{ component('BoSaveModeToolbar', {
+            closeUrl: path('admin.configuration.features.default'),
+            testid: 'feature-edit',
+        }) }}
         {{ form_end(form) }}
     </div>
 

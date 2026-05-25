@@ -64,9 +64,11 @@
                             {{ form_widget(form.id) }}
                             {{ form_widget(form.locale) }}
                             {{ safe_hook('attribute.update-form', { attribute: attribute.id }) }}
-                            <button type="submit" class="btn btn-primary" data-testid="attribute-edit-submit">
-                                <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save'|trans }}
-                            </button>
+                            {{ component('BoSaveModeToolbar', {
+                                closeUrl: path('admin.configuration.attributes.default'),
+                                wrapperClass: '',
+                                testid: 'attribute-edit',
+                            }) }}
                         {{ form_end(form) }}
                     </div>
                 </div>

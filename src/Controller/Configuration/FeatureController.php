@@ -136,6 +136,7 @@ final class FeatureController
             ]);
 
         $featureId = (int) $request->request->get('feature_id', 0);
+        $closeAfterSave = $request->request->get('save_mode') === 'close';
 
         return $this->action->submit(
             resource: self::RESOURCE,
@@ -149,8 +150,8 @@ final class FeatureController
                 return $event;
             },
             actionLabel: 'Feature update',
-            successRoute: self::EDIT_ROUTE,
-            successParameters: ['feature_id' => $featureId],
+            successRoute: $closeAfterSave ? self::LIST_ROUTE : self::EDIT_ROUTE,
+            successParameters: $closeAfterSave ? [] : ['feature_id' => $featureId],
             renderError: fn (): RedirectResponse => new RedirectResponse($this->urls->generate(self::EDIT_ROUTE, ['feature_id' => $featureId])),
             describeForLog: $this->describeUpdated(...),
         );

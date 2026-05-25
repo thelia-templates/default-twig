@@ -148,6 +148,7 @@ final class TemplateController
             ]);
 
         $templateId = (int) $request->request->get('template_id', 0);
+        $closeAfterSave = $request->request->get('save_mode') === 'close';
 
         return $this->action->submit(
             resource: self::RESOURCE,
@@ -156,8 +157,8 @@ final class TemplateController
             eventName: TheliaEvents::TEMPLATE_UPDATE,
             eventFactory: $this->updateEvent(...),
             actionLabel: 'Template update',
-            successRoute: self::EDIT_ROUTE,
-            successParameters: ['template_id' => $templateId],
+            successRoute: $closeAfterSave ? self::LIST_ROUTE : self::EDIT_ROUTE,
+            successParameters: $closeAfterSave ? [] : ['template_id' => $templateId],
             renderError: fn (): RedirectResponse => new RedirectResponse($this->urls->generate(self::EDIT_ROUTE, ['template_id' => $templateId])),
             describeForLog: $this->describeUpdated(...),
         );
