@@ -311,3 +311,7 @@
 
     {{ safe_hook('category-edit.bottom', { category_id: category.id }) }}
 {% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('wysiwyg.js', { location: 'category-edit-js' }) }}
+{% endblock %}

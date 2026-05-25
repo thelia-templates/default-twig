@@ -101,3 +101,7 @@
 
     {{ safe_hook('order-status-edit.bottom', { order_status_id: status.id }) }}
 {% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('wysiwyg.js', { location: 'order-status-edit-js' }) }}
+{% endblock %}

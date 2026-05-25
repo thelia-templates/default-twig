@@ -201,3 +201,7 @@
 
     {{ safe_hook('folder-edit.bottom', { folder_id: folder.id }) }}
 {% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('wysiwyg.js', { location: 'folder-edit-js' }) }}
+{% endblock %}

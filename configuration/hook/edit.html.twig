@@ -66,3 +66,7 @@
         {{ form_end(form) }}
     </div>
 {% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('wysiwyg.js', { location: 'hook-edit-js' }) }}
+{% endblock %}

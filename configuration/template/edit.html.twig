@@ -173,3 +173,7 @@
 
     {{ safe_hook('template-edit.bottom', { template_id: template.id }) }}
 {% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('wysiwyg.js', { location: 'template-edit-js' }) }}
+{% endblock %}

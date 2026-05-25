@@ -219,3 +219,7 @@
 
     {{ safe_hook('content-edit.bottom', { content_id: content.id }) }}
 {% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('wysiwyg.js', { location: 'content-edit-js' }) }}
+{% endblock %}

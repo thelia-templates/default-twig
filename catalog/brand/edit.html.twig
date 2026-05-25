@@ -164,3 +164,7 @@
 
     {{ safe_hook('brand-edit.bottom', { brand_id: brand.id }) }}
 {% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('wysiwyg.js', { location: 'brand-edit-js' }) }}
+{% endblock %}

@@ -222,3 +222,7 @@
 
     {{ safe_hook('coupon.edit-bottom', is_update ? { coupon_id: coupon_id } : {}) }}
 {% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('wysiwyg.js', { location: 'coupon-edit-js' }) }}
+{% endblock %}
