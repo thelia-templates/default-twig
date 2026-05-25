@@ -81,6 +81,7 @@
                                                        value="{{ field.vars.value }}"
                                                        placeholder="http://www.example.com"
                                                        {% if not one_domain_per_lang %}readonly{% endif %}>
+                                                {% do field.setRendered %}
                                             </td>
                                         </tr>
                                     {% endfor %}
