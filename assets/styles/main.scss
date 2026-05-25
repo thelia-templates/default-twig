@@ -606,3 +606,13 @@ input[type="color"].form-control {
 .bo-category-tree__chevron {
     transition: transform 0.15s;
 }
+
+.bo-ace-editor {
+    border: 1px solid var(--bs-border-color, #dee2e6);
+    border-radius: var(--bs-border-radius, 0.375rem);
+    overflow: hidden;
+}
+
+.bo-ace-editor--locked {
+    opacity: 0.7;
+}
