@@ -83,17 +83,11 @@
                 </div>
             </div>
 
-            <div class="d-flex justify-content-end gap-2 mt-3">
-                <a href="{{ path('admin.configuration.index') }}" class="btn btn-outline-secondary" data-testid="config-store-cancel">
-                    {{ 'Cancel'|trans }}
-                </a>
-                <button type="submit" name="save_mode" value="stay" class="btn btn-outline-primary" data-testid="config-store-save-stay">
-                    <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save'|trans }}
-                </button>
-                <button type="submit" name="save_mode" value="close" class="btn btn-primary" data-testid="config-store-save-close">
-                    <i class="bi bi-check2-all" aria-hidden="true"></i> {{ 'Save and close'|trans }}
-                </button>
-            </div>
+            {{ component('BoSaveModeToolbar', {
+                closeUrl: path('admin.configuration.index'),
+                closeLabel: 'Cancel',
+                testid: 'config-store',
+            }) }}
         {{ form_end(form) }}
     </div>
 
