@@ -212,10 +212,10 @@
             {% endif %}
 
             {% if item_to_translate != '' and is_writable %}
-                <div class="d-flex justify-content-end gap-2 mt-3">
-                    <button type="submit" class="btn btn-outline-secondary" name="save_mode" value="close">{{ 'Save and close'|trans }}</button>
-                    <button type="submit" class="btn btn-primary" name="save_mode" value="stay">{{ 'Save and stay'|trans }}</button>
-                </div>
+                {{ component('BoSaveModeToolbar', {
+                    saveLabel: 'Save and stay',
+                    testid: 'translations-edit',
+                }) }}
             {% endif %}
         </form>
     </div>

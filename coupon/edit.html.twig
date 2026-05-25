@@ -176,10 +176,13 @@
                         </div>
                     </div>
                 </div>
-                <div class="card-footer d-flex justify-content-end gap-2">
-                    <a href="{{ path('admin.coupon.default') }}" class="btn btn-outline-secondary">{{ 'Cancel'|trans }}</a>
-                    <button type="submit" name="save_mode" value="stay" class="btn btn-outline-primary" data-testid="coupon-save-stay">{{ 'Save'|trans }}</button>
-                    <button type="submit" name="save_mode" value="close" class="btn btn-primary" data-testid="coupon-save-close">{{ 'Save and close'|trans }}</button>
+                <div class="card-footer">
+                    {{ component('BoSaveModeToolbar', {
+                        closeUrl: path('admin.coupon.default'),
+                        closeLabel: 'Cancel',
+                        wrapperClass: '',
+                        testid: 'coupon',
+                    }) }}
                 </div>
             </div>
         </form>

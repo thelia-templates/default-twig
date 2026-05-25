@@ -56,12 +56,13 @@
                         <div class="col-md-6">{{ form_row(form.source_ip, { attr: { disabled: edit_disabled ? 'disabled' : null } }) }}</div>
                     </div>
                     {% if not edit_disabled %}
-                        <div class="d-flex justify-content-end gap-2 mt-3">
-                            <a href="{{ path('admin.configuration.index') }}" class="btn btn-outline-secondary">{{ 'Cancel'|trans }}</a>
-                            <button type="submit" name="save_mode" value="stay" class="btn btn-primary" data-testid="mailing-system-save">
-                                <i class="bi bi-check2"></i> {{ 'Save'|trans }}
-                            </button>
-                        </div>
+                        {{ component('BoSaveModeToolbar', {
+                            closeUrl: path('admin.configuration.index'),
+                            closeLabel: 'Cancel',
+                            showSaveClose: false,
+                            saveVariant: 'primary',
+                            testid: 'mailing-system',
+                        }) }}
                     {% endif %}
                 {{ form_end(form) }}
             </div>
