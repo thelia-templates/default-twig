@@ -41,9 +41,13 @@ use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
 use Thelia\Model\AttributeQuery;
 use Thelia\Model\AttributeTemplateQuery;
+use Thelia\Model\Category;
+use Thelia\Model\CategoryQuery;
 use Thelia\Model\FeatureQuery;
 use Thelia\Model\FeatureTemplateQuery;
 use Thelia\Model\LangQuery;
+use Thelia\Model\Product;
+use Thelia\Model\ProductQuery;
 use Thelia\Model\Template;
 use Thelia\Model\TemplateQuery;
 use Thelia\Tools\TokenProvider;
@@ -130,6 +134,8 @@ final class TemplateController
             'feature_position_url' => $this->urls->generate('admin.configuration.templates.attributes.update-feature-position'),
             'attribute_position_url' => $this->urls->generate('admin.configuration.templates.attributes.update-attribute-position'),
             'position_token' => $this->tokens->assignToken(),
+            'products_using' => $this->productsUsingTemplate($template, $locale),
+            'categories_defaulting' => $this->categoriesDefaultingToTemplate($template, $locale),
         ]));
     }
 
@@ -556,6 +562,55 @@ final class TemplateController
         }
 
         return $items;
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function productsUsingTemplate(Template $template, string $locale): array
+    {
+        $rows = [];
+        $products = ProductQuery::create()
+            ->filterByTemplateId((int) $template->getId())
+            ->orderByRef()
+            ->find();
+
+        foreach ($products as $product) {
+            \assert($product instanceof Product);
+            $product->setLocale($locale);
+            $rows[] = [
+                'id' => (int) $product->getId(),
+                'ref' => (string) $product->getRef(),
+                'title' => (string) $product->getTitle(),
+                'edit_url' => $this->urls->generate('admin.products.update', ['product_id' => (int) $product->getId()]),
+            ];
+        }
+
+        return $rows;
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function categoriesDefaultingToTemplate(Template $template, string $locale): array
+    {
+        $rows = [];
+        $categories = CategoryQuery::create()
+            ->filterByDefaultTemplateId((int) $template->getId())
+            ->orderByPosition()
+            ->find();
+
+        foreach ($categories as $category) {
+            \assert($category instanceof Category);
+            $category->setLocale($locale);
+            $rows[] = [
+                'id' => (int) $category->getId(),
+                'title' => (string) $category->getTitle(),
+                'edit_url' => $this->urls->generate('admin.categories.update', ['category_id' => (int) $category->getId()]),
+            ];
+        }
+
+        return $rows;
     }
 
     private function defaultLocale(): string

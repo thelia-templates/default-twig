@@ -89,6 +89,84 @@
                 </div>
             </div>
         </div>
+
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card" data-testid="template-products-using">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>{{ 'Products using this template'|trans }}</span>
+                        <span class="badge bg-secondary" data-testid="template-products-using-count">{{ products_using|length }}</span>
+                    </div>
+                    {% if products_using|length > 0 %}
+                        <table class="table table-striped mb-0" data-testid="template-products-using-table">
+                            <thead>
+                                <tr>
+                                    <th>{{ 'ID'|trans }}</th>
+                                    <th>{{ 'Reference'|trans }}</th>
+                                    <th>{{ 'Title'|trans }}</th>
+                                    <th class="text-end">{{ 'Actions'|trans }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for product in products_using %}
+                                    <tr data-testid="template-products-using-row-{{ product.id }}">
+                                        <td>{{ product.id }}</td>
+                                        <td>{{ product.ref }}</td>
+                                        <td>{{ product.title }}</td>
+                                        <td class="text-end">
+                                            <a href="{{ product.edit_url }}" class="btn btn-sm btn-outline-secondary" data-testid="template-products-using-edit-{{ product.id }}">
+                                                <i class="bi bi-pencil" aria-hidden="true"></i> {{ 'Edit'|trans }}
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <div class="card-body text-muted" data-testid="template-products-using-empty">
+                            {{ 'This template is not used by any product.'|trans }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card" data-testid="template-categories-defaulting">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>{{ 'Default template for categories'|trans }}</span>
+                        <span class="badge bg-secondary" data-testid="template-categories-defaulting-count">{{ categories_defaulting|length }}</span>
+                    </div>
+                    {% if categories_defaulting|length > 0 %}
+                        <table class="table table-striped mb-0" data-testid="template-categories-defaulting-table">
+                            <thead>
+                                <tr>
+                                    <th>{{ 'ID'|trans }}</th>
+                                    <th>{{ 'Title'|trans }}</th>
+                                    <th class="text-end">{{ 'Actions'|trans }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for category in categories_defaulting %}
+                                    <tr data-testid="template-categories-defaulting-row-{{ category.id }}">
+                                        <td>{{ category.id }}</td>
+                                        <td>{{ category.title }}</td>
+                                        <td class="text-end">
+                                            <a href="{{ category.edit_url }}" class="btn btn-sm btn-outline-secondary" data-testid="template-categories-defaulting-edit-{{ category.id }}">
+                                                <i class="bi bi-pencil" aria-hidden="true"></i> {{ 'Edit'|trans }}
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <div class="card-body text-muted" data-testid="template-categories-defaulting-empty">
+                            {{ 'No category uses this template as its default.'|trans }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
     </div>
 
     {{ safe_hook('template-edit.bottom', { template_id: template.id }) }}
