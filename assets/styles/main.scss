@@ -1065,3 +1065,55 @@ tr.bo-order-row--urgent {
         box-shadow: 0 0 0 0.2rem rgba(242, 96, 65, 0.25);
     }
 }
+
+// ---------- Dashboard ----------
+
+.bo-kpi {
+    transition: transform .12s ease, box-shadow .12s ease;
+}
+.bo-kpi:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .08) !important;
+}
+
+.bo-kpi__delta {
+    display: inline-flex;
+    align-items: center;
+    gap: .15rem;
+    font-size: .8rem;
+    font-weight: 600;
+    padding: .15rem .5rem;
+    border-radius: 999px;
+    line-height: 1;
+}
+.bo-kpi__delta--up {
+    background-color: rgba(92, 184, 92, 0.12);
+    color: #2e7d32;
+}
+.bo-kpi__delta--down {
+    background-color: rgba(220, 53, 69, 0.12);
+    color: #c62828;
+}
+.bo-kpi__delta--flat {
+    background-color: rgba(108, 117, 125, 0.12);
+    color: #6c757d;
+}
+.bo-kpi__delta i {
+    font-size: 1rem;
+}
+
+.bo-kpi__dot {
+    display: inline-block;
+    width: .65rem;
+    height: .65rem;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.bo-chart-canvas {
+    position: relative;
+    min-height: 240px;
+}
+.bo-chart-canvas > canvas {
+    max-width: 100%;
+}

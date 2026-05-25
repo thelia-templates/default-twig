@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace BackOfficeDefaultTwigBundle\Repository;
 
+use BackOfficeDefaultTwigBundle\DTO\Dashboard\DateRange;
 use BackOfficeDefaultTwigBundle\Service\Order\OrderFilters;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\Collection\ObjectCollection;
@@ -159,6 +160,102 @@ final readonly class OrderRepository
     public function countAll(): int
     {
         return OrderQuery::create()->count();
+    }
+
+    /**
+     * Sum of computed totals on orders created in $range. Used by the dashboard
+     * revenue KPI.
+     */
+    public function getRevenue(DateRange $range): float
+    {
+        $sql = 'SELECT COALESCE(SUM(computed), 0) AS revenue FROM (
+            SELECT '.OrderFilters::totalAmountSqlExpression().' AS computed
+            FROM `order`
+            WHERE created_at BETWEEN :from AND :to
+        ) AS sub';
+
+        $statement = Propel::getConnection()->prepare($sql);
+        $statement->execute([':from' => $range->fromSql(), ':to' => $range->toSql()]);
+        $row = $statement->fetch(\PDO::FETCH_ASSOC);
+
+        return (float) ($row['revenue'] ?? 0);
+    }
+
+    public function countOrders(DateRange $range): int
+    {
+        return (int) OrderQuery::create()
+            ->filterByCreatedAt($range->fromSql(), Criteria::GREATER_EQUAL)
+            ->filterByCreatedAt($range->toSql(), Criteria::LESS_EQUAL)
+            ->count();
+    }
+
+    /**
+     * Daily revenue and order count buckets, one row per day in the range
+     * (filled with zeroes when no order). Single SQL pass with GROUP BY.
+     *
+     * @return array{labels: list<string>, revenue: list<float>, orders: list<int>}
+     */
+    public function getDailyBuckets(DateRange $range): array
+    {
+        $sql = 'SELECT DATE(`order`.created_at) AS day, COUNT(*) AS orders_count,
+                COALESCE(SUM('.OrderFilters::totalAmountSqlExpression().'), 0) AS revenue
+                FROM `order`
+                WHERE created_at BETWEEN :from AND :to
+                GROUP BY DATE(`order`.created_at)';
+
+        $statement = Propel::getConnection()->prepare($sql);
+        $statement->execute([':from' => $range->fromSql(), ':to' => $range->toSql()]);
+
+        $rows = [];
+        while (($row = $statement->fetch(\PDO::FETCH_ASSOC)) !== false) {
+            $rows[$row['day']] = ['revenue' => (float) $row['revenue'], 'orders' => (int) $row['orders_count']];
+        }
+
+        $labels = [];
+        $revenue = [];
+        $orders = [];
+        $cursor = $range->from->setTime(0, 0);
+        $end = $range->to->setTime(0, 0);
+        while ($cursor <= $end) {
+            $key = $cursor->format('Y-m-d');
+            $labels[] = $cursor->format('d/m');
+            $revenue[] = $rows[$key]['revenue'] ?? 0.0;
+            $orders[] = $rows[$key]['orders'] ?? 0;
+            $cursor = $cursor->modify('+1 day');
+        }
+
+        return ['labels' => $labels, 'revenue' => $revenue, 'orders' => $orders];
+    }
+
+    /**
+     * Order-count breakdown by status (only statuses with at least one order).
+     *
+     * @return list<array{id: int, code: string, title: string, color: string, count: int}>
+     */
+    public function getStatusBreakdown(string $locale): array
+    {
+        return $this->findStatusesWithCounts($locale);
+    }
+
+    public function countUnpaidOlderThan(int $hours): int
+    {
+        $threshold = (new \DateTimeImmutable())->modify('-'.$hours.' hours')->format('Y-m-d H:i:s');
+
+        return (int) OrderQuery::create()
+            ->useOrderStatusQuery()
+                ->filterByCode(OrderStatus::CODE_NOT_PAID)
+            ->endUse()
+            ->filterByCreatedAt($threshold, Criteria::LESS_EQUAL)
+            ->count();
+    }
+
+    public function countAwaitingShipment(): int
+    {
+        return (int) OrderQuery::create()
+            ->useOrderStatusQuery()
+                ->filterByCode([OrderStatus::CODE_PAID, OrderStatus::CODE_PROCESSING], Criteria::IN)
+            ->endUse()
+            ->count();
     }
 
     /**

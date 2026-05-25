@@ -14,10 +14,16 @@ declare(strict_types=1);
 
 namespace BackOfficeDefaultTwigBundle\Repository;
 
+use BackOfficeDefaultTwigBundle\DTO\Dashboard\DateRange;
+use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\Collection\ObjectCollection;
+use Propel\Runtime\Propel;
 use Thelia\Model\Product;
 use Thelia\Model\ProductCategoryQuery;
+use Thelia\Model\ProductI18nQuery;
 use Thelia\Model\ProductQuery;
+use Thelia\Model\ProductSaleElements;
+use Thelia\Model\ProductSaleElementsQuery;
 
 final readonly class ProductRepository
 {
@@ -46,5 +52,87 @@ final readonly class ProductRepository
     public function countInCategory(int $categoryId): int
     {
         return ProductCategoryQuery::create()->filterByCategoryId($categoryId)->count();
+    }
+
+    public function countAll(): int
+    {
+        return (int) ProductQuery::create()->count();
+    }
+
+    /**
+     * Top-selling products on the date range, by units sold and total revenue.
+     * Aggregates order_product rows so a sold-out product still appears as long
+     * as it has historical sales in the window.
+     *
+     * @return list<array{id: int, ref: string, title: string, quantity: int, revenue: float}>
+     */
+    public function findTopSellers(DateRange $range, int $limit, string $locale): array
+    {
+        $sql = 'SELECT op.product_ref AS ref,
+                       SUM(op.quantity) AS quantity_sum,
+                       SUM(op.quantity * IF(op.was_in_promo = 1, op.promo_price, op.price)) AS revenue
+                FROM order_product op
+                JOIN `order` o ON o.id = op.order_id
+                WHERE o.created_at BETWEEN :from AND :to
+                GROUP BY op.product_ref
+                ORDER BY quantity_sum DESC
+                LIMIT '.max(1, $limit);
+
+        $statement = Propel::getConnection()->prepare($sql);
+        $statement->execute([':from' => $range->fromSql(), ':to' => $range->toSql()]);
+
+        $rows = [];
+        while (($row = $statement->fetch(\PDO::FETCH_ASSOC)) !== false) {
+            $rows[] = $row;
+        }
+        if ($rows === []) {
+            return [];
+        }
+
+        $refs = array_column($rows, 'ref');
+        $products = ProductQuery::create()
+            ->filterByRef($refs, Criteria::IN)
+            ->find();
+
+        $byRef = [];
+        foreach ($products as $product) {
+            \assert($product instanceof Product);
+            $product->setLocale($locale);
+            $byRef[(string) $product->getRef()] = $product;
+        }
+
+        $items = [];
+        foreach ($rows as $row) {
+            $product = $byRef[$row['ref']] ?? null;
+            $items[] = [
+                'id' => $product !== null ? (int) $product->getId() : 0,
+                'ref' => (string) $row['ref'],
+                'title' => $product !== null ? (string) $product->getTitle() : (string) $row['ref'],
+                'quantity' => (int) $row['quantity_sum'],
+                'revenue' => (float) $row['revenue'],
+            ];
+        }
+
+        return $items;
+    }
+
+    /**
+     * @return list<ProductSaleElements>
+     */
+    public function findLowStock(int $threshold, int $limit, string $locale): array
+    {
+        $list = array_values(iterator_to_array(
+            ProductSaleElementsQuery::create()
+                ->filterByQuantity($threshold, Criteria::LESS_EQUAL)
+                ->orderByQuantity(Criteria::ASC)
+                ->limit($limit)
+                ->find(),
+        ));
+
+        foreach ($list as $pse) {
+            $pse->getProduct()?->setLocale($locale);
+        }
+
+        return $list;
     }
 }

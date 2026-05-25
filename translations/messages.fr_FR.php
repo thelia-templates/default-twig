@@ -910,4 +910,23 @@ return [
     'with' => 'avec',
     'Without' => 'Sans',
     'without' => 'sans',
+
+    // Dashboard
+    '7 days' => '7 jours',
+    '30 days' => '30 jours',
+    '90 days' => '90 jours',
+    'Average order' => 'Panier moyen',
+    'Daily, TTC' => 'Journalier, TTC',
+    'New customers' => 'Nouveaux clients',
+    'No order yet' => 'Aucune commande',
+    'No sales yet in this period' => 'Aucune vente sur cette période',
+    'Order status' => 'Statut des commandes',
+    '%count% orders awaiting shipment' => '%count% commande(s) en attente d\'envoi',
+    'Revenue' => 'Chiffre d\'affaires',
+    'Revenue trend' => 'Évolution du chiffre d\'affaires',
+    'sold' => 'vendu(s)',
+    'This month' => 'Ce mois-ci',
+    'This year' => 'Cette année',
+    'Top selling products' => 'Meilleures ventes',
+    '%count% unpaid orders over 48h' => '%count% commande(s) impayée(s) > 48h',
 ];
