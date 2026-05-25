@@ -124,7 +124,9 @@ final class OrderController
                 'countries' => $this->countryChoices($locale),
                 'states' => $this->stateChoices($locale),
                 'invoice_url' => $this->urls->generate('admin.order.pdf.invoice', ['order_id' => $order_id, 'browser' => 1]),
+                'invoice_download_url' => $this->urls->generate('admin.order.pdf.invoice', ['order_id' => $order_id, 'browser' => 0]),
                 'delivery_url' => $this->urls->generate('admin.order.pdf.delivery', ['order_id' => $order_id, 'browser' => 1]),
+                'delivery_download_url' => $this->urls->generate('admin.order.pdf.delivery', ['order_id' => $order_id, 'browser' => 0]),
                 'token' => $this->tokens->assignToken(),
             ],
         )));
