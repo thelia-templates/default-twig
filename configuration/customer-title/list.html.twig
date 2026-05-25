@@ -40,27 +40,21 @@
     </div>
 
     {% if is_granted('CREATE', 'admin.customer.title') %}
-        <div class="modal fade" id="customer-title-create-modal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    {{ form_start(create_form, { action: path('admin.configuration.customer-titles.create'), method: 'post' }) }}
-                    <div class="modal-header">
-                        <h2 class="modal-title h5">{{ 'New customer title'|trans }}</h2>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'Close'|trans }}"></button>
-                    </div>
-                    <div class="modal-body">
-                        {{ form_row(create_form.short) }}
-                        {{ form_row(create_form.long) }}
-                        {{ form_row(create_form.default) }}
-                    </div>
-                    <div class="modal-footer">
-                        {{ form_widget(create_form.locale) }}
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ 'Cancel'|trans }}</button>
-                        <button type="submit" class="btn btn-primary">{{ 'Create'|trans }}</button>
-                    </div>
-                    {{ form_end(create_form) }}
-                </div>
-            </div>
-        </div>
+        {% component 'BoCreateDialog' with {
+            id: 'customer-title-create-modal',
+            title: 'New customer title',
+            form: create_form,
+            formAction: path('admin.configuration.customer-titles.create'),
+            submitLabel: 'Create',
+            testid: 'customer-title-create',
+            size: '',
+        } %}
+            {% block fields %}
+                {{ form_row(create_form.short) }}
+                {{ form_row(create_form.long) }}
+                {{ form_row(create_form.default) }}
+                {{ form_widget(create_form.locale) }}
+            {% endblock %}
+        {% endcomponent %}
     {% endif %}
 {% endblock %}
