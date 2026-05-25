@@ -151,7 +151,7 @@
             </div>
 
             <div class="tab-pane fade {% if current_tab == 'pse' %}show active{% endif %}" id="tab-pse" role="tabpanel">
-                {{ render(controller('BackOfficeDefaultTwigBundle\\Controller\\Catalog\\ProductAdvancedController::combinationsTab', { product_id: product.id })) }}
+                {{ render(controller('BackOfficeDefaultTwigBundle\\Controller\\Catalog\\ProductAdvancedController::combinationsTab', { product_id: product.id, currency_id: app.request.query.get('combinations_currency_id') })) }}
             </div>
 
             <div class="tab-pane fade {% if current_tab == 'related' %}show active{% endif %}" id="tab-related" role="tabpanel">

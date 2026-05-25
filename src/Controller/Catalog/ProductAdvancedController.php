@@ -521,9 +521,11 @@ final class ProductAdvancedController
             return $denied;
         }
 
+        $currencyId = (int) $request->get('currency_id', 0);
+
         return new Response($this->twig->render(
             '@BackOfficeDefaultTwig/catalog/product/_combinations_tab.html.twig',
-            $this->combinationsTabContextBuilder->build($product),
+            $this->combinationsTabContextBuilder->build($product, $currencyId > 0 ? $currencyId : null),
         ));
     }
 

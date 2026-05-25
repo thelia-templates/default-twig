@@ -1,16 +1,33 @@
 <div data-testid="product-combinations-tab">
     {{ safe_hook('product.combinations-tab.top', { product: product.id }) }}
 
-    {% if template_attributes is not empty %}
-        <div class="d-flex justify-content-end gap-2 mb-3" data-testid="combinations-toolbar">
-            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#combination-creation-modal" data-testid="combination-create-btn">
-                <i class="bi bi-plus-circle" aria-hidden="true"></i> {{ 'Add a combination'|trans }}
-            </button>
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#combination-builder-modal" data-testid="combination-builder-btn">
-                <i class="bi bi-stars" aria-hidden="true"></i> {{ 'Combination builder'|trans }}
-            </button>
-        </div>
-    {% endif %}
+    <div class="d-flex justify-content-between align-items-end gap-2 mb-3 flex-wrap">
+        {% if available_currencies|default([])|length > 1 %}
+            <div data-testid="combinations-currency-wrapper">
+                <label class="form-label mb-1" for="combinations-currency-switcher">{{ 'Prices in currency'|trans }}</label>
+                <select class="form-select form-select-sm" style="width:auto" id="combinations-currency-switcher"
+                        data-testid="combinations-currency-switcher"
+                        onchange="window.location.assign(this.value)">
+                    {% for option in available_currencies %}
+                        <option value="{{ path('admin.products.update', { product_id: product.id, current_tab: 'pse', combinations_currency_id: option.id }) }}"{% if option.id == currency.id %} selected{% endif %}>{{ option.code }} ({{ option.symbol }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+        {% else %}
+            <span></span>
+        {% endif %}
+
+        {% if template_attributes is not empty %}
+            <div class="d-flex gap-2" data-testid="combinations-toolbar">
+                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#combination-creation-modal" data-testid="combination-create-btn">
+                    <i class="bi bi-plus-circle" aria-hidden="true"></i> {{ 'Add a combination'|trans }}
+                </button>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#combination-builder-modal" data-testid="combination-builder-btn">
+                    <i class="bi bi-stars" aria-hidden="true"></i> {{ 'Combination builder'|trans }}
+                </button>
+            </div>
+        {% endif %}
+    </div>
 
     {% if has_combinations %}
         <form method="post" action="{{ path('admin.product.combination.update') }}?_token={{ assignToken() }}" data-testid="combinations-form">

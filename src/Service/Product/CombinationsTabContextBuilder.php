@@ -43,10 +43,10 @@ final readonly class CombinationsTabContextBuilder
      *     template_attributes: list<array{id: int, title: string, values: list<array{id: int, title: string}>}>
      * }
      */
-    public function build(Product $product): array
+    public function build(Product $product, ?int $currencyId = null): array
     {
         $locale = $this->defaultLocale();
-        $currency = $this->defaultCurrency();
+        $currency = $this->resolveCurrency($currencyId);
         $pseRecords = ProductSaleElementsQuery::create()
             ->filterByProductId((int) $product->getId())
             ->orderById()
@@ -111,8 +111,26 @@ final readonly class CombinationsTabContextBuilder
                 'code' => (string) $currency->getCode(),
                 'is_default' => (bool) $currency->getByDefault(),
             ],
+            'available_currencies' => $this->collectCurrencies(),
             'template_attributes' => $this->collectTemplateAttributes($product, $locale),
         ];
+    }
+
+    /**
+     * @return list<array{id: int, code: string, symbol: string}>
+     */
+    private function collectCurrencies(): array
+    {
+        $currencies = [];
+        foreach (CurrencyQuery::create()->orderByPosition()->find() as $currency) {
+            $currencies[] = [
+                'id' => (int) $currency->getId(),
+                'code' => (string) $currency->getCode(),
+                'symbol' => (string) $currency->getSymbol(),
+            ];
+        }
+
+        return $currencies;
     }
 
     /**
@@ -199,13 +217,20 @@ final readonly class CombinationsTabContextBuilder
         return LangQuery::create()->findOneByByDefault(true)?->getLocale() ?? 'en_US';
     }
 
-    private function defaultCurrency(): Currency
+    private function resolveCurrency(?int $currencyId): Currency
     {
+        if ($currencyId !== null && $currencyId > 0) {
+            $currency = CurrencyQuery::create()->findPk($currencyId);
+            if ($currency !== null) {
+                return $currency;
+            }
+        }
+
         $currency = CurrencyQuery::create()->findOneByByDefault(true);
         if ($currency !== null) {
             return $currency;
         }
-        $first = CurrencyQuery::create()->orderById()->findOne();
+        $first = CurrencyQuery::create()->orderByPosition()->findOne();
         if ($first === null) {
             throw new \RuntimeException('No currency configured.');
         }
