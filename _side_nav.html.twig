@@ -5,6 +5,8 @@
 
 {% set current_route = app.request.attributes.get('_route')|default('') %}
 {% set current_path = app.request.pathInfo|default('') %}
+{% set store_logo_filename = thelia_config('logo_file') %}
+{% set store_name = thelia_config('store_name', 'Your Logo') %}
 
 {% macro is_section(current_path, prefixes) %}
     {%- for prefix in prefixes -%}
@@ -18,8 +20,15 @@
         <h2 class="h5 offcanvas-title text-white mb-0">{{ 'Menu'|trans }}</h2>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="{{ 'Close'|trans }}"></button>
     </div>
-    <a class="bo-side-nav__header" href="{{ path('admin.home') }}" aria-label="Thelia">
-        {% include '@BackOfficeDefaultTwig/_thelia_logo.html.twig' with { variant: 'light', height: '32' } only %}
+    <a class="bo-side-nav__header" href="{{ path('admin.home') }}" aria-label="{{ store_name }}">
+        {% if store_logo_filename %}
+            <img src="{{ path('admin.store-media.show', { field: 'logo' }) }}" alt="{{ store_name }}" class="bo-side-nav__logo" data-testid="bo-store-logo">
+        {% else %}
+            <span class="bo-side-nav__logo-placeholder" data-testid="bo-store-logo-placeholder">
+                <i class="bi bi-image" aria-hidden="true"></i>
+                {{ 'Your logo'|trans }}
+            </span>
+        {% endif %}
     </a>
 
     {{ safe_hook('main.before-top-menu', { location: 'before_top_menu' }) }}
@@ -201,4 +210,9 @@
 
     {{ safe_hook('main.topbar-bottom') }}
     {{ safe_hook('main.after-top-menu', { location: 'after_top_menu' }) }}
+
+    <a class="bo-side-nav__footer" href="https://thelia.net" target="_blank" rel="noopener" aria-label="Thelia">
+        <span class="bo-side-nav__footer-label">{{ 'Powered by'|trans }}</span>
+        {% include '@BackOfficeDefaultTwig/_thelia_logo.html.twig' with { variant: 'light', height: '20' } only %}
+    </a>
 </aside>

@@ -74,7 +74,45 @@ $bo-side-nav-hover-bg: rgba(255, 255, 255, .07);
         display: flex;
         align-items: center;
         justify-content: center;
-        height: 60px;
+        min-height: 60px;
+        padding: .5rem 1rem;
+        background-color: #ffffff;
+        text-decoration: none;
+        flex-shrink: 0;
+        border-bottom: 1px solid rgba(0, 0, 0, .08);
+
+        &:hover {
+            opacity: .85;
+        }
+    }
+
+    &__logo {
+        max-height: 44px;
+        max-width: 100%;
+        width: auto;
+        object-fit: contain;
+    }
+
+    &__logo-placeholder {
+        display: inline-flex;
+        align-items: center;
+        gap: .5rem;
+        color: #6c757d;
+        font-size: .85rem;
+        font-style: italic;
+
+        .bi {
+            font-size: 1.5rem;
+        }
+    }
+
+    &__footer {
+        margin-top: auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .5rem;
+        padding: .75rem 1rem;
         background-color: var(--bs-primary);
         text-decoration: none;
         flex-shrink: 0;
@@ -84,9 +122,16 @@ $bo-side-nav-hover-bg: rgba(255, 255, 255, .07);
         }
 
         .thelia-logo {
-            height: 32px;
+            height: 20px;
             width: auto;
         }
+    }
+
+    &__footer-label {
+        color: rgba(255, 255, 255, .85);
+        font-size: .75rem;
+        text-transform: uppercase;
+        letter-spacing: .04em;
     }
 
     &__sections {
