@@ -106,23 +106,51 @@
                                    data-bs-toggle="tooltip"
                                    title="{{ 'Includes postage and discount'|trans }}"></i>
                             </legend>
-                            <div class="row g-2">
-                                <div class="col">
-                                    <div class="input-group input-group-sm">
-                                        <input type="text" name="min_amount" value="{{ filters.min_amount_input }}"
-                                               class="form-control" placeholder="{{ 'Min'|trans }}" inputmode="decimal"
-                                               aria-label="{{ 'Min'|trans }}"
-                                               data-testid="order-filter-min-amount">
-                                        <span class="input-group-text">€</span>
+                            <div class="bo-range-slider" data-controller="bo-range-slider"
+                                 data-bo-range-slider-min-value="{{ filters.amount_slider.min }}"
+                                 data-bo-range-slider-max-value="{{ filters.amount_slider.max }}"
+                                 data-bo-range-slider-step-value="{{ filters.amount_slider.step }}">
+                                <div class="bo-range-slider__rail">
+                                    <div class="bo-range-slider__track">
+                                        <div class="bo-range-slider__fill" data-bo-range-slider-target="fill"></div>
                                     </div>
+                                    <input type="range" class="bo-range-slider__handle"
+                                           data-bo-range-slider-target="minRange"
+                                           data-action="input->bo-range-slider#onMinRange"
+                                           min="{{ filters.amount_slider.min }}" max="{{ filters.amount_slider.max }}"
+                                           step="{{ filters.amount_slider.step }}"
+                                           value="{{ filters.amount_slider.min }}"
+                                           aria-label="{{ 'Min'|trans }}">
+                                    <input type="range" class="bo-range-slider__handle"
+                                           data-bo-range-slider-target="maxRange"
+                                           data-action="input->bo-range-slider#onMaxRange"
+                                           min="{{ filters.amount_slider.min }}" max="{{ filters.amount_slider.max }}"
+                                           step="{{ filters.amount_slider.step }}"
+                                           value="{{ filters.amount_slider.max }}"
+                                           aria-label="{{ 'Max'|trans }}">
                                 </div>
-                                <div class="col">
-                                    <div class="input-group input-group-sm">
-                                        <input type="text" name="max_amount" value="{{ filters.max_amount_input }}"
-                                               class="form-control" placeholder="{{ 'Max'|trans }}" inputmode="decimal"
-                                               aria-label="{{ 'Max'|trans }}"
-                                               data-testid="order-filter-max-amount">
-                                        <span class="input-group-text">€</span>
+                                <div class="row g-1 mt-1">
+                                    <div class="col">
+                                        <div class="input-group input-group-sm">
+                                            <input type="text" name="min_amount" value="{{ filters.min_amount_input }}"
+                                                   class="form-control" placeholder="{{ 'Min'|trans }}" inputmode="decimal"
+                                                   aria-label="{{ 'Min'|trans }}"
+                                                   data-bo-range-slider-target="minInput"
+                                                   data-action="change->bo-range-slider#onMinInput"
+                                                   data-testid="order-filter-min-amount">
+                                            <span class="input-group-text">€</span>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="input-group input-group-sm">
+                                            <input type="text" name="max_amount" value="{{ filters.max_amount_input }}"
+                                                   class="form-control" placeholder="{{ 'Max'|trans }}" inputmode="decimal"
+                                                   aria-label="{{ 'Max'|trans }}"
+                                                   data-bo-range-slider-target="maxInput"
+                                                   data-action="change->bo-range-slider#onMaxInput"
+                                                   data-testid="order-filter-max-amount">
+                                            <span class="input-group-text">€</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -186,18 +214,46 @@
                     <div class="col-md-6 col-lg-4">
                         <fieldset>
                             <legend class="form-label">{{ 'Number of items'|trans }}</legend>
-                            <div class="row g-2">
-                                <div class="col">
-                                    <input type="number" min="0" name="min_items" value="{{ filters.min_items_input }}"
-                                           class="form-control form-control-sm" placeholder="{{ 'Min'|trans }}"
-                                           aria-label="{{ 'Min'|trans }}"
-                                           data-testid="order-filter-min-items">
+                            <div class="bo-range-slider" data-controller="bo-range-slider"
+                                 data-bo-range-slider-min-value="{{ filters.items_slider.min }}"
+                                 data-bo-range-slider-max-value="{{ filters.items_slider.max }}"
+                                 data-bo-range-slider-step-value="{{ filters.items_slider.step }}">
+                                <div class="bo-range-slider__rail">
+                                    <div class="bo-range-slider__track">
+                                        <div class="bo-range-slider__fill" data-bo-range-slider-target="fill"></div>
+                                    </div>
+                                    <input type="range" class="bo-range-slider__handle"
+                                           data-bo-range-slider-target="minRange"
+                                           data-action="input->bo-range-slider#onMinRange"
+                                           min="{{ filters.items_slider.min }}" max="{{ filters.items_slider.max }}"
+                                           step="{{ filters.items_slider.step }}"
+                                           value="{{ filters.items_slider.min }}"
+                                           aria-label="{{ 'Min'|trans }}">
+                                    <input type="range" class="bo-range-slider__handle"
+                                           data-bo-range-slider-target="maxRange"
+                                           data-action="input->bo-range-slider#onMaxRange"
+                                           min="{{ filters.items_slider.min }}" max="{{ filters.items_slider.max }}"
+                                           step="{{ filters.items_slider.step }}"
+                                           value="{{ filters.items_slider.max }}"
+                                           aria-label="{{ 'Max'|trans }}">
                                 </div>
-                                <div class="col">
-                                    <input type="number" min="0" name="max_items" value="{{ filters.max_items_input }}"
-                                           class="form-control form-control-sm" placeholder="{{ 'Max'|trans }}"
-                                           aria-label="{{ 'Max'|trans }}"
-                                           data-testid="order-filter-max-items">
+                                <div class="row g-1 mt-1">
+                                    <div class="col">
+                                        <input type="number" min="0" name="min_items" value="{{ filters.min_items_input }}"
+                                               class="form-control form-control-sm" placeholder="{{ 'Min'|trans }}"
+                                               aria-label="{{ 'Min'|trans }}"
+                                               data-bo-range-slider-target="minInput"
+                                               data-action="change->bo-range-slider#onMinInput"
+                                               data-testid="order-filter-min-items">
+                                    </div>
+                                    <div class="col">
+                                        <input type="number" min="0" name="max_items" value="{{ filters.max_items_input }}"
+                                               class="form-control form-control-sm" placeholder="{{ 'Max'|trans }}"
+                                               aria-label="{{ 'Max'|trans }}"
+                                               data-bo-range-slider-target="maxInput"
+                                               data-action="change->bo-range-slider#onMaxInput"
+                                               data-testid="order-filter-max-items">
+                                    </div>
                                 </div>
                             </div>
                         </fieldset>
