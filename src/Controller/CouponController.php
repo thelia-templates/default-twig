@@ -472,8 +472,29 @@ final class CouponController
             'type' => (string) $coupon->getType(),
             'enabled' => (bool) $coupon->getIsEnabled(),
             'enabled_label' => $coupon->getIsEnabled() ? $this->translator->trans('Enabled') : $this->translator->trans('Disabled'),
+            'start_date' => $coupon->getStartDate(),
+            'expiration_date' => $coupon->getExpirationDate(),
+            'days_left' => $this->daysLeftLabel($coupon),
+            'usages_left' => $coupon->isUsageUnlimited() ? $this->translator->trans('Unlimited') : (string) max(0, (int) $coupon->getUsagesLeft()),
             '_actions' => $actions,
         ];
+    }
+
+    private function daysLeftLabel(Coupon $coupon): string
+    {
+        $expiration = $coupon->getExpirationDate();
+        if (!$expiration instanceof \DateTimeInterface) {
+            return $this->translator->trans('Unlimited');
+        }
+
+        $now = new \DateTimeImmutable();
+        if ($expiration <= $now) {
+            return $this->translator->trans('Expired');
+        }
+
+        $days = (int) $now->diff($expiration)->format('%r%a');
+
+        return (string) $days;
     }
 
     private function defaultLocale(): string
