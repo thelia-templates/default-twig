@@ -16,8 +16,10 @@ namespace BackOfficeDefaultTwigBundle\Controller\Catalog;
 
 use BackOfficeDefaultTwigBundle\Form\Brand\BrandSeoType;
 use BackOfficeDefaultTwigBundle\Form\Brand\BrandType;
+use BackOfficeDefaultTwigBundle\Repository\BrandRepository;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
+use BackOfficeDefaultTwigBundle\Service\Catalog\BrandImagePresenter;
 use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
 use Symfony\Component\Form\FormFactoryInterface;
@@ -38,7 +40,6 @@ use Thelia\Core\Event\UpdateSeoEvent;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
 use Thelia\Model\Brand;
-use Thelia\Model\BrandQuery;
 use Thelia\Model\LangQuery;
 use Thelia\Tools\TokenProvider;
 use Twig\Environment;
@@ -61,6 +62,8 @@ final class BrandController
         private readonly TokenProvider $tokens,
         private readonly TranslatorInterface $translator,
         private readonly EditLocaleResolver $editLocale,
+        private readonly BrandImagePresenter $brandImages,
+        private readonly BrandRepository $brandRepository,
     ) {
     }
 
@@ -103,7 +106,7 @@ final class BrandController
             return $denied;
         }
 
-        $brand = BrandQuery::create()->findPk($brand_id);
+        $brand = $this->brandRepository->findById($brand_id);
         if ($brand === null) {
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }
@@ -114,6 +117,7 @@ final class BrandController
 
         $form = $this->buildUpdateForm($brand, $locale);
         $seoForm = $this->buildSeoForm($brand, $locale);
+        $logoImages = $this->brandImages->listForBrand($brand_id, $locale);
 
         return new Response($this->twig->render(self::EDIT_TEMPLATE, [
             'brand' => $brand,
@@ -121,6 +125,9 @@ final class BrandController
             'seo_form' => $seoForm->createView(),
             'current_tab' => (string) $request->query->get('current_tab', 'general'),
             'edit_language_id' => (int) $editLang->getId(),
+            'logo_images' => $logoImages,
+            'logo_image_id' => (int) ($brand->getLogoImageId() ?? 0),
+            'images_tab_url' => $this->urls->generate(self::EDIT_ROUTE, ['brand_id' => $brand_id, 'current_tab' => 'images']),
         ]));
     }
 
@@ -175,7 +182,7 @@ final class BrandController
     #[Route('/toggle-online', name: 'toggle-online', methods: ['GET', 'POST'])]
     public function toggleOnline(Request $request): Response
     {
-        $brand = BrandQuery::create()->findPk((int) $request->get('brand_id', 0));
+        $brand = $this->brandRepository->findById((int) $request->get('brand_id', 0));
         if ($brand === null) {
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }
@@ -336,7 +343,7 @@ final class BrandController
     private function buildListContext(Request $request): array
     {
         $locale = $request->getLocale();
-        $brands = BrandQuery::create()->orderByPosition()->find();
+        $brands = $this->brandRepository->findAllOrderedByPosition();
         $rows = [];
 
         foreach ($brands as $brand) {
