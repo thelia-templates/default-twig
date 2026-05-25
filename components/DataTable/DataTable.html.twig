@@ -53,7 +53,7 @@
                 {% else %}
                     <tr>
                         <td colspan="{{ columns|length }}" class="text-center text-muted py-4" data-testid="datatable-{{ id }}-empty">
-                            {{ emptyMessage|default('No data'|trans({}, 'bo.default-twig')) }}
+                            {{ emptyMessage|default('No data'|trans) }}
                         </td>
                     </tr>
                 {% endfor %}

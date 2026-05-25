@@ -6,7 +6,7 @@
             <meta name="viewport" content="width=device-width, initial-scale=1">
             <meta name="referrer" content="same-origin">
 
-            <title>{% block title %}{{ 'Back-office'|trans({}, 'bo.default-twig') }}{% endblock %} - Thelia</title>
+            <title>{% block title %}{{ 'Back-office'|trans }}{% endblock %} - Thelia</title>
 
             {% block stylesheets %}
                 {{ encore_entry_link_tags('app', null, 'backoffice') }}

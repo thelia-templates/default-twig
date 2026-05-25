@@ -1,8 +1,8 @@
 {% extends '@BackOfficeDefaultTwig/auth-layout.html.twig' %}
 
-{% block title %}{{ 'Welcome'|trans({}, 'bo.default-twig') }}{% endblock %}
+{% block title %}{{ 'Welcome'|trans }}{% endblock %}
 
-{% block auth_subtitle %}{{ 'Sign in to your back-office'|trans({}, 'bo.default-twig') }}{% endblock %}
+{% block auth_subtitle %}{{ 'Sign in to your back-office'|trans }}{% endblock %}
 
 {% block flash %}
     {{ parent() }}
@@ -21,18 +21,18 @@
             {# Render a single generic message so the form does not leak whether
                the username exists or the password is wrong (account enumeration). #}
             <div class="alert alert-danger" role="alert" data-testid="login-error">
-                {{ 'Invalid credentials.'|trans({}, 'bo.default-twig') }}
+                {{ 'Invalid credentials.'|trans }}
             </div>
         {% endif %}
 
         <div class="mb-3">
-            {{ form_label(login_form.username, 'Username or e-mail address'|trans({}, 'bo.default-twig'), {'label_attr': {'class': 'form-label'}}) }}
+            {{ form_label(login_form.username, 'Username or e-mail address'|trans, {'label_attr': {'class': 'form-label'}}) }}
             <div class="input-group">
                 <span class="input-group-text"><i class="bi bi-person"></i></span>
                 {{ form_widget(login_form.username, {
                     'attr': {
                         'class': 'form-control form-control-lg',
-                        'placeholder': 'Username or e-mail address'|trans({}, 'bo.default-twig'),
+                        'placeholder': 'Username or e-mail address'|trans,
                         'autofocus': 'autofocus',
                         'data-testid': 'login-username',
                     },
@@ -42,13 +42,13 @@
         </div>
 
         <div class="mb-3">
-            {{ form_label(login_form.password, 'Password'|trans({}, 'bo.default-twig'), {'label_attr': {'class': 'form-label'}}) }}
+            {{ form_label(login_form.password, 'Password'|trans, {'label_attr': {'class': 'form-label'}}) }}
             <div class="input-group">
                 <span class="input-group-text"><i class="bi bi-lock"></i></span>
                 {{ form_widget(login_form.password, {
                     'attr': {
                         'class': 'form-control form-control-lg',
-                        'placeholder': 'Password'|trans({}, 'bo.default-twig'),
+                        'placeholder': 'Password'|trans,
                         'data-testid': 'login-password',
                     },
                 }) }}
@@ -65,14 +65,14 @@
 
         <button type="submit" class="btn btn-primary btn-lg w-100" data-testid="login-submit">
             <i class="bi bi-box-arrow-in-right me-2"></i>
-            {{ 'Login'|trans({}, 'bo.default-twig') }}
+            {{ 'Login'|trans }}
         </button>
     </form>
 
     <div class="text-center mt-4">
         <a class="text-decoration-none small" href="{{ path('index', {router: 'front'}) }}">
             <i class="bi bi-arrow-left me-1"></i>
-            {{ 'Return to shop'|trans({}, 'bo.default-twig') }}
+            {{ 'Return to shop'|trans }}
         </a>
     </div>
 

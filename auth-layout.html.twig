@@ -7,8 +7,8 @@
         <div class="bo-auth-card card shadow-sm" style="max-width: 420px; width: 100%;">
             <div class="card-body p-4 p-md-5">
                 <div class="text-center mb-4">
-                    <h1 class="h4 mb-1" data-testid="bo-auth-title">{% block auth_title %}{{ 'Thelia'|trans({}, 'bo.default-twig') }}{% endblock %}</h1>
-                    <p class="text-body-secondary small mb-0">{% block auth_subtitle %}{{ 'Back-office'|trans({}, 'bo.default-twig') }}{% endblock %}</p>
+                    <h1 class="h4 mb-1" data-testid="bo-auth-title">{% block auth_title %}{{ 'Thelia'|trans }}{% endblock %}</h1>
+                    <p class="text-body-secondary small mb-0">{% block auth_subtitle %}{{ 'Back-office'|trans }}{% endblock %}</p>
                 </div>
 
                 {% block flash %}{{ parent() }}{% endblock %}
