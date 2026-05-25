@@ -115,6 +115,7 @@
                                         <option value="{{ template.id }}" {% if template.id == category.defaultTemplateId %}selected{% endif %}>{{ template.name }}</option>
                                     {% endfor %}
                                 </select>
+                                {% do form.default_template_id.setRendered %}
                             </div>
                         </div>
                     </div>
