@@ -118,6 +118,7 @@
                                         <option value="{{ tpl.id }}" {% if tpl.id == product.templateId %}selected{% endif %}>{{ tpl.name }}</option>
                                     {% endfor %}
                                 </select>
+                                {% do form.template_id.setRendered %}
                             </div>
                             <div class="mb-3">
                                 {{ form_label(form.brand_id) }}

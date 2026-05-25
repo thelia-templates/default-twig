@@ -912,6 +912,7 @@ return [
     'without' => 'sans',
 
     // Category list - product/subcategory counts
+    '- All categories -' => '- Toutes les rubriques -',
     'no product' => 'aucun produit',
     '%count% product' => '%count% produit',
     '%count% products' => '%count% produits',
