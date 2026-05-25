@@ -204,7 +204,7 @@
                             title: 'Delivery address'|trans,
                             address: order_addresses.delivery,
                             customer_email: null,
-                            hook: safe_hook('order-edit.bill-delivery-address', { order_id: order.id, module_id: delivery.module_id }),
+                            hook: safe_hook('order-edit.bill-delivery-address', { order_id: order.id, module: delivery.module_id, module_id: delivery.module_id }),
                         } only %}
                     </div>
                 </div>
@@ -279,14 +279,24 @@
                 {% endif %}
 
                 <div class="card mb-3" data-testid="order-payment">
-                    <div class="card-header">{{ 'Payment'|trans }}</div>
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>{{ 'Payment'|trans }}</span>
+                        {% if payment.is_paid %}
+                            <span class="badge text-bg-success">{{ 'Paid'|trans }}</span>
+                        {% endif %}
+                    </div>
                     <div class="card-body small">
                         <p class="mb-1"><strong>{{ payment.module_title|default('-') }}</strong></p>
                         {% if payment.transaction_ref %}
-                            <p class="mb-1 text-muted">{{ 'Transaction ref'|trans }}: <code>{{ payment.transaction_ref }}</code></p>
+                            <p class="mb-1 text-muted">{{ 'Transaction reference'|trans }}: <code>{{ payment.transaction_ref }}</code></p>
+                        {% else %}
+                            <p class="mb-1 text-muted">{{ 'No transaction for this order'|trans }}</p>
                         {% endif %}
                         {% if payment.invoice_ref %}
-                            <p class="mb-1 text-muted">{{ 'Invoice ref'|trans }}: <code>{{ payment.invoice_ref }}</code></p>
+                            <p class="mb-1 text-muted">{{ 'Invoice reference'|trans }}: <code>{{ payment.invoice_ref }}</code></p>
+                        {% endif %}
+                        {% if payment.invoice_date %}
+                            <p class="mb-1 text-muted">{{ 'Invoice date'|trans }}: {{ payment.invoice_date|date('d/m/Y') }}</p>
                         {% endif %}
                         {{ safe_hook('order-edit.payment-module-bottom', { order_id: order.id, module_id: payment.module_id }) }}
                     </div>
@@ -296,10 +306,13 @@
                     <div class="card-header">{{ 'Delivery'|trans }}</div>
                     <div class="card-body small">
                         <p class="mb-1"><strong>{{ delivery.module_title|default('-') }}</strong></p>
-                        {% if delivery.delivery_ref %}
-                            <p class="mb-1 text-muted">{{ 'Tracking ref'|trans }}: <code>{{ delivery.delivery_ref }}</code></p>
+                        {% if delivery.module_description %}
+                            <div class="text-muted small mb-2">{{ delivery.module_description|raw }}</div>
                         {% endif %}
-                        {{ safe_hook('order-edit.delivery-module-bottom', { order_id: order.id, module_id: delivery.module_id }) }}
+                        {% if delivery.delivery_ref %}
+                            <p class="mb-1 text-muted">{{ 'Tracking reference'|trans }}: <code>{{ delivery.delivery_ref }}</code></p>
+                        {% endif %}
+                        {{ safe_hook('order-edit.delivery-module-bottom', { order_id: order.id, module: delivery.module_id, module_id: delivery.module_id }) }}
                     </div>
                 </div>
 

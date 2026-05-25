@@ -91,6 +91,9 @@ final readonly class OrderDetailContextBuilder
         $statusModel = OrderStatusQuery::create()->findPk((int) $order->getStatusId());
         $statusModel?->setLocale($locale);
 
+        $invoiceDate = $order->getInvoiceDate();
+        $invoiceDateString = $invoiceDate instanceof \DateTimeInterface ? $invoiceDate->format(\DATE_ATOM) : null;
+
         return [
             'totals' => [
                 'subtotal_ht' => $subtotalHt,
@@ -113,10 +116,13 @@ final readonly class OrderDetailContextBuilder
                 'module_title' => $this->moduleTitle((int) $order->getPaymentModuleId()),
                 'transaction_ref' => (string) $order->getTransactionRef(),
                 'invoice_ref' => (string) $order->getInvoiceRef(),
+                'invoice_date' => $invoiceDateString,
+                'is_paid' => $order->isPaid(false),
             ],
             'delivery' => [
                 'module_id' => (int) $order->getDeliveryModuleId(),
                 'module_title' => $this->moduleTitle((int) $order->getDeliveryModuleId()),
+                'module_description' => $this->moduleDescription((int) $order->getDeliveryModuleId(), $locale),
                 'delivery_ref' => (string) $order->getDeliveryRef(),
             ],
             'coupons' => $coupons,
@@ -155,5 +161,19 @@ final readonly class OrderDetailContextBuilder
         $module = ModuleQuery::create()->findPk($moduleId);
 
         return $module !== null ? (string) $module->getTitle() : '';
+    }
+
+    private function moduleDescription(int $moduleId, string $locale): string
+    {
+        if ($moduleId === 0) {
+            return '';
+        }
+        $module = ModuleQuery::create()->findPk($moduleId);
+        if ($module === null) {
+            return '';
+        }
+        $module->setLocale($locale);
+
+        return (string) $module->getDescription();
     }
 }
