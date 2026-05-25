@@ -21,9 +21,16 @@
     <div class="container-fluid" data-testid="product-edit-page">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h1 class="h3 mb-0">{{ product.title }} <small class="text-muted">#{{ product.id }}</small></h1>
-            <a href="{{ path('admin.products.default') }}" class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-left" aria-hidden="true"></i> {{ 'Back to list'|trans }}
-            </a>
+            <div class="d-flex gap-2">
+                {% if is_granted('CREATE', 'admin.product') %}
+                    <button type="button" class="btn btn-outline-primary flex-shrink-0" data-bs-toggle="modal" data-bs-target="#product-clone-modal" data-testid="product-clone-btn">
+                        <i class="bi bi-files" aria-hidden="true"></i> {{ 'Clone product'|trans }}
+                    </button>
+                {% endif %}
+                <a href="{{ path('admin.products.default') }}" class="btn btn-outline-secondary flex-shrink-0">
+                    <i class="bi bi-arrow-left" aria-hidden="true"></i> {{ 'Back to list'|trans }}
+                </a>
+            </div>
         </div>
 
         <div class="d-flex justify-content-end mb-3">
@@ -210,6 +217,35 @@
         message: 'If you change the product template, some of the product attribute combinations may be deleted, and you may have to reconfigure some of the product prices.',
         testid: 'product-template-notice',
     }) }}
+
+    <div class="modal fade" id="product-clone-modal" tabindex="-1" aria-labelledby="product-clone-modal-title" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                {{ form_start(clone_form, { action: path('admin.products.clone'), method: 'post', attr: { 'data-testid': 'product-clone-form' } }) }}
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="product-clone-modal-title">{{ 'Clone product'|trans }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'Close'|trans }}"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="thelia_product_clone[productId]" value="{{ product.id }}">
+                        {% do clone_form.productId.setRendered %}
+                        <div class="mb-3">
+                            {{ form_label(clone_form.newRef) }}
+                            {{ form_widget(clone_form.newRef, { attr: { class: 'form-control', placeholder: product.ref ~ '-copy' } }) }}
+                            {{ form_errors(clone_form.newRef) }}
+                        </div>
+                        {{ safe_hook('product.clone-form', { product: product.id }) }}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'Cancel'|trans }}</button>
+                        <button type="submit" class="btn btn-primary" data-testid="product-clone-submit">
+                            <i class="bi bi-files" aria-hidden="true"></i> {{ 'Clone product'|trans }}
+                        </button>
+                    </div>
+                {{ form_end(clone_form) }}
+            </div>
+        </div>
+    </div>
 
     {{ safe_hook('product-edit.bottom', { product_id: product.id }) }}
 {% endblock %}

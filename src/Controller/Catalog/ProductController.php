@@ -125,7 +125,8 @@ final class ProductController
     {
         $form = $this->buildCloneForm();
 
-        $productId = (int) $request->request->get('thelia_product_clone', [])['productId'] ?? 0;
+        $cloneData = $request->request->all('thelia_product_clone');
+        $productId = (int) ($cloneData['productId'] ?? 0);
         if ($productId === 0) {
             $productId = (int) $request->request->get('productId', 0);
         }
@@ -180,6 +181,7 @@ final class ProductController
                 'product' => $product,
                 'form' => $form->createView(),
                 'seo_form' => $seoForm->createView(),
+                'clone_form' => $this->buildCloneForm()->createView(),
                 'current_tab' => (string) $request->query->get('current_tab', 'general'),
                 'edit_language_id' => (int) $editLang->getId(),
                 'available_templates' => $this->templateChoices(),
