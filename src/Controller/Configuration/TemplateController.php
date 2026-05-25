@@ -78,7 +78,7 @@ final class TemplateController
             return $denied;
         }
 
-        return new Response($this->twig->render(self::LIST_TEMPLATE, $this->buildListContext()));
+        return new Response($this->twig->render(self::LIST_TEMPLATE, $this->buildListContext($request)));
     }
 
     #[Route('/create', name: 'create', methods: ['POST'])]
@@ -372,7 +372,7 @@ final class TemplateController
     /**
      * @return array<string, mixed>
      */
-    private function buildListContext(): array
+    private function buildListContext(Request $request): array
     {
         $locale = $request->getLocale();
         $templates = TemplateQuery::create()->orderById()->find();
