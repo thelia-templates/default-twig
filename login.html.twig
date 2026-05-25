@@ -15,7 +15,9 @@
     <form action="{{ path('admin.checklogin') }}" method="post" data-testid="login-form" novalidate>
         {{ form_widget(login_form._token) }}
 
-        <input type="hidden" name="{{ field_name(login_form.success_url) }}" value="{{ path('admin') }}">
+        {% set target_path = app.request.query.get('_target_path')|default('') %}
+        {% set redirect_url = target_path is not empty and target_path starts with '/admin' ? target_path : path('admin') %}
+        <input type="hidden" name="{{ field_name(login_form.success_url) }}" value="{{ redirect_url }}">
 
         {% if login_form.vars.errors|length > 0 %}
             {# Render a single generic message so the form does not leak whether
