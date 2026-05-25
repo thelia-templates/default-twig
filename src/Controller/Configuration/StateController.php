@@ -69,7 +69,7 @@ final class StateController
             return $denied;
         }
 
-        $locale = $this->defaultLocale();
+        $locale = $request->getLocale();
         $countryFilter = (int) $request->query->get('country_id', 0);
         $query = StateQuery::create()
             ->joinWithI18n($locale)

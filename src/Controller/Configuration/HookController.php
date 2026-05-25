@@ -78,7 +78,7 @@ final class HookController
         }
 
         $type = (int) ($request->query->get('type') ?? TemplateDefinition::FRONT_OFFICE);
-        $locale = $this->defaultLocale();
+        $locale = $request->getLocale();
 
         $rows = [];
         foreach (HookQuery::create()->filterByType($type)->joinWithI18n($locale)->orderById()->find() as $hook) {

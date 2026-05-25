@@ -62,13 +62,13 @@ final class AreaController
     }
 
     #[Route('', name: 'default', methods: ['GET'])]
-    public function list(): Response
+    public function list(Request $request): Response
     {
         if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::VIEW)) {
             return $denied;
         }
 
-        $locale = $this->defaultLocale();
+        $locale = $request->getLocale();
         $areas = AreaQuery::create()->orderByName()->find();
         $rows = [];
         foreach ($areas as $area) {

@@ -68,7 +68,7 @@ final class FeatureController
     }
 
     #[Route('', name: 'default', methods: ['GET'])]
-    public function list(): Response
+    public function list(Request $request): Response
     {
         if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::VIEW)) {
             return $denied;
@@ -296,7 +296,7 @@ final class FeatureController
      */
     private function buildListContext(): array
     {
-        $locale = $this->defaultLocale();
+        $locale = $request->getLocale();
         $features = FeatureQuery::create()->orderByPosition()->find();
         $rows = [];
 
