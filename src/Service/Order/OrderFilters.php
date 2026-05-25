@@ -16,7 +16,6 @@ namespace BackOfficeDefaultTwigBundle\Service\Order;
 
 use Propel\Runtime\ActiveQuery\Criteria;
 use Symfony\Component\HttpFoundation\Request;
-use Thelia\Model\Customer;
 use Thelia\Model\Map\OrderTableMap;
 use Thelia\Model\OrderQuery;
 
@@ -314,17 +313,19 @@ final readonly class OrderFilters
 
         $needle = '%'.$this->search.'%';
 
+        // condition+combine groups the OR cluster as a single AND clause, otherwise
+        // chaining _or() bleeds into the surrounding filters and turns the whole
+        // WHERE into an OR (status_ids OR search instead of status_ids AND search).
         $query
-            ->_or()
-            ->filterByRef($needle, Criteria::LIKE)
-            ->_or()
-            ->useCustomerQuery()
-                ->where(Customer::TABLE_MAP.'.firstname LIKE ?', $needle, \PDO::PARAM_STR)
-                ->_or()
-                ->where(Customer::TABLE_MAP.'.lastname LIKE ?', $needle, \PDO::PARAM_STR)
-                ->_or()
-                ->where(Customer::TABLE_MAP.'.email LIKE ?', $needle, \PDO::PARAM_STR)
-            ->endUse();
+            ->condition('search_ref', OrderTableMap::COL_REF.' LIKE ?', $needle, \PDO::PARAM_STR)
+            ->condition(
+                'search_customer',
+                'EXISTS (SELECT 1 FROM customer c WHERE c.id = '.OrderTableMap::COL_CUSTOMER_ID
+                    .' AND CONCAT_WS(\' \', c.firstname, c.lastname, c.email) LIKE ?)',
+                $needle,
+                \PDO::PARAM_STR,
+            )
+            ->combine(['search_ref', 'search_customer'], 'OR');
     }
 
     private function applyCouponFilter(OrderQuery $query): void
