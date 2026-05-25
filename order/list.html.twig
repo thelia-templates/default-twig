@@ -4,8 +4,8 @@
 {% block body_testid %}order-list{% endblock %}
 
 {% block breadcrumb %}
-    <nav aria-label="breadcrumb" class="mb-3">
-        <ol class="breadcrumb">
+    <nav aria-label="breadcrumb" class="mb-1">
+        <ol class="breadcrumb mb-0">
             <li class="breadcrumb-item"><a href="{{ path('admin.home') }}">{{ 'Home'|trans }}</a></li>
             <li class="breadcrumb-item active" aria-current="page">{{ 'Orders'|trans }}</li>
         </ol>
@@ -16,16 +16,17 @@
     {{ safe_hook('orders.top') }}
 
     <div class="container-fluid" data-testid="orders-page">
-        <h1 class="h3 mb-3">{{ 'Orders management'|trans }}</h1>
-
-        <div class="d-flex flex-wrap align-items-center gap-2 mb-3" data-testid="order-quick-filters">
-            {% for chip in filters.quick_chips %}
-                <a class="btn btn-sm {{ chip.active ? 'btn-primary' : 'btn-outline-secondary' }}"
-                   href="{{ chip.url }}"
-                   data-testid="order-quick-filter-{{ chip.code }}">
-                    <i class="bi {{ chip.icon }} me-1" aria-hidden="true"></i>{{ chip.label }}
-                </a>
-            {% endfor %}
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+            <h1 class="h4 mb-0">{{ 'Orders management'|trans }}</h1>
+            <div class="d-flex flex-wrap align-items-center gap-2" data-testid="order-quick-filters">
+                {% for chip in filters.quick_chips %}
+                    <a class="btn btn-sm {{ chip.active ? 'btn-primary' : 'btn-outline-secondary' }}"
+                       href="{{ chip.url }}"
+                       data-testid="order-quick-filter-{{ chip.code }}">
+                        <i class="bi {{ chip.icon }} me-1" aria-hidden="true"></i>{{ chip.label }}
+                    </a>
+                {% endfor %}
+            </div>
         </div>
 
         <form method="get" action="{{ path('admin.order.list') }}" class="bo-order-filters" data-testid="order-search-form">
