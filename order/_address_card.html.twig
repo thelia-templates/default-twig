@@ -1,0 +1,65 @@
+<div class="card h-100" data-testid="order-{{ kind }}-address-card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>{{ title }}</span>
+        {% if address %}
+            <button type="button" class="btn btn-sm btn-outline-secondary"
+                    data-bs-toggle="modal" data-bs-target="#order-address-modal"
+                    data-address-payload="{{ address|json_encode|e('html_attr') }}"
+                    data-address-kind="{{ kind }}"
+                    data-testid="order-{{ kind }}-address-edit">
+                <i class="bi bi-pencil-square" aria-hidden="true"></i> {{ 'Edit'|trans }}
+            </button>
+        {% endif %}
+    </div>
+    <div class="card-body small" data-testid="order-{{ kind }}-address">
+        {% if address %}
+            <dl class="row mb-0">
+                {% if address.title_long %}
+                    <dt class="col-sm-5 fw-normal text-muted">{{ 'Title'|trans }}</dt>
+                    <dd class="col-sm-7 mb-1">{{ address.title_long }}</dd>
+                {% endif %}
+                {% if address.company %}
+                    <dt class="col-sm-5 fw-normal text-muted">{{ 'Company'|trans }}</dt>
+                    <dd class="col-sm-7 mb-1">{{ address.company }}</dd>
+                {% endif %}
+                <dt class="col-sm-5 fw-normal text-muted">{{ 'Name'|trans }}</dt>
+                <dd class="col-sm-7 mb-1 fw-semibold">{{ address.firstname }} {{ address.lastname }}</dd>
+
+                <dt class="col-sm-5 fw-normal text-muted">{{ 'Street address'|trans }}</dt>
+                <dd class="col-sm-7 mb-1">
+                    {{ address.address1 }}
+                    {% if address.address2 %}<br>{{ address.address2 }}{% endif %}
+                    {% if address.address3 %}<br>{{ address.address3 }}{% endif %}
+                </dd>
+
+                <dt class="col-sm-5 fw-normal text-muted">{{ 'Zip / City'|trans }}</dt>
+                <dd class="col-sm-7 mb-1">{{ address.zipcode }} {{ address.city }}</dd>
+
+                {% if address.country_title %}
+                    <dt class="col-sm-5 fw-normal text-muted">{{ 'Country'|trans }}</dt>
+                    <dd class="col-sm-7 mb-1">{{ address.country_title }}</dd>
+                {% endif %}
+                {% if address.state_title %}
+                    <dt class="col-sm-5 fw-normal text-muted">{{ 'State'|trans }}</dt>
+                    <dd class="col-sm-7 mb-1">{{ address.state_title }}</dd>
+                {% endif %}
+
+                {% if address.phone %}
+                    <dt class="col-sm-5 fw-normal text-muted">{{ 'Phone'|trans }}</dt>
+                    <dd class="col-sm-7 mb-1">{{ address.phone }}</dd>
+                {% endif %}
+                {% if address.cellphone %}
+                    <dt class="col-sm-5 fw-normal text-muted">{{ 'Cellphone'|trans }}</dt>
+                    <dd class="col-sm-7 mb-1">{{ address.cellphone }}</dd>
+                {% endif %}
+                {% if customer_email %}
+                    <dt class="col-sm-5 fw-normal text-muted">{{ 'Email'|trans }}</dt>
+                    <dd class="col-sm-7 mb-0"><a href="mailto:{{ customer_email }}">{{ customer_email }}</a></dd>
+                {% endif %}
+            </dl>
+        {% else %}
+            <p class="text-muted mb-0">{{ 'No %kind% address.'|trans({'%kind%': kind}) }}</p>
+        {% endif %}
+        {% if hook %}{{ hook }}{% endif %}
+    </div>
+</div>

@@ -118,7 +118,7 @@ final class OrderController
             [
                 'order' => $order,
                 'order_items' => $this->orderItems($order),
-                'order_addresses' => $this->orderAddresses($order),
+                'order_addresses' => $this->orderAddresses($order, $locale),
                 'available_statuses' => $this->statusChoices($locale),
                 'customer_titles' => $this->customerTitleChoices($locale),
                 'countries' => $this->countryChoices($locale),
@@ -223,10 +223,12 @@ final class OrderController
                 'thelia_order_address',
                 \BackOfficeDefaultTwigBundle\Form\Order\OrderAddressType::class,
                 null,
-                [],
+                ['csrf_protection' => false],
             );
             $form->handleRequest($request);
-            $data = ($form->isSubmitted() && $form->isValid()) ? ($form->getData() ?? []) : $request->request->all();
+            $data = ($form->isSubmitted() && $form->isValid())
+                ? ($form->getData() ?? [])
+                : (array) $request->request->all('thelia_order_address');
 
             $addressId = (int) ($data['id'] ?? 0);
             $orderAddress = $addressId > 0 ? OrderAddressQuery::create()->findPk($addressId) : null;
@@ -338,25 +340,56 @@ final class OrderController
     /**
      * @return array<string, mixed>
      */
-    private function orderAddresses(Order $order): array
+    private function orderAddresses(Order $order, string $locale): array
     {
         $invoice = $order->getOrderAddressRelatedByInvoiceOrderAddressId();
         $delivery = $order->getOrderAddressRelatedByDeliveryOrderAddressId();
 
         return [
-            'invoice' => $invoice ? $this->addressToArray($invoice) : null,
-            'delivery' => $delivery ? $this->addressToArray($delivery) : null,
+            'invoice' => $invoice ? $this->addressToArray($invoice, $locale) : null,
+            'delivery' => $delivery ? $this->addressToArray($delivery, $locale) : null,
         ];
     }
 
     /**
      * @return array<string, mixed>
      */
-    private function addressToArray(\Thelia\Model\OrderAddress $address): array
+    private function addressToArray(\Thelia\Model\OrderAddress $address, string $locale): array
     {
+        $titleId = (int) $address->getCustomerTitleId();
+        $titleLong = '';
+        if ($titleId > 0) {
+            $title = CustomerTitleQuery::create()->findPk($titleId);
+            if ($title !== null) {
+                $title->setLocale($locale);
+                $titleLong = (string) $title->getLong();
+            }
+        }
+
+        $countryId = (int) $address->getCountryId();
+        $countryTitle = '';
+        if ($countryId > 0) {
+            $country = CountryQuery::create()->findPk($countryId);
+            if ($country !== null) {
+                $country->setLocale($locale);
+                $countryTitle = (string) $country->getTitle();
+            }
+        }
+
+        $stateId = $address->getStateId() ? (int) $address->getStateId() : null;
+        $stateTitle = '';
+        if ($stateId !== null) {
+            $state = StateQuery::create()->findPk($stateId);
+            if ($state !== null) {
+                $state->setLocale($locale);
+                $stateTitle = (string) $state->getTitle();
+            }
+        }
+
         return [
             'id' => (int) $address->getId(),
-            'title_id' => (int) $address->getCustomerTitleId(),
+            'title_id' => $titleId,
+            'title_long' => $titleLong,
             'firstname' => (string) $address->getFirstname(),
             'lastname' => (string) $address->getLastname(),
             'company' => (string) $address->getCompany(),
@@ -365,8 +398,10 @@ final class OrderController
             'address3' => (string) $address->getAddress3(),
             'zipcode' => (string) $address->getZipcode(),
             'city' => (string) $address->getCity(),
-            'country_id' => (int) $address->getCountryId(),
-            'state_id' => $address->getStateId() ? (int) $address->getStateId() : null,
+            'country_id' => $countryId,
+            'country_title' => $countryTitle,
+            'state_id' => $stateId,
+            'state_title' => $stateTitle,
             'phone' => (string) $address->getPhone(),
             'cellphone' => (string) $address->getCellphone(),
         ];

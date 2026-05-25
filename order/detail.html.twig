@@ -190,57 +190,22 @@
 
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
-                        <div class="card h-100">
-                            <div class="card-header d-flex justify-content-between align-items-center">
-                                <span>{{ 'Invoice address'|trans }}</span>
-                                {% if order_addresses.invoice %}
-                                    <button type="button" class="btn btn-sm btn-outline-secondary"
-                                            data-bs-toggle="modal" data-bs-target="#order-address-modal"
-                                            data-address-payload="{{ order_addresses.invoice|json_encode|e('html_attr') }}"
-                                            data-address-kind="invoice"
-                                            data-testid="order-invoice-address-edit">
-                                        <i class="bi bi-pencil-square" aria-hidden="true"></i> {{ 'Edit'|trans }}
-                                    </button>
-                                {% endif %}
-                            </div>
-                            <div class="card-body" data-testid="order-invoice-address">
-                                {% if order_addresses.invoice %}
-                                    <p class="mb-1">{{ order_addresses.invoice.firstname }} {{ order_addresses.invoice.lastname }}</p>
-                                    {% if order_addresses.invoice.company %}<p class="mb-1">{{ order_addresses.invoice.company }}</p>{% endif %}
-                                    <p class="mb-1">{{ order_addresses.invoice.address1 }}<br>{{ order_addresses.invoice.zipcode }} {{ order_addresses.invoice.city }}</p>
-                                    {% if order_addresses.invoice.phone %}<p class="mb-0 text-muted">{{ order_addresses.invoice.phone }}</p>{% endif %}
-                                {% else %}
-                                    <p class="text-muted mb-0">{{ 'No invoice address.'|trans }}</p>
-                                {% endif %}
-                            </div>
-                        </div>
+                        {% include '@BackOfficeDefaultTwig/order/_address_card.html.twig' with {
+                            kind: 'invoice',
+                            title: 'Invoice address'|trans,
+                            address: order_addresses.invoice,
+                            customer_email: customer ? customer.email : null,
+                            hook: null,
+                        } only %}
                     </div>
                     <div class="col-md-6">
-                        <div class="card h-100">
-                            <div class="card-header d-flex justify-content-between align-items-center">
-                                <span>{{ 'Delivery address'|trans }}</span>
-                                {% if order_addresses.delivery %}
-                                    <button type="button" class="btn btn-sm btn-outline-secondary"
-                                            data-bs-toggle="modal" data-bs-target="#order-address-modal"
-                                            data-address-payload="{{ order_addresses.delivery|json_encode|e('html_attr') }}"
-                                            data-address-kind="delivery"
-                                            data-testid="order-delivery-address-edit">
-                                        <i class="bi bi-pencil-square" aria-hidden="true"></i> {{ 'Edit'|trans }}
-                                    </button>
-                                {% endif %}
-                            </div>
-                            <div class="card-body" data-testid="order-delivery-address">
-                                {% if order_addresses.delivery %}
-                                    <p class="mb-1">{{ order_addresses.delivery.firstname }} {{ order_addresses.delivery.lastname }}</p>
-                                    {% if order_addresses.delivery.company %}<p class="mb-1">{{ order_addresses.delivery.company }}</p>{% endif %}
-                                    <p class="mb-1">{{ order_addresses.delivery.address1 }}<br>{{ order_addresses.delivery.zipcode }} {{ order_addresses.delivery.city }}</p>
-                                    {% if order_addresses.delivery.phone %}<p class="mb-1 text-muted">{{ order_addresses.delivery.phone }}</p>{% endif %}
-                                {% else %}
-                                    <p class="text-muted mb-0">{{ 'No delivery address.'|trans }}</p>
-                                {% endif %}
-                                {{ safe_hook('order-edit.bill-delivery-address', { order_id: order.id, module_id: delivery.module_id }) }}
-                            </div>
-                        </div>
+                        {% include '@BackOfficeDefaultTwig/order/_address_card.html.twig' with {
+                            kind: 'delivery',
+                            title: 'Delivery address'|trans,
+                            address: order_addresses.delivery,
+                            customer_email: null,
+                            hook: safe_hook('order-edit.bill-delivery-address', { order_id: order.id, module_id: delivery.module_id }),
+                        } only %}
                     </div>
                 </div>
             </div>
