@@ -16,13 +16,16 @@ namespace BackOfficeDefaultTwigBundle\Controller\Customer;
 
 use BackOfficeDefaultTwigBundle\Form\Customer\AddressType;
 use BackOfficeDefaultTwigBundle\Form\Customer\CustomerType;
+use BackOfficeDefaultTwigBundle\Repository\CountryRepository;
+use BackOfficeDefaultTwigBundle\Repository\CustomerRepository;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormErrorRenderer;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormValidator;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminLogger;
-use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
-use Propel\Runtime\ActiveQuery\Criteria;
+use BackOfficeDefaultTwigBundle\Service\Customer\CustomerFilterPresenter;
+use BackOfficeDefaultTwigBundle\Service\Customer\CustomerFilters;
+use BackOfficeDefaultTwigBundle\Service\Customer\CustomerListRowPresenter;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -69,6 +72,10 @@ final class CustomerController
         private readonly UrlGeneratorInterface $urls,
         private readonly TranslatorInterface $translator,
         private readonly CustomerTitleService $titleService,
+        private readonly CustomerRepository $customerRepository,
+        private readonly CountryRepository $countryRepository,
+        private readonly CustomerFilterPresenter $filterPresenter,
+        private readonly CustomerListRowPresenter $rowPresenter,
     ) {
     }
 
@@ -80,20 +87,97 @@ final class CustomerController
         }
 
         $page = max(1, (int) $request->query->get('page', 1));
-        $order = (string) $request->query->get('customer_order', 'lastname');
-        $search = trim((string) $request->query->get('q', ''));
+        $locale = $request->getLocale();
+        $filters = CustomerFilters::fromRequest($request);
 
-        $locale = $this->defaultLocale();
+        $paginated = $this->customerRepository->findPaginated($filters, $page, self::PAGE_SIZE);
 
-        return new Response($this->twig->render(self::LIST_TEMPLATE, array_merge(
-            $this->paginatedRows($search, $order, $page),
-            [
-                'current_order' => $order,
-                'current_page' => $page,
-                'current_search' => $search,
-                'create_form' => $this->buildCreateForm($locale)->createView(),
-            ],
-        )));
+        $customerIds = [];
+        foreach ($paginated['rows'] as $customer) {
+            \assert($customer instanceof Customer);
+            $customerIds[] = (int) $customer->getId();
+        }
+
+        $orderCounts = $this->customerRepository->findOrderCounts($customerIds);
+        $totalsSpent = $this->customerRepository->findTotalSpentByCustomer($customerIds);
+        $lastOrders = $this->customerRepository->findLastOrderDateByCustomer($customerIds);
+        $newsletter = $this->customerRepository->findNewsletterFlags($customerIds);
+        $phones = $this->customerRepository->findPrimaryPhones($customerIds);
+        $primaryCountryIds = $this->customerRepository->findPrimaryCountryIds($customerIds);
+        $countriesIndex = $this->buildCountriesIndex($primaryCountryIds, $locale);
+
+        $rows = [];
+        foreach ($paginated['rows'] as $customer) {
+            \assert($customer instanceof Customer);
+            $customerId = (int) $customer->getId();
+            $countryId = $primaryCountryIds[$customerId] ?? 0;
+            $country = $countriesIndex[$countryId] ?? ['flag' => '', 'title' => ''];
+
+            $rows[] = $this->rowPresenter->present(
+                customer: $customer,
+                locale: $locale,
+                orderCount: $orderCounts[$customerId] ?? 0,
+                totalSpent: $totalsSpent[$customerId] ?? 0.0,
+                lastOrderAt: $lastOrders[$customerId] ?? null,
+                phone: $phones[$customerId] ?? '',
+                countryFlag: $country['flag'],
+                countryTitle: $country['title'],
+                newsletterSubscribed: $newsletter[$customerId] ?? false,
+            );
+        }
+
+        $filtersPresented = $this->filterPresenter->present($filters, $locale);
+
+        return new Response($this->twig->render(self::LIST_TEMPLATE, [
+            'rows' => $rows,
+            'total' => $paginated['total'],
+            'pages' => $paginated['lastPage'],
+            'current_page' => $page,
+            'filters' => $filtersPresented,
+            'query_params' => $filters->toQueryParams(),
+            'create_form' => $this->buildCreateForm($locale)->createView(),
+        ]));
+    }
+
+    /**
+     * @param array<int, int> $primaryCountryIds
+     *
+     * @return array<int, array{flag: string, title: string}>
+     */
+    private function buildCountriesIndex(array $primaryCountryIds, string $locale): array
+    {
+        $uniqueIds = array_values(array_unique(array_filter($primaryCountryIds, static fn (int $id): bool => $id > 0)));
+        if ($uniqueIds === []) {
+            return [];
+        }
+
+        $countries = $this->countryRepository->findByIdsLocalized($uniqueIds, $locale);
+
+        $index = [];
+        foreach ($countries as $country) {
+            $index[$country['id']] = [
+                'flag' => self::countryFlag($country['iso']),
+                'title' => $country['title'],
+            ];
+        }
+
+        return $index;
+    }
+
+    private static function countryFlag(string $iso): string
+    {
+        if (\strlen($iso) !== 2) {
+            return '';
+        }
+
+        $upper = strtoupper($iso);
+        $offset = 0x1F1E6 - \ord('A');
+        $flag = '';
+        for ($i = 0, $len = \strlen($upper); $i < $len; ++$i) {
+            $flag .= mb_chr(\ord($upper[$i]) + $offset);
+        }
+
+        return $flag;
     }
 
     #[Route('/customer/update', name: 'customer.update.view', methods: ['GET'])]
@@ -293,88 +377,6 @@ final class CustomerController
             \sprintf('Customer %s %s (ID %d) created', (string) $customer->getFirstname(), (string) $customer->getLastname(), (int) $customer->getId()),
             (int) $customer->getId(),
         ];
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function paginatedRows(string $search, string $order, int $page): array
-    {
-        $query = CustomerQuery::create();
-
-        if ($search !== '') {
-            $query->_or()
-                ->filterByEmail('%'.$search.'%', Criteria::LIKE)
-                ->_or()
-                ->filterByLastname('%'.$search.'%', Criteria::LIKE)
-                ->_or()
-                ->filterByFirstname('%'.$search.'%', Criteria::LIKE)
-                ->_or()
-                ->filterByRef('%'.$search.'%', Criteria::LIKE);
-        }
-
-        $this->applyOrder($query, $order);
-
-        $total = (int) $query->count();
-        $pages = max(1, (int) ceil($total / self::PAGE_SIZE));
-        $page = min($page, $pages);
-
-        $customers = $query
-            ->offset(($page - 1) * self::PAGE_SIZE)
-            ->limit(self::PAGE_SIZE)
-            ->find();
-
-        $rows = [];
-        foreach ($customers as $customer) {
-            \assert($customer instanceof Customer);
-            $rows[] = [
-                'ref' => $customer->getRef() ?? '-',
-                'lastname' => $customer->getLastname() ?? '',
-                'firstname' => $customer->getFirstname() ?? '',
-                'email' => $customer->getEmail() ?? '',
-                'registration_date' => $customer->getCreatedAt()?->format('Y-m-d') ?? '-',
-                '_actions' => [
-                    new RowAction(
-                        kind: 'edit',
-                        label: $this->translator->trans('Edit this customer'),
-                        href: $this->urls->generate(self::EDIT_ROUTE, ['customer_id' => (int) $customer->getId()]),
-                        grantedAttribute: AccessManager::UPDATE,
-                        grantedSubject: 'admin.customer',
-                    ),
-                    new RowAction(
-                        kind: 'delete',
-                        label: $this->translator->trans('Delete this customer'),
-                        modalTarget: '#customer-delete-modal',
-                        grantedAttribute: AccessManager::DELETE,
-                        grantedSubject: 'admin.customer',
-                        dataAttributes: [
-                            'customer-id' => (int) $customer->getId(),
-                            'customer-label' => trim(($customer->getFirstname() ?? '').' '.($customer->getLastname() ?? '')),
-                        ],
-                    ),
-                ],
-            ];
-        }
-
-        return [
-            'rows' => $rows,
-            'total' => $total,
-            'pages' => $pages,
-        ];
-    }
-
-    private function applyOrder(CustomerQuery $query, string $order): void
-    {
-        match ($order) {
-            'reference' => $query->orderByRef(Criteria::ASC),
-            'reference_reverse' => $query->orderByRef(Criteria::DESC),
-            'firstname' => $query->orderByFirstname(Criteria::ASC),
-            'firstname_reverse' => $query->orderByFirstname(Criteria::DESC),
-            'registration_date' => $query->orderByCreatedAt(Criteria::ASC),
-            'registration_date_reverse' => $query->orderByCreatedAt(Criteria::DESC),
-            'lastname_reverse' => $query->orderByLastname(Criteria::DESC),
-            default => $query->orderByLastname(Criteria::ASC),
-        };
     }
 
     /**
