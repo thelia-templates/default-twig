@@ -183,7 +183,8 @@
 
 {%- block file_widget -%}
     {%- if app is defined and app.request and app.request.pathInfo starts with '/admin' -%}
-        {{- block('file_widget', 'bootstrap_5_layout.html.twig') -}}
+        {# Bootstrap 5 has no dedicated file_widget block: a file input is rendered through form_widget_simple, which applies the form-control class. #}
+        {{- block('form_widget_simple', 'bootstrap_5_layout.html.twig') -}}
     {%- else -%}
         {{- block('file_widget', '@formTwig/flexy_form_theme.html.twig') -}}
     {%- endif -%}
