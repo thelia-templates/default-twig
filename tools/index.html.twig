@@ -1,0 +1,71 @@
+{% extends '@BackOfficeDefaultTwig/base.html.twig' %}
+
+{% block title %}{{ 'Tools'|trans }}{% endblock %}
+{% block body_testid %}tools-index{% endblock %}
+
+{% block breadcrumb %}
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ path('admin.home') }}">{{ 'Home'|trans }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ 'Tools'|trans }}</li>
+        </ol>
+    </nav>
+{% endblock %}
+
+{% set sections = [
+    {
+        title: 'General tools'|trans,
+        hookTop: 'tools.col1-top',
+        hookBottom: 'tools.col1-bottom',
+        items: [
+            { route: 'admin.coupon.default', label: 'Coupons'|trans, icon: 'bi-ticket-perforated', resource: 'admin.coupon' },
+            { route: 'admin.sale.default', label: 'Sales management'|trans, icon: 'bi-percent', resource: 'admin.sales' },
+            { route: 'admin.brand.default', label: 'Brands'|trans, icon: 'bi-bookmark-star', resource: 'admin.brand' },
+            { route: 'admin.newsletter.default', label: 'Newsletter'|trans, icon: 'bi-envelope-paper', resource: 'admin.newsletter' },
+        ],
+    },
+    {
+        title: 'Data transfer'|trans,
+        hookTop: 'tools.col2-top',
+        hookBottom: 'tools.col2-bottom',
+        items: [
+            { route: 'export.list', label: 'Export'|trans, icon: 'bi-cloud-download', resource: 'admin.export' },
+            { route: 'import.list', label: 'Import'|trans, icon: 'bi-cloud-upload', resource: 'admin.import' },
+        ],
+    },
+] %}
+
+{% block content %}
+    {{ safe_hook('tools.top', { location: 'tools_top' }) }}
+
+    <div class="container-fluid" data-testid="tools-page">
+        <h1 class="h3 mb-4">{{ 'Tools'|trans }}</h1>
+
+        {% for section in sections %}
+            {% set visible_items = section.items|filter((item) => is_granted('VIEW', item.resource)) %}
+            {% if visible_items|length > 0 or section.hookTop is defined %}
+                <h2 class="h5 text-muted mb-3">{{ section.title }}</h2>
+                {% if section.hookTop is defined %}{{ safe_hook(section.hookTop) }}{% endif %}
+                <div class="row g-3 mb-4" data-testid="tools-section">
+                    {% for item in visible_items %}
+                        <div class="col-md-3">
+                            <a href="{{ path(item.route) }}" class="card text-decoration-none h-100" data-testid="tools-link-{{ item.route }}">
+                                <div class="card-body d-flex align-items-center gap-3">
+                                    <i class="bi {{ item.icon }} fs-3 text-primary" aria-hidden="true"></i>
+                                    <span class="fw-medium text-body">{{ item.label }}</span>
+                                </div>
+                            </a>
+                        </div>
+                    {% endfor %}
+                </div>
+                {% if section.hookBottom is defined %}{{ safe_hook(section.hookBottom) }}{% endif %}
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    {{ safe_hook('tools.bottom', { location: 'tools_bottom' }) }}
+{% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('tools.js', { location: 'tools-js' }) }}
+{% endblock %}
