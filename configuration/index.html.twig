@@ -96,3 +96,7 @@
 
     {{ safe_hook('configuration.bottom') }}
 {% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('configuration.js', { location: 'configuration-js' }) }}
+{% endblock %}
