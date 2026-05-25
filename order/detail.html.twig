@@ -40,6 +40,11 @@
                 <a href="{{ delivery_url }}" target="_blank" class="btn btn-outline-secondary" data-testid="order-delivery-link">
                     <i class="bi bi-file-pdf" aria-hidden="true"></i> {{ 'Delivery slip'|trans }}
                 </a>
+                {% if cancel_status_id > 0 and not is_canceled %}
+                    <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#order-cancel-modal" data-testid="order-cancel-btn">
+                        <i class="bi bi-x-circle" aria-hidden="true"></i> {{ 'Cancel order'|trans }}
+                    </button>
+                {% endif %}
             </div>
         </div>
 
@@ -86,34 +91,30 @@
                 </div>
 
                 <div class="card mb-3">
-                    <div class="card-header">{{ 'Update status'|trans }}</div>
+                    <div class="card-header">{{ 'Order management'|trans }}</div>
                     <div class="card-body">
-                        <form action="{{ path('admin.order.update.status', { order_id: order.id }) }}?_token={{ token }}" method="post" data-testid="order-status-form">
-                            <div class="row g-2">
-                                <div class="col-md-9">
-                                    <select name="status_id" class="form-select" data-testid="order-status-select">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label" for="order-status-select">{{ 'Order status'|trans }}</label>
+                                <form action="{{ path('admin.order.update.status', { order_id: order.id }) }}?_token={{ token }}" method="post" class="d-flex gap-2" data-testid="order-status-form">
+                                    <select id="order-status-select" name="status_id" class="form-select" data-testid="order-status-select">
                                         {% for s in available_statuses %}
                                             {% if s.id > 0 %}
                                                 <option value="{{ s.id }}" {% if s.id == order.statusId %}selected{% endif %}>{{ s.title }}</option>
                                             {% endif %}
                                         {% endfor %}
                                     </select>
-                                </div>
-                                <div class="col-md-3">
-                                    <button type="submit" class="btn btn-primary w-100" data-testid="order-status-submit">{{ 'Update'|trans }}</button>
-                                </div>
+                                    <button type="submit" class="btn btn-primary flex-shrink-0" data-testid="order-status-submit">{{ 'Update'|trans }}</button>
+                                </form>
                             </div>
-                        </form>
-                    </div>
-                </div>
-
-                <div class="card mb-3">
-                    <div class="card-header">{{ 'Delivery reference'|trans }}</div>
-                    <div class="card-body">
-                        <form action="{{ path('admin.order.update.deliveryRef', { order_id: order.id }) }}?_token={{ token }}" method="post" class="d-flex gap-2" data-testid="order-delivery-ref-form">
-                            <input type="text" name="delivery_ref" value="{{ order.deliveryRef }}" class="form-control" data-testid="order-delivery-ref-input">
-                            <button type="submit" class="btn btn-primary" data-testid="order-delivery-ref-submit">{{ 'Update'|trans }}</button>
-                        </form>
+                            <div class="col-md-6">
+                                <label class="form-label" for="order-delivery-ref-input">{{ 'Tracking reference'|trans }}</label>
+                                <form action="{{ path('admin.order.update.deliveryRef', { order_id: order.id }) }}?_token={{ token }}" method="post" class="d-flex gap-2" data-testid="order-delivery-ref-form">
+                                    <input type="text" id="order-delivery-ref-input" name="delivery_ref" value="{{ order.deliveryRef }}" class="form-control" placeholder="{{ 'Tracking number'|trans }}" data-testid="order-delivery-ref-input">
+                                    <button type="submit" class="btn btn-primary flex-shrink-0" data-testid="order-delivery-ref-submit">{{ 'Update'|trans }}</button>
+                                </form>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -163,10 +164,11 @@
                                     <p class="mb-1">{{ order_addresses.delivery.firstname }} {{ order_addresses.delivery.lastname }}</p>
                                     {% if order_addresses.delivery.company %}<p class="mb-1">{{ order_addresses.delivery.company }}</p>{% endif %}
                                     <p class="mb-1">{{ order_addresses.delivery.address1 }}<br>{{ order_addresses.delivery.zipcode }} {{ order_addresses.delivery.city }}</p>
-                                    {% if order_addresses.delivery.phone %}<p class="mb-0 text-muted">{{ order_addresses.delivery.phone }}</p>{% endif %}
+                                    {% if order_addresses.delivery.phone %}<p class="mb-1 text-muted">{{ order_addresses.delivery.phone }}</p>{% endif %}
                                 {% else %}
                                     <p class="text-muted mb-0">{{ 'No delivery address.'|trans }}</p>
                                 {% endif %}
+                                {{ safe_hook('order-edit.bill-delivery-address', { order_id: order.id, module_id: delivery.module_id }) }}
                             </div>
                         </div>
                     </div>
@@ -210,6 +212,20 @@
                     </ul>
                 </div>
 
+                {% if coupons|length > 0 %}
+                    <div class="card mb-3" data-testid="order-coupons">
+                        <div class="card-header">{{ 'Coupons'|trans }}</div>
+                        <ul class="list-group list-group-flush small">
+                            {% for coupon in coupons %}
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span><code>{{ coupon.code }}</code>{% if coupon.title %} <span class="text-muted">— {{ coupon.title }}</span>{% endif %}</span>
+                                    <strong class="text-danger">- {{ coupon.amount|number_format(2, '.', ' ') }} {{ currency.symbol }}</strong>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+
                 {% if customer %}
                     <div class="card mb-3" data-testid="order-customer">
                         <div class="card-header d-flex justify-content-between align-items-center">
@@ -235,8 +251,9 @@
                             <p class="mb-1 text-muted">{{ 'Transaction ref'|trans }}: <code>{{ payment.transaction_ref }}</code></p>
                         {% endif %}
                         {% if payment.invoice_ref %}
-                            <p class="mb-0 text-muted">{{ 'Invoice ref'|trans }}: <code>{{ payment.invoice_ref }}</code></p>
+                            <p class="mb-1 text-muted">{{ 'Invoice ref'|trans }}: <code>{{ payment.invoice_ref }}</code></p>
                         {% endif %}
+                        {{ safe_hook('order-edit.payment-module-bottom', { order_id: order.id, module_id: payment.module_id }) }}
                     </div>
                 </div>
 
@@ -245,8 +262,9 @@
                     <div class="card-body small">
                         <p class="mb-1"><strong>{{ delivery.module_title|default('—') }}</strong></p>
                         {% if delivery.delivery_ref %}
-                            <p class="mb-0 text-muted">{{ 'Tracking ref'|trans }}: <code>{{ delivery.delivery_ref }}</code></p>
+                            <p class="mb-1 text-muted">{{ 'Tracking ref'|trans }}: <code>{{ delivery.delivery_ref }}</code></p>
                         {% endif %}
+                        {{ safe_hook('order-edit.delivery-module-bottom', { order_id: order.id, module_id: delivery.module_id }) }}
                     </div>
                 </div>
 
@@ -295,6 +313,31 @@
             states: states,
             token: token,
         } only %}
+    {% endif %}
+
+    {% if cancel_status_id > 0 and not is_canceled %}
+        <div class="modal fade" id="order-cancel-modal" tabindex="-1" aria-hidden="true" data-testid="order-cancel-modal">
+            <div class="modal-dialog">
+                <form method="post" action="{{ path('admin.order.update.status', { order_id: order.id }) }}?_token={{ token }}" data-testid="order-cancel-form">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5">{{ 'Cancel order'|trans }}</h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'Close'|trans }}"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" name="status_id" value="{{ cancel_status_id }}">
+                            <p>{{ 'Do you really want to cancel this order?'|trans }} <strong>#{{ order.ref }}</strong></p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'Close'|trans }}</button>
+                            <button type="submit" class="btn btn-danger" data-testid="order-cancel-submit">
+                                <i class="bi bi-x-circle" aria-hidden="true"></i> {{ 'Cancel this order'|trans }}
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
     {% endif %}
 
     {{ safe_hook('order-edit.bottom', { order: order.id }) }}

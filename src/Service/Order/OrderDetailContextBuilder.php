@@ -17,6 +17,8 @@ namespace BackOfficeDefaultTwigBundle\Service\Order;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Thelia\Model\ModuleQuery;
 use Thelia\Model\Order;
+use Thelia\Model\OrderCoupon;
+use Thelia\Model\OrderStatusQuery;
 
 final readonly class OrderDetailContextBuilder
 {
@@ -32,6 +34,9 @@ final readonly class OrderDetailContextBuilder
      *     customer: array{id: int, ref: string, firstname: string, lastname: string, email: string, edit_url: string}|null,
      *     payment: array{module_id: int, module_title: string, transaction_ref: string, invoice_ref: string},
      *     delivery: array{module_id: int, module_title: string, delivery_ref: string},
+     *     coupons: list<array{code: string, title: string, amount: float}>,
+     *     cancel_status_id: int,
+     *     is_canceled: bool,
      *     currency: array{id: int, symbol: string, code: string}
      * }
      */
@@ -55,6 +60,19 @@ final readonly class OrderDetailContextBuilder
         $postageTax = (float) $order->getPostageTax();
         $discount = (float) $order->getDiscount();
         $grandTotal = $subtotalHt + $subtotalTaxes + $postageHt - $discount;
+
+        $coupons = [];
+        foreach ($order->getOrderCoupons() as $orderCoupon) {
+            \assert($orderCoupon instanceof OrderCoupon);
+            $coupons[] = [
+                'code' => (string) $orderCoupon->getCode(),
+                'title' => (string) $orderCoupon->getTitle(),
+                'amount' => (float) $orderCoupon->getAmount(),
+            ];
+        }
+
+        $cancelledStatus = OrderStatusQuery::getCancelledStatus();
+        $cancelStatusId = $cancelledStatus !== null ? (int) $cancelledStatus->getId() : 0;
 
         $customer = null;
         $customerModel = $order->getCustomer();
@@ -93,6 +111,9 @@ final readonly class OrderDetailContextBuilder
                 'module_title' => $this->moduleTitle((int) $order->getDeliveryModuleId()),
                 'delivery_ref' => (string) $order->getDeliveryRef(),
             ],
+            'coupons' => $coupons,
+            'cancel_status_id' => $cancelStatusId,
+            'is_canceled' => $cancelStatusId > 0 && (int) $order->getStatusId() === $cancelStatusId,
             'currency' => [
                 'id' => $currency !== null ? (int) $currency->getId() : 0,
                 'symbol' => $currency !== null ? (string) $currency->getSymbol() : '',
