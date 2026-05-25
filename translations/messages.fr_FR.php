@@ -339,7 +339,7 @@ return [
     'Edit address' => 'Modifier l\'adresse',
     'Edit administrator' => 'Modifier l\'administrateur',
     'Edit attribute' => 'Modifier la déclinaison',
-    'Edit brand' => 'Modifier un marque',
+    'Edit brand' => 'Modifier une marque',
     'Edit category' => 'Editer la rubrique',
     'Edit content' => 'Modifier le contenu',
     'Edit country' => 'Modifier le pays',

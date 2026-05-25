@@ -16,6 +16,8 @@
 {% block content %}
     {{ safe_hook('folder-edit.top', { folder_id: folder.id }) }}
 
+    {% set current_tab = current_tab|default('general') %}
+    {% set children = children|default([]) %}
     {% set extra_tabs = hook_block('folder.tab', { folder: folder.id, id: folder.id }) %}
 
     <div class="container-fluid" data-testid="folder-edit-page">
