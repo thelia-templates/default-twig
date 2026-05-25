@@ -45,6 +45,9 @@ final class ConfirmDialog
 
     public ?string $hook = null;
 
+    /** @var array<string, scalar|null> */
+    public array $hookContext = [];
+
     public ?string $prefillTrigger = null;
 
     public ?string $prefillInput = null;

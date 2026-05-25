@@ -17,6 +17,7 @@
         size            modal-dialog size class (default: modal-lg)
         testid          base data-testid: appends -form / -submit (default: none)
         hook            a hook name rendered through safe_hook in the body (default: none)
+        hookContext     arguments passed to safe_hook (e.g. { administrator_id: id }) (default: [])
 
     Extra body content can be added through the fields block:
         {% component 'BoCreateDialog' with { ... } %}{% block fields %}…{% endblock %}{% endcomponent %}
@@ -32,7 +33,7 @@
                 <div class="modal-body">
                     {% if fieldsTemplate %}{% include fieldsTemplate with { form: form } only %}{% endif %}
                     {% block fields %}{% endblock %}
-                    {% if hook %}{{ safe_hook(hook) }}{% endif %}
+                    {% if hook %}{{ safe_hook(hook, hookContext) }}{% endif %}
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ cancelLabel|trans }}</button>

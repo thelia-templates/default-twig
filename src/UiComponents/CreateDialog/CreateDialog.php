@@ -45,4 +45,7 @@ final class CreateDialog
     public ?string $testid = null;
 
     public ?string $hook = null;
+
+    /** @var array<string, scalar|null> */
+    public array $hookContext = [];
 }
