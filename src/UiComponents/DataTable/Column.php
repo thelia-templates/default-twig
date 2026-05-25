@@ -21,7 +21,10 @@ final readonly class Column
      * @param array<string, mixed> $options Kind-specific options. Schemas per ColumnKind:
      *   - TOGGLE: { url_key: string|null, icon_on: string, icon_off: string } (null url_key → readonly)
      *   - BADGE:  { variants: array<scalar, string> mapping row value → Bootstrap variant }
+     *   - RADIO:  { name: string, value_key: string, checked_when_key: string|null, label_key: string|null }
      *   - TEXT / HTML / ACTIONS: empty
+     * @param ?string $sortKey Sort field this column maps to. When set, the header becomes a sortable link.
+     *                        Use the same string the consuming controller expects in its order query param.
      */
     public function __construct(
         public string $key,
@@ -29,6 +32,7 @@ final readonly class Column
         public ColumnKind $kind = ColumnKind::TEXT,
         public string $cellAlign = 'start',
         public array $options = [],
+        public ?string $sortKey = null,
     ) {
     }
 }

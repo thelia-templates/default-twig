@@ -1,3 +1,7 @@
+{# @var id string #}
+{# @var columns list<\BackOfficeDefaultTwigBundle\UiComponents\DataTable\Column> #}
+{# @var rows list<array<string, mixed>> #}
+{% set sort_base_url = sortBaseUrl ?? app.request.pathInfo %}
 <div class="card" data-testid="datatable-{{ id }}">
     {% if caption %}
         <div class="card-header bg-body-tertiary d-flex justify-content-between align-items-center">
@@ -13,8 +17,23 @@
             <thead class="table-light">
                 <tr>
                     {% for column in columns %}
-                        <th scope="col" class="text-{{ column.cellAlign }}">{{ column.label }}</th>
+                        <th scope="col" class="text-{{ column.cellAlign }}">
+                            {%- if column.sortKey -%}
+                                {%- set isActive = sortField == column.sortKey -%}
+                                {%- set nextDirection = isActive and sortDirection == 'asc' ? 'desc' : 'asc' -%}
+                                {%- set sortParams = sortKeepParams|merge({ (sortParam): column.sortKey, (sortDirectionParam): nextDirection }) -%}
+                                <a class="text-decoration-none text-reset d-inline-flex align-items-center gap-1"
+                                   href="{{ sort_base_url }}?{{ sortParams|url_encode }}"
+                                   data-testid="datatable-{{ id }}-sort-{{ column.sortKey }}">
+                                    {{ column.label }}
+                                    <i class="bi {{ isActive ? (sortDirection == 'asc' ? 'bi-sort-up' : 'bi-sort-down') : 'bi-arrow-down-up text-muted' }}" aria-hidden="true"></i>
+                                </a>
+                            {%- else -%}
+                                {{ column.label }}
+                            {%- endif -%}
+                        </th>
                     {% endfor %}
+                    {% if extraColumnsHeaderHook %}{{ safe_hook(extraColumnsHeaderHook, { table_id: id }) }}{% endif %}
                 </tr>
             </thead>
             <tbody{% for attr, value in tbodyAttributes %} {{ attr }}="{{ value }}"{% endfor %}>
@@ -29,6 +48,7 @@
                                 } only %}
                             </td>
                         {% endfor %}
+                        {% if extraColumnsHook %}{{ safe_hook(extraColumnsHook, { table_id: id, row: row, row_id: row.id|default(null) }) }}{% endif %}
                     </tr>
                 {% else %}
                     <tr>

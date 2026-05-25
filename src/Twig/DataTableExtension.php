@@ -31,18 +31,19 @@ final class DataTableExtension extends AbstractExtension
             new TwigFunction('column_toggle', $this->toggleColumn(...)),
             new TwigFunction('column_badge', $this->badgeColumn(...)),
             new TwigFunction('column_actions', $this->actionsColumn(...)),
+            new TwigFunction('column_radio', $this->radioColumn(...)),
             new TwigFunction('row_action', $this->rowAction(...)),
         ];
     }
 
-    public function textColumn(string $key, string $label, string $cellAlign = 'start'): Column
+    public function textColumn(string $key, string $label, string $cellAlign = 'start', ?string $sortKey = null): Column
     {
-        return new Column($key, $label, ColumnKind::TEXT, $cellAlign);
+        return new Column($key, $label, ColumnKind::TEXT, $cellAlign, sortKey: $sortKey);
     }
 
-    public function htmlColumn(string $key, string $label, string $cellAlign = 'start'): Column
+    public function htmlColumn(string $key, string $label, string $cellAlign = 'start', ?string $sortKey = null): Column
     {
-        return new Column($key, $label, ColumnKind::HTML, $cellAlign);
+        return new Column($key, $label, ColumnKind::HTML, $cellAlign, sortKey: $sortKey);
     }
 
     public function toggleColumn(
@@ -52,6 +53,7 @@ final class DataTableExtension extends AbstractExtension
         string $cellAlign = 'center',
         string $iconOn = 'bi-check-circle-fill text-success',
         string $iconOff = 'bi-circle text-secondary',
+        ?string $sortKey = null,
     ): Column {
         return new Column(
             $key,
@@ -59,20 +61,39 @@ final class DataTableExtension extends AbstractExtension
             ColumnKind::TOGGLE,
             $cellAlign,
             ['url_key' => $urlKey, 'icon_on' => $iconOn, 'icon_off' => $iconOff],
+            $sortKey,
         );
     }
 
     /**
      * @param array<scalar, string> $variants
      */
-    public function badgeColumn(string $key, string $label, array $variants = [], string $cellAlign = 'start'): Column
+    public function badgeColumn(string $key, string $label, array $variants = [], string $cellAlign = 'start', ?string $sortKey = null): Column
     {
-        return new Column($key, $label, ColumnKind::BADGE, $cellAlign, ['variants' => $variants]);
+        return new Column($key, $label, ColumnKind::BADGE, $cellAlign, ['variants' => $variants], $sortKey);
     }
 
     public function actionsColumn(string $key = '_actions', string $label = 'Actions', string $cellAlign = 'end'): Column
     {
         return new Column($key, $label, ColumnKind::ACTIONS, $cellAlign);
+    }
+
+    public function radioColumn(
+        string $key,
+        string $label,
+        string $name,
+        string $valueKey = 'id',
+        ?string $checkedWhenKey = null,
+        ?string $labelKey = null,
+        string $cellAlign = 'center',
+    ): Column {
+        return new Column(
+            $key,
+            $label,
+            ColumnKind::RADIO,
+            $cellAlign,
+            ['name' => $name, 'value_key' => $valueKey, 'checked_when_key' => $checkedWhenKey, 'label_key' => $labelKey],
+        );
     }
 
     /**

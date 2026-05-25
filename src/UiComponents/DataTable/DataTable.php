@@ -33,4 +33,38 @@ final class DataTable
 
     /** @var array<string, string> Extra HTML attributes appended to the table body (e.g. Stimulus wiring). */
     public array $tbodyAttributes = [];
+
+    /** Sort field currently applied (matches one of {@see Column::sortKey}). */
+    public ?string $sortField = null;
+
+    /** Sort direction currently applied ('asc' or 'desc'). */
+    public string $sortDirection = 'asc';
+
+    /** Query parameter used to convey the sort field. */
+    public string $sortParam = 'order';
+
+    /** Query parameter used to convey the sort direction. */
+    public string $sortDirectionParam = 'direction';
+
+    /** Base URL the sortable header links target. Defaults to the current request path. */
+    public ?string $sortBaseUrl = null;
+
+    /**
+     * Extra query parameters preserved on sort links (current filters, page, etc.).
+     *
+     * @var array<string, scalar|null>
+     */
+    public array $sortKeepParams = [];
+
+    /**
+     * Hook name dispatched at the end of the row to allow modules to inject extra `<td>` cells.
+     * The hook receives `{ table_id, row, row_id }` as context.
+     */
+    public ?string $extraColumnsHook = null;
+
+    /**
+     * Hook name dispatched at the end of the header row to allow modules to inject extra `<th>` cells.
+     * The hook receives `{ table_id }`.
+     */
+    public ?string $extraColumnsHeaderHook = null;
 }

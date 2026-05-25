@@ -21,4 +21,5 @@ enum ColumnKind: string
     case TOGGLE = 'toggle';
     case BADGE = 'badge';
     case ACTIONS = 'actions';
+    case RADIO = 'radio';
 }
