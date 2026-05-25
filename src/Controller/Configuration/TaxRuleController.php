@@ -522,9 +522,9 @@ final class TaxRuleController
             $state?->setLocale($locale);
 
             $rows[] = [
-                'country' => $country?->getTitle() ?? '—',
-                'state' => $state?->getTitle() ?? '—',
-                'tax' => $tax?->getTitle() ?? '—',
+                'country' => $country?->getTitle() ?? '-',
+                'state' => $state?->getTitle() ?? '-',
+                'tax' => $tax?->getTitle() ?? '-',
                 'position' => $entry->getPosition(),
             ];
         }

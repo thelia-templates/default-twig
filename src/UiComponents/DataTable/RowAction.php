@@ -18,7 +18,7 @@ final readonly class RowAction
 {
     /**
      * @param string                   $kind             One of: 'edit', 'delete', 'view', 'custom'. Drives the default Bootstrap-icon glyph + variant.
-     * @param ?string                  $href             Destination URL. Mutually exclusive with $modalTarget — if both null, the action becomes a no-op button.
+     * @param ?string                  $href             Destination URL. Mutually exclusive with $modalTarget - if both null, the action becomes a no-op button.
      * @param ?string                  $modalTarget      CSS selector of a Bootstrap modal to open (e.g. '#delete_dialog'). Adds data-bs-toggle/target.
      * @param ?string                  $grantedAttribute Symfony voter attribute (VIEW/UPDATE/DELETE) required to render the action. Null = no permission gate.
      * @param string|array<string,mixed>|null $grantedSubject   Symfony voter subject (resource code string OR { resource, module } array as supported by AdminVoter).

@@ -18,18 +18,16 @@
 
     {% set extra_tabs = hook_block('order.tab', { order: order.id, id: order.id }) %}
 
-    {% set current_status_label = '' %}
-    {% for s in available_statuses %}{% if s.id == order.statusId %}{% set current_status_label = s.title %}{% endif %}{% endfor %}
     <div class="container-fluid" data-testid="order-detail-page">
         <div class="d-flex justify-content-between align-items-start mb-3">
             <div>
                 <h1 class="h3 mb-1">{{ 'Order'|trans }} <small class="text-muted">#{{ order.ref }}</small></h1>
                 <div class="d-flex gap-2 align-items-center small text-muted">
-                    {% if current_status_label %}
-                        <span class="badge bg-secondary" data-testid="order-status-badge">{{ current_status_label }}</span>
+                    {% if current_status %}
+                        <span class="badge" style="background-color: {{ current_status.color }}; color: #fff;" data-testid="order-status-badge">{{ current_status.title }}</span>
                     {% endif %}
                     {% if order.createdAt %}
-                        <span data-testid="order-created-at"><i class="bi bi-calendar3"></i> {{ order.createdAt|date('Y-m-d H:i') }}</span>
+                        <span data-testid="order-created-at"><i class="bi bi-calendar3"></i> {{ order.createdAt|date('d/m/Y H:i') }}</span>
                     {% endif %}
                 </div>
             </div>
@@ -218,7 +216,7 @@
                         <ul class="list-group list-group-flush small">
                             {% for coupon in coupons %}
                                 <li class="list-group-item d-flex justify-content-between">
-                                    <span><code>{{ coupon.code }}</code>{% if coupon.title %} <span class="text-muted">— {{ coupon.title }}</span>{% endif %}</span>
+                                    <span><code>{{ coupon.code }}</code>{% if coupon.title %} <span class="text-muted">- {{ coupon.title }}</span>{% endif %}</span>
                                     <strong class="text-danger">- {{ coupon.amount|number_format(2, '.', ' ') }} {{ currency.symbol }}</strong>
                                 </li>
                             {% endfor %}
@@ -246,7 +244,7 @@
                 <div class="card mb-3" data-testid="order-payment">
                     <div class="card-header">{{ 'Payment'|trans }}</div>
                     <div class="card-body small">
-                        <p class="mb-1"><strong>{{ payment.module_title|default('—') }}</strong></p>
+                        <p class="mb-1"><strong>{{ payment.module_title|default('-') }}</strong></p>
                         {% if payment.transaction_ref %}
                             <p class="mb-1 text-muted">{{ 'Transaction ref'|trans }}: <code>{{ payment.transaction_ref }}</code></p>
                         {% endif %}
@@ -260,7 +258,7 @@
                 <div class="card mb-3" data-testid="order-delivery">
                     <div class="card-header">{{ 'Delivery'|trans }}</div>
                     <div class="card-body small">
-                        <p class="mb-1"><strong>{{ delivery.module_title|default('—') }}</strong></p>
+                        <p class="mb-1"><strong>{{ delivery.module_title|default('-') }}</strong></p>
                         {% if delivery.delivery_ref %}
                             <p class="mb-1 text-muted">{{ 'Tracking ref'|trans }}: <code>{{ delivery.delivery_ref }}</code></p>
                         {% endif %}

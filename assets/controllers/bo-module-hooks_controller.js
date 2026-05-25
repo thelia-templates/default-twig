@@ -147,10 +147,10 @@ export default class extends Controller {
     }
 
     classnamePlaceholder() {
-        return this.createClassnameTarget.dataset.placeholder || '—';
+        return this.createClassnameTarget.dataset.placeholder || '-';
     }
 
     methodPlaceholder() {
-        return this.createMethodTarget.dataset.placeholder || '—';
+        return this.createMethodTarget.dataset.placeholder || '-';
     }
 }

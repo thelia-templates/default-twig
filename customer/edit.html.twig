@@ -45,7 +45,7 @@
                 {{ form_end(form) }}
             </div>
             <div class="card-footer text-muted small">
-                {{ 'Registered on %date'|trans({ '%date': customer.createdAt ? customer.createdAt|format_datetime('medium', 'short') : '—' }) }}
+                {{ 'Registered on %date'|trans({ '%date': customer.createdAt ? customer.createdAt|format_datetime('medium', 'short') : '-' }) }}
             </div>
         </div>
 

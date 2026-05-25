@@ -521,7 +521,7 @@ final class CategoryController
      */
     private function availableTemplates(string $locale): array
     {
-        $items = [['id' => null, 'name' => $this->translator->trans('— Inherit from parent —')]];
+        $items = [['id' => null, 'name' => $this->translator->trans('- Inherit from parent -')]];
         foreach (TemplateQuery::create()->orderById()->find() as $template) {
             $template->setLocale($locale);
             $items[] = ['id' => (int) $template->getId(), 'name' => (string) $template->getName()];

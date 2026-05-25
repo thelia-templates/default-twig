@@ -52,9 +52,9 @@
                         {% for row in rows %}
                             <tr data-testid="sale-row-{{ row.id }}">
                                 <td><a href="{{ row.edit_url }}" class="fw-semibold text-decoration-none">{{ row.title ?: '#' ~ row.id }}</a></td>
-                                <td>{% if row.label %}<span class="badge bg-danger-subtle text-danger-emphasis">{{ row.label }}</span>{% else %}<span class="text-body-secondary">—</span>{% endif %}</td>
-                                <td>{{ row.start_date ?? '—' }}</td>
-                                <td>{{ row.end_date ?? '—' }}</td>
+                                <td>{% if row.label %}<span class="badge bg-danger-subtle text-danger-emphasis">{{ row.label }}</span>{% else %}<span class="text-body-secondary">-</span>{% endif %}</td>
+                                <td>{{ row.start_date ?? '-' }}</td>
+                                <td>{{ row.end_date ?? '-' }}</td>
                                 <td>{{ row.offset_type_label }}</td>
                                 <td class="text-center">{{ row.products_count }}</td>
                                 <td class="text-center">

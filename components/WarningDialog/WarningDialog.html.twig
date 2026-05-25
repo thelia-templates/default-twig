@@ -1,15 +1,15 @@
 {#
-    BoWarningDialog — informational dialog with a single dismiss button (no form).
+    BoWarningDialog - informational dialog with a single dismiss button (no form).
 
     Replaces generic-warning-dialog.html. For confirmations with an action, use BoConfirmDialog instead.
 
     Props:
         id          the modal id (required)
         title       header title, |trans (required)
-        message     body text, |trans (default: none — override the body block instead)
+        message     body text, |trans (default: none - override the body block instead)
         okLabel     dismiss button label, |trans (default: OK)
         okButtonId  id on the dismiss button, so a Stimulus controller can hook it (default: none)
-        variant     warning | danger | info | primary | success — drives the header icon (default: warning)
+        variant     warning | danger | info | primary | success - drives the header icon (default: warning)
         icon        explicit bi icon class, overriding the variant default (default: none)
         testid      data-testid on the modal; the OK button gets testid-ok (default: none)
 

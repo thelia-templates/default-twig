@@ -1,4 +1,4 @@
-// Thelia back-office — Bootstrap 5 variable overrides
+// Thelia back-office - Bootstrap 5 variable overrides
 // Mirrors the public-facing thelia.net design system (orange / soft slate)
 
 $primary: #f26041;        // Thelia orange (matches thelia.net .bg-primary)
@@ -20,7 +20,7 @@ $nav-link-hover-color: var(--bs-body-color);
 $nav-tabs-link-active-color: var(--bs-body-color);
 $nav-tabs-link-hover-border-color: var(--bs-border-color) var(--bs-border-color) transparent;
 
-// Form polish — Thelia.net inspired (rounded, generous padding, brand focus ring)
+// Form polish - Thelia.net inspired (rounded, generous padding, brand focus ring)
 $input-border-radius: .5rem;
 $input-border-radius-sm: .375rem;
 $input-border-radius-lg: .625rem;
@@ -40,7 +40,7 @@ $form-text-color: #6c757d;
 $form-text-margin-top: .4rem;
 $form-text-font-size: .8rem;
 
-// Tooltips — dark, generous padding, brand-tinted shadow
+// Tooltips - dark, generous padding, brand-tinted shadow
 $tooltip-bg: #1f2937;
 $tooltip-color: #ffffff;
 $tooltip-opacity: 1;
@@ -49,7 +49,7 @@ $tooltip-padding-y: .45rem;
 $tooltip-padding-x: .65rem;
 $tooltip-font-size: .8rem;
 
-// Buttons — same border radius as inputs for consistency
+// Buttons - same border radius as inputs for consistency
 $btn-border-radius: .5rem;
 $btn-border-radius-sm: .375rem;
 $btn-border-radius-lg: .625rem;
@@ -57,7 +57,7 @@ $btn-padding-y: .5rem;
 $btn-padding-x: 1rem;
 $btn-font-weight: 500;
 
-// Cards — softer borders + tinted header
+// Cards - softer borders + tinted header
 $card-border-radius: .75rem;
 $card-border-color: #e6e8eb;
 $card-cap-bg: #ffffff;
@@ -66,7 +66,7 @@ $card-cap-padding-x: 1.25rem;
 $card-spacer-y: 1.25rem;
 $card-spacer-x: 1.25rem;
 
-// Breadcrumb — discrete
+// Breadcrumb - discrete
 $breadcrumb-padding-y: .25rem;
 $breadcrumb-padding-x: 0;
 $breadcrumb-margin-bottom: 1.25rem;
@@ -74,7 +74,7 @@ $breadcrumb-font-size: .85rem;
 $breadcrumb-divider-color: #adb5bd;
 $breadcrumb-active-color: #6c757d;
 
-// Tables — zebra + hover + neutral header
+// Tables - zebra + hover + neutral header
 $table-bg: transparent;
 $table-cell-padding-y: .75rem;
 $table-cell-padding-x: 1rem;

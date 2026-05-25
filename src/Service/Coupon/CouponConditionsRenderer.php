@@ -239,7 +239,7 @@ final readonly class CouponConditionsRenderer
                 'id' => (int) $category->getId(),
                 'label' => (string) $category->getTitle(),
                 'level' => $level,
-                'indent' => str_repeat('— ', $level),
+                'indent' => str_repeat('- ', $level),
             ];
             $this->walkCategoryTree((int) $category->getId(), $level + 1, $locale, $tree);
         }

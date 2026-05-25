@@ -543,7 +543,7 @@ final class ProductController
     private function categoryChoices(): array
     {
         $locale = $this->defaultLocale();
-        $items = [['id' => 0, 'title' => $this->translator->trans('— All categories —')]];
+        $items = [['id' => 0, 'title' => $this->translator->trans('- All categories -')]];
         foreach (CategoryQuery::create()->orderById()->find() as $category) {
             $category->setLocale($locale);
             $items[] = ['id' => (int) $category->getId(), 'title' => (string) $category->getTitle()];
@@ -586,7 +586,7 @@ final class ProductController
     private function templateChoices(): array
     {
         $locale = $this->defaultLocale();
-        $items = [['id' => null, 'name' => $this->translator->trans('— No template —')]];
+        $items = [['id' => null, 'name' => $this->translator->trans('- No template -')]];
         foreach (TemplateQuery::create()->orderById()->find() as $template) {
             $template->setLocale($locale);
             $items[] = ['id' => (int) $template->getId(), 'name' => (string) $template->getName()];

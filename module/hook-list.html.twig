@@ -153,7 +153,7 @@
                                             <span class="badge bg-secondary" data-testid="module-hook-toggle-disabled-{{ m.id }}">{{ 'Disabled'|trans }}</span>
                                         {% endif %}
                                     </td>
-                                    <td class="text-center">{% if group.by_module %}—{% else %}{{ m.position }}{% endif %}</td>
+                                    <td class="text-center">{% if group.by_module %}-{% else %}{{ m.position }}{% endif %}</td>
                                     <td class="text-end">
                                         <a href="{{ m.edit_url }}" class="btn btn-sm btn-outline-secondary" data-testid="module-hook-edit-{{ m.id }}" title="{{ 'Edit'|trans }}">
                                             <i class="bi bi-pencil" aria-hidden="true"></i>

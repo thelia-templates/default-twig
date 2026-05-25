@@ -6,7 +6,7 @@
             <meta name="viewport" content="width=device-width, initial-scale=1">
             <meta name="referrer" content="same-origin">
 
-            <title>{% block title %}{{ 'Back-office'|trans({}, 'bo.default-twig') }}{% endblock %} — Thelia</title>
+            <title>{% block title %}{{ 'Back-office'|trans({}, 'bo.default-twig') }}{% endblock %} - Thelia</title>
 
             {% block stylesheets %}
                 {{ encore_entry_link_tags('app', null, 'backoffice') }}
@@ -20,7 +20,7 @@
         </head>
     {% endblock %}
 
-    <body class="bg-body-secondary" data-testid="{% block body_testid %}bo-page{% endblock %}">
+    <body class="bg-body-secondary" data-testid="{% block body_testid %}bo-page{% endblock %}" data-controller="bootstrap-bridge">
         {% block body %}
             <div class="bo-layout">
                 {% block side_nav %}{% include '@BackOfficeDefaultTwig/_side_nav.html.twig' %}{% endblock %}

@@ -246,7 +246,7 @@
                                             data-bo-combination-creation-target="select"
                                             data-action="change->bo-combination-creation#sync"
                                             data-testid="combination-creation-select-{{ attribute.id }}">
-                                        <option value="">{{ '— Not used —'|trans }}</option>
+                                        <option value="">{{ '- Not used -'|trans }}</option>
                                         {% for value in attribute.values %}
                                             <option value="{{ value.id }}">{{ value.title }}</option>
                                         {% endfor %}

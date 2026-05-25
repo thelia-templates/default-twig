@@ -18,6 +18,7 @@ use BackOfficeDefaultTwigBundle\Repository\OrderRepository;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\Service\Order\OrderDetailContextBuilder;
+use BackOfficeDefaultTwigBundle\Service\Order\OrderListFilters;
 use BackOfficeDefaultTwigBundle\Service\Order\OrderListRowPresenter;
 use BackOfficeDefaultTwigBundle\Service\Pdf\OrderPdfRenderer;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
@@ -66,6 +67,7 @@ final class OrderController
         private readonly OrderDetailContextBuilder $detailContextBuilder,
         private readonly OrderRepository $orderRepository,
         private readonly OrderListRowPresenter $rowPresenter,
+        private readonly OrderListFilters $listFilters,
     ) {
     }
 
@@ -80,12 +82,16 @@ final class OrderController
         $statusId = (int) $request->query->get('status_id', 0);
         $search = trim((string) $request->query->get('q', ''));
         $locale = $request->getLocale();
+        $filters = $this->listFilters->fromRequest($request);
 
         $paginated = $this->orderRepository->findPaginated(
             page: $page,
             perPage: self::PAGE_SIZE,
             statusId: $statusId > 0 ? $statusId : null,
             search: $search !== '' ? $search : null,
+            orderBy: $filters['order'],
+            direction: $filters['direction'],
+            createdSince: $filters['created_since'],
         );
 
         $rows = [];
@@ -101,31 +107,35 @@ final class OrderController
             'current_page' => min($page, $paginated['lastPage']),
             'current_status' => $statusId,
             'current_search' => $search,
-            'available_statuses' => $this->statusChoices(),
+            'current_period' => $filters['period'],
+            'current_order' => $filters['order'],
+            'current_direction' => $filters['direction'],
+            'quick_filters' => $filters['chips'],
+            'available_statuses' => $this->statusChoices($locale),
         ]));
     }
 
     #[Route('/admin/order/update/{order_id}', name: 'admin.order.update.view', methods: ['GET'], requirements: ['order_id' => '\d+'])]
-    public function detail(int $order_id): Response
+    public function detail(Request $request, int $order_id): Response
     {
         if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::VIEW)) {
             return $denied;
         }
 
-        $order = OrderQuery::create()->findPk($order_id);
+        $order = $this->orderRepository->findById($order_id);
         if ($order === null) {
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }
 
-        $locale = $this->defaultLocale();
+        $locale = $request->getLocale();
 
         return new Response($this->twig->render(self::DETAIL_TEMPLATE, array_merge(
-            $this->detailContextBuilder->build($order),
+            $this->detailContextBuilder->build($order, $locale),
             [
                 'order' => $order,
                 'order_items' => $this->orderItems($order),
                 'order_addresses' => $this->orderAddresses($order),
-                'available_statuses' => $this->statusChoices(),
+                'available_statuses' => $this->statusChoices($locale),
                 'customer_titles' => $this->customerTitleChoices($locale),
                 'countries' => $this->countryChoices($locale),
                 'states' => $this->stateChoices($locale),
@@ -405,16 +415,12 @@ final class OrderController
     /**
      * @return list<array<string, mixed>>
      */
-    private function statusChoices(): array
+    private function statusChoices(string $locale): array
     {
-        $locale = $this->defaultLocale();
-        $items = [['id' => 0, 'title' => $this->translator->trans('— All statuses —')]];
-        foreach (OrderStatusQuery::create()->orderByPosition()->find() as $status) {
-            $status->setLocale($locale);
-            $items[] = ['id' => (int) $status->getId(), 'title' => (string) $status->getTitle(), 'code' => (string) $status->getCode()];
-        }
-
-        return $items;
+        return $this->orderRepository->findStatusChoices(
+            $locale,
+            $this->translator->trans('- All statuses -'),
+        );
     }
 
     private function defaultLocale(): string

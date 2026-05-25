@@ -15,8 +15,26 @@
 {% block content %}
     {{ safe_hook('orders.top') }}
 
+    {% set keep_params = {
+        status_id: current_status > 0 ? current_status : null,
+        q: current_search,
+        period: current_period,
+        order: current_order,
+        direction: current_direction,
+    } %}
+
     <div class="container-fluid" data-testid="orders-page">
         <h1 class="h3 mb-3">{{ 'Orders management'|trans }}</h1>
+
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-3" data-testid="order-quick-filters">
+            {% for chip in quick_filters %}
+                <a class="btn btn-sm {{ chip.code == current_period ? 'btn-primary' : 'btn-outline-secondary' }}"
+                   href="{{ path('admin.order.list', { period: chip.code, status_id: current_status > 0 ? current_status : null, q: current_search }) }}"
+                   data-testid="order-quick-filter-{{ chip.code }}">
+                    <i class="bi {{ chip.icon }} me-1" aria-hidden="true"></i>{{ chip.label|trans }}
+                </a>
+            {% endfor %}
+        </div>
 
         <form method="get" action="{{ path('admin.order.list') }}" class="row g-2 mb-3" data-testid="order-search-form">
             <div class="col-md-4">
@@ -28,34 +46,45 @@
                 </select>
             </div>
             <div class="col-md-4">
-                <label class="form-label">{{ 'Reference / transaction'|trans }}</label>
-                <input type="search" name="q" value="{{ current_search }}" class="form-control" data-testid="order-search-input">
+                <label class="form-label">{{ 'Search'|trans }}</label>
+                <input type="search" name="q" value="{{ current_search }}" class="form-control" placeholder="{{ 'Reference, customer name or email'|trans }}" data-testid="order-search-input">
             </div>
             <div class="col-md-4 d-flex align-items-end gap-2">
                 <button type="submit" class="btn btn-secondary" data-testid="order-search-submit">{{ 'Search'|trans }}</button>
                 <a href="{{ path('admin.order.list') }}" class="btn btn-outline-secondary">{{ 'Reset'|trans }}</a>
             </div>
+            <input type="hidden" name="period" value="{{ current_period }}">
+            <input type="hidden" name="order" value="{{ current_order }}">
+            <input type="hidden" name="direction" value="{{ current_direction }}">
         </form>
 
         {{ component('BoDataTable', {
             id: 'orders',
             columns: [
-                column('id', 'ID'|trans),
-                column('ref', 'Reference'|trans),
+                column_html('ref_html', 'Reference'|trans, 'start', 'ref'),
+                column_html('customer_html', 'Customer'|trans),
+                column_html('items_html', 'Items'|trans, 'center'),
                 column_badge('status_code', 'Status'|trans, {}, 'start', 'status', 'status_color'),
-                column('amount', 'Total'|trans, 'end'),
-                column('date', 'Date'|trans),
+                column_html('payment_html', 'Payment'|trans),
+                column_html('delivery_html', 'Delivery'|trans),
+                column_text('amount', 'Total'|trans, 'end', 'amount'),
+                column_html('date_html', 'Date'|trans, 'start', 'created_at'),
                 column_actions('_actions', 'Actions'|trans),
             ],
             rows: rows,
             emptyMessage: 'No order matches the current filters.'|trans,
+            sortField: current_order,
+            sortDirection: current_direction,
+            sortParam: 'order',
+            sortDirectionParam: 'direction',
+            sortKeepParams: keep_params,
         }) }}
 
         {{ component('BoPagination', {
             route: 'admin.order.list',
             currentPage: current_page,
             lastPage: pages,
-            routeParams: { status_id: current_status > 0 ? current_status : null, q: current_search },
+            routeParams: keep_params,
             ariaLabel: 'Order pagination',
             testid: 'order-pagination',
         }) }}

@@ -7,7 +7,7 @@
             <select id="coupon-category" class="form-select" name="coupon_specific[category_id]"
                     data-bo-coupon-product-picker-target="category"
                     data-action="change->bo-coupon-product-picker#onCategoryChangeMulti">
-                <option value="">— {{ 'All products'|trans }} —</option>
+                <option value="">- {{ 'All products'|trans }} -</option>
                 {% for cat in categories %}
                     <option value="{{ cat.id }}">{{ cat.title }}</option>
                 {% endfor %}

@@ -28,7 +28,7 @@ export default class extends Controller {
         const data = this.dataValue || {};
         const products = data[categoryId] || data[String(categoryId)] || [];
 
-        select.innerHTML = '<option value="">— Select a product —</option>';
+        select.innerHTML = '<option value="">- Select a product -</option>';
         products.forEach((p) => {
             const opt = document.createElement('option');
             opt.value = String(p.id);

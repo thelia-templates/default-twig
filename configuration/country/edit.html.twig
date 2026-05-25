@@ -1,6 +1,6 @@
 {% extends '@BackOfficeDefaultTwig/base.html.twig' %}
 
-{% block title %}{{ 'Edit country'|trans }} — {{ country.title }}{% endblock %}
+{% block title %}{{ 'Edit country'|trans }} - {{ country.title }}{% endblock %}
 {% block body_testid %}country-edit{% endblock %}
 
 {% block breadcrumb %}
@@ -16,7 +16,7 @@
 
 {% block content %}
     <div class="container-fluid" data-testid="country-edit-page">
-        <h1 class="h3 mb-3">{{ 'Country'|trans }} <small class="text-muted">{{ country.isoalpha2 }} — #{{ country.id }}</small></h1>
+        <h1 class="h3 mb-3">{{ 'Country'|trans }} <small class="text-muted">{{ country.isoalpha2 }} - #{{ country.id }}</small></h1>
 
         <div class="d-flex justify-content-end mb-3">
             {{ component('BoLanguageSwitcher', { currentLanguageId: edit_language_id }) }}

@@ -61,7 +61,7 @@ export default class extends Controller {
             html += `<h3 class="h6 mt-3">${this.t('Your template define new hooks')}</h3>`;
             html += '<table class="table table-sm table-striped"><thead><tr><th><input type="checkbox" data-action="change->bo-hooks#toggleAll" data-bo-hooks-target-list="new"></th><th>Code</th><th>Title</th><th>Block</th><th>Module</th></tr></thead><tbody>';
             this.newHooks.forEach((hook, index) => {
-                html += `<tr><td><input type="checkbox" class="bo-hooks-new" data-index="${index}"></td><td>${this.escape(hook.code)}</td><td>${this.escape(hook.title || '-')}</td><td>${hook.block ? '✓' : '—'}</td><td>${hook.module ? '✓' : '—'}</td></tr>`;
+                html += `<tr><td><input type="checkbox" class="bo-hooks-new" data-index="${index}"></td><td>${this.escape(hook.code)}</td><td>${this.escape(hook.title || '-')}</td><td>${hook.block ? '✓' : '-'}</td><td>${hook.module ? '✓' : '-'}</td></tr>`;
             });
             html += '</tbody></table>';
         }
@@ -69,7 +69,7 @@ export default class extends Controller {
             html += `<h3 class="h6 mt-3">${this.t('Your template does not support this hooks')}</h3>`;
             html += '<table class="table table-sm table-striped"><thead><tr><th></th><th>Code</th><th>Title</th><th>Official</th></tr></thead><tbody>';
             this.missingHooks.forEach((hook) => {
-                html += `<tr><td><input type="checkbox" class="bo-hooks-missing" value="${hook.id}" ${hook.activate ? '' : 'disabled'}></td><td>${this.escape(hook.code)}</td><td>${this.escape(hook.title)}</td><td>${hook.native ? '✓' : '—'}</td></tr>`;
+                html += `<tr><td><input type="checkbox" class="bo-hooks-missing" value="${hook.id}" ${hook.activate ? '' : 'disabled'}></td><td>${this.escape(hook.code)}</td><td>${this.escape(hook.title)}</td><td>${hook.native ? '✓' : '-'}</td></tr>`;
             });
             html += '</tbody></table>';
         }

@@ -22,6 +22,8 @@ use Thelia\Model\OrderStatusQuery;
 
 final readonly class OrderDetailContextBuilder
 {
+    private const FALLBACK_STATUS_COLOR = '#6c757d';
+
     public function __construct(
         private UrlGeneratorInterface $urls,
     ) {
@@ -37,10 +39,11 @@ final readonly class OrderDetailContextBuilder
      *     coupons: list<array{code: string, title: string, amount: float}>,
      *     cancel_status_id: int,
      *     is_canceled: bool,
-     *     currency: array{id: int, symbol: string, code: string}
+     *     currency: array{id: int, symbol: string, code: string},
+     *     current_status: array{id: int, code: string, title: string, color: string}|null
      * }
      */
-    public function build(Order $order): array
+    public function build(Order $order, string $locale = 'en_US'): array
     {
         $currency = $order->getCurrency();
 
@@ -87,6 +90,9 @@ final readonly class OrderDetailContextBuilder
             ];
         }
 
+        $statusModel = OrderStatusQuery::create()->findPk((int) $order->getStatusId());
+        $statusModel?->setLocale($locale);
+
         return [
             'totals' => [
                 'subtotal_ht' => $subtotalHt,
@@ -118,6 +124,12 @@ final readonly class OrderDetailContextBuilder
                 'id' => $currency !== null ? (int) $currency->getId() : 0,
                 'symbol' => $currency !== null ? (string) $currency->getSymbol() : '',
                 'code' => $currency !== null ? (string) $currency->getCode() : '',
+            ],
+            'current_status' => $statusModel === null ? null : [
+                'id' => (int) $statusModel->getId(),
+                'code' => (string) $statusModel->getCode(),
+                'title' => (string) $statusModel->getTitle(),
+                'color' => (string) ($statusModel->getColor() ?: self::FALLBACK_STATUS_COLOR),
             ],
         ];
     }

@@ -274,7 +274,7 @@ final class ModuleController
                 $session->getFlashBag()->add($type, $message);
             }
         } catch (\Throwable) {
-            // silent — CLI session has no FlashBag
+            // silent - CLI session has no FlashBag
         }
     }
 

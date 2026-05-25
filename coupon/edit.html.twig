@@ -4,7 +4,7 @@
 {% set form_action = is_update ? path('admin.coupon.update', { couponId: coupon_id }) : path('admin.coupon.create') %}
 {% set page_title = is_update ? ('Update coupon'|trans) : ('Create coupon'|trans) %}
 
-{% block title %}{{ page_title }}{% if is_update %} — {{ data.code }}{% endif %}{% endblock %}
+{% block title %}{{ page_title }}{% if is_update %} - {{ data.code }}{% endif %}{% endblock %}
 {% block body_testid %}coupon-edit{% endblock %}
 
 {% block breadcrumb %}

@@ -5,7 +5,7 @@
                 data-bo-coupon-product-picker-target="category"
                 data-action="change->bo-coupon-product-picker#onCategoryChange"
                 data-testid="coupon-free-product-category">
-            <option value="">— {{ 'Select a category'|trans }} —</option>
+            <option value="">- {{ 'Select a category'|trans }} -</option>
             {% for cat in categories|default([]) %}
                 <option value="{{ cat.id }}" {% if offered_category_id|default('') == cat.id %}selected{% endif %}>{{ cat.title }}</option>
             {% endfor %}
@@ -18,7 +18,7 @@
                 data-bo-coupon-product-picker-data-value="{{ products_by_category|default({})|json_encode|e('html_attr') }}"
                 data-bo-coupon-product-picker-initial-product-value="{{ offered_product_id|default('') }}"
                 data-testid="coupon-free-product-product">
-            <option value="">— {{ 'Select a product'|trans }} —</option>
+            <option value="">- {{ 'Select a product'|trans }} -</option>
         </select>
     </div>
 </div>

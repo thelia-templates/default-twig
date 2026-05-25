@@ -85,8 +85,8 @@ final readonly class ModuleHookListPresenter
                 $moduleRows[] = [
                     'id' => $moduleHookId,
                     'module_id' => (int) $moduleHook->getModuleId(),
-                    'module_code' => $module !== null ? (string) $module->getCode() : '—',
-                    'module_title' => $module !== null ? (string) $module->getTitle() : '—',
+                    'module_code' => $module !== null ? (string) $module->getCode() : '-',
+                    'module_title' => $module !== null ? (string) $module->getTitle() : '-',
                     'classname' => (string) $moduleHook->getClassname(),
                     'method' => (string) $moduleHook->getMethod(),
                     'active' => (bool) $moduleHook->getActive(),

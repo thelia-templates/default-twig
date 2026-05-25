@@ -18,6 +18,7 @@ use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\Collection\ObjectCollection;
 use Thelia\Model\Customer;
 use Thelia\Model\Order;
+use Thelia\Model\OrderProductQuery;
 use Thelia\Model\OrderQuery;
 use Thelia\Model\OrderStatus;
 use Thelia\Model\OrderStatusQuery;
@@ -28,19 +29,36 @@ use Thelia\Model\OrderStatusQuery;
  */
 final readonly class OrderRepository
 {
+    public const SORT_FIELDS = [
+        'id' => 'id',
+        'ref' => 'ref',
+        'created_at' => 'createdAt',
+        'amount' => 'id', // total is computed; we fall back to id (insertion order ≈ creation order).
+    ];
+
     /**
      * @return array{rows: ObjectCollection<int, Order>, total: int, lastPage: int}
      */
-    public function findPaginated(int $page, int $perPage, ?int $statusId = null, ?string $search = null): array
-    {
-        $query = $this->buildQuery($statusId, $search);
+    public function findPaginated(
+        int $page,
+        int $perPage,
+        ?int $statusId = null,
+        ?string $search = null,
+        string $orderBy = 'created_at',
+        string $direction = 'desc',
+        ?\DateTimeInterface $createdSince = null,
+    ): array {
+        $query = $this->buildQuery($statusId, $search, $createdSince);
 
         $total = (clone $query)->count();
         $lastPage = max(1, (int) ceil($total / max(1, $perPage)));
         $page = max(1, min($page, $lastPage));
 
+        $sortColumn = self::SORT_FIELDS[$orderBy] ?? self::SORT_FIELDS['created_at'];
+        $sortDirection = strtolower($direction) === 'asc' ? Criteria::ASC : Criteria::DESC;
+
         $rows = $query
-            ->orderByCreatedAt(Criteria::DESC)
+            ->orderBy('order.'.$sortColumn, $sortDirection)
             ->offset(($page - 1) * $perPage)
             ->limit($perPage)
             ->find();
@@ -53,12 +71,39 @@ final readonly class OrderRepository
         return OrderQuery::create()->findPk($orderId);
     }
 
+    public function countItemsForOrder(int $orderId): int
+    {
+        return OrderProductQuery::create()->filterByOrderId($orderId)->count();
+    }
+
     /**
      * @return ObjectCollection<int, OrderStatus>
      */
     public function findAllStatuses(): ObjectCollection
     {
         return OrderStatusQuery::create()->orderById()->find();
+    }
+
+    /**
+     * Localised list of statuses suitable for a `<select>` filter.
+     * The first entry is a synthetic "all statuses" option (id = 0).
+     *
+     * @return list<array{id: int, title: string, code: string}>
+     */
+    public function findStatusChoices(string $locale, string $allLabel): array
+    {
+        $items = [['id' => 0, 'title' => $allLabel, 'code' => '']];
+
+        foreach (OrderStatusQuery::create()->orderByPosition()->find() as $status) {
+            $status->setLocale($locale);
+            $items[] = [
+                'id' => (int) $status->getId(),
+                'title' => (string) $status->getTitle(),
+                'code' => (string) $status->getCode(),
+            ];
+        }
+
+        return $items;
     }
 
     /**
@@ -98,12 +143,16 @@ final readonly class OrderRepository
         return OrderQuery::create()->count();
     }
 
-    private function buildQuery(?int $statusId, ?string $search): OrderQuery
+    private function buildQuery(?int $statusId, ?string $search, ?\DateTimeInterface $createdSince): OrderQuery
     {
         $query = OrderQuery::create();
 
         if ($statusId !== null && $statusId > 0) {
             $query->filterByStatusId($statusId);
+        }
+
+        if ($createdSince !== null) {
+            $query->filterByCreatedAt($createdSince->format('Y-m-d H:i:s'), Criteria::GREATER_EQUAL);
         }
 
         if ($search !== null && $search !== '') {

@@ -328,11 +328,11 @@ final class CustomerController
         foreach ($customers as $customer) {
             \assert($customer instanceof Customer);
             $rows[] = [
-                'ref' => $customer->getRef() ?? '—',
+                'ref' => $customer->getRef() ?? '-',
                 'lastname' => $customer->getLastname() ?? '',
                 'firstname' => $customer->getFirstname() ?? '',
                 'email' => $customer->getEmail() ?? '',
-                'registration_date' => $customer->getCreatedAt()?->format('Y-m-d') ?? '—',
+                'registration_date' => $customer->getCreatedAt()?->format('Y-m-d') ?? '-',
                 '_actions' => [
                     new RowAction(
                         kind: 'edit',
@@ -451,7 +451,7 @@ final class CustomerController
     {
         $choices = [];
         foreach (LangQuery::create()->find() as $lang) {
-            $choices[$lang->getTitle() ?? $lang->getCode() ?? '—'] = (int) $lang->getId();
+            $choices[$lang->getTitle() ?? $lang->getCode() ?? '-'] = (int) $lang->getId();
         }
 
         return $choices;

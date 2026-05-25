@@ -19,7 +19,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 use Thelia\Core\Security\SecurityContext;
 
 /**
- * Returns `null` when the current admin is granted, a 403 Response otherwise — callers can early-return:
+ * Returns `null` when the current admin is granted, a 403 Response otherwise - callers can early-return:
  *
  *     if ($denied = $this->access->check(AdminResources::BRAND, [], 'UPDATE')) {
  *         return $denied;

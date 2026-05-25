@@ -1,4 +1,4 @@
-// Thelia back-office Twig — main stylesheet
+// Thelia back-office Twig - main stylesheet
 // Bootstrap 5.3 + bootstrap-icons (MIT)
 
 @import "variables";
@@ -222,12 +222,16 @@ $bo-side-nav-hover-bg: rgba(255, 255, 255, .07);
         }
     }
 
-    // Sub-menu (collapse): stays inside its parent block — no border, slight
-    // tint to keep it visually grouped with the section header above.
+    // Sub-menu (collapse): stays inside its parent block - no border, slight
+    // tint to keep it visually grouped with the section header above. Force the
+    // column layout during Bootstrap's `.collapsing` height transition so the
+    // items don't flash side-by-side before the final stylesheet kicks in.
     .nav.collapse,
     .nav.collapsing {
         background-color: rgba(0, 0, 0, .25);
         border-top: 1px solid rgba(255, 255, 255, .04);
+        flex-direction: column;
+        flex-wrap: nowrap;
     }
 
     .nav.collapse .nav-link,
@@ -363,7 +367,7 @@ textarea.form-control {
     margin-bottom: 1.25rem !important;
 }
 
-// Form labels — display block; the helper rendered after the label gets pushed
+// Form labels - display block; the helper rendered after the label gets pushed
 // onto its own line so "(optional)" no longer collides with the label.
 // Thelia legacy form theme emits `<label class="FieldInput-label">`, so we
 // style both the BS5 class and the legacy one.
@@ -396,7 +400,7 @@ label.FieldInput-label {
 }
 
 // Legacy "(optionnel)" text is concatenated directly into the label as plain
-// text — render it discreetly via `:has` and a CSS counter trick is not
+// text - render it discreetly via `:has` and a CSS counter trick is not
 // possible, so use a softer color on the whole label except for the required
 // asterisk. We at least add some breathing room between the label and the
 // input below.
@@ -467,7 +471,7 @@ input[type="color"].form-control {
     margin-left: .15rem;
 }
 
-// Cards — softer border, modern shadow, headers aligned with body padding
+// Cards - softer border, modern shadow, headers aligned with body padding
 .card {
     border-color: $card-border-color;
     box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
@@ -481,7 +485,7 @@ input[type="color"].form-control {
     color: #3a3a3a;
 }
 
-// Buttons — refined idle/hover states
+// Buttons - refined idle/hover states
 .btn-primary {
     --bs-btn-color: #fff;
     --bs-btn-bg: #{$primary};
@@ -503,7 +507,7 @@ input[type="color"].form-control {
     transition: background-color .15s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease;
 }
 
-// Tables — modern striping and hover
+// Tables - modern striping and hover
 .table {
     --bs-table-hover-bg: rgba(242, 96, 65, .04);
 
@@ -528,7 +532,7 @@ input[type="color"].form-control {
     }
 }
 
-// Breadcrumbs — subtle separator and brand primary on links
+// Breadcrumbs - subtle separator and brand primary on links
 .breadcrumb {
     font-size: .85rem;
 
@@ -542,7 +546,7 @@ input[type="color"].form-control {
     }
 }
 
-// Tabs — extra breathing room
+// Tabs - extra breathing room
 .nav-tabs {
     border-bottom-color: $card-border-color;
     margin-bottom: 1.5rem;
@@ -558,12 +562,12 @@ input[type="color"].form-control {
     }
 }
 
-// Alerts — slightly bolder edge
+// Alerts - slightly bolder edge
 .alert {
     border-radius: .5rem;
 }
 
-// Dropdowns — softer shadow
+// Dropdowns - softer shadow
 .dropdown-menu {
     box-shadow: 0 8px 24px rgba(15, 23, 42, .12);
     border-color: $card-border-color;
@@ -580,7 +584,7 @@ input[type="color"].form-control {
     font-family: var(--bs-font-monospace);
 }
 
-// Tooltips — softer, more readable
+// Tooltips - softer, more readable
 .tooltip {
     --bs-tooltip-bg: #1f2937;
     --bs-tooltip-color: #ffffff;
@@ -596,7 +600,7 @@ input[type="color"].form-control {
     font-weight: 500;
 }
 
-// Buttons with only an icon — tighter, square footprint with a clear hover state.
+// Buttons with only an icon - tighter, square footprint with a clear hover state.
 .btn-icon {
     width: 2.25rem;
     height: 2.25rem;
@@ -762,4 +766,30 @@ input[type="color"].form-control {
 
 .bo-ace-editor--locked {
     opacity: 0.7;
+}
+
+// ---------- Order list ----------
+
+.bo-order-customer {
+    line-height: 1.3;
+    min-width: 0;
+}
+
+.bo-order-items {
+    font-weight: 500;
+}
+
+.bo-order-module {
+    display: inline-flex;
+    align-items: center;
+    color: var(--bs-body-color);
+    font-size: .9rem;
+}
+
+tr.bo-order-row--urgent {
+    box-shadow: inset 4px 0 0 var(--bs-danger);
+}
+
+.bo-order-urgent {
+    cursor: help;
 }

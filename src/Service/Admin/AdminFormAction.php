@@ -26,11 +26,11 @@ use Thelia\Tools\TokenProvider;
 /**
  * Orchestrates the recurring admin action pipeline:
  *
- *  1. ACL check        — early-return 403 when denied
- *  2. Input check      — Symfony Form validation OR CSRF token verification
- *  3. Event dispatch   — pre-built event or one created from the validated form
- *  4. Audit log        — optional success message + resource id
- *  5. Response         — redirect on success, caller-supplied render on failure
+ *  1. ACL check        - early-return 403 when denied
+ *  2. Input check      - Symfony Form validation OR CSRF token verification
+ *  3. Event dispatch   - pre-built event or one created from the validated form
+ *  4. Audit log        - optional success message + resource id
+ *  5. Response         - redirect on success, caller-supplied render on failure
  *
  * Two entry points cover the BO Twig actions:
  *   - {@see submit()}  for form-driven endpoints (create/update/save/configure)

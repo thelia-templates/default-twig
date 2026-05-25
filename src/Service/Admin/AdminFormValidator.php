@@ -38,7 +38,7 @@ readonly class AdminFormValidator
         $request = $this->requestStack->getMainRequest();
 
         if (null === $request) {
-            throw new FormValidationException('No HTTP request in stack — form cannot be validated.');
+            throw new FormValidationException('No HTTP request in stack - form cannot be validated.');
         }
 
         if (strtoupper($request->getMethod()) !== strtoupper($expectedMethod)) {

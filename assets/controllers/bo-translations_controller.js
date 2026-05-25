@@ -20,7 +20,7 @@ import { Controller } from '@hotwired/stimulus';
  *
  * Actions:
  *   - `selectUserMode` / `selectDeveloperMode` on the mode buttons.
- *   - `copyAll` on the "copy all translations" link — fills every empty source
+ *   - `copyAll` on the "copy all translations" link - fills every empty source
  *     translation with the original text.
  *   - `trackChange` on translation inputs to flip an internal dirty flag.
  *   - `confirmUnsaved` on form submit; prompts the user when dirty.

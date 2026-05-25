@@ -83,7 +83,7 @@ export default class extends Controller {
 
         const emptyOption = document.createElement('option');
         emptyOption.value = '';
-        emptyOption.textContent = '—';
+        emptyOption.textContent = '-';
         select.appendChild(emptyOption);
 
         states.forEach((state) => {

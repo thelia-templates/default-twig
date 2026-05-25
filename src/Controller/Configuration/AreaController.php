@@ -284,7 +284,7 @@ final class AreaController
             $state = \Thelia\Model\StateQuery::create()->findPk($stateId);
             if ($state !== null) {
                 $state->setLocale($this->defaultLocale());
-                $label .= ' — '.(string) $state->getTitle();
+                $label .= ' - '.(string) $state->getTitle();
             }
         }
 
