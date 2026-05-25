@@ -14,7 +14,12 @@ declare(strict_types=1);
 
 namespace BackOfficeDefaultTwigBundle\Controller\File;
 
+use BackOfficeDefaultTwigBundle\Form\File\DocumentMetadataType;
+use BackOfficeDefaultTwigBundle\Form\File\ImageMetadataType;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
+use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
+use Symfony\Component\Form\FormFactoryInterface;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -23,8 +28,10 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
+use Thelia\Core\Event\File\FileCreateOrUpdateEvent;
 use Thelia\Core\Event\TheliaEvents;
 use Thelia\Core\File\FileManager;
+use Thelia\Core\File\FileModelInterface;
 use Thelia\Core\File\Service\FileDeleteService;
 use Thelia\Core\File\Service\FilePositionService;
 use Thelia\Core\File\Service\FileProcessorService;
@@ -48,6 +55,8 @@ final class FileController
         private readonly EventDispatcherInterface $events,
         private readonly TranslatorInterface $translator,
         private readonly AdminResources $resources,
+        private readonly FormFactoryInterface $formFactory,
+        private readonly EditLocaleResolver $editLocale,
     ) {
     }
 
@@ -94,9 +103,15 @@ final class FileController
     }
 
     #[Route('/admin/image/type/{parentType}/{imageId}/update', name: 'admin.image.update.view', methods: ['GET'], requirements: ['imageId' => '\d+', 'parentType' => '.+'])]
-    public function imageUpdateView(string $parentType, int $imageId): Response
+    public function imageUpdateView(string $parentType, int $imageId, Request $request): Response
     {
-        return $this->redirectToParent($parentType, 'image', $imageId);
+        return $this->renderEditPage('image', $parentType, $imageId, $request);
+    }
+
+    #[Route('/admin/image/type/{parentType}/{imageId}/update', name: 'admin.image.update.process', methods: ['POST'], requirements: ['imageId' => '\d+', 'parentType' => '.+'])]
+    public function imageUpdateProcess(string $parentType, int $imageId, Request $request): Response
+    {
+        return $this->processEditPage('image', $parentType, $imageId, $request, TheliaEvents::IMAGE_UPDATE);
     }
 
     #[Route('/admin/document/type/{parentType}/{parentId}/list-ajax', name: 'admin.document.list-ajax', requirements: ['parentId' => '\d+', 'parentType' => '.+'])]
@@ -142,9 +157,230 @@ final class FileController
     }
 
     #[Route('/admin/document/type/{parentType}/{documentId}/update', name: 'admin.document.update.view', methods: ['GET'], requirements: ['documentId' => '\d+', 'parentType' => '.+'])]
-    public function documentUpdateView(string $parentType, int $documentId): Response
+    public function documentUpdateView(string $parentType, int $documentId, Request $request): Response
     {
-        return $this->redirectToParent($parentType, 'document', $documentId);
+        return $this->renderEditPage('document', $parentType, $documentId, $request);
+    }
+
+    #[Route('/admin/document/type/{parentType}/{documentId}/update', name: 'admin.document.update.process', methods: ['POST'], requirements: ['documentId' => '\d+', 'parentType' => '.+'])]
+    public function documentUpdateProcess(string $parentType, int $documentId, Request $request): Response
+    {
+        return $this->processEditPage('document', $parentType, $documentId, $request, TheliaEvents::DOCUMENT_UPDATE);
+    }
+
+    private function renderEditPage(string $kind, string $parentType, int $fileId, Request $request): Response
+    {
+        $resource = $this->resources->getResource($parentType);
+        if ($denied = $this->access->check($resource, [], AccessManager::UPDATE)) {
+            return $denied;
+        }
+
+        $model = $this->loadFileModel($kind, $parentType, $fileId);
+        if ($model === null) {
+            return new RedirectResponse($this->guessParentUrl($parentType, $kind, null));
+        }
+
+        $editLang = $this->editLocale->resolveFromRequest($request);
+        $locale = $editLang->getLocale() ?? 'en_US';
+        $model->setLocale($locale);
+
+        $parentId = (int) $model->getParentId();
+        $orderedIds = $this->fetchSiblingIds($kind, $parentType, $parentId);
+        [$previousId, $nextId] = $this->neighbourIds($orderedIds, $fileId);
+
+        $editUrl = $this->urls->generate($this->editRouteName($kind), [
+            'parentType' => $parentType,
+            $kind === 'image' ? 'imageId' : 'documentId' => $fileId,
+        ]);
+
+        $form = $this->buildMetadataForm($kind, [
+            'id' => $fileId,
+            'locale' => $locale,
+            'success_url' => $editUrl,
+            'title' => (string) $model->getTitle(),
+            'chapo' => (string) $model->getChapo(),
+            'postscriptum' => (string) $model->getPostscriptum(),
+            'description' => (string) $model->getDescription(),
+            'visible' => method_exists($model, 'getVisible') ? (bool) $model->getVisible() : true,
+        ]);
+
+        $template = $kind === 'image'
+            ? '@BackOfficeDefaultTwig/file/image-edit.html.twig'
+            : '@BackOfficeDefaultTwig/file/document-edit.html.twig';
+
+        return new Response($this->twig->render($template, $this->buildEditContext($kind, $parentType, $parentId, $fileId, $model, $form->createView(), $editLang->getId(), $previousId, $nextId)));
+    }
+
+    private function processEditPage(string $kind, string $parentType, int $fileId, Request $request, string $eventName): Response
+    {
+        $resource = $this->resources->getResource($parentType);
+        if ($denied = $this->access->check($resource, [], AccessManager::UPDATE)) {
+            return $denied;
+        }
+
+        $model = $this->loadFileModel($kind, $parentType, $fileId);
+        if ($model === null) {
+            return new RedirectResponse($this->guessParentUrl($parentType, $kind, null));
+        }
+
+        $form = $this->buildMetadataForm($kind);
+        $form->handleRequest($request);
+
+        $editUrl = $this->urls->generate($this->editRouteName($kind), [
+            'parentType' => $parentType,
+            $kind === 'image' ? 'imageId' : 'documentId' => $fileId,
+        ]);
+
+        if (!$form->isSubmitted() || !$form->isValid()) {
+            $editLang = $this->editLocale->resolveFromRequest($request);
+            $parentId = (int) $model->getParentId();
+            $orderedIds = $this->fetchSiblingIds($kind, $parentType, (int) $parentId);
+            [$previousId, $nextId] = $this->neighbourIds($orderedIds, $fileId);
+
+            $model->setLocale($editLang->getLocale() ?? 'en_US');
+
+            $template = $kind === 'image'
+                ? '@BackOfficeDefaultTwig/file/image-edit.html.twig'
+                : '@BackOfficeDefaultTwig/file/document-edit.html.twig';
+
+            return new Response($this->twig->render($template, $this->buildEditContext($kind, $parentType, $parentId, $fileId, $model, $form->createView(), $editLang->getId(), $previousId, $nextId)), Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $data = $form->getData();
+        $locale = (string) ($data['locale'] ?? '');
+        if ($locale === '') {
+            $locale = $this->defaultLocale();
+        }
+
+        $oldModel = clone $model;
+        $model->setLocale($locale);
+        $model->setTitle((string) ($data['title'] ?? ''));
+        $model->setChapo((string) ($data['chapo'] ?? ''));
+        $model->setDescription((string) ($data['description'] ?? ''));
+        $model->setPostscriptum((string) ($data['postscriptum'] ?? ''));
+        if (method_exists($model, 'setVisible')) {
+            $model->setVisible(!empty($data['visible']) ? 1 : 0);
+        }
+
+        $event = new FileCreateOrUpdateEvent((int) $model->getParentId());
+        $event->setModel($model);
+        $event->setOldModel($oldModel);
+
+        $uploaded = $data['file'] ?? null;
+        if ($uploaded instanceof UploadedFile) {
+            $event->setUploadedFile($uploaded);
+        }
+
+        $this->events->dispatch($event, $eventName);
+
+        $saveMode = (string) $request->request->get('save_mode', 'stay');
+        if ($saveMode === 'close') {
+            return new RedirectResponse($this->guessParentUrl($parentType, $kind, (int) $model->getParentId()));
+        }
+
+        return new RedirectResponse($editUrl);
+    }
+
+    private function loadFileModel(string $kind, string $parentType, int $fileId): ?FileModelInterface
+    {
+        $modelInstance = $this->fileManager->getModelInstance($kind, $parentType);
+        $model = $modelInstance->getQueryInstance()->findPk($fileId);
+
+        return $model instanceof FileModelInterface ? $model : null;
+    }
+
+    private function buildMetadataForm(string $kind, ?array $data = null)
+    {
+        $type = $kind === 'image' ? ImageMetadataType::class : DocumentMetadataType::class;
+        $name = $kind === 'image' ? 'thelia_image_modification' : 'thelia_document_modification';
+
+        return $this->formFactory->createNamed($name, $type, $data);
+    }
+
+    /**
+     * @param list<int> $orderedIds
+     *
+     * @return array{0: int, 1: int} [previousId, nextId] - 0 means none
+     */
+    private function neighbourIds(array $orderedIds, int $currentId): array
+    {
+        $index = array_search($currentId, $orderedIds, true);
+        if ($index === false) {
+            return [0, 0];
+        }
+        $previous = $index > 0 ? $orderedIds[$index - 1] : 0;
+        $next = $index < (count($orderedIds) - 1) ? $orderedIds[$index + 1] : 0;
+
+        return [$previous, $next];
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function fetchSiblingIds(string $kind, string $parentType, int $parentId): array
+    {
+        $modelInstance = $this->fileManager->getModelInstance($kind, $parentType);
+        $query = $modelInstance->getQueryInstance();
+        $filterMethod = 'filterBy'.ucfirst($parentType).'Id';
+        if (method_exists($query, $filterMethod)) {
+            $query->{$filterMethod}($parentId);
+        }
+
+        $ids = [];
+        foreach ($query->orderByPosition()->find() as $record) {
+            $ids[] = (int) $record->getId();
+        }
+
+        return $ids;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildEditContext(string $kind, string $parentType, int $parentId, int $fileId, FileModelInterface $model, $formView, int $editLanguageId, int $previousId, int $nextId): array
+    {
+        $editRoute = $this->editRouteName($kind);
+        $previousUrl = $previousId > 0 ? $this->urls->generate($editRoute, ['parentType' => $parentType, $kind === 'image' ? 'imageId' : 'documentId' => $previousId]) : '';
+        $nextUrl = $nextId > 0 ? $this->urls->generate($editRoute, ['parentType' => $parentType, $kind === 'image' ? 'imageId' : 'documentId' => $nextId]) : '';
+
+        $closeUrl = $this->guessParentUrl($parentType, $kind, $parentId);
+        $fileName = (string) $model->getFile();
+
+        return [
+            'kind' => $kind,
+            'parent_type' => $parentType,
+            'parent_id' => $parentId,
+            'file_id' => $fileId,
+            'file_name' => $fileName,
+            'file_title' => (string) $model->getTitle(),
+            'file_url' => $this->fileUrl($kind, $parentType, $fileName),
+            'form' => $formView,
+            'edit_language_id' => $editLanguageId,
+            'previous_url' => $previousUrl,
+            'next_url' => $nextUrl,
+            'close_url' => $closeUrl,
+            'edit_url' => $this->urls->generate($editRoute, ['parentType' => $parentType, $kind === 'image' ? 'imageId' : 'documentId' => $fileId]),
+        ];
+    }
+
+    private function editRouteName(string $kind): string
+    {
+        return $kind === 'image' ? 'admin.image.update.view' : 'admin.document.update.view';
+    }
+
+    private function guessParentUrl(string $parentType, string $kind, ?int $parentId): string
+    {
+        $parentEditRoute = $this->guessParentEditRoute($parentType);
+        if ($parentEditRoute === null) {
+            return $this->urls->generate('admin.home');
+        }
+
+        $params = ['current_tab' => $kind === 'image' ? 'images' : 'documents'];
+        if ($parentId !== null && $parentId > 0) {
+            $params[$parentType.'_id'] = $parentId;
+        }
+
+        return $this->urls->generate($parentEditRoute, $params);
     }
 
     private function renderList(string $kind, string $parentType, int $parentId): Response
@@ -282,23 +518,6 @@ final class FileController
         }
 
         return new RedirectResponse($request->headers->get('referer') ?? $this->urls->generate('admin.home'));
-    }
-
-    private function redirectToParent(string $parentType, string $kind, int $fileId): Response
-    {
-        $modelInstance = $this->fileManager->getModelInstance($kind, $parentType);
-        $model = $modelInstance->getQueryInstance()->findPk($fileId);
-        if ($model === null) {
-            return new RedirectResponse($this->urls->generate('admin.home'));
-        }
-
-        $parentId = (int) $model->getParentId();
-        $parentEditRoute = $this->guessParentEditRoute($parentType);
-        if ($parentEditRoute === null) {
-            return new RedirectResponse($this->urls->generate('admin.home'));
-        }
-
-        return new RedirectResponse($this->urls->generate($parentEditRoute, [$parentType.'_id' => $parentId, 'current_tab' => $kind === 'image' ? 'images' : 'documents']));
     }
 
     private function guessParentEditRoute(string $parentType): ?string

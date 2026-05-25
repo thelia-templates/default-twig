@@ -1,0 +1,144 @@
+{% extends '@BackOfficeDefaultTwig/base.html.twig' %}
+
+{% block title %}{{ 'Edit an image'|trans }} - {{ file_title }}{% endblock %}
+{% block body_testid %}file-image-edit-page{% endblock %}
+
+{% block breadcrumb %}
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ path('admin.home') }}">{{ 'Home'|trans }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ close_url }}">{{ ('Edit '~parent_type)|trans }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ 'Editing image "%name"'|trans({ '%name': file_title }) }}</li>
+        </ol>
+    </nav>
+{% endblock %}
+
+{% block content %}
+    {{ safe_hook('image-edit.top', { image_id: file_id, type: parent_type }) }}
+
+    <div class="container-fluid" data-testid="image-edit-page">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h1 class="h3 mb-0">{{ 'Edit image "%name"'|trans({ '%name': file_title }) }} <small class="text-muted">#{{ file_id }}</small></h1>
+            <div class="btn-group">
+                <a class="btn btn-outline-secondary" href="{{ previous_url ?: '#' }}" {% if not previous_url %}aria-disabled="true" tabindex="-1"{% endif %} title="{{ 'Edit previous image'|trans }}" data-testid="bo-image-edit-previous">
+                    <i class="bi bi-arrow-left" aria-hidden="true"></i>
+                </a>
+                <a class="btn btn-outline-secondary" href="{{ next_url ?: '#' }}" {% if not next_url %}aria-disabled="true" tabindex="-1"{% endif %} title="{{ 'Edit next image'|trans }}" data-testid="bo-image-edit-next">
+                    <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                </a>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end mb-3">
+            {{ component('BoLanguageSwitcher', { currentLanguageId: edit_language_id }) }}
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                {{ form_start(form, { action: edit_url, method: 'post', attr: { 'data-testid': 'bo-image-edit-form' } }) }}
+                    {{ form_widget(form.id) }}
+                    {{ form_widget(form.locale) }}
+                    {{ form_widget(form.success_url) }}
+
+                    {% include '@BackOfficeDefaultTwig/components/SaveModeToolbar/SaveModeToolbar.html.twig' with {
+                        closeUrl: close_url,
+                        closeLabel: 'Close',
+                        closeVariant: 'outline-secondary',
+                        saveModeField: 'save_mode',
+                        saveLabel: 'Save',
+                        saveCloseLabel: 'Save and close',
+                        saveIcon: 'bi-check2',
+                        saveCloseIcon: 'bi-check2-all',
+                        saveVariant: 'outline-primary',
+                        saveCloseVariant: 'primary',
+                        showSave: true,
+                        showSaveClose: true,
+                        align: 'end',
+                        wrapperClass: 'mb-3',
+                        testid: 'bo-image-edit',
+                    } only %}
+
+                    <h2 class="h5 mb-3">{{ 'Image information'|trans }}</h2>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">{{ 'Preview'|trans }}</label>
+                            <div class="bg-light text-center p-3 rounded">
+                                {% if file_url %}
+                                    <a href="{{ file_url }}" target="_blank" rel="noopener" data-testid="bo-image-preview">
+                                        <img src="{{ file_url }}" alt="{{ file_title }}" class="img-fluid" style="max-height: 320px;">
+                                    </a>
+                                {% else %}
+                                    <div class="text-muted">{{ 'Image file not found'|trans }}</div>
+                                {% endif %}
+                            </div>
+                            {% if file_name %}
+                                <div class="form-text text-truncate"><i class="bi bi-file-earmark-image" aria-hidden="true"></i> {{ file_name }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.file) }}
+                                {{ form_widget(form.file, { attr: { class: 'form-control' } }) }}
+                            </div>
+
+                            <div class="form-check mb-3">
+                                {{ form_widget(form.visible, { attr: { class: 'form-check-input' } }) }}
+                                {{ form_label(form.visible, null, { label_attr: { class: 'form-check-label' } }) }}
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_label(form.title) }}
+                                {{ form_widget(form.title, { attr: { class: 'form-control' } }) }}
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_label(form.chapo) }}
+                                {{ form_widget(form.chapo, { attr: { class: 'form-control', rows: 3 } }) }}
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_label(form.postscriptum) }}
+                                {{ form_widget(form.postscriptum, { attr: { class: 'form-control', rows: 3 } }) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            {{ form_label(form.description) }}
+                            {{ form_widget(form.description, { attr: { class: 'form-control wysiwyg', rows: 10 } }) }}
+                        </div>
+                    </div>
+
+                    {% include '@BackOfficeDefaultTwig/components/SaveModeToolbar/SaveModeToolbar.html.twig' with {
+                        closeUrl: close_url,
+                        closeLabel: 'Close',
+                        closeVariant: 'outline-secondary',
+                        saveModeField: 'save_mode',
+                        saveLabel: 'Save',
+                        saveCloseLabel: 'Save and close',
+                        saveIcon: 'bi-check2',
+                        saveCloseIcon: 'bi-check2-all',
+                        saveVariant: 'outline-primary',
+                        saveCloseVariant: 'primary',
+                        showSave: true,
+                        showSaveClose: true,
+                        align: 'end',
+                        wrapperClass: 'mt-3',
+                        testid: 'bo-image-edit-bottom',
+                    } only %}
+
+                {{ form_end(form) }}
+            </div>
+        </div>
+    </div>
+
+    {{ safe_hook('image-edit.bottom', { image_id: file_id, type: parent_type }) }}
+{% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('image.edit-js', { location: 'image-edit-js', type: parent_type, image_id: file_id }) }}
+    {{ safe_hook('wysiwyg.js', { location: 'wysiwyg-image-edit-js' }) }}
+{% endblock %}
