@@ -297,16 +297,38 @@ final class OrderController
     {
         $items = [];
         foreach ($order->getOrderProducts() as $product) {
-            $tax = 0.0;
+            $wasInPromo = (bool) $product->getWasInPromo();
+            $unitPriceHt = (float) ($wasInPromo ? $product->getPromoPrice() : $product->getPrice());
+
+            $unitTax = 0.0;
             foreach ($product->getOrderProductTaxes() as $orderProductTax) {
-                $tax += (float) $orderProductTax->getAmount();
+                $unitTax += (float) ($wasInPromo ? $orderProductTax->getPromoAmount() : $orderProductTax->getAmount());
             }
+            $quantity = (float) $product->getQuantity();
+
+            $combinations = [];
+            foreach ($product->getOrderProductAttributeCombinations() as $combination) {
+                $combinations[] = [
+                    'attribute_title' => (string) $combination->getAttributeTitle(),
+                    'attribute_av_title' => (string) $combination->getAttributeAvTitle(),
+                ];
+            }
+
             $items[] = [
+                'id' => (int) $product->getId(),
                 'ref' => (string) $product->getProductRef(),
+                'pse_ref' => (string) $product->getProductSaleElementsRef(),
                 'title' => (string) $product->getTitle(),
-                'quantity' => (float) $product->getQuantity(),
-                'price' => (float) $product->getPrice(),
-                'tax' => $tax,
+                'quantity' => $quantity,
+                'price' => $unitPriceHt,
+                'tax' => $unitTax,
+                'unit_taxed_price' => $unitPriceHt + $unitTax,
+                'line_ht' => $unitPriceHt * $quantity,
+                'line_tax' => $unitTax * $quantity,
+                'line_ttc' => ($unitPriceHt + $unitTax) * $quantity,
+                'virtual' => (bool) $product->getVirtual(),
+                'tax_rule_title' => (string) ($product->getTaxRuleTitle() ?? ''),
+                'combinations' => $combinations,
             ];
         }
 

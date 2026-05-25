@@ -29,20 +29,6 @@ final readonly class OrderDetailContextBuilder
     ) {
     }
 
-    /**
-     * @return array{
-     *     totals: array{subtotal_ht: float, subtotal_taxes: float, subtotal_ttc: float, postage_ht: float, postage_tax: float, postage_ttc: float, discount: float, grand_total: float},
-     *     weight: float,
-     *     customer: array{id: int, ref: string, firstname: string, lastname: string, email: string, edit_url: string}|null,
-     *     payment: array{module_id: int, module_title: string, transaction_ref: string, invoice_ref: string},
-     *     delivery: array{module_id: int, module_title: string, delivery_ref: string},
-     *     coupons: list<array{code: string, title: string, amount: float}>,
-     *     cancel_status_id: int,
-     *     is_canceled: bool,
-     *     currency: array{id: int, symbol: string, code: string},
-     *     current_status: array{id: int, code: string, title: string, color: string}|null
-     * }
-     */
     public function build(Order $order, string $locale = 'en_US'): array
     {
         $currency = $order->getCurrency();
@@ -50,18 +36,30 @@ final readonly class OrderDetailContextBuilder
         $subtotalHt = 0.0;
         $subtotalTaxes = 0.0;
         $weight = 0.0;
+        $itemsTaxes = [];
         foreach ($order->getOrderProducts() as $orderProduct) {
             $quantity = (float) $orderProduct->getQuantity();
             $subtotalHt += (float) $orderProduct->getPrice() * $quantity;
             $weight += (float) $orderProduct->getWeight() * $quantity;
+
+            $lineTax = 0.0;
             foreach ($orderProduct->getOrderProductTaxes() as $orderProductTax) {
-                $subtotalTaxes += (float) $orderProductTax->getAmount() * $quantity;
+                $lineTax += (float) $orderProductTax->getAmount();
+            }
+            $subtotalTaxes += $lineTax * $quantity;
+
+            $ruleTitle = (string) ($orderProduct->getTaxRuleTitle() ?? '');
+            if ($lineTax > 0 && $ruleTitle !== '') {
+                $itemsTaxes[$ruleTitle] = ($itemsTaxes[$ruleTitle] ?? 0.0) + $lineTax * $quantity;
             }
         }
 
         $postageHt = (float) $order->getPostage();
         $postageTax = (float) $order->getPostageTax();
+        $postageTaxRuleTitle = (string) ($order->getPostageTaxRuleTitle() ?? '');
         $discount = (float) $order->getDiscount();
+        $discountTax = $this->estimateDiscountTax($discount, $subtotalHt, $subtotalTaxes);
+        $totalTax = $subtotalTaxes + $postageTax - $discountTax;
         $grandTotal = $subtotalHt + $subtotalTaxes + $postageHt - $discount;
 
         $coupons = [];
@@ -101,8 +99,12 @@ final readonly class OrderDetailContextBuilder
                 'postage_ht' => $postageHt - $postageTax,
                 'postage_tax' => $postageTax,
                 'postage_ttc' => $postageHt,
+                'postage_tax_rule_title' => $postageTaxRuleTitle,
                 'discount' => $discount,
+                'discount_tax' => $discountTax,
+                'total_tax' => $totalTax,
                 'grand_total' => $grandTotal,
+                'items_taxes' => $itemsTaxes,
             ],
             'weight' => $weight,
             'customer' => $customer,
@@ -132,6 +134,17 @@ final readonly class OrderDetailContextBuilder
                 'color' => (string) ($statusModel->getColor() ?: self::FALLBACK_STATUS_COLOR),
             ],
         ];
+    }
+
+    private function estimateDiscountTax(float $discount, float $subtotalHt, float $subtotalTaxes): float
+    {
+        if ($discount <= 0.0 || $subtotalHt + $subtotalTaxes <= 0.0) {
+            return 0.0;
+        }
+
+        $taxedTotal = $subtotalHt + $subtotalTaxes;
+
+        return round($discount * ($subtotalTaxes / $taxedTotal), 6);
     }
 
     private function moduleTitle(int $moduleId): string
