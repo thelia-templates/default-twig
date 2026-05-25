@@ -920,6 +920,11 @@ return [
     'Yes' => 'Oui',
     'No' => 'Non',
 
+    // Administrator list
+    '(No profile)' => '(Aucun profil)',
+    'No profile defined yet.' => 'Aucun profil défini pour le moment.',
+    'If a translation is missing or incomplete:' => 'Si une traduction manque ou est incomplète :',
+
     // Category list - product/subcategory counts
     '- All categories -' => '- Toutes les rubriques -',
     'no product' => 'aucun produit',
