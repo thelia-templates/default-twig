@@ -64,13 +64,13 @@ final class CountryController
     }
 
     #[Route('', name: 'default', methods: ['GET'])]
-    public function list(): Response
+    public function list(Request $request): Response
     {
         if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::VIEW)) {
             return $denied;
         }
 
-        $locale = $this->defaultLocale();
+        $locale = $request->getLocale();
         $countries = CountryQuery::create()
             ->joinWithI18n($locale)
             ->orderBy(CountryI18nTableMap::COL_TITLE)
