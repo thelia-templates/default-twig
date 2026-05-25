@@ -11,6 +11,10 @@ $body-color: #4f4f4f;
 $body-secondary-bg: #ffffff;
 $body-tertiary-bg: #ffffff;
 
+// Slightly tighter than Bootstrap's 1rem default (16px) for a denser
+// back-office feel without sacrificing readability.
+$font-size-base: .9rem;
+
 $border-color: #d9d9d9;
 
 // Bootstrap inherits nav-link colors from --bs-link-color which we override
@@ -26,7 +30,7 @@ $input-border-radius-sm: .375rem;
 $input-border-radius-lg: .625rem;
 $input-padding-y: .625rem;
 $input-padding-x: .9rem;
-$input-font-size: .925rem;
+$input-font-size: .9rem;
 $input-bg: #ffffff;
 $input-border-color: #c6cbd1;
 $input-border-width: 1px;
