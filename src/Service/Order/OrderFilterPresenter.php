@@ -25,15 +25,6 @@ final readonly class OrderFilterPresenter
 {
     private const LIST_ROUTE = 'admin.order.list';
 
-    // Slider ranges cover the vast majority of e-commerce orders; users can
-    // still type any value beyond these bounds in the linked text inputs.
-    private const AMOUNT_SLIDER_MIN = 0;
-    private const AMOUNT_SLIDER_MAX = 15000;
-    private const AMOUNT_SLIDER_STEP = 50;
-    private const ITEMS_SLIDER_MIN = 0;
-    private const ITEMS_SLIDER_MAX = 50;
-    private const ITEMS_SLIDER_STEP = 1;
-
     public function __construct(
         private UrlGeneratorInterface $urls,
         private TranslatorInterface $translator,
@@ -86,16 +77,8 @@ final readonly class OrderFilterPresenter
             'max_amount_input' => $this->formatNumber($filters->maxAmount),
             'min_items_input' => $filters->minItems !== null ? (string) $filters->minItems : '',
             'max_items_input' => $filters->maxItems !== null ? (string) $filters->maxItems : '',
-            'amount_slider' => [
-                'min' => self::AMOUNT_SLIDER_MIN,
-                'max' => self::AMOUNT_SLIDER_MAX,
-                'step' => self::AMOUNT_SLIDER_STEP,
-            ],
-            'items_slider' => [
-                'min' => self::ITEMS_SLIDER_MIN,
-                'max' => self::ITEMS_SLIDER_MAX,
-                'step' => self::ITEMS_SLIDER_STEP,
-            ],
+            'amount_slider' => $this->catalog->amountBounds(),
+            'items_slider' => $this->catalog->itemsBounds(),
             'coupon_value' => $this->triStateValue($filters->hasCoupon),
             'tracking_value' => $this->triStateValue($filters->hasTracking),
             'search_input' => $filters->search,

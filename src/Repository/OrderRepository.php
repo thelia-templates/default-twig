@@ -190,11 +190,74 @@ final readonly class OrderRepository
         return $ids;
     }
 
+    /**
+     * Adaptive bounds for the amount range slider. Reuses the same total
+     * formula as the filter to stay consistent across UI and SQL.
+     *
+     * @return array{min: float, max: float, step: int}
+     */
+    public function getAmountBounds(): array
+    {
+        $sql = 'SELECT MAX(computed) AS max_val FROM (
+            SELECT '.OrderFilters::totalAmountSqlExpression().' AS computed
+            FROM `order`
+        ) AS sub';
+
+        $statement = Propel::getConnection()->prepare($sql);
+        $statement->execute();
+        $row = $statement->fetch(\PDO::FETCH_ASSOC);
+        $rawMax = (float) ($row['max_val'] ?? 0);
+
+        $niceMax = self::roundUpToNice($rawMax);
+        $step = $niceMax >= 5000 ? 100 : ($niceMax >= 1000 ? 50 : 10);
+
+        return ['min' => 0.0, 'max' => (float) $niceMax, 'step' => $step];
+    }
+
+    /**
+     * Adaptive bounds for the item-count range slider.
+     *
+     * @return array{min: int, max: int, step: int}
+     */
+    public function getItemsBounds(): array
+    {
+        $sql = 'SELECT MAX(item_count) AS max_val FROM (
+            SELECT COUNT(*) AS item_count FROM order_product GROUP BY order_id
+        ) AS sub';
+
+        $statement = Propel::getConnection()->prepare($sql);
+        $statement->execute();
+        $row = $statement->fetch(\PDO::FETCH_ASSOC);
+        $rawMax = (int) ($row['max_val'] ?? 0);
+
+        $niceMax = max(10, (int) (ceil(max(1, $rawMax) / 5) * 5));
+
+        return ['min' => 0, 'max' => $niceMax, 'step' => 1];
+    }
+
     private function buildFilteredQuery(OrderFilters $filters): OrderQuery
     {
         $query = OrderQuery::create();
         $filters->applyTo($query);
 
         return $query;
+    }
+
+    private static function roundUpToNice(float $value): int
+    {
+        if ($value <= 100) {
+            return 100;
+        }
+        if ($value <= 500) {
+            return 500;
+        }
+        if ($value <= 1000) {
+            return 1000;
+        }
+        if ($value <= 5000) {
+            return (int) (ceil($value / 500) * 500);
+        }
+
+        return (int) (ceil($value / 1000) * 1000);
     }
 }

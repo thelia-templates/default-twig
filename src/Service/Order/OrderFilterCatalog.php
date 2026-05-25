@@ -37,6 +37,12 @@ final class OrderFilterCatalog
     /** @var array<string, list<array{id: int, title: string, flag: string, iso: string}>> */
     private array $countriesByLocale = [];
 
+    /** @var array{min: float, max: float, step: int}|null */
+    private ?array $amountBounds = null;
+
+    /** @var array{min: int, max: int, step: int}|null */
+    private ?array $itemsBounds = null;
+
     public function __construct(
         private readonly OrderRepository $orders,
         private readonly ModuleRepository $modules,
@@ -96,6 +102,22 @@ final class OrderFilterCatalog
         );
 
         return $this->countriesByLocale[$locale] = $items;
+    }
+
+    /**
+     * @return array{min: float, max: float, step: int}
+     */
+    public function amountBounds(): array
+    {
+        return $this->amountBounds ??= $this->orders->getAmountBounds();
+    }
+
+    /**
+     * @return array{min: int, max: int, step: int}
+     */
+    public function itemsBounds(): array
+    {
+        return $this->itemsBounds ??= $this->orders->getItemsBounds();
     }
 
     private static function countryFlag(string $iso): string

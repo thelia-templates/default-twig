@@ -393,9 +393,11 @@ final readonly class OrderFilters
 
     /**
      * Mirrors Order::getTotalAmount() in pure SQL (taxed line totals + postage - discount,
-     * promo-aware). Lets us filter by amount without hydrating any model.
+     * promo-aware). Lets us filter by amount without hydrating any model. Exposed
+     * publicly so the Repository can reuse the very same formula when computing
+     * adaptive slider bounds.
      */
-    private static function totalAmountSqlExpression(): string
+    public static function totalAmountSqlExpression(): string
     {
         return '(
             COALESCE(
