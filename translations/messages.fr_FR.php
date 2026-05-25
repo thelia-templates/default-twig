@@ -911,6 +911,11 @@ return [
     'Without' => 'Sans',
     'without' => 'sans',
 
+    // Module list - section labels
+    'Delivery modules' => 'Modules de livraison',
+    'Payment modules' => 'Modules de paiement',
+    'Classic modules' => 'Modules classiques',
+
     // Category list - product/subcategory counts
     '- All categories -' => '- Toutes les rubriques -',
     'no product' => 'aucun produit',
