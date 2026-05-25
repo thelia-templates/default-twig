@@ -46,7 +46,7 @@ final readonly class ModuleListPresenter
             \assert($module instanceof Module);
             $type = (int) $module->getType();
             if (!isset($groups[$type])) {
-                $groups[$type] = ['label' => $this->translator->trans('Other modules'), 'rows' => []];
+                $groups[$type] = ['slug' => 'other', 'label' => $this->translator->trans('Other modules'), 'rows' => []];
             }
             $groups[$type]['rows'][] = $this->moduleToRow($module);
         }
@@ -59,14 +59,14 @@ final readonly class ModuleListPresenter
     }
 
     /**
-     * @return array<int, array{label: string, rows: list<array<string, mixed>>}>
+     * @return array<int, array{slug: string, label: string, rows: list<array<string, mixed>>}>
      */
     private function initialGroups(): array
     {
         return [
-            BaseModule::DELIVERY_MODULE_TYPE => ['label' => $this->translator->trans('Delivery modules'), 'rows' => []],
-            BaseModule::PAYMENT_MODULE_TYPE => ['label' => $this->translator->trans('Payment modules'), 'rows' => []],
-            BaseModule::CLASSIC_MODULE_TYPE => ['label' => $this->translator->trans('Classic modules'), 'rows' => []],
+            BaseModule::DELIVERY_MODULE_TYPE => ['slug' => 'delivery', 'label' => $this->translator->trans('Delivery modules'), 'rows' => []],
+            BaseModule::PAYMENT_MODULE_TYPE => ['slug' => 'payment', 'label' => $this->translator->trans('Payment modules'), 'rows' => []],
+            BaseModule::CLASSIC_MODULE_TYPE => ['slug' => 'classic', 'label' => $this->translator->trans('Classic modules'), 'rows' => []],
         ];
     }
 

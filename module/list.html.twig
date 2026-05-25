@@ -19,10 +19,10 @@
         {% include '@BackOfficeDefaultTwig/_page_header.html.twig' with { title: 'Modules management'|trans } only %}
 
         {% for type, group in groups %}
-            <section class="mb-4" data-testid="modules-block-{{ type }}">
+            <section class="mb-4" data-testid="modules-block-{{ group.slug }}">
                 <h2 class="h5 mb-2">{{ group.label }}</h2>
                 {{ component('BoDataTable', {
-                    id: 'modules-' ~ type,
+                    id: 'modules-' ~ group.slug,
                     columns: [
                         column('id', 'ID'|trans),
                         column('code', 'Code'|trans),
