@@ -16,6 +16,7 @@ namespace BackOfficeDefaultTwigBundle\Controller\Folder;
 
 use BackOfficeDefaultTwigBundle\Form\Content\ContentSeoType;
 use BackOfficeDefaultTwigBundle\Form\Content\ContentType;
+use BackOfficeDefaultTwigBundle\Repository\FolderRepository;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
@@ -41,7 +42,6 @@ use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
 use Thelia\Model\Content;
 use Thelia\Model\ContentQuery;
-use Thelia\Model\FolderQuery;
 use Thelia\Model\LangQuery;
 use Thelia\Tools\TokenProvider;
 use Twig\Environment;
@@ -63,6 +63,7 @@ final class ContentController
         private readonly TokenProvider $tokens,
         private readonly TranslatorInterface $translator,
         private readonly EditLocaleResolver $editLocale,
+        private readonly FolderRepository $folderRepository,
     ) {
     }
 
@@ -358,12 +359,11 @@ final class ContentController
         }
 
         $rows = [];
-        foreach (FolderQuery::create()->orderByPosition()->find() as $folder) {
+        foreach ($this->folderRepository->findAllOrderedByPosition($locale) as $folder) {
             $id = (int) $folder->getId();
             if (isset($taken[$id])) {
                 continue;
             }
-            $folder->setLocale($locale);
             $rows[] = ['id' => $id, 'title' => (string) $folder->getTitle()];
         }
 
@@ -373,10 +373,8 @@ final class ContentController
     /** @return list<array{id: int, title: string}> */
     private function folderChoices(string $locale): array
     {
-        $folders = FolderQuery::create()->orderByPosition()->find();
         $rows = [];
-        foreach ($folders as $folder) {
-            $folder->setLocale($locale);
+        foreach ($this->folderRepository->findAllOrderedByPosition($locale) as $folder) {
             $rows[] = ['id' => (int) $folder->getId(), 'title' => (string) $folder->getTitle()];
         }
 
