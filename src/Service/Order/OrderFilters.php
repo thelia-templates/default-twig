@@ -49,6 +49,7 @@ final readonly class OrderFilters
     public const KEY_TRACKING = 'tracking';
     public const KEY_SEARCH = 'search';
     public const KEY_PERIOD = 'period';
+    public const KEY_CUSTOMER_ID = 'customer_id';
 
     /** @var list<array{code: string, label: string, icon: string}> */
     public const QUICK_CHIPS = [
@@ -71,6 +72,7 @@ final readonly class OrderFilters
         public array $paymentModuleIds = [],
         public array $deliveryModuleIds = [],
         public ?int $countryId = null,
+        public ?int $customerId = null,
         public ?int $minItems = null,
         public ?int $maxItems = null,
         public ?bool $hasCoupon = null,
@@ -144,6 +146,7 @@ final readonly class OrderFilters
             paymentModuleIds: self::parseIntArray($query->all('payment_module_ids')),
             deliveryModuleIds: self::parseIntArray($query->all('delivery_module_ids')),
             countryId: self::parsePositiveInt((string) $query->get('country_id', '')),
+            customerId: self::parsePositiveInt((string) $query->get('customer_id', '')),
             minItems: $minItems,
             maxItems: $maxItems,
             hasCoupon: self::parseTriState((string) $query->get('coupon', '')),
@@ -165,6 +168,7 @@ final readonly class OrderFilters
             && $this->paymentModuleIds === []
             && $this->deliveryModuleIds === []
             && $this->countryId === null
+            && $this->customerId === null
             && $this->minItems === null
             && $this->maxItems === null
             && $this->hasCoupon === null
@@ -203,6 +207,9 @@ final readonly class OrderFilters
         }
         if ($this->countryId !== null) {
             $params['country_id'] = $this->countryId;
+        }
+        if ($this->customerId !== null) {
+            $params['customer_id'] = $this->customerId;
         }
         if ($this->minItems !== null) {
             $params['min_items'] = $this->minItems;
@@ -260,6 +267,7 @@ final readonly class OrderFilters
             self::KEY_PAYMENT_MODULE_IDS => ['paymentModuleIds' => []],
             self::KEY_DELIVERY_MODULE_IDS => ['deliveryModuleIds' => []],
             self::KEY_COUNTRY_ID => ['countryId' => null],
+            self::KEY_CUSTOMER_ID => ['customerId' => null],
             self::KEY_ITEMS_RANGE => ['minItems' => null, 'maxItems' => null],
             self::KEY_COUPON => ['hasCoupon' => null],
             self::KEY_TRACKING => ['hasTracking' => null],
@@ -294,6 +302,10 @@ final readonly class OrderFilters
             $query->useOrderAddressRelatedByDeliveryOrderAddressIdQuery()
                 ->filterByCountryId($this->countryId)
                 ->endUse();
+        }
+
+        if ($this->customerId !== null) {
+            $query->filterByCustomerId($this->customerId);
         }
 
         $this->applyCouponFilter($query);
@@ -456,6 +468,7 @@ final readonly class OrderFilters
             paymentModuleIds: \array_key_exists('paymentModuleIds', $overrides) ? $overrides['paymentModuleIds'] : $this->paymentModuleIds,
             deliveryModuleIds: \array_key_exists('deliveryModuleIds', $overrides) ? $overrides['deliveryModuleIds'] : $this->deliveryModuleIds,
             countryId: \array_key_exists('countryId', $overrides) ? $overrides['countryId'] : $this->countryId,
+            customerId: \array_key_exists('customerId', $overrides) ? $overrides['customerId'] : $this->customerId,
             minItems: \array_key_exists('minItems', $overrides) ? $overrides['minItems'] : $this->minItems,
             maxItems: \array_key_exists('maxItems', $overrides) ? $overrides['maxItems'] : $this->maxItems,
             hasCoupon: \array_key_exists('hasCoupon', $overrides) ? $overrides['hasCoupon'] : $this->hasCoupon,
