@@ -40,6 +40,7 @@ use Thelia\Model\CustomerTitleQuery;
 use Thelia\Model\Order;
 use Thelia\Model\OrderAddressQuery;
 use Thelia\Model\OrderQuery;
+use Thelia\Model\OrderStatusQuery;
 use Thelia\Model\StateQuery;
 use Thelia\Tools\TokenProvider;
 use Twig\Environment;
@@ -180,6 +181,33 @@ final class OrderController
             actionLabel: 'Order status updated',
             successRoute: self::DETAIL_ROUTE,
             successParameters: ['order_id' => $order_id],
+        );
+    }
+
+    #[Route('/admin/order/list/cancel/{order_id}', name: 'admin.order.list.cancel', methods: ['POST', 'GET'], requirements: ['order_id' => '\d+'])]
+    public function cancelFromList(int $order_id, Request $request): Response
+    {
+        $order = OrderQuery::create()->findPk($order_id);
+        if ($order === null) {
+            return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
+        }
+
+        $cancelStatus = OrderStatusQuery::getCancelledStatus();
+        if ($cancelStatus === null) {
+            return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
+        }
+
+        $event = new OrderEvent($order);
+        $event->setStatus((int) $cancelStatus->getId());
+
+        return $this->action->tokenAction(
+            resource: self::RESOURCE,
+            access: AccessManager::UPDATE,
+            request: $request,
+            event: $event,
+            eventName: TheliaEvents::ORDER_UPDATE_STATUS,
+            actionLabel: 'Order canceled from list',
+            successRoute: self::LIST_ROUTE,
         );
     }
 

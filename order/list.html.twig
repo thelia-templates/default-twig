@@ -352,5 +352,35 @@
         </div>
     </div>
 
+    <div class="modal fade" id="order-cancel-modal" tabindex="-1" aria-labelledby="order-cancel-modal-title" aria-hidden="true"
+         data-controller="bo-order-cancel-modal" data-testid="order-cancel-modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="post"
+                      action="{{ path('admin.order.list.cancel', { order_id: 0 }) }}?_token={{ assignToken() }}"
+                      data-bo-order-cancel-modal-target="form"
+                      data-testid="order-cancel-form">
+                    <div class="modal-header">
+                        <h2 class="modal-title h5" id="order-cancel-modal-title">{{ 'Cancel order'|trans }}</h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'Close'|trans }}"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="order_id" value="" data-bo-order-cancel-modal-target="orderIdInput">
+                        <p class="mb-0">
+                            {{ 'Do you really want to cancel this order?'|trans }}
+                            <strong>#<span data-bo-order-cancel-modal-target="orderRefLabel"></span></strong>
+                        </p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'Close'|trans }}</button>
+                        <button type="submit" class="btn btn-danger" data-testid="order-cancel-submit">
+                            <i class="bi bi-x-circle" aria-hidden="true"></i> {{ 'Cancel this order'|trans }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     {{ safe_hook('orders.bottom') }}
 {% endblock %}

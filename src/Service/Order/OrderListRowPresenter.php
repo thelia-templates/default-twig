@@ -33,6 +33,7 @@ final readonly class OrderListRowPresenter
     private const DETAIL_ROUTE = 'admin.order.update.view';
     private const INVOICE_PDF_ROUTE = 'admin.order.pdf.invoice';
     private const DELIVERY_PDF_ROUTE = 'admin.order.pdf.delivery';
+    private const CANCEL_FROM_LIST_ROUTE = 'admin.order.list.cancel';
     private const FALLBACK_STATUS_COLOR = '#6c757d';
     private const URGENT_THRESHOLD_HOURS = 48;
     private const URGENT_STATUS_CODE = 'not_paid';
@@ -59,6 +60,9 @@ final readonly class OrderListRowPresenter
         $deliveryModule?->setLocale($locale);
 
         $isUrgent = $this->isUrgent($order, $status?->getCode());
+        $cancelStatus = OrderStatusQuery::getCancelledStatus();
+        $cancelStatusId = $cancelStatus !== null ? (int) $cancelStatus->getId() : 0;
+        $isCanceled = $cancelStatusId > 0 && (int) $order->getStatusId() === $cancelStatusId;
 
         return [
             'id' => $orderId,
@@ -75,7 +79,7 @@ final readonly class OrderListRowPresenter
             'date_html' => $this->renderDate($order),
             'is_urgent' => $isUrgent,
             '_row_class' => $isUrgent ? 'bo-order-row--urgent' : '',
-            '_actions' => $this->buildActions($orderId),
+            '_actions' => $this->buildActions($orderId, $cancelStatusId, $isCanceled, (string) $order->getRef()),
         ];
     }
 
@@ -242,9 +246,9 @@ final readonly class OrderListRowPresenter
     /**
      * @return list<RowAction>
      */
-    private function buildActions(int $orderId): array
+    private function buildActions(int $orderId, int $cancelStatusId, bool $isCanceled, string $orderRef): array
     {
-        return [
+        $actions = [
             new RowAction(
                 kind: 'view',
                 label: $this->translator->trans('View order'),
@@ -267,5 +271,22 @@ final readonly class OrderListRowPresenter
                 grantedSubject: self::RESOURCE,
             ),
         ];
+
+        if ($cancelStatusId > 0 && !$isCanceled) {
+            $actions[] = new RowAction(
+                kind: 'cancel',
+                label: $this->translator->trans('Cancel order'),
+                modalTarget: '#order-cancel-modal',
+                grantedAttribute: AccessManager::UPDATE,
+                grantedSubject: self::RESOURCE,
+                dataAttributes: [
+                    'order-id' => $orderId,
+                    'order-ref' => $orderRef,
+                    'order-cancel-url' => $this->urls->generate(self::CANCEL_FROM_LIST_ROUTE, ['order_id' => $orderId]),
+                ],
+            );
+        }
+
+        return $actions;
     }
 }
