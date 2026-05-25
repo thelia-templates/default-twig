@@ -135,29 +135,56 @@ $bo-side-nav-hover-bg: rgba(255, 255, 255, .07);
     }
 
     &__sections {
-        padding: 1rem .75rem 1.5rem;
+        padding: 0;
     }
 
+    .nav-pills {
+        gap: 0;
+    }
+
+    .nav-item {
+        border-bottom: 1px solid rgba(255, 255, 255, .04);
+    }
 
     .nav-link {
         color: $bo-side-nav-text;
-        border-radius: 6px;
-        padding: .5rem .75rem;
-        margin-bottom: 2px;
-        font-size: .9rem;
+        border-radius: 0;
+        padding: .9rem 1.25rem;
+        margin-bottom: 0;
+        font-size: .95rem;
+        font-weight: 500;
         display: flex;
         align-items: center;
+        gap: .85rem;
+        line-height: 1.2;
+
+        > .bi {
+            font-size: 1.35rem;
+            width: 1.5rem;
+            text-align: center;
+            color: rgba(255, 255, 255, .55);
+            margin-right: 0 !important;
+            transition: color .15s ease;
+        }
 
         &:hover,
         &:focus {
             background-color: $bo-side-nav-hover-bg;
             color: $bo-side-nav-text-active;
+
+            > .bi {
+                color: var(--bs-primary);
+            }
         }
 
         &.active {
-            background-color: var(--bs-primary);
+            background-color: rgba(255, 255, 255, .05);
             color: $bo-side-nav-text-active;
-            box-shadow: 0 4px 14px rgba(242, 96, 65, .25);
+            box-shadow: inset 4px 0 0 var(--bs-primary);
+
+            > .bi {
+                color: var(--bs-primary);
+            }
         }
     }
 
@@ -167,7 +194,9 @@ $bo-side-nav-hover-bg: rgba(255, 255, 255, .07);
 
     &__chevron {
         font-size: .75rem;
+        margin-left: auto;
         transition: transform .18s ease;
+        color: rgba(255, 255, 255, .4);
     }
 
     &__toggle[aria-expanded="true"] &__chevron,
@@ -177,16 +206,21 @@ $bo-side-nav-hover-bg: rgba(255, 255, 255, .07);
 
     .nav .nav-link {
         font-size: .85rem;
-        padding-left: 2rem;
+        font-weight: 400;
+        padding: .55rem .75rem .55rem 3.4rem;
         margin-bottom: 0;
         background: transparent;
         box-shadow: none;
-        color: rgba(255, 255, 255, .75);
+        color: rgba(255, 255, 255, .65);
 
         &:hover {
             background: $bo-side-nav-hover-bg;
             color: #fff;
         }
+    }
+
+    .nav .nav-item {
+        border-bottom: none;
     }
 }
 
