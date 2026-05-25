@@ -112,6 +112,47 @@
                 {% endif %}
             </div>
         </div>
+
+        <div class="card mt-4" data-testid="customer-orders-section">
+            <div class="card-header">
+                {{ 'Orders for this customer'|trans }}
+                <span class="badge bg-secondary ms-1">{{ orders_total|default(0) }}</span>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_orders is empty %}
+                    <p class="text-muted mb-0 p-3">{{ 'This customer has not placed any order yet.'|trans }}</p>
+                {% else %}
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0" data-testid="customer-orders-table">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>{{ 'Reference'|trans }}</th>
+                                    <th>{{ 'Date'|trans }}</th>
+                                    <th>{{ 'Status'|trans }}</th>
+                                    <th class="text-end">{{ 'Total'|trans }}</th>
+                                    <th class="text-end">{{ 'Actions'|trans }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in recent_orders %}
+                                    <tr data-testid="customer-order-row" data-order-id="{{ order.id }}">
+                                        <td><a href="{{ order.edit_url }}" class="link-primary text-decoration-none fw-medium">{{ order.ref }}</a></td>
+                                        <td>{{ order.created_at ? order.created_at|format_datetime('medium', 'short') : '-' }}</td>
+                                        <td><span class="badge" style="background-color: {{ order.status_color }};">{{ order.status_title }}</span></td>
+                                        <td class="text-end">{{ order.amount|number_format(2, '.', ' ') }} {{ order.currency_symbol }}</td>
+                                        <td class="text-end">
+                                            <a href="{{ order.edit_url }}" class="btn btn-sm btn-outline-primary" data-testid="customer-order-view">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
     </div>
 
     {% if address_create_form is defined and is_granted('CREATE', 'admin.address') %}

@@ -76,6 +76,23 @@ final readonly class OrderRepository
         return OrderProductQuery::create()->filterByOrderId($orderId)->count();
     }
 
+    public function countByCustomer(int $customerId): int
+    {
+        return (int) OrderQuery::create()->filterByCustomerId($customerId)->count();
+    }
+
+    /**
+     * @return ObjectCollection<int, Order>
+     */
+    public function findRecentByCustomer(int $customerId, int $limit = 25): ObjectCollection
+    {
+        return OrderQuery::create()
+            ->filterByCustomerId($customerId)
+            ->orderByCreatedAt(Criteria::DESC)
+            ->limit($limit)
+            ->find();
+    }
+
     /**
      * @return ObjectCollection<int, OrderStatus>
      */

@@ -18,6 +18,7 @@ use BackOfficeDefaultTwigBundle\Form\Customer\AddressType;
 use BackOfficeDefaultTwigBundle\Form\Customer\CustomerType;
 use BackOfficeDefaultTwigBundle\Repository\CountryRepository;
 use BackOfficeDefaultTwigBundle\Repository\CustomerRepository;
+use BackOfficeDefaultTwigBundle\Repository\OrderRepository;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormErrorRenderer;
@@ -76,6 +77,7 @@ final class CustomerController
         private readonly CountryRepository $countryRepository,
         private readonly CustomerFilterPresenter $filterPresenter,
         private readonly CustomerListRowPresenter $rowPresenter,
+        private readonly OrderRepository $orderRepository,
     ) {
     }
 
@@ -204,11 +206,15 @@ final class CustomerController
                 ],
         );
 
+        $customerId = (int) $customer->getId();
+
         return new Response($this->twig->render(self::EDIT_TEMPLATE, [
             'form' => $form->createView(),
             'customer' => $customer,
             'addresses' => $this->addressRows($customer),
             'address_create_form' => $addressCreateForm->createView(),
+            'recent_orders' => $this->recentOrders($customerId),
+            'orders_total' => $this->orderRepository->countByCustomer($customerId),
         ]));
     }
 
@@ -382,6 +388,30 @@ final class CustomerController
     /**
      * @return array<int, array<string, mixed>>
      */
+    /**
+     * @return list<array{id: int, ref: string, created_at: \DateTimeInterface|null, status_title: string, status_color: string, amount: float, currency_symbol: string, edit_url: string}>
+     */
+    private function recentOrders(int $customerId): array
+    {
+        $rows = [];
+        foreach ($this->orderRepository->findRecentByCustomer($customerId) as $order) {
+            $status = $order->getOrderStatus();
+            $currency = $order->getCurrency();
+            $rows[] = [
+                'id' => (int) $order->getId(),
+                'ref' => (string) $order->getRef(),
+                'created_at' => $order->getCreatedAt(),
+                'status_title' => $status !== null ? (string) $status->getTitle() : '',
+                'status_color' => $status !== null && method_exists($status, 'getColor') ? (string) $status->getColor() : '#6c757d',
+                'amount' => (float) $order->getTotalAmount(),
+                'currency_symbol' => $currency !== null ? (string) $currency->getSymbol() : '',
+                'edit_url' => $this->urls->generate('admin.order.update.view', ['order_id' => (int) $order->getId()]),
+            ];
+        }
+
+        return $rows;
+    }
+
     private function addressRows(Customer $customer): array
     {
         $rows = [];
