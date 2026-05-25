@@ -295,6 +295,20 @@ final class TaxRuleController
         );
     }
 
+    #[Route('/delivery-modules', name: 'delivery.modules.update', methods: ['POST'])]
+    public function updateDeliveryModulesTaxRule(Request $request): Response
+    {
+        if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::UPDATE)) {
+            return $denied;
+        }
+
+        $this->tokens->checkToken((string) $request->query->get('_token'));
+
+        ConfigQuery::write('taxrule_id_delivery_module', (string) (int) $request->request->get('delivery-module-tax-rule', 0));
+
+        return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
+    }
+
     /**
      * @param array<string, mixed>|null $data
      */

@@ -79,7 +79,7 @@
                 <h2 class="h5 mb-2">{{ 'Tax rule for delivery modules'|trans }}</h2>
                 <div class="card">
                     <div class="card-body">
-                        <form method="post" action="{{ path('admin.configuration.tax-rule.delivery.modules.update') }}" class="row g-3 align-items-end" data-testid="tax-rule-delivery-form">
+                        <form method="post" action="{{ path('admin.configuration.taxes-rules.delivery.modules.update') }}?_token={{ assignToken() }}" class="row g-3 align-items-end" data-testid="tax-rule-delivery-form">
                             <div class="col-md-9">
                                 <label for="delivery-module-tax-rule" class="form-label">{{ 'Select a tax rule'|trans }}</label>
                                 <select id="delivery-module-tax-rule" name="delivery-module-tax-rule" class="form-select">
