@@ -41,17 +41,15 @@
             emptyMessage: 'No coupon is currently defined. Use the (+) button above to create your first coupon.'|trans,
         }) }}
 
-        {% if pages > 1 %}
-            <nav aria-label="{{ 'Coupons pagination'|trans }}" class="mt-3" data-testid="coupons-pagination">
-                <ul class="pagination justify-content-center">
-                    {% for n in 1..pages %}
-                        <li class="page-item {% if n == current_page %}active{% endif %}">
-                            <a class="page-link" href="{{ path('admin.coupon.default', { page: n }) }}">{{ n }}</a>
-                        </li>
-                    {% endfor %}
-                </ul>
-            </nav>
-        {% endif %}
+        <div class="mt-3">
+            {{ component('BoPagination', {
+                route: 'admin.coupon.default',
+                currentPage: current_page,
+                lastPage: pages,
+                ariaLabel: 'Coupons pagination',
+                testid: 'coupons-pagination',
+            }) }}
+        </div>
     </div>
 
     {{ safe_hook('coupon.bottom') }}

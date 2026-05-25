@@ -82,17 +82,16 @@
                     emptyMessage: 'No product in this category yet.'|trans,
                 }) }}
 
-                {% if product_pages > 1 %}
-                    <nav aria-label="{{ 'Category products pagination'|trans }}" class="mt-3" data-testid="category-products-pagination">
-                        <ul class="pagination justify-content-center">
-                            {% for n in 1..product_pages %}
-                                <li class="page-item {% if n == product_current_page %}active{% endif %}">
-                                    <a class="page-link" href="{{ path('admin.categories.default', { category_id: parent_id, page: n }) }}">{{ n }}</a>
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    </nav>
-                {% endif %}
+                <div class="mt-3">
+                    {{ component('BoPagination', {
+                        route: 'admin.categories.default',
+                        currentPage: product_current_page,
+                        lastPage: product_pages,
+                        routeParams: { category_id: parent_id },
+                        ariaLabel: 'Category products pagination',
+                        testid: 'category-products-pagination',
+                    }) }}
+                </div>
             </section>
         {% endif %}
     </div>

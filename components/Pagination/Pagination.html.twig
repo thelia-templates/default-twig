@@ -1,0 +1,46 @@
+{#
+    BoPagination — windowed pagination with previous/next, ellipses and first/last shortcuts.
+
+    Replaces the {% for n in 1..pages %} flat lists that overflow on large datasets.
+
+    Props:
+        route        route name used to build each page link (required)
+        currentPage  current page, 1-based (required)
+        lastPage     total number of pages (required)
+        routeParams  extra params merged into every link; empty values are dropped (default: {})
+        pageParam    query/route parameter carrying the page number (default: page)
+        window       pages shown on each side of the current one (default: 2)
+        align        start | center | end (default: center)
+        ariaLabel    nav aria-label, |trans (default: Pagination)
+        testid       data-testid on the nav (default: none)
+#}
+{% if lastPage > 1 %}
+    {%- set justify = align == 'center' ? ' justify-content-center' : (align == 'end' ? ' justify-content-end' : '') -%}
+    <nav aria-label="{{ (ariaLabel ?? 'Pagination')|trans }}"{% if testid %} data-testid="{{ testid }}"{% endif %}>
+        <ul class="pagination{{ justify }} mb-0">
+            <li class="page-item{% if currentPage <= 1 %} disabled{% endif %}">
+                {% if currentPage <= 1 %}
+                    <span class="page-link" aria-hidden="true">&lsaquo;</span>
+                {% else %}
+                    <a class="page-link" href="{{ path(route, this.linkParams(currentPage - 1)) }}" aria-label="{{ 'Previous'|trans }}">&lsaquo;</a>
+                {% endif %}
+            </li>
+            {% for n in this.pages %}
+                {% if n is null %}
+                    <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+                {% else %}
+                    <li class="page-item{% if n == currentPage %} active{% endif %}"{% if n == currentPage %} aria-current="page"{% endif %}>
+                        <a class="page-link" href="{{ path(route, this.linkParams(n)) }}">{{ n }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+            <li class="page-item{% if currentPage >= lastPage %} disabled{% endif %}">
+                {% if currentPage >= lastPage %}
+                    <span class="page-link" aria-hidden="true">&rsaquo;</span>
+                {% else %}
+                    <a class="page-link" href="{{ path(route, this.linkParams(currentPage + 1)) }}" aria-label="{{ 'Next'|trans }}">&rsaquo;</a>
+                {% endif %}
+            </li>
+        </ul>
+    </nav>
+{% endif %}

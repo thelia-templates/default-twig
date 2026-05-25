@@ -52,17 +52,14 @@
             emptyMessage: 'No order matches the current filters.'|trans,
         }) }}
 
-        {% if pages > 1 %}
-            <nav aria-label="{{ 'Order pagination'|trans }}" data-testid="order-pagination">
-                <ul class="pagination">
-                    {% for p in 1..pages %}
-                        <li class="page-item {% if p == current_page %}active{% endif %}">
-                            <a class="page-link" href="?{% if current_status > 0 %}status_id={{ current_status }}&{% endif %}{% if current_search %}q={{ current_search }}&{% endif %}page={{ p }}">{{ p }}</a>
-                        </li>
-                    {% endfor %}
-                </ul>
-            </nav>
-        {% endif %}
+        {{ component('BoPagination', {
+            route: 'admin.order.list',
+            currentPage: current_page,
+            lastPage: pages,
+            routeParams: { status_id: current_status > 0 ? current_status : null, q: current_search },
+            ariaLabel: 'Order pagination',
+            testid: 'order-pagination',
+        }) }}
     </div>
 
     {{ safe_hook('orders.bottom') }}

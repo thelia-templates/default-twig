@@ -64,17 +64,14 @@
             },
         }) }}
 
-        {% if pages > 1 %}
-            <nav aria-label="{{ 'Product pagination'|trans }}" data-testid="product-pagination">
-                <ul class="pagination">
-                    {% for p in 1..pages %}
-                        <li class="page-item {% if p == current_page %}active{% endif %}">
-                            <a class="page-link" href="?{% if current_category > 0 %}category_id={{ current_category }}&{% endif %}{% if current_search %}q={{ current_search }}&{% endif %}page={{ p }}">{{ p }}</a>
-                        </li>
-                    {% endfor %}
-                </ul>
-            </nav>
-        {% endif %}
+        {{ component('BoPagination', {
+            route: 'admin.products.default',
+            currentPage: current_page,
+            lastPage: pages,
+            routeParams: { category_id: current_category > 0 ? current_category : null, q: current_search },
+            ariaLabel: 'Product pagination',
+            testid: 'product-pagination',
+        }) }}
     </div>
 
     {{ safe_hook('products.bottom') }}
