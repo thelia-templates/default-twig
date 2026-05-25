@@ -68,9 +68,16 @@ final class DataTableExtension extends AbstractExtension
     /**
      * @param array<scalar, string> $variants
      */
-    public function badgeColumn(string $key, string $label, array $variants = [], string $cellAlign = 'start', ?string $sortKey = null): Column
+    public function badgeColumn(string $key, string $label, array $variants = [], string $cellAlign = 'start', ?string $labelKey = null, ?string $colorKey = null, ?string $sortKey = null): Column
     {
-        return new Column($key, $label, ColumnKind::BADGE, $cellAlign, ['variants' => $variants], $sortKey);
+        return new Column(
+            $key,
+            $label,
+            ColumnKind::BADGE,
+            $cellAlign,
+            ['variants' => $variants, 'label_key' => $labelKey, 'color_key' => $colorKey],
+            $sortKey,
+        );
     }
 
     public function actionsColumn(string $key = '_actions', string $label = 'Actions', string $cellAlign = 'end'): Column

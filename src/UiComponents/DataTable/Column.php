@@ -20,7 +20,7 @@ final readonly class Column
      * @param string $cellAlign Bootstrap text-alignment utility, one of: 'start', 'center', 'end'.
      * @param array<string, mixed> $options Kind-specific options. Schemas per ColumnKind:
      *   - TOGGLE: { url_key: string|null, icon_on: string, icon_off: string } (null url_key → readonly)
-     *   - BADGE:  { variants: array<scalar, string> mapping row value → Bootstrap variant }
+     *   - BADGE:  { variants: array<scalar, string> mapping row value → Bootstrap variant, label_key?: string optional row key holding the visible label, color_key?: string optional row key holding a CSS color taking precedence over variants }
      *   - RADIO:  { name: string, value_key: string, checked_when_key: string|null, label_key: string|null }
      *   - TEXT / HTML / ACTIONS: empty
      * @param ?string $sortKey Sort field this column maps to. When set, the header becomes a sortable link.
