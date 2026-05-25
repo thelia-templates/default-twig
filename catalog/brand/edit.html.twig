@@ -93,10 +93,67 @@
                                 {{ form_widget(form.visible, { attr: { class: 'form-check-input' } }) }}
                                 {{ form_label(form.visible, null, { label_attr: { class: 'form-check-label' } }) }}
                             </div>
-                            <div class="mb-3">
-                                {{ form_label(form.logo_image_id) }}
-                                {{ form_widget(form.logo_image_id, { attr: { class: 'form-control' } }) }}
-                                <small class="form-text text-muted">{{ 'Set the brand logo image ID. Brand images management is exposed via the legacy endpoints.'|trans }}</small>
+
+                            <div class="mb-3" data-controller="bo-brand-logo-picker" data-testid="brand-logo-picker">
+                                <label class="form-label">{{ 'Select the brand logo'|trans }}</label>
+                                {{ form_widget(form.logo_image_id, { attr: { 'data-bo-brand-logo-picker-target': 'input' } }) }}
+
+                                {% if logo_images|length == 0 %}
+                                    <div class="alert alert-info small mb-0" data-testid="brand-logo-picker-empty">
+                                        {{ 'Upload images in the Images tab before choosing a logo.'|trans }}
+                                        <a href="{{ images_tab_url }}" class="alert-link">{{ 'Go to Images tab'|trans }}</a>
+                                    </div>
+                                {% else %}
+                                    {% set selected_image = null %}
+                                    {% for image in logo_images %}
+                                        {% if image.id == logo_image_id %}
+                                            {% set selected_image = image %}
+                                        {% endif %}
+                                    {% endfor %}
+                                    <div class="text-center bg-light rounded p-3 mb-2" data-bo-brand-logo-picker-target="previewWrapper">
+                                        <img src="{{ selected_image ? selected_image.preview_url : '' }}"
+                                             alt="{{ selected_image ? selected_image.title : '' }}"
+                                             class="img-fluid {% if not selected_image %}d-none{% endif %}"
+                                             style="max-height: 200px;"
+                                             data-bo-brand-logo-picker-target="preview"
+                                             data-testid="brand-logo-preview">
+                                        <div class="text-muted small py-4 {% if selected_image %}d-none{% endif %}"
+                                             data-bo-brand-logo-picker-target="emptyPreview"
+                                             data-testid="brand-logo-preview-empty">
+                                            {{ 'No logo selected'|trans }}
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex flex-wrap gap-2" role="radiogroup" aria-label="{{ 'Brand logo candidates'|trans }}">
+                                        <button type="button"
+                                                class="btn btn-sm border rounded p-1 d-flex align-items-center justify-content-center {% if logo_image_id == 0 %}border-primary border-2{% endif %}"
+                                                style="width: 80px; height: 80px;"
+                                                data-action="bo-brand-logo-picker#select"
+                                                data-bo-brand-logo-picker-image-id-param="0"
+                                                data-bo-brand-logo-picker-preview-url-param=""
+                                                data-testid="brand-logo-pick-none"
+                                                title="{{ 'No logo image'|trans }}"
+                                                aria-pressed="{{ logo_image_id == 0 ? 'true' : 'false' }}">
+                                            <i class="bi bi-slash-circle text-muted fs-3"></i>
+                                        </button>
+                                        {% for image in logo_images %}
+                                            <button type="button"
+                                                    class="btn btn-sm border rounded p-1 d-flex align-items-center justify-content-center {% if image.id == logo_image_id %}border-primary border-2{% endif %}"
+                                                    style="width: 80px; height: 80px;"
+                                                    data-action="bo-brand-logo-picker#select"
+                                                    data-bo-brand-logo-picker-image-id-param="{{ image.id }}"
+                                                    data-bo-brand-logo-picker-preview-url-param="{{ image.preview_url }}"
+                                                    data-testid="brand-logo-pick-{{ image.id }}"
+                                                    title="{{ image.title }}"
+                                                    aria-pressed="{{ image.id == logo_image_id ? 'true' : 'false' }}">
+                                                <img src="{{ image.thumbnail_url }}"
+                                                     alt="{{ image.title }}"
+                                                     class="img-fluid"
+                                                     style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                                            </button>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
