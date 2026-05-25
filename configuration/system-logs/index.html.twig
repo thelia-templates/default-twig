@@ -1,0 +1,126 @@
+{% extends '@BackOfficeDefaultTwig/base.html.twig' %}
+
+{% block title %}{{ 'System logs'|trans }}{% endblock %}
+{% block body_testid %}system-logs{% endblock %}
+
+{% block breadcrumb %}
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ path('admin.home') }}">{{ 'Home'|trans }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ path('admin.configuration.index') }}">{{ 'Configuration'|trans }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ 'System logs'|trans }}</li>
+        </ol>
+    </nav>
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid" data-testid="system-logs-page" data-controller="bo-system-logs">
+        <h1 class="h3 mb-4">{{ 'System logs configuration'|trans }}</h1>
+
+        {{ form_start(form, { action: path('admin.configuration.system-logs.save'), method: 'post', attr: { 'data-testid': 'system-logs-form' } }) }}
+            <div class="row g-3">
+                <div class="col-lg-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h2 class="h5 mb-3">{{ 'General configuration'|trans }}</h2>
+
+                            <div class="mb-3">
+                                {{ form_label(form.level) }}
+                                {{ form_widget(form.level, { attr: { class: 'form-select' } }) }}
+                                <div class="form-text">{{ 'Messages with a level greater or equal to the selected level will be added to the log destinations.'|trans }}</div>
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_label(form.format) }}
+                                {{ form_widget(form.format, { attr: { class: 'form-control' } }) }}
+                                <div class="form-text">
+                                    {{ 'Log lines header format. You may use the following variables:'|trans }}
+                                    <ul class="mb-0 ps-3">
+                                        <li><code>#INDEX</code> {{ 'sequential number of the log line'|trans }}</li>
+                                        <li><code>#LEVEL</code> {{ 'message level'|trans }}</li>
+                                        <li><code>#FILE</code> {{ 'originating file name'|trans }}</li>
+                                        <li><code>#FUNCTION</code> {{ 'originating function name'|trans }}</li>
+                                        <li><code>#LINE</code> {{ 'originating file line number'|trans }}</li>
+                                        <li><code>#DATE</code> {{ 'date in yyyy-mm-dd format'|trans }}</li>
+                                        <li><code>#HOUR</code> {{ 'hour in hh:mm:ss format'|trans }}</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_label(form.show_redirections) }}
+                                {{ form_widget(form.show_redirections, { attr: { class: 'form-select' } }) }}
+                                <div class="form-text">{{ 'If yes, redirections through Redirect::exec() will be displayed as links.'|trans }}</div>
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_label(form.files) }}
+                                {{ form_widget(form.files, { attr: { class: 'form-control' } }) }}
+                                <div class="form-text">{{ 'Enter one or more file names without path separated by ";". Use "!" before a file name to exclude it. Use "*" to activate logs for all files.'|trans }}</div>
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_label(form.ip_addresses) }}
+                                {{ form_widget(form.ip_addresses, { attr: { class: 'form-control' } }) }}
+                                <div class="form-text">{{ 'Enter one or more IPv4 addresses separated by ";". Leave empty to log every IP.'|trans }}</div>
+                                <div class="form-text">{{ 'Your current IP address is %ip'|trans({ '%ip': ip_address }) }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h2 class="h5 mb-3">{{ 'Destinations'|trans }}</h2>
+                            <div class="alert alert-info">
+                                {{ 'Destinations process logs to display, store or send them. You can select and configure zero, one or more destinations below.'|trans }}
+                            </div>
+
+                            {% for destination in destinations %}
+                                {% set is_active = destination.fqcn in active_destinations %}
+                                <div class="border rounded p-3 mb-3" data-testid="system-logs-destination-{{ destination.classname }}">
+                                    <input type="hidden" name="destinations[{{ destination.classname }}][classname]" value="{{ destination.fqcn }}">
+                                    <h3 class="h6 mb-1">{{ destination.title }}</h3>
+                                    <p class="text-muted small">{{ destination.description }}</p>
+
+                                    <div class="form-check mb-2">
+                                        <input type="checkbox" class="form-check-input" id="destination-{{ destination.classname }}-active" name="destinations[{{ destination.classname }}][active]" value="{{ destination.classname }}" data-action="change->bo-system-logs#toggle" data-bo-system-logs-target="activate" data-classname="{{ destination.classname }}" {% if is_active %}checked{% endif %}>
+                                        <label class="form-check-label" for="destination-{{ destination.classname }}-active">{{ 'Activate this log destination'|trans }}</label>
+                                    </div>
+
+                                    {% if destination.configs|length > 0 %}
+                                        <div data-bo-system-logs-target="config" data-classname="{{ destination.classname }}" {% if not is_active %}hidden{% endif %}>
+                                            {% for config in destination.configs %}
+                                                <div class="mb-2">
+                                                    <label class="form-label">{{ config.title }}</label>
+                                                    {% if config.type == 2 %}
+                                                        <input type="text" class="form-control" name="config[{{ destination.classname }}][{{ config.name }}]" value="{{ config.value }}">
+                                                    {% else %}
+                                                        <textarea class="form-control" name="config[{{ destination.classname }}][{{ config.name }}]" rows="2">{{ config.value }}</textarea>
+                                                    {% endif %}
+                                                    <div class="form-text">{{ config.label }}</div>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-end mt-3">
+                <a href="{{ path('admin.configuration.index') }}" class="btn btn-outline-secondary me-2">{{ 'Cancel'|trans }}</a>
+                <button type="submit" class="btn btn-primary" data-testid="system-logs-submit">
+                    <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save'|trans }}
+                </button>
+            </div>
+        {{ form_end(form) }}
+    </div>
+{% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('system.logs-js', { location: 'system-logs-js' }) }}
+{% endblock %}
