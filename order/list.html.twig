@@ -61,7 +61,7 @@
 
             <div id="bo-order-advanced" class="bo-order-filters__panel collapse {{ filters.is_empty ? '' : 'show' }}"
                  data-testid="order-advanced-panel">
-                <div class="row g-4 pt-3">
+                <div class="row g-2 pt-2">
                     <div class="col-md-6 col-lg-4">
                         <fieldset>
                             <legend class="form-label">{{ 'Status'|trans }}</legend>
@@ -86,12 +86,12 @@
                             <div class="row g-2">
                                 <div class="col">
                                     <input type="date" name="created_from" value="{{ filters.created_from_input }}"
-                                           class="form-control" aria-label="{{ 'From'|trans }}"
+                                           class="form-control form-control-sm" aria-label="{{ 'From'|trans }}"
                                            data-testid="order-filter-created-from">
                                 </div>
                                 <div class="col">
                                     <input type="date" name="created_to" value="{{ filters.created_to_input }}"
-                                           class="form-control" aria-label="{{ 'To'|trans }}"
+                                           class="form-control form-control-sm" aria-label="{{ 'To'|trans }}"
                                            data-testid="order-filter-created-to">
                                 </div>
                             </div>
@@ -108,7 +108,7 @@
                             </legend>
                             <div class="row g-2">
                                 <div class="col">
-                                    <div class="input-group">
+                                    <div class="input-group input-group-sm">
                                         <input type="text" name="min_amount" value="{{ filters.min_amount_input }}"
                                                class="form-control" placeholder="{{ 'Min'|trans }}" inputmode="decimal"
                                                aria-label="{{ 'Min'|trans }}"
@@ -117,7 +117,7 @@
                                     </div>
                                 </div>
                                 <div class="col">
-                                    <div class="input-group">
+                                    <div class="input-group input-group-sm">
                                         <input type="text" name="max_amount" value="{{ filters.max_amount_input }}"
                                                class="form-control" placeholder="{{ 'Max'|trans }}" inputmode="decimal"
                                                aria-label="{{ 'Max'|trans }}"
@@ -172,7 +172,7 @@
                     <div class="col-md-6 col-lg-4">
                         <fieldset>
                             <legend class="form-label">{{ 'Delivery country'|trans }}</legend>
-                            <select name="country_id" class="form-select" data-testid="order-filter-country">
+                            <select name="country_id" class="form-select form-select-sm" data-testid="order-filter-country">
                                 <option value="">{{ 'All countries'|trans }}</option>
                                 {% for option in filters.country_options %}
                                     <option value="{{ option.id }}" {{ option.id == filters.selected_country_id ? 'selected' : '' }}>
@@ -189,13 +189,13 @@
                             <div class="row g-2">
                                 <div class="col">
                                     <input type="number" min="0" name="min_items" value="{{ filters.min_items_input }}"
-                                           class="form-control" placeholder="{{ 'Min'|trans }}"
+                                           class="form-control form-control-sm" placeholder="{{ 'Min'|trans }}"
                                            aria-label="{{ 'Min'|trans }}"
                                            data-testid="order-filter-min-items">
                                 </div>
                                 <div class="col">
                                     <input type="number" min="0" name="max_items" value="{{ filters.max_items_input }}"
-                                           class="form-control" placeholder="{{ 'Max'|trans }}"
+                                           class="form-control form-control-sm" placeholder="{{ 'Max'|trans }}"
                                            aria-label="{{ 'Max'|trans }}"
                                            data-testid="order-filter-max-items">
                                 </div>
@@ -206,13 +206,13 @@
                     <div class="col-md-6 col-lg-4">
                         <fieldset>
                             <legend class="form-label">{{ 'Coupon'|trans }}</legend>
-                            <div class="btn-group w-100" role="group" aria-label="{{ 'Coupon'|trans }}">
+                            <div class="btn-group btn-group-sm w-100" role="group" aria-label="{{ 'Coupon'|trans }}">
                                 {% for option in filters.tristate_options %}
                                     {% set id = 'filter-coupon-' ~ (option.value ?: 'all') %}
                                     <input type="radio" class="btn-check" name="coupon" id="{{ id }}"
                                            value="{{ option.value }}"
                                            {{ option.value == filters.coupon_value ? 'checked' : '' }}>
-                                    <label class="btn btn-outline-secondary" for="{{ id }}">{{ option.label }}</label>
+                                    <label class="btn btn-outline-secondary btn-sm" for="{{ id }}">{{ option.label }}</label>
                                 {% endfor %}
                             </div>
                         </fieldset>
@@ -221,13 +221,13 @@
                     <div class="col-md-6 col-lg-4">
                         <fieldset>
                             <legend class="form-label">{{ 'Tracking'|trans }}</legend>
-                            <div class="btn-group w-100" role="group" aria-label="{{ 'Tracking'|trans }}">
+                            <div class="btn-group btn-group-sm w-100" role="group" aria-label="{{ 'Tracking'|trans }}">
                                 {% for option in filters.tristate_options %}
                                     {% set id = 'filter-tracking-' ~ (option.value ?: 'all') %}
                                     <input type="radio" class="btn-check" name="tracking" id="{{ id }}"
                                            value="{{ option.value }}"
                                            {{ option.value == filters.tracking_value ? 'checked' : '' }}>
-                                    <label class="btn btn-outline-secondary" for="{{ id }}">{{ option.label }}</label>
+                                    <label class="btn btn-outline-secondary btn-sm" for="{{ id }}">{{ option.label }}</label>
                                 {% endfor %}
                             </div>
                         </fieldset>
