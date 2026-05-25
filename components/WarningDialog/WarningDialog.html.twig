@@ -1,0 +1,41 @@
+{#
+    BoWarningDialog — informational dialog with a single dismiss button (no form).
+
+    Replaces generic-warning-dialog.html. For confirmations with an action, use BoConfirmDialog instead.
+
+    Props:
+        id          the modal id (required)
+        title       header title, |trans (required)
+        message     body text, |trans (default: none — override the body block instead)
+        okLabel     dismiss button label, |trans (default: OK)
+        okButtonId  id on the dismiss button, so a Stimulus controller can hook it (default: none)
+        variant     warning | danger | info | primary | success — drives the header icon (default: warning)
+        icon        explicit bi icon class, overriding the variant default (default: none)
+        testid      data-testid on the modal; the OK button gets testid-ok (default: none)
+
+    Override the body for rich content:
+        {% component 'BoWarningDialog' with { ... } %}{% block body %}…{% endblock %}{% endcomponent %}
+#}
+<div class="modal fade" id="{{ id }}" tabindex="-1" aria-labelledby="{{ id }}-title" aria-hidden="true"{% if testid %} data-testid="{{ testid }}"{% endif %}>
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title h5 d-flex align-items-center gap-2" id="{{ id }}-title">
+                    <i class="bi {{ this.iconClass }} text-{{ variant }}" aria-hidden="true"></i>
+                    {{ title|trans }}
+                </h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'Close'|trans }}"></button>
+            </div>
+            <div class="modal-body">
+                {% block body %}
+                    {% if message %}<p class="mb-0">{{ message|trans }}</p>{% endif %}
+                {% endblock %}
+            </div>
+            <div class="modal-footer">
+                <button type="button"{% if okButtonId %} id="{{ okButtonId }}"{% endif %} class="btn btn-{{ variant }}" data-bs-dismiss="modal"{% if testid %} data-testid="{{ testid }}-ok"{% endif %}>
+                    {{ okLabel|trans }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
