@@ -136,20 +136,23 @@ final readonly class CategoryListPresenter
 
     private function renderTitleLink(string $browseUrl, string $title, int $productCount, int $childCount): string
     {
-        $countLabel = $this->translator->trans(
-            '%products% product(s), %children% sub-categor%plural%',
-            [
-                '%products%' => $productCount,
-                '%children%' => $childCount,
-                '%plural%' => $childCount === 1 ? 'y' : 'ies',
-            ],
-        );
+        $products = match (true) {
+            $productCount === 0 => $this->translator->trans('no product'),
+            $productCount === 1 => $this->translator->trans('%count% product', ['%count%' => $productCount]),
+            default => $this->translator->trans('%count% products', ['%count%' => $productCount]),
+        };
+        $children = match (true) {
+            $childCount === 0 => $this->translator->trans('no sub-category'),
+            $childCount === 1 => $this->translator->trans('%count% sub-category', ['%count%' => $childCount]),
+            default => $this->translator->trans('%count% sub-categories', ['%count%' => $childCount]),
+        };
 
         return \sprintf(
-            '<a href="%s" class="text-decoration-none fw-medium">%s</a> <small class="text-muted">(%s)</small>',
+            '<a href="%s" class="text-decoration-none fw-medium">%s</a> <small class="text-muted">(%s, %s)</small>',
             htmlspecialchars($browseUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
             htmlspecialchars($title, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
-            htmlspecialchars($countLabel, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
+            htmlspecialchars($products, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
+            htmlspecialchars($children, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
         );
     }
 

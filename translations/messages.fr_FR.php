@@ -911,6 +911,14 @@ return [
     'Without' => 'Sans',
     'without' => 'sans',
 
+    // Category list - product/subcategory counts
+    'no product' => 'aucun produit',
+    '%count% product' => '%count% produit',
+    '%count% products' => '%count% produits',
+    'no sub-category' => 'aucune sous-rubrique',
+    '%count% sub-category' => '%count% sous-rubrique',
+    '%count% sub-categories' => '%count% sous-rubriques',
+
     // Customer list - advanced filters and rich rows
     'All customers' => 'Tous les clients',
     'Country' => 'Pays',
