@@ -16,6 +16,7 @@ namespace BackOfficeDefaultTwigBundle\Controller\Module;
 
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
+use BackOfficeDefaultTwigBundle\Service\Module\ModuleHookListPresenter;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -31,8 +32,10 @@ use Thelia\Core\Event\Hook\ModuleHookUpdateEvent;
 use Thelia\Core\Event\TheliaEvents;
 use Thelia\Core\Event\UpdatePositionEvent;
 use Thelia\Core\Security\AccessManager;
+use Thelia\Core\Hook\BaseHook;
 use Thelia\Core\Security\Resource\AdminResources;
 use Thelia\Model\HookQuery;
+use Thelia\Model\IgnoredModuleHookQuery;
 use Thelia\Model\LangQuery;
 use Thelia\Model\ModuleHookQuery;
 use Thelia\Model\ModuleQuery;
@@ -53,6 +56,7 @@ final class ModuleHookController
         private readonly TokenProvider $tokens,
         private readonly EventDispatcherInterface $events,
         private readonly TranslatorInterface $translator,
+        private readonly ModuleHookListPresenter $listPresenter,
     ) {
     }
 
@@ -193,25 +197,21 @@ final class ModuleHookController
             return new JsonResponse([], Response::HTTP_FORBIDDEN);
         }
 
-        $module = ModuleQuery::create()->findPk($moduleId);
-        if ($module === null) {
-            return new JsonResponse(['classnames' => []]);
-        }
-
-        $namespace = (string) $module->getFullNamespace();
-        $rootNamespace = trim(substr($namespace, 0, strrpos($namespace, '\\') ?: \strlen($namespace)), '\\');
-
+        // Hook classes are discovered when the module is activated and stored in
+        // module_hook (registered) / ignored_module_hook (detected but disabled),
+        // so we read them from there rather than introspecting loaded classes.
         $classnames = [];
-        foreach (get_declared_classes() as $class) {
-            if (!str_starts_with($class, $rootNamespace.'\\')) {
-                continue;
+        foreach (ModuleHookQuery::create()->filterByModuleId($moduleId)->groupByClassname()->find() as $moduleHook) {
+            $classname = (string) $moduleHook->getClassname();
+            if ($classname !== '' && !\in_array($classname, $classnames, true)) {
+                $classnames[] = $classname;
             }
-
-            if (!is_subclass_of($class, \Thelia\Core\Hook\BaseHook::class)) {
-                continue;
+        }
+        foreach (IgnoredModuleHookQuery::create()->filterByModuleId($moduleId)->groupByClassname()->find() as $ignored) {
+            $classname = (string) $ignored->getClassname();
+            if ($classname !== '' && !\in_array($classname, $classnames, true)) {
+                $classnames[] = $classname;
             }
-
-            $classnames[] = $class;
         }
 
         sort($classnames);
@@ -226,26 +226,20 @@ final class ModuleHookController
             return new JsonResponse([], Response::HTTP_FORBIDDEN);
         }
 
-        $module = ModuleQuery::create()->findPk($moduleId);
-        if ($module === null || !class_exists($className)) {
-            return new JsonResponse(['methods' => []]);
-        }
-
-        $namespace = (string) $module->getFullNamespace();
-        $rootNamespace = trim(substr($namespace, 0, strrpos($namespace, '\\') ?: \strlen($namespace)), '\\');
-        if (!str_starts_with($className, $rootNamespace.'\\') || !is_subclass_of($className, \Thelia\Core\Hook\BaseHook::class)) {
-            return new JsonResponse(['methods' => []]);
-        }
-
-        $methods = [];
-        foreach ((new \ReflectionClass($className))->getMethods(\ReflectionMethod::IS_PUBLIC) as $method) {
-            if ($method->getDeclaringClass()->getName() !== $className) {
-                continue;
+        // Same rationale as getClassnames: read the registered/ignored hook
+        // methods from the database, plus the generic template-injection method.
+        $methods = [BaseHook::INJECT_TEMPLATE_METHOD_NAME];
+        foreach (ModuleHookQuery::create()->filterByModuleId($moduleId)->filterByClassname($className)->find() as $moduleHook) {
+            $method = (string) $moduleHook->getMethod();
+            if ($method !== '' && !\in_array($method, $methods, true)) {
+                $methods[] = $method;
             }
-            if (str_starts_with($method->getName(), '__')) {
-                continue;
+        }
+        foreach (IgnoredModuleHookQuery::create()->filterByModuleId($moduleId)->filterByClassname($className)->find() as $ignored) {
+            $method = (string) $ignored->getMethod();
+            if ($method !== '' && !\in_array($method, $methods, true)) {
+                $methods[] = $method;
             }
-            $methods[] = $method->getName();
         }
 
         sort($methods);
@@ -258,28 +252,16 @@ final class ModuleHookController
      */
     private function buildListContext(): array
     {
-        $moduleHooks = ModuleHookQuery::create()->orderByPosition()->find();
-        $rows = [];
-        foreach ($moduleHooks as $hook) {
-            $module = ModuleQuery::create()->findPk((int) $hook->getModuleId());
-            $hookModel = HookQuery::create()->findPk((int) $hook->getHookId());
-            $rows[] = [
-                'id' => (int) $hook->getId(),
-                'module' => $module ? (string) $module->getCode() : '—',
-                'hook' => $hookModel ? (string) $hookModel->getCode() : '—',
-                'classname' => (string) $hook->getClassname(),
-                'method' => (string) $hook->getMethod(),
-                'active' => (bool) $hook->getActive(),
-                'position' => (int) $hook->getPosition(),
-                'edit_url' => $this->urls->generate(self::EDIT_ROUTE, ['module_hook_id' => (int) $hook->getId()]),
-                'toggle_url' => $this->tokenizedUrl('admin.module-hook.toggle-activation', ['module_hook_id' => (int) $hook->getId()]),
-            ];
-        }
-
         return [
-            'rows' => $rows,
+            'hook_groups' => $this->listPresenter->build($this->defaultLocale()),
             'available_modules' => $this->moduleChoices(),
             'available_hooks' => $this->hookChoices(),
+            'create_url' => $this->urls->generate('admin.module-hook.create'),
+            'create_token' => $this->tokens->assignToken(),
+            'delete_url' => $this->urls->generate('admin.module-hook.delete'),
+            'delete_token' => $this->tokens->assignToken(),
+            'classnames_url_template' => $this->urls->generate('admin.module-hook.get-module-hook-classnames', ['moduleId' => 0]),
+            'methods_url_template' => $this->urls->generate('admin.module-hook.get-module-hook-methods', ['moduleId' => 0, 'className' => '__CLASS__']),
             'update_position_url' => $this->urls->generate('admin.module-hook.update-position'),
             'update_position_token' => $this->tokens->assignToken(),
         ];
@@ -307,7 +289,11 @@ final class ModuleHookController
     {
         $locale = $this->defaultLocale();
         $items = [];
-        foreach (HookQuery::create()->orderByCode()->find() as $hook) {
+        $hooks = HookQuery::create()
+            ->filterByType(\Thelia\Core\Template\TemplateDefinition::FRONT_OFFICE, \Propel\Runtime\ActiveQuery\Criteria::NOT_EQUAL)
+            ->orderByCode()
+            ->find();
+        foreach ($hooks as $hook) {
             $hook->setLocale($locale);
             $items[] = ['id' => (int) $hook->getId(), 'code' => (string) $hook->getCode()];
         }
@@ -320,16 +306,5 @@ final class ModuleHookController
         $defaultLang = LangQuery::create()->findOneByByDefault(true);
 
         return $defaultLang?->getLocale() ?? 'en_US';
-    }
-
-    /**
-     * @param array<string, scalar> $parameters
-     */
-    private function tokenizedUrl(string $route, array $parameters): string
-    {
-        $url = $this->urls->generate($route, $parameters);
-        $separator = str_contains($url, '?') ? '&' : '?';
-
-        return $url.$separator.'_token='.$this->tokens->assignToken();
     }
 }

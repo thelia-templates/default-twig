@@ -14,80 +14,252 @@
 {% endblock %}
 
 {% block content %}
+    <div data-controller="bo-module-hooks"
+         data-bo-module-hooks-classnames-url-value="{{ classnames_url_template }}"
+         data-bo-module-hooks-methods-url-value="{{ methods_url_template }}">
     <div class="container-fluid" data-testid="module-hooks-page">
-        <h1 class="h3 mb-3">{{ 'Module hooks management'|trans }}</h1>
 
-        <form action="{{ path('admin.module-hook.create') }}" method="post" class="card p-3 mb-4" data-testid="module-hook-create-form">
-            <div class="row g-2">
-                <div class="col-md-3">
-                    <label class="form-label">{{ 'Module'|trans }}</label>
-                    <select name="module_id" class="form-select" data-testid="module-hook-module">
-                        {% for m in available_modules %}
-                            <option value="{{ m.id }}">{{ m.code }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">{{ 'Hook'|trans }}</label>
-                    <select name="hook_id" class="form-select" data-testid="module-hook-hook">
-                        {% for h in available_hooks %}
-                            <option value="{{ h.id }}">{{ h.code }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">{{ 'Class'|trans }}</label>
-                    <input type="text" name="classname" class="form-control" data-testid="module-hook-classname">
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label">{{ 'Method'|trans }}</label>
-                    <input type="text" name="method" class="form-control" data-testid="module-hook-method">
-                </div>
-                <div class="col-md-1 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary w-100" data-testid="module-hook-create-submit">{{ 'Add'|trans }}</button>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h1 class="h3 mb-0">{{ 'Module hooks management'|trans }}</h1>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#module-hook-create-modal" data-testid="module-hook-add-btn">
+                <i class="bi bi-plus-circle" aria-hidden="true"></i> {{ 'Add a module to a hook'|trans }}
+            </button>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label" for="module-hooks-filter-status">{{ 'By status'|trans }}</label>
+                        <select id="module-hooks-filter-status" class="form-select" data-bo-module-hooks-target="filterStatus" data-action="change->bo-module-hooks#applyFilters">
+                            <option value="">{{ 'All'|trans }}</option>
+                            <option value="1">{{ 'Active'|trans }}</option>
+                            <option value="0">{{ 'Inactive'|trans }}</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label" for="module-hooks-filter-module">{{ 'By module'|trans }}</label>
+                        <select id="module-hooks-filter-module" class="form-select" data-bo-module-hooks-target="filterModule" data-action="change->bo-module-hooks#applyFilters">
+                            <option value="">{{ 'All'|trans }}</option>
+                            {% for m in available_modules %}
+                                <option value="{{ m.id }}">{{ m.code }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label" for="module-hooks-filter-type">{{ 'By type'|trans }}</label>
+                        <select id="module-hooks-filter-type" class="form-select" data-bo-module-hooks-target="filterType" data-action="change->bo-module-hooks#applyFilters">
+                            <option value="">{{ 'All'|trans }}</option>
+                            <option value="2">{{ 'Back Office'|trans }}</option>
+                            <option value="3">{{ 'PDF'|trans }}</option>
+                            <option value="4">{{ 'Email'|trans }}</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label" for="module-hooks-filter-name">{{ 'By hook name'|trans }}</label>
+                        <input type="search" id="module-hooks-filter-name" class="form-control" data-bo-module-hooks-target="filterName" data-action="input->bo-module-hooks#applyFilters" placeholder="{{ 'Search…'|trans }}">
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-check form-switch">
+                            <input type="checkbox" class="form-check-input" id="module-hooks-filter-empty" checked data-bo-module-hooks-target="filterEmpty" data-action="change->bo-module-hooks#applyFilters">
+                            <label class="form-check-label" for="module-hooks-filter-empty">{{ 'Hide empty hooks'|trans }}</label>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </form>
+        </div>
 
-        <table class="table" data-testid="module-hooks-table">
-            <thead>
-                <tr>
-                    <th>{{ 'ID'|trans }}</th>
-                    <th>{{ 'Module'|trans }}</th>
-                    <th>{{ 'Hook'|trans }}</th>
-                    <th>{{ 'Class'|trans }}</th>
-                    <th>{{ 'Method'|trans }}</th>
-                    <th class="text-center">{{ 'Active'|trans }}</th>
-                    <th class="text-center">{{ 'Position'|trans }}</th>
-                    <th class="text-end">{{ 'Actions'|trans }}</th>
-                </tr>
-            </thead>
-            <tbody data-controller="bo-sortable"
-                   data-bo-sortable-url-value="{{ update_position_url }}"
-                   data-bo-sortable-token-value="{{ update_position_token }}"
-                   data-bo-sortable-param-name-value="module_hook_id">
-                {% for row in rows %}
-                    <tr data-row-id="{{ row.id }}" data-testid="module-hook-row-{{ row.id }}">
-                        <td>{{ row.id }}</td>
-                        <td>{{ row.module }}</td>
-                        <td>{{ row.hook }}</td>
-                        <td>{{ row.classname }}</td>
-                        <td>{{ row.method }}</td>
-                        <td class="text-center">{% if row.active %}<i class="bi bi-check2 text-success"></i>{% else %}<i class="bi bi-x text-danger"></i>{% endif %}</td>
-                        <td class="text-center">{{ row.position }}</td>
-                        <td class="text-end">
-                            <a href="{{ row.edit_url }}" class="btn btn-sm btn-outline-secondary" data-testid="module-hook-edit-{{ row.id }}">
-                                <i class="bi bi-pencil" aria-hidden="true"></i>
-                            </a>
-                            <a href="{{ row.toggle_url }}" class="btn btn-sm btn-outline-secondary" data-testid="module-hook-toggle-{{ row.id }}">
-                                <i class="bi bi-power" aria-hidden="true"></i>
-                            </a>
-                        </td>
-                    </tr>
-                {% else %}
-                    <tr><td colspan="8" class="text-muted text-center">{{ 'No module hook yet.'|trans }}</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div data-bo-module-hooks-target="emptyMessage" class="alert alert-info d-none" role="status">
+            {{ 'No hook matches the current filters.'|trans }}
+        </div>
+
+        {% for group in hook_groups %}
+            <div class="card mb-3 module-hook-group"
+                 data-bo-module-hooks-target="hookCard"
+                 data-hook-type="{{ group.type }}"
+                 data-hook-name="{{ (group.title ~ ' ' ~ group.code)|lower }}"
+                 data-hook-empty="{{ group.modules is empty ? '1' : '0' }}"
+                 data-testid="module-hook-group-{{ group.id }}">
+                <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="fw-semibold">{{ group.title }}</span>
+                        <code class="text-body-secondary">{{ group.code }}</code>
+                        <span class="badge bg-secondary">{{ group.type_label }}</span>
+                        {% if group.block %}<span class="badge bg-info">{{ 'Block'|trans }}</span>{% endif %}
+                        {% if group.by_module %}<span class="badge bg-light text-dark border">{{ 'By module'|trans }}</span>{% endif %}
+                    </div>
+                    <div class="d-flex gap-1">
+                        {% if not group.by_module %}
+                            <button type="button" class="btn btn-sm btn-outline-primary"
+                                    data-bs-toggle="modal" data-bs-target="#module-hook-create-modal"
+                                    data-action="bo-module-hooks#prefillHook" data-hook-id="{{ group.id }}"
+                                    data-testid="module-hook-add-to-{{ group.id }}"
+                                    title="{{ 'Add a module to this hook'|trans }}">
+                                <i class="bi bi-plus-lg" aria-hidden="true"></i>
+                            </button>
+                        {% endif %}
+                        <a href="{{ path('admin.hook.update', { hook_id: group.id }) }}" class="btn btn-sm btn-outline-secondary" title="{{ 'Edit this hook'|trans }}">
+                            <i class="bi bi-pencil" aria-hidden="true"></i>
+                        </a>
+                        {% if group.description %}
+                            <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="collapse" data-bs-target="#module-hook-info-{{ group.id }}" title="{{ 'Information on this hook'|trans }}">
+                                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if group.description %}
+                    <div class="collapse" id="module-hook-info-{{ group.id }}">
+                        <div class="card-body border-bottom text-body-secondary small">{{ group.description }}</div>
+                    </div>
+                {% endif %}
+
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>{{ 'Module'|trans }}</th>
+                                <th>{{ 'Class'|trans }} / {{ 'Method'|trans }}</th>
+                                <th class="text-center">{{ 'Active'|trans }}</th>
+                                <th class="text-center">{{ 'Position'|trans }}</th>
+                                <th class="text-end">{{ 'Actions'|trans }}</th>
+                            </tr>
+                        </thead>
+                        <tbody {% if not group.by_module %}data-controller="bo-sortable" data-bo-sortable-url-value="{{ update_position_url }}" data-bo-sortable-token-value="{{ update_position_token }}" data-bo-sortable-param-name-value="module_hook_id"{% endif %}>
+                            {% for m in group.modules %}
+                                <tr data-row-id="{{ m.id }}"
+                                    class="module-hook-row {% if not m.module_active %}opacity-50{% endif %}"
+                                    data-module-id="{{ m.module_id }}"
+                                    data-active="{{ m.active and m.module_active and m.hook_active ? '1' : '0' }}"
+                                    data-testid="module-hook-row-{{ m.id }}">
+                                    <td>
+                                        <span class="fw-semibold">{{ m.module_title }}</span>
+                                        <span class="text-body-secondary">({{ m.module_code }})</span>
+                                        {% if not m.module_active %}<span class="badge bg-warning text-dark">{{ 'Module inactive'|trans }}</span>{% endif %}
+                                    </td>
+                                    <td class="small text-body-secondary"><code>{{ m.classname|split('\\')|last }}</code>::{{ m.method }}</td>
+                                    <td class="text-center">
+                                        {% if m.can_toggle %}
+                                            <form method="post" action="{{ m.toggle_url }}" class="d-inline" data-testid="module-hook-toggle-form-{{ m.id }}">
+                                                <div class="form-check form-switch d-inline-flex justify-content-center m-0">
+                                                    <input type="checkbox" class="form-check-input" {% if m.active %}checked{% endif %}
+                                                           data-action="change->bo-module-hooks#submitToggle"
+                                                           aria-label="{{ 'Toggle activation'|trans }}"
+                                                           data-testid="module-hook-toggle-{{ m.id }}">
+                                                </div>
+                                            </form>
+                                        {% else %}
+                                            <span class="badge bg-secondary" data-testid="module-hook-toggle-disabled-{{ m.id }}">{{ 'Disabled'|trans }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">{% if group.by_module %}—{% else %}{{ m.position }}{% endif %}</td>
+                                    <td class="text-end">
+                                        <a href="{{ m.edit_url }}" class="btn btn-sm btn-outline-secondary" data-testid="module-hook-edit-{{ m.id }}" title="{{ 'Edit'|trans }}">
+                                            <i class="bi bi-pencil" aria-hidden="true"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                                data-bs-toggle="modal" data-bs-target="#module-hook-delete-modal"
+                                                data-action="bo-module-hooks#prefillDelete" data-module-hook-id="{{ m.id }}"
+                                                data-testid="module-hook-delete-{{ m.id }}" title="{{ 'Delete'|trans }}">
+                                            <i class="bi bi-trash" aria-hidden="true"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr><td colspan="5" class="text-body-secondary text-center">{{ 'No module hooked here.'|trans }}</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% else %}
+            <div class="alert alert-info">{{ 'No hook available.'|trans }}</div>
+        {% endfor %}
+    </div>
+
+    <div class="modal fade" id="module-hook-create-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <form method="post" action="{{ create_url }}?_token={{ create_token }}" data-testid="module-hook-create-form">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5">{{ 'Add a module to a hook'|trans }}</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'Close'|trans }}"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label" for="module-hook-create-module">{{ 'Module'|trans }}</label>
+                            <select id="module-hook-create-module" name="module_id" class="form-select" required
+                                    data-bo-module-hooks-target="createModule"
+                                    data-action="change->bo-module-hooks#loadClassnames"
+                                    data-testid="module-hook-create-module">
+                                <option value="">{{ 'Select a module…'|trans }}</option>
+                                {% for m in available_modules %}
+                                    <option value="{{ m.id }}">{{ m.code }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="module-hook-create-hook">{{ 'Hook'|trans }}</label>
+                            <select id="module-hook-create-hook" name="hook_id" class="form-select" required
+                                    data-bo-module-hooks-target="createHook"
+                                    data-testid="module-hook-create-hook">
+                                <option value="">{{ 'Select a hook…'|trans }}</option>
+                                {% for h in available_hooks %}
+                                    <option value="{{ h.id }}">{{ h.code }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="module-hook-create-classname">{{ 'Class'|trans }}</label>
+                            <select id="module-hook-create-classname" name="classname" class="form-select"
+                                    data-bo-module-hooks-target="createClassname"
+                                    data-action="change->bo-module-hooks#loadMethods"
+                                    data-placeholder="{{ 'Select a class…'|trans }}"
+                                    data-testid="module-hook-create-classname" disabled>
+                                <option value="">{{ 'Select a module first…'|trans }}</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="module-hook-create-method">{{ 'Method'|trans }}</label>
+                            <select id="module-hook-create-method" name="method" class="form-select"
+                                    data-bo-module-hooks-target="createMethod"
+                                    data-placeholder="{{ 'Select a method…'|trans }}"
+                                    data-testid="module-hook-create-method" disabled>
+                                <option value="">{{ 'Select a class first…'|trans }}</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'Cancel'|trans }}</button>
+                        <button type="submit" class="btn btn-primary" data-testid="module-hook-create-submit">
+                            <i class="bi bi-plus-circle" aria-hidden="true"></i> {{ 'Put module in hook'|trans }}
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal fade" id="module-hook-delete-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <form method="post" action="{{ delete_url }}?_token={{ delete_token }}" data-testid="module-hook-delete-form">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5">{{ 'Delete a module hook'|trans }}</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'Close'|trans }}"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="module_hook_id" data-bo-module-hooks-target="deleteInput">
+                        <p>{{ 'Do you really want to remove this module from the hook?'|trans }}</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'Cancel'|trans }}</button>
+                        <button type="submit" class="btn btn-danger" data-testid="module-hook-delete-confirm">{{ 'Delete'|trans }}</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
     </div>
 {% endblock %}
