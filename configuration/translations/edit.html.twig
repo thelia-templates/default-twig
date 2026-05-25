@@ -24,7 +24,8 @@
             <div class="alert alert-danger">{{ 'The directory local/I18n does not exist or is not writable. Please fix this issue before.'|trans }}</div>
         {% endif %}
 
-        <form method="POST" id="translation_form" action="{{ path('admin.configuration.translations.update') }}" data-testid="translations-form">
+        <form method="POST" id="translation_form" action="{{ path('admin.configuration.translations.update') }}" data-testid="translations-form"
+              data-action="submit->bo-translations#confirmUnsaved">
             <input type="hidden" name="edit_language_id" value="{{ edit_language_id }}">
 
             <div class="row g-3 mb-3">
@@ -130,19 +131,48 @@
             </div>
 
             <div class="alert alert-info">
-                <p>
-                    <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
-                    {{ 'This page allows you to translate each <strong>resources</strong> of your website : Thelia, modules, templates.'|trans|raw }}
-                </p>
-                <ul>
-                    <li>{{ 'Redefine the text only for this resource.'|trans }}</li>
-                    <li>{{ 'Redefine the text globally. Every text will be translated with this translation, except if there is a translation for this resource.'|trans }}</li>
-                </ul>
+                <div class="row align-items-start">
+                    <div class="col-md-9">
+                        <p class="mb-2">
+                            <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
+                            {{ 'This page allows you to translate each <strong>resources</strong> of your website : Thelia, modules, templates.'|trans|raw }}
+                        </p>
+                        <ul class="mb-2">
+                            <li>{{ 'Redefine the text only for this resource.'|trans }}</li>
+                            <li>{{ 'Redefine the text globally. Every text will be translated with this translation, except if there is a translation for this resource.'|trans }}</li>
+                        </ul>
+                        <p class="mb-1 small text-muted">
+                            <strong>{{ 'User mode'|trans }}</strong>: {{ 'redefines translations for your website only.'|trans }}<br>
+                            <strong>{{ 'Developer mode'|trans }}</strong>: {{ 'edits the resource translations directly (Thelia core, modules, templates).'|trans }}
+                        </p>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="btn-group w-100" role="group" aria-label="{{ 'Editing mode'|trans }}">
+                            <button type="button" class="btn btn-outline-primary" data-bo-translations-target="userModeButton" data-action="bo-translations#selectUserMode" data-testid="translations-mode-user">{{ 'User mode'|trans }}</button>
+                            <button type="button" class="btn btn-outline-primary" data-bo-translations-target="developerModeButton" data-action="bo-translations#selectDeveloperMode" data-testid="translations-mode-developer">{{ 'Developer mode'|trans }}</button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="form-check mb-3">
-                <input class="form-check-input" type="checkbox" id="view_missing_traductions_only" name="view_missing_traductions_only" value="1"{% if view_missing_only %} checked{% endif %} data-action="change->bo-translations#submitForm">
-                <label class="form-check-label" for="view_missing_traductions_only">{{ 'View only missing translations.'|trans }}</label>
+            {% if edit_language_locale != 'en_US' %}
+                <div class="alert alert-warning" data-bo-translations-target="developerOnly" data-testid="translations-crowdin-warning">
+                    <i class="bi bi-translate me-1" aria-hidden="true"></i>
+                    {{ 'If you want to translate core components of Thelia (core, install, default modules or templates), please use our translation platform'|trans }}
+                    (<a href="https://crowdin.com/" target="_blank" rel="noopener">Crowdin</a>):
+                    <a href="https://translate.thelia.net" target="_blank" rel="noopener">translate.thelia.net</a>.
+                    {{ 'That way, the Thelia community will benefit from your translations.'|trans }}
+                </div>
+            {% endif %}
+
+            <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="view_missing_traductions_only" name="view_missing_traductions_only" value="1"{% if view_missing_only %} checked{% endif %} data-action="change->bo-translations#submitForm">
+                    <label class="form-check-label" for="view_missing_traductions_only">{{ 'View only missing translations.'|trans }}</label>
+                </div>
+                <a href="#" class="small" data-action="click->bo-translations#copyAll" data-testid="translations-copy-all" title="{{ 'Copy all missing translations.'|trans }}">
+                    <i class="bi bi-files me-1" aria-hidden="true"></i>{{ 'Copy all translations.'|trans }}
+                </a>
             </div>
 
             {% if max_input_vars_warning %}
@@ -183,15 +213,19 @@
                             <td class="col-md-6">
                                 <div class="input-group input-group-sm mb-1">
                                     <span class="input-group-text">›</span>
-                                    <input type="text" name="translation[]" value="{{ info.translation }}" class="form-control" data-testid="translation-input">
+                                    <input type="text" name="translation[]" value="{{ info.translation }}" class="form-control" data-testid="translation-input"
+                                           data-bo-translations-target="defaultInput"
+                                           data-action="change->bo-translations#trackChange">
                                 </div>
-                                <div class="input-group input-group-sm mb-1">
+                                <div class="input-group input-group-sm mb-1" data-bo-translations-target="customRow">
                                     <span class="input-group-text" title="{{ 'Custom redefinition'|trans }}">★</span>
-                                    <input type="text" name="translation_custom[]" value="{{ info.custom_fallback }}" class="form-control" placeholder="{{ 'specific redefinition'|trans }}">
+                                    <input type="text" name="translation_custom[]" value="{{ info.custom_fallback }}" class="form-control" placeholder="{{ 'specific redefinition'|trans }}"
+                                           data-action="change->bo-translations#trackChange">
                                 </div>
-                                <div class="input-group input-group-sm">
+                                <div class="input-group input-group-sm" data-bo-translations-target="globalRow">
                                     <span class="input-group-text" title="{{ 'Global redefinition'|trans }}">»</span>
-                                    <input type="text" name="translation_global[]" value="{{ info.global_fallback }}" class="form-control" placeholder="{{ 'global redefinition'|trans }}">
+                                    <input type="text" name="translation_global[]" value="{{ info.global_fallback }}" class="form-control" placeholder="{{ 'global redefinition'|trans }}"
+                                           data-action="change->bo-translations#trackChange">
                                 </div>
                             </td>
                         </tr>
