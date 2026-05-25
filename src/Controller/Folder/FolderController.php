@@ -17,6 +17,7 @@ namespace BackOfficeDefaultTwigBundle\Controller\Folder;
 use BackOfficeDefaultTwigBundle\Form\Folder\FolderType;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
+use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
@@ -58,6 +59,7 @@ final class FolderController
         private readonly UrlGeneratorInterface $urls,
         private readonly TokenProvider $tokens,
         private readonly TranslatorInterface $translator,
+        private readonly EditLocaleResolver $editLocale,
     ) {
     }
 
@@ -93,7 +95,7 @@ final class FolderController
     }
 
     #[Route('/update/{folder_id}', name: 'update', methods: ['GET'], requirements: ['folder_id' => '\d+'])]
-    public function updateView(int $folder_id): Response
+    public function updateView(int $folder_id, Request $request): Response
     {
         if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::VIEW)) {
             return $denied;
@@ -104,12 +106,14 @@ final class FolderController
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }
 
-        $locale = $this->defaultLocale();
+        $editLang = $this->editLocale->resolveFromRequest($request);
+        $locale = $editLang->getLocale() ?? 'en_US';
         $folder->setLocale($locale);
 
         return new Response($this->twig->render(self::EDIT_TEMPLATE, [
             'folder' => $folder,
             'form' => $this->buildUpdateForm($folder, $locale)->createView(),
+            'edit_language_id' => (int) $editLang->getId(),
         ]));
     }
 

@@ -20,6 +20,7 @@ use BackOfficeDefaultTwigBundle\Form\Product\ProductType;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\Service\Catalog\ProductRelationsContext;
+use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Symfony\Component\Form\FormFactoryInterface;
@@ -69,6 +70,7 @@ final class ProductController
         private readonly TokenProvider $tokens,
         private readonly TranslatorInterface $translator,
         private readonly ProductRelationsContext $relations,
+        private readonly EditLocaleResolver $editLocale,
     ) {
     }
 
@@ -166,7 +168,8 @@ final class ProductController
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }
 
-        $locale = $this->defaultLocale();
+        $editLang = $this->editLocale->resolveFromRequest($request);
+        $locale = $editLang->getLocale() ?? 'en_US';
         $product->setLocale($locale);
 
         $form = $this->buildUpdateForm($product, $locale);
@@ -178,6 +181,7 @@ final class ProductController
                 'form' => $form->createView(),
                 'seo_form' => $seoForm->createView(),
                 'current_tab' => (string) $request->query->get('current_tab', 'general'),
+                'edit_language_id' => (int) $editLang->getId(),
                 'available_templates' => $this->templateChoices(),
             ],
             $this->relations->build($product, $locale),

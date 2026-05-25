@@ -19,6 +19,7 @@ use BackOfficeDefaultTwigBundle\Form\Catalog\CategoryType;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\Service\Catalog\CategoryListPresenter;
+use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -66,6 +67,7 @@ final class CategoryController
         private readonly TokenProvider $tokens,
         private readonly TranslatorInterface $translator,
         private readonly CategoryListPresenter $listPresenter,
+        private readonly EditLocaleResolver $editLocale,
     ) {
     }
 
@@ -120,7 +122,8 @@ final class CategoryController
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }
 
-        $locale = $this->defaultLocale();
+        $editLang = $this->editLocale->resolveFromRequest($request);
+        $locale = $editLang->getLocale() ?? 'en_US';
         $category->setLocale($locale);
 
         return new Response($this->twig->render(self::EDIT_TEMPLATE, [
@@ -130,6 +133,7 @@ final class CategoryController
             'children' => $this->childRows($category, $locale),
             'available_templates' => $this->availableTemplates($locale),
             'current_tab' => (string) $request->query->get('current_tab', 'general'),
+            'edit_language_id' => (int) $editLang->getId(),
             'folder_tree' => $this->folderTree($locale),
             'assigned_contents' => $this->assignedContents($category, $locale),
             'available_related_content_url' => $this->urls->generate('admin.category.available-related-content', ['categoryId' => (int) $category->getId(), 'folderId' => 0, '_format' => 'json']),
