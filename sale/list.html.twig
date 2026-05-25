@@ -1,0 +1,144 @@
+{% extends '@BackOfficeDefaultTwig/base.html.twig' %}
+
+{% block title %}{{ 'Sales'|trans }}{% endblock %}
+{% block body_testid %}sales-list{% endblock %}
+
+{% block breadcrumb %}
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ path('admin.home') }}">{{ 'Home'|trans }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ 'Sales'|trans }}</li>
+        </ol>
+    </nav>
+{% endblock %}
+
+{% block content %}
+    {{ safe_hook('sales.top', { location: 'sales_top' }) }}
+
+    <div class="container-fluid" data-testid="sales-page">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <h1 class="h3 mb-0">{{ 'Sales & promotions'|trans }}</h1>
+            <div class="d-flex gap-2">
+                <a href="{{ global_actions.check_url }}" class="btn btn-outline-secondary" data-testid="sales-check-activation"
+                   title="{{ 'Refresh the active status of every sale according to its dates.'|trans }}">
+                    <i class="bi bi-arrow-repeat" aria-hidden="true"></i> {{ 'Check activation'|trans }}
+                </a>
+                <a href="{{ global_actions.reset_url }}" class="btn btn-outline-secondary" data-testid="sales-reset-status"
+                   title="{{ 'Remove the sale flag from every product before recomputing it.'|trans }}">
+                    <i class="bi bi-eraser" aria-hidden="true"></i> {{ 'Reset status'|trans }}
+                </a>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#sale-create-modal" data-testid="sale-create-btn">
+                    <i class="bi bi-plus-circle" aria-hidden="true"></i> {{ 'New sale'|trans }}
+                </button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="table-responsive">
+                <table class="table align-middle mb-0" data-testid="sales-table">
+                    <thead class="table-light">
+                        <tr>
+                            <th>{{ 'Title'|trans }}</th>
+                            <th>{{ 'Label'|trans }}</th>
+                            <th>{{ 'Start date'|trans }}</th>
+                            <th>{{ 'End date'|trans }}</th>
+                            <th>{{ 'Discount type'|trans }}</th>
+                            <th class="text-center">{{ 'Products'|trans }}</th>
+                            <th class="text-center">{{ 'Status'|trans }}</th>
+                            <th class="text-end">{{ 'Actions'|trans }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in rows %}
+                            <tr data-testid="sale-row-{{ row.id }}">
+                                <td><a href="{{ row.edit_url }}" class="fw-semibold text-decoration-none">{{ row.title ?: '#' ~ row.id }}</a></td>
+                                <td>{% if row.label %}<span class="badge bg-danger-subtle text-danger-emphasis">{{ row.label }}</span>{% else %}<span class="text-body-secondary">—</span>{% endif %}</td>
+                                <td>{{ row.start_date ?? '—' }}</td>
+                                <td>{{ row.end_date ?? '—' }}</td>
+                                <td>{{ row.offset_type_label }}</td>
+                                <td class="text-center">{{ row.products_count }}</td>
+                                <td class="text-center">
+                                    <a href="{{ row.toggle_url }}" class="text-decoration-none" data-testid="sale-toggle-{{ row.id }}">
+                                        {% if row.active %}
+                                            <span class="badge bg-success">{{ 'Active'|trans }}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ 'Inactive'|trans }}</span>
+                                        {% endif %}
+                                    </a>
+                                </td>
+                                <td class="text-end">
+                                    <a href="{{ row.edit_url }}" class="btn btn-sm btn-outline-secondary" data-testid="sale-edit-{{ row.id }}" title="{{ 'Edit'|trans }}">
+                                        <i class="bi bi-pencil" aria-hidden="true"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-danger"
+                                            data-bs-toggle="modal" data-bs-target="#sale-delete-modal"
+                                            data-sale-id="{{ row.id }}"
+                                            data-testid="sale-delete-{{ row.id }}" title="{{ 'Delete'|trans }}">
+                                        <i class="bi bi-trash" aria-hidden="true"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr><td colspan="8" class="text-body-secondary text-center py-4">{{ 'No sale yet. Create your first promotion.'|trans }}</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="sale-create-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            {{ form_start(create_form, { action: path('admin.sale.create'), attr: { 'data-testid': 'sale-create-form' } }) }}
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5">{{ 'New sale'|trans }}</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'Close'|trans }}"></button>
+                    </div>
+                    <div class="modal-body">
+                        {{ form_widget(create_form.locale) }}
+                        <div class="mb-3">
+                            {{ form_label(create_form.title) }}
+                            {{ form_widget(create_form.title, { attr: { class: 'form-control' } }) }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form_label(create_form.label) }}
+                            {{ form_widget(create_form.label, { attr: { class: 'form-control' } }) }}
+                            <div class="form-text">{{ 'The short label shown on discounted products (e.g. "Sale", "-20%").'|trans }}</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'Cancel'|trans }}</button>
+                        <button type="submit" class="btn btn-primary" data-testid="sale-create-submit">{{ 'Create and configure'|trans }}</button>
+                    </div>
+                </div>
+            {{ form_end(create_form) }}
+        </div>
+    </div>
+
+    <div class="modal fade" id="sale-delete-modal" tabindex="-1" aria-hidden="true"
+         data-controller="bo-prefill-modal"
+         data-bo-prefill-modal-source-trigger-value="data-sale-id"
+         data-bo-prefill-modal-target-input-value="sale_id">
+        <div class="modal-dialog">
+            <form method="post" action="{{ global_actions.delete_url }}?_token={{ global_actions.delete_token }}" data-testid="sale-delete-form">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5">{{ 'Delete sale'|trans }}</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'Close'|trans }}"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="sale_id" data-bo-prefill-modal-target="input">
+                        <p>{{ 'Do you really want to delete this sale?'|trans }}</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'Cancel'|trans }}</button>
+                        <button type="submit" class="btn btn-danger" data-testid="sale-delete-confirm">{{ 'Delete'|trans }}</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {{ safe_hook('sales.bottom', { location: 'sales_bottom' }) }}
+{% endblock %}

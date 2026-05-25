@@ -127,6 +127,9 @@
                         {% if is_granted('VIEW', 'admin.coupon') %}
                             <li><a class="nav-link" href="{{ path('admin.coupon.default') }}">{{ 'Coupons'|trans }}</a></li>
                         {% endif %}
+                        {% if is_granted('VIEW', 'admin.sales') %}
+                            <li><a class="nav-link" href="{{ path('admin.sale.default') }}">{{ 'Sales'|trans }}</a></li>
+                        {% endif %}
                         <li><a class="nav-link" href="{{ path('admin.newsletter.default') }}">{{ 'Newsletter'|trans }}</a></li>
                         {% if is_granted('VIEW', 'admin.export') %}
                             <li><a class="nav-link" href="{{ path('export.list') }}">{{ 'Export'|trans }}</a></li>

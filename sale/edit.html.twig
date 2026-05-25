@@ -1,0 +1,157 @@
+{% extends '@BackOfficeDefaultTwig/base.html.twig' %}
+
+{% block title %}{{ 'Edit sale'|trans }} — {{ sale.title }}{% endblock %}
+{% block body_testid %}sale-edit{% endblock %}
+
+{% block breadcrumb %}
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ path('admin.home') }}">{{ 'Home'|trans }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ path('admin.sale.default') }}">{{ 'Sales'|trans }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ sale.title ?: '#' ~ sale.id }}</li>
+        </ol>
+    </nav>
+{% endblock %}
+
+{% block content %}
+    {{ safe_hook('sale-edit.top', { sale_id: sale.id }) }}
+
+    <div class="container-fluid"
+         data-testid="sale-edit-page"
+         data-controller="bo-sale-product-picker"
+         data-bo-sale-product-picker-products-url-value="{{ products_url }}">
+
+        {{ form_start(form, { action: path('admin.sale.save', { sale_id: sale.id }), attr: { 'data-testid': 'sale-edit-form' } }) }}
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h1 class="h3 mb-0">{{ sale.title ?: '#' ~ sale.id }}</h1>
+                <div class="d-flex gap-2">
+                    <a href="{{ path('admin.sale.default') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left" aria-hidden="true"></i> {{ 'Back to list'|trans }}
+                    </a>
+                    <button type="submit" class="btn btn-primary" data-testid="sale-edit-submit">
+                        <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save'|trans }}
+                    </button>
+                </div>
+            </div>
+
+            {{ form_widget(form.id) }}
+            {{ form_widget(form.locale) }}
+
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card mb-3">
+                        <div class="card-header">{{ 'General information'|trans }}</div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-8 mb-3">
+                                    {{ form_label(form.title) }}
+                                    {{ form_widget(form.title, { attr: { class: 'form-control' } }) }}
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    {{ form_label(form.label) }}
+                                    {{ form_widget(form.label, { attr: { class: 'form-control' } }) }}
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                {{ form_label(form.chapo) }}
+                                {{ form_widget(form.chapo, { attr: { class: 'form-control', rows: 2 } }) }}
+                            </div>
+                            <div class="mb-3">
+                                {{ form_label(form.description) }}
+                                {{ form_widget(form.description, { attr: { class: 'form-control', rows: 5 } }) }}
+                            </div>
+                            <div class="mb-0">
+                                {{ form_label(form.postscriptum) }}
+                                {{ form_widget(form.postscriptum, { attr: { class: 'form-control', rows: 2 } }) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-3">
+                        <div class="card-header">{{ 'Products covered by this sale'|trans }}</div>
+                        <div class="card-body">
+                            <div class="row g-2 align-items-end mb-3">
+                                <div class="col-md-9">
+                                    <label class="form-label" for="sale-categories">{{ 'Product categories'|trans }}</label>
+                                    <select id="sale-categories" multiple size="6" class="form-select"
+                                            data-bo-sale-product-picker-target="categories" data-testid="sale-categories">
+                                        {% for category in all_categories %}
+                                            <option value="{{ category.id }}" {% if category.id in selected_category_ids %}selected{% endif %}>{{ category.title }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="form-text">{{ 'Select categories then load their products.'|trans }}</div>
+                                </div>
+                                <div class="col-md-3">
+                                    <button type="button" class="btn btn-outline-primary w-100"
+                                            data-action="bo-sale-product-picker#loadProducts" data-testid="sale-load-products">
+                                        <i class="bi bi-download" aria-hidden="true"></i> {{ 'Load products'|trans }}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="border rounded p-3" style="max-height: 320px; overflow-y: auto;"
+                                 data-bo-sale-product-picker-target="productZone" data-testid="sale-product-zone">
+                                {% for product in selected_products %}
+                                    <div class="form-check" data-product-id="{{ product.id }}">
+                                        <input class="form-check-input" type="checkbox" name="products[]" value="{{ product.id }}" id="sale-product-{{ product.id }}" checked>
+                                        <label class="form-check-label" for="sale-product-{{ product.id }}">
+                                            <code>{{ product.ref }}</code> {{ product.title }}
+                                        </label>
+                                    </div>
+                                {% else %}
+                                    <p class="text-body-secondary mb-0" data-bo-sale-product-picker-target="emptyHint">{{ 'No product selected yet. Pick categories and load their products.'|trans }}</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card mb-3">
+                        <div class="card-header">{{ 'Settings'|trans }}</div>
+                        <div class="card-body">
+                            <div class="form-check form-switch mb-2">
+                                {{ form_widget(form.active, { attr: { class: 'form-check-input' } }) }}
+                                {{ form_label(form.active, null, { label_attr: { class: 'form-check-label' } }) }}
+                            </div>
+                            <div class="form-check form-switch mb-3">
+                                {{ form_widget(form.display_initial_price, { attr: { class: 'form-check-input' } }) }}
+                                {{ form_label(form.display_initial_price, null, { label_attr: { class: 'form-check-label' } }) }}
+                            </div>
+                            <div class="mb-3">
+                                {{ form_label(form.start_date) }}
+                                {{ form_widget(form.start_date, { attr: { class: 'form-control', placeholder: 'YYYY-MM-DD HH:mm:ss' } }) }}
+                            </div>
+                            <div class="mb-0">
+                                {{ form_label(form.end_date) }}
+                                {{ form_widget(form.end_date, { attr: { class: 'form-control', placeholder: 'YYYY-MM-DD HH:mm:ss' } }) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-3">
+                        <div class="card-header">{{ 'Discount'|trans }}</div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                {{ form_label(form.price_offset_type) }}
+                                {{ form_widget(form.price_offset_type, { attr: { class: 'form-select' } }) }}
+                            </div>
+                            <label class="form-label">{{ 'Discount value per currency'|trans }}</label>
+                            {% for currency in currencies %}
+                                <div class="input-group mb-2">
+                                    <span class="input-group-text" style="min-width: 4.5rem;">{{ currency.code }}</span>
+                                    <input type="number" step="0.01" min="0" class="form-control"
+                                           name="price_offset[{{ currency.id }}]" value="{{ currency.offset }}"
+                                           data-testid="sale-offset-{{ currency.id }}" aria-label="{{ currency.code }}">
+                                    <span class="input-group-text">{{ currency.symbol }}</span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {{ form_end(form) }}
+    </div>
+
+    {{ safe_hook('sale-edit.bottom', { sale_id: sale.id }) }}
+{% endblock %}
