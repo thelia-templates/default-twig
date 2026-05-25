@@ -920,6 +920,26 @@ return [
     'Yes' => 'Oui',
     'No' => 'Non',
 
+    // Form misc
+    'optional' => 'facultatif',
+
+    // Product form labels
+    'Product reference' => 'Référence produit',
+    'Product title' => 'Titre du produit',
+    'Default product category' => 'Rubrique par défaut',
+    'This product is online' => 'Ce produit est en ligne',
+    'Virtual product (no physical shipping)' => 'Produit virtuel (pas d\'expédition physique)',
+    'Base price (excluding taxes)' => 'Prix de base HT',
+    'Base price with taxes' => 'Prix de base TTC',
+    'Price currency' => 'Devise',
+    'Weight (kg)' => 'Poids (kg)',
+    'Stock' => 'Stock',
+    'Product template' => 'Gabarit du produit',
+    'Brand / Supplier' => 'Marque / Fournisseur',
+    'Virtual document' => 'Document virtuel',
+    'Detailed description' => 'Description détaillée',
+    'Conclusion' => 'Conclusion',
+
     // Administrator list
     '(No profile)' => '(Aucun profil)',
     'No profile defined yet.' => 'Aucun profil défini pour le moment.',

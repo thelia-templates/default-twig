@@ -40,7 +40,7 @@
             <{{ element|default('label') }}{% with { attr: label_attr } %}{{ block('attributes', 'form_div_layout.html.twig') }}{% endwith %}>
                 <span class="bo-form-label__text">{{ translation_domain is same as(false) ? label : label|trans(label_translation_parameters, translation_domain) }}</span>
                 {%- if required %}<span class="bo-form-label__required" aria-hidden="true">*</span>{% endif -%}
-                {%- if not required %}<small class="bo-form-label__optional text-body-secondary">({{ 'optional'|trans({}, 'core') }})</small>{% endif -%}
+                {%- if not required %} <small class="bo-form-label__optional text-body-secondary">({{ 'optional'|trans }})</small>{% endif -%}
                 {%- if help is not empty -%}
                     <small class="bo-form-label__help text-body-secondary">{{ translation_domain is same as(false) ? help : help|trans(help_translation_parameters, translation_domain) }}</small>
                 {%- endif -%}
