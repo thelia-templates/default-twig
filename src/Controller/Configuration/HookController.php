@@ -88,8 +88,8 @@ final class HookController
                 'id' => (int) $hook->getId(),
                 'code' => (string) $hook->getCode(),
                 'title' => (string) $hook->getTitle(),
-                'native_label' => $hook->getNative() ? 'Yes' : 'No',
-                'active_label' => $hook->getActivate() ? 'Yes' : 'No',
+                'native_label' => $hook->getNative() ? $this->translator->trans('Yes') : $this->translator->trans('No'),
+                'active_label' => $hook->getActivate() ? $this->translator->trans('Yes') : $this->translator->trans('No'),
                 '_actions' => [
                     new RowAction(
                         kind: 'edit',

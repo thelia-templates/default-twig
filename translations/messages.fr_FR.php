@@ -916,6 +916,10 @@ return [
     'Payment modules' => 'Modules de paiement',
     'Classic modules' => 'Modules classiques',
 
+    // Boolean labels
+    'Yes' => 'Oui',
+    'No' => 'Non',
+
     // Category list - product/subcategory counts
     '- All categories -' => '- Toutes les rubriques -',
     'no product' => 'aucun produit',
