@@ -1,0 +1,85 @@
+<?php
+
+declare(strict_types=1);
+
+/*
+ * This file is part of the Thelia package.
+ * http://www.thelia.net
+ *
+ * (c) OpenStudio <info@thelia.net>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace BackOfficeDefaultTwigBundle\Repository;
+
+use Thelia\Model\ExportCategoryQuery;
+use Thelia\Model\ExportQuery;
+use Thelia\Model\ImportCategoryQuery;
+use Thelia\Model\ImportQuery;
+
+/**
+ * Localized export/import catalogues for the data-transfer back-office screens.
+ * Each category carries its ordered definitions so the controller stays thin.
+ */
+final readonly class DataTransferRepository
+{
+    /**
+     * @return list<array{id: int, title: string, exports: list<array{id: int, ref: string, title: string, description: string, position: int}>}>
+     */
+    public function findExportCatalogue(string $locale): array
+    {
+        $categories = [];
+        foreach (ExportCategoryQuery::create()->orderByPosition()->find() as $category) {
+            $category->setLocale($locale);
+            $exports = [];
+            foreach (ExportQuery::create()->filterByExportCategoryId($category->getId())->orderByPosition()->find() as $export) {
+                $export->setLocale($locale);
+                $exports[] = [
+                    'id' => (int) $export->getId(),
+                    'ref' => (string) $export->getRef(),
+                    'title' => (string) $export->getTitle(),
+                    'description' => (string) $export->getDescription(),
+                    'position' => (int) $export->getPosition(),
+                ];
+            }
+            $categories[] = [
+                'id' => (int) $category->getId(),
+                'title' => (string) $category->getTitle(),
+                'exports' => $exports,
+            ];
+        }
+
+        return $categories;
+    }
+
+    /**
+     * @return list<array{id: int, title: string, imports: list<array{id: int, ref: string, title: string, description: string, position: int}>}>
+     */
+    public function findImportCatalogue(string $locale): array
+    {
+        $categories = [];
+        foreach (ImportCategoryQuery::create()->orderByPosition()->find() as $category) {
+            $category->setLocale($locale);
+            $imports = [];
+            foreach (ImportQuery::create()->filterByImportCategoryId($category->getId())->orderByPosition()->find() as $import) {
+                $import->setLocale($locale);
+                $imports[] = [
+                    'id' => (int) $import->getId(),
+                    'ref' => (string) $import->getRef(),
+                    'title' => (string) $import->getTitle(),
+                    'description' => (string) $import->getDescription(),
+                    'position' => (int) $import->getPosition(),
+                ];
+            }
+            $categories[] = [
+                'id' => (int) $category->getId(),
+                'title' => (string) $category->getTitle(),
+                'imports' => $imports,
+            ];
+        }
+
+        return $categories;
+    }
+}

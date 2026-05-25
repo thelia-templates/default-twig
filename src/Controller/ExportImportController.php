@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace BackOfficeDefaultTwigBundle\Controller;
 
+use BackOfficeDefaultTwigBundle\Repository\DataTransferRepository;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -34,10 +35,6 @@ use Thelia\Core\Security\Resource\AdminResources;
 use Thelia\Core\Serializer\SerializerManager;
 use Thelia\Domain\DataTransfer\ExportHandler;
 use Thelia\Domain\DataTransfer\ImportHandler;
-use Thelia\Model\ExportCategoryQuery;
-use Thelia\Model\ExportQuery;
-use Thelia\Model\ImportCategoryQuery;
-use Thelia\Model\ImportQuery;
 use Thelia\Model\LangQuery;
 use Twig\Environment;
 
@@ -54,6 +51,7 @@ final class ExportImportController
         private readonly UrlGeneratorInterface $urls,
         private readonly TranslatorInterface $translator,
         private readonly RequestStack $requestStack,
+        private readonly DataTransferRepository $dataTransferRepository,
     ) {
     }
 
@@ -64,29 +62,8 @@ final class ExportImportController
             return $denied;
         }
 
-        $locale = $this->defaultLocale();
-        $categories = [];
-        foreach (ExportCategoryQuery::create()->orderByPosition()->find() as $category) {
-            $category->setLocale($locale);
-            $exports = [];
-            foreach (ExportQuery::create()->filterByExportCategoryId($category->getId())->orderByPosition()->find() as $export) {
-                $export->setLocale($locale);
-                $exports[] = [
-                    'id' => (int) $export->getId(),
-                    'ref' => (string) $export->getRef(),
-                    'title' => (string) $export->getTitle(),
-                    'description' => (string) $export->getDescription(),
-                ];
-            }
-            $categories[] = [
-                'id' => (int) $category->getId(),
-                'title' => (string) $category->getTitle(),
-                'exports' => $exports,
-            ];
-        }
-
         return new Response($this->twig->render('@BackOfficeDefaultTwig/export/list.html.twig', [
-            'categories' => $categories,
+            'categories' => $this->dataTransferRepository->findExportCatalogue($this->defaultLocale()),
         ]));
     }
 
@@ -97,29 +74,8 @@ final class ExportImportController
             return $denied;
         }
 
-        $locale = $this->defaultLocale();
-        $categories = [];
-        foreach (ImportCategoryQuery::create()->orderByPosition()->find() as $category) {
-            $category->setLocale($locale);
-            $imports = [];
-            foreach (ImportQuery::create()->filterByImportCategoryId($category->getId())->orderByPosition()->find() as $import) {
-                $import->setLocale($locale);
-                $imports[] = [
-                    'id' => (int) $import->getId(),
-                    'ref' => (string) $import->getRef(),
-                    'title' => (string) $import->getTitle(),
-                    'description' => (string) $import->getDescription(),
-                ];
-            }
-            $categories[] = [
-                'id' => (int) $category->getId(),
-                'title' => (string) $category->getTitle(),
-                'imports' => $imports,
-            ];
-        }
-
         return new Response($this->twig->render('@BackOfficeDefaultTwig/import/list.html.twig', [
-            'categories' => $categories,
+            'categories' => $this->dataTransferRepository->findImportCatalogue($this->defaultLocale()),
         ]));
     }
 
