@@ -17,6 +17,8 @@ namespace BackOfficeDefaultTwigBundle\Controller\Catalog;
 use BackOfficeDefaultTwigBundle\Form\Product\ProductCloneType;
 use BackOfficeDefaultTwigBundle\Form\Product\ProductSeoType;
 use BackOfficeDefaultTwigBundle\Form\Product\ProductType;
+use BackOfficeDefaultTwigBundle\Repository\CategoryRepository;
+use BackOfficeDefaultTwigBundle\Repository\ProductRepository;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\Service\Catalog\ProductRelationsContext;
@@ -70,6 +72,8 @@ final class ProductController
         private readonly TokenProvider $tokens,
         private readonly TranslatorInterface $translator,
         private readonly ProductRelationsContext $relations,
+        private readonly CategoryRepository $categories,
+        private readonly ProductRepository $productRepository,
         private readonly EditLocaleResolver $editLocale,
     ) {
     }
@@ -176,6 +180,10 @@ final class ProductController
         $form = $this->buildUpdateForm($product, $locale);
         $seoForm = $this->buildSeoForm($product, $locale);
 
+        $defaultCategoryId = (int) $product->getDefaultCategoryId();
+        $defaultCategory = $defaultCategoryId > 0 ? CategoryQuery::create()->findPk($defaultCategoryId) : null;
+        $navigation = $this->productRepository->findPreviousNext($product);
+
         return new Response($this->twig->render(self::EDIT_TEMPLATE, array_merge(
             [
                 'product' => $product,
@@ -185,6 +193,9 @@ final class ProductController
                 'current_tab' => (string) $request->query->get('current_tab', 'general'),
                 'edit_language_id' => (int) $editLang->getId(),
                 'available_templates' => $this->templateChoices(),
+                'breadcrumb_path' => $this->categories->buildBreadcrumbPath($defaultCategory, $locale),
+                'prev_url' => $navigation['previous'] !== null ? $this->urls->generate(self::EDIT_ROUTE, ['product_id' => $navigation['previous']]) : null,
+                'next_url' => $navigation['next'] !== null ? $this->urls->generate(self::EDIT_ROUTE, ['product_id' => $navigation['next']]) : null,
             ],
             $this->relations->build($product, $locale),
         )));
