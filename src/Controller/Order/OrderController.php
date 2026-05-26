@@ -113,12 +113,20 @@ final class OrderController
         }
 
         $locale = $request->getLocale();
+        $navigation = $this->orderRepository->findPreviousNext($order);
+        $itemsTotal = $this->orderRepository->countOrderProducts($order_id);
+        $itemsPage = max(1, (int) $request->query->get('items_page', 1));
+        $itemsPerPage = 25;
+        $itemsLastPage = max(1, (int) ceil($itemsTotal / $itemsPerPage));
 
         return new Response($this->twig->render(self::DETAIL_TEMPLATE, array_merge(
             $this->detailContextBuilder->build($order, $locale),
             [
                 'order' => $order,
-                'order_items' => $this->orderItems($order),
+                'order_items' => $this->orderItemsPage($order_id, $itemsPage, $itemsPerPage),
+                'items_total' => $itemsTotal,
+                'items_page' => $itemsPage,
+                'items_last_page' => $itemsLastPage,
                 'order_addresses' => $this->orderAddresses($order, $locale),
                 'available_statuses' => $this->statusChoices($locale),
                 'customer_titles' => $this->customerTitleChoices($locale),
@@ -129,6 +137,8 @@ final class OrderController
                 'delivery_url' => $this->urls->generate('admin.order.pdf.delivery', ['order_id' => $order_id, 'browser' => 1]),
                 'delivery_download_url' => $this->urls->generate('admin.order.pdf.delivery', ['order_id' => $order_id, 'browser' => 0]),
                 'token' => $this->tokens->assignToken(),
+                'prev_url' => $navigation['previous'] !== null ? $this->urls->generate('admin.order.update.view', ['order_id' => $navigation['previous']]) : null,
+                'next_url' => $navigation['next'] !== null ? $this->urls->generate('admin.order.update.view', ['order_id' => $navigation['next']]) : null,
             ],
         )));
     }
@@ -325,10 +335,10 @@ final class OrderController
     /**
      * @return list<array<string, mixed>>
      */
-    private function orderItems(Order $order): array
+    private function orderItemsPage(int $orderId, int $page, int $perPage): array
     {
         $items = [];
-        foreach ($order->getOrderProducts() as $product) {
+        foreach ($this->orderRepository->findOrderProductsPage($orderId, $page, $perPage) as $product) {
             $wasInPromo = (bool) $product->getWasInPromo();
             $unitPriceHt = (float) ($wasInPromo ? $product->getPromoPrice() : $product->getPrice());
 

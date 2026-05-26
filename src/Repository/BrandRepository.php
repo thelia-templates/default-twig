@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace BackOfficeDefaultTwigBundle\Repository;
 
+use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\Collection\ObjectCollection;
 use Thelia\Model\Brand;
 use Thelia\Model\BrandImage;
@@ -51,5 +52,23 @@ final readonly class BrandRepository
         }
 
         return $images;
+    }
+
+    /** @return array{previous: ?int, next: ?int} */
+    public function findPreviousNext(Brand $current): array
+    {
+        $previous = BrandQuery::create()
+            ->filterByPosition($current->getPosition(), Criteria::LESS_THAN)
+            ->orderByPosition(Criteria::DESC)
+            ->findOne();
+        $next = BrandQuery::create()
+            ->filterByPosition($current->getPosition(), Criteria::GREATER_THAN)
+            ->orderByPosition(Criteria::ASC)
+            ->findOne();
+
+        return [
+            'previous' => $previous !== null ? (int) $previous->getId() : null,
+            'next' => $next !== null ? (int) $next->getId() : null,
+        ];
     }
 }

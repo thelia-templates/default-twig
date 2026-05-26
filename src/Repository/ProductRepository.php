@@ -146,4 +146,37 @@ final readonly class ProductRepository
 
         return $list;
     }
+
+    /** @return array{previous: ?int, next: ?int} */
+    public function findPreviousNext(Product $current): array
+    {
+        $defaultCategory = ProductCategoryQuery::create()
+            ->filterByProductId($current->getId())
+            ->filterByDefaultCategory(true)
+            ->findOne();
+        if ($defaultCategory === null) {
+            return ['previous' => null, 'next' => null];
+        }
+
+        $position = (int) $defaultCategory->getPosition();
+        $categoryId = (int) $defaultCategory->getCategoryId();
+
+        $previousRow = ProductCategoryQuery::create()
+            ->filterByCategoryId($categoryId)
+            ->filterByDefaultCategory(true)
+            ->filterByPosition($position, Criteria::LESS_THAN)
+            ->orderByPosition(Criteria::DESC)
+            ->findOne();
+        $nextRow = ProductCategoryQuery::create()
+            ->filterByCategoryId($categoryId)
+            ->filterByDefaultCategory(true)
+            ->filterByPosition($position, Criteria::GREATER_THAN)
+            ->orderByPosition(Criteria::ASC)
+            ->findOne();
+
+        return [
+            'previous' => $previousRow !== null ? (int) $previousRow->getProductId() : null,
+            'next' => $nextRow !== null ? (int) $nextRow->getProductId() : null,
+        ];
+    }
 }

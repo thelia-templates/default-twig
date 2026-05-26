@@ -119,6 +119,8 @@ final class BrandController
         $seoForm = $this->buildSeoForm($brand, $locale);
         $logoImages = $this->brandImages->listForBrand($brand_id, $locale);
 
+        $navigation = $this->brandRepository->findPreviousNext($brand);
+
         return new Response($this->twig->render(self::EDIT_TEMPLATE, [
             'brand' => $brand,
             'form' => $form->createView(),
@@ -128,6 +130,8 @@ final class BrandController
             'logo_images' => $logoImages,
             'logo_image_id' => (int) ($brand->getLogoImageId() ?? 0),
             'images_tab_url' => $this->urls->generate(self::EDIT_ROUTE, ['brand_id' => $brand_id, 'current_tab' => 'images']),
+            'prev_url' => $navigation['previous'] !== null ? $this->urls->generate(self::EDIT_ROUTE, ['brand_id' => $navigation['previous']]) : null,
+            'next_url' => $navigation['next'] !== null ? $this->urls->generate(self::EDIT_ROUTE, ['brand_id' => $navigation['next']]) : null,
         ]));
     }
 

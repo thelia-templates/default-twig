@@ -32,6 +32,13 @@
                 </div>
             </div>
             <div class="d-flex gap-2 flex-wrap" data-testid="order-actions">
+                {% include '@BackOfficeDefaultTwig/_prev_next_buttons.html.twig' with {
+                    prev_url: prev_url|default(null),
+                    next_url: next_url|default(null),
+                    prev_label: 'Edit previous order'|trans,
+                    next_label: 'Edit next order'|trans,
+                    testid: 'order',
+                } only %}
                 <div class="btn-group" data-controller="bo-print-iframe" data-bo-print-iframe-url-value="{{ invoice_url }}" data-bo-print-iframe-name-value="order-invoice">
                     <a href="{{ invoice_url }}" target="_blank" class="btn btn-outline-secondary" data-testid="order-invoice-link" title="{{ 'View invoice PDF'|trans }}">
                         <i class="bi bi-file-pdf" aria-hidden="true"></i> {{ 'Invoice'|trans }}
@@ -126,6 +133,19 @@
                             {% endif %}
                         </table>
                     </div>
+                    {% if items_last_page|default(1) > 1 %}
+                        <div class="card-footer">
+                            {{ component('BoPagination', {
+                                route: 'admin.order.update.view',
+                                currentPage: items_page,
+                                lastPage: items_last_page,
+                                routeParams: { order_id: order.id },
+                                pageParam: 'items_page',
+                                ariaLabel: 'Order items pagination'|trans,
+                                testid: 'order-items',
+                            }) }}
+                        </div>
+                    {% endif %}
                 </div>
 
                 <div class="card mb-3" data-testid="order-taxes-breakdown">

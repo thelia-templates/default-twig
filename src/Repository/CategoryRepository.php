@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace BackOfficeDefaultTwigBundle\Repository;
 
+use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\Collection\ObjectCollection;
 use Thelia\Model\Category;
 use Thelia\Model\CategoryQuery;
@@ -63,6 +64,26 @@ final readonly class CategoryRepository
     public function countChildren(int $parentId): int
     {
         return CategoryQuery::create()->filterByParent($parentId)->count();
+    }
+
+    /** @return array{previous: ?int, next: ?int} */
+    public function findPreviousNext(Category $current): array
+    {
+        $previous = CategoryQuery::create()
+            ->filterByParent($current->getParent())
+            ->filterByPosition($current->getPosition(), Criteria::LESS_THAN)
+            ->orderByPosition(Criteria::DESC)
+            ->findOne();
+        $next = CategoryQuery::create()
+            ->filterByParent($current->getParent())
+            ->filterByPosition($current->getPosition(), Criteria::GREATER_THAN)
+            ->orderByPosition(Criteria::ASC)
+            ->findOne();
+
+        return [
+            'previous' => $previous !== null ? (int) $previous->getId() : null,
+            'next' => $next !== null ? (int) $next->getId() : null,
+        ];
     }
 
     /**

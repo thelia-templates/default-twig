@@ -93,6 +93,24 @@ final readonly class OrderRepository
             ->find();
     }
 
+    public function countOrderProducts(int $orderId): int
+    {
+        return OrderProductQuery::create()->filterByOrderId($orderId)->count();
+    }
+
+    public function findOrderProductsPage(int $orderId, int $page, int $perPage): ObjectCollection
+    {
+        $page = max(1, $page);
+        $offset = ($page - 1) * $perPage;
+
+        return OrderProductQuery::create()
+            ->filterByOrderId($orderId)
+            ->orderById()
+            ->offset($offset)
+            ->limit($perPage)
+            ->find();
+    }
+
     /**
      * @return ObjectCollection<int, OrderStatus>
      */
@@ -373,5 +391,25 @@ final readonly class OrderRepository
         }
 
         return (int) (ceil($value / 1000) * 1000);
+    }
+
+    /** @return array{previous: ?int, next: ?int} */
+    public function findPreviousNext(Order $current): array
+    {
+        $previous = OrderQuery::create()
+            ->filterById($current->getId(), Criteria::LESS_THAN)
+            ->filterByStatusId($current->getStatusId(), Criteria::EQUAL)
+            ->orderById(Criteria::DESC)
+            ->findOne();
+        $next = OrderQuery::create()
+            ->filterById($current->getId(), Criteria::GREATER_THAN)
+            ->filterByStatusId($current->getStatusId(), Criteria::EQUAL)
+            ->orderById(Criteria::ASC)
+            ->findOne();
+
+        return [
+            'previous' => $previous !== null ? (int) $previous->getId() : null,
+            'next' => $next !== null ? (int) $next->getId() : null,
+        ];
     }
 }
