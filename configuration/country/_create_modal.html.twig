@@ -1,0 +1,10 @@
+{{ component('BoCreateDialog', {
+    id: 'country-create-modal',
+    title: 'Create a new country',
+    form: create_form,
+    formAction: path('admin.configuration.countries.create'),
+    fieldsTemplate: '@BackOfficeDefaultTwig/configuration/country/_form_fields.html.twig',
+    submitLabel: 'Create this country',
+    testid: 'country-create',
+    hook: 'country.create-form',
+}) }}

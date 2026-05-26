@@ -84,8 +84,13 @@ final class CountryController
             $rows[] = $this->countryToRow($country);
         }
 
+        $createForm = $this->formFactory->createNamed('thelia_country_create', CountryType::class, [
+            'locale' => $request->getLocale(),
+        ], []);
+
         return new Response($this->twig->render(self::LIST_TEMPLATE, [
             'rows' => $rows,
+            'create_form' => $createForm->createView(),
         ]));
     }
 
@@ -255,6 +260,9 @@ final class CountryController
     private function createEvent(FormInterface $validated): CountryCreateEvent
     {
         $data = $validated->getData() ?? [];
+        // CountryCreateEvent only supports the base fields; chapo/description/
+        // postscriptum and the zip-code settings are exposed on CountryUpdateEvent
+        // only, so they are edited from the country edit screen after creation.
         $event = new CountryCreateEvent();
         $event->setLocale((string) ($data['locale'] ?? $this->defaultLocale()))
             ->setTitle((string) ($data['title'] ?? ''))
@@ -263,12 +271,7 @@ final class CountryController
             ->setIsoAlpha3((string) ($data['isoalpha3'] ?? ''))
             ->setArea((int) ($data['area'] ?? 0))
             ->setVisible((bool) ($data['visible'] ?? false))
-            ->setHasStates((bool) ($data['has_states'] ?? false))
-            ->setNeedZipCode((bool) ($data['need_zip_code'] ?? false))
-            ->setZipCodeFormat((string) ($data['zip_code_format'] ?? ''))
-            ->setChapo((string) ($data['chapo'] ?? ''))
-            ->setDescription((string) ($data['description'] ?? ''))
-            ->setPostscriptum((string) ($data['postscriptum'] ?? ''));
+            ->setHasStates((bool) ($data['has_states'] ?? false));
 
         return $event;
     }
@@ -333,6 +336,7 @@ final class CountryController
             'isocode' => (string) $country->getIsocode(),
             'visible' => (bool) $country->getVisible(),
             'default' => (bool) $country->getByDefault(),
+            'toggle_visible_url' => $this->tokenizedUrl('admin.configuration.countries.toggle-visibility', ['country_id' => $id]),
             'toggle_default_url' => $this->tokenizedUrl('admin.configuration.countries.toggle-default', ['country_id' => $id]),
             '_actions' => $actions,
         ];

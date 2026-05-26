@@ -1,0 +1,23 @@
+{% if form.id is defined %}
+    {{ form_widget(form.id) }}
+{% endif %}
+{{ form_widget(form.locale) }}
+<div class="row g-3">
+    <div class="col-md-6">{{ form_row(form.title) }}</div>
+    <div class="col-md-2">{{ form_row(form.isocode) }}</div>
+    <div class="col-md-2">{{ form_row(form.isoalpha2) }}</div>
+    <div class="col-md-2">{{ form_row(form.isoalpha3) }}</div>
+    <div class="col-md-6">{{ form_row(form.area) }}</div>
+    <div class="col-md-3">
+        <div class="form-check mt-4">
+            {{ form_widget(form.visible, { attr: { class: 'form-check-input' } }) }}
+            {{ form_label(form.visible, null, { label_attr: { class: 'form-check-label' } }) }}
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="form-check mt-4">
+            {{ form_widget(form.has_states, { attr: { class: 'form-check-input' } }) }}
+            {{ form_label(form.has_states, null, { label_attr: { class: 'form-check-label' } }) }}
+        </div>
+    </div>
+</div>

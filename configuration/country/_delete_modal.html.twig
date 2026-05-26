@@ -1,0 +1,10 @@
+{{ component('BoConfirmDialog', {
+    id: 'country-delete-modal',
+    title: 'Delete country',
+    formAction: path('admin.configuration.countries.delete'),
+    message: 'Do you really want to delete this country?',
+    testid: 'country-delete',
+    hook: 'country.delete-form',
+    prefillTrigger: 'data-country-id',
+    prefillInput: 'country_id',
+}) }}

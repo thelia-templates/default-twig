@@ -64,35 +64,39 @@ final class CountryType extends AbstractType
                 'required' => false,
                 'label' => $this->translator->trans('Manages states'),
             ])
-            ->add('need_zip_code', CheckboxType::class, [
-                'required' => false,
-                'label' => $this->translator->trans('This country uses a ZIP code'),
-            ])
-            ->add('zip_code_format', TextType::class, [
-                'required' => false,
-                'label' => $this->translator->trans('ZIP code format'),
-                'help' => $this->translator->trans('Use N for a digit, L for a letter, C for the ISO 3166-1 alpha-2 country code, and S for the state ISO 3166-2 code.'),
-            ])
-            ->add('chapo', TextareaType::class, [
-                'required' => false,
-                'label' => $this->translator->trans('Summary'),
-            ])
-            ->add('description', TextareaType::class, [
-                'required' => false,
-                'label' => $this->translator->trans('Detailed description'),
-            ])
-            ->add('postscriptum', TextareaType::class, [
-                'required' => false,
-                'label' => $this->translator->trans('Conclusion'),
-            ])
             ->add('locale', HiddenType::class, [
                 'constraints' => [new NotBlank()],
             ]);
 
+        // chapo/description/postscriptum and the zip-code settings are only
+        // editable on update: CountryCreateEvent does not carry them, so they
+        // are set from the country edit screen after creation.
         if ($options['include_id']) {
-            $builder->add('id', HiddenType::class, [
-                'constraints' => [new NotBlank(), new GreaterThan(0)],
-            ]);
+            $builder
+                ->add('id', HiddenType::class, [
+                    'constraints' => [new NotBlank(), new GreaterThan(0)],
+                ])
+                ->add('need_zip_code', CheckboxType::class, [
+                    'required' => false,
+                    'label' => $this->translator->trans('This country uses a ZIP code'),
+                ])
+                ->add('zip_code_format', TextType::class, [
+                    'required' => false,
+                    'label' => $this->translator->trans('ZIP code format'),
+                    'help' => $this->translator->trans('Use N for a digit, L for a letter, C for the ISO 3166-1 alpha-2 country code, and S for the state ISO 3166-2 code.'),
+                ])
+                ->add('chapo', TextareaType::class, [
+                    'required' => false,
+                    'label' => $this->translator->trans('Summary'),
+                ])
+                ->add('description', TextareaType::class, [
+                    'required' => false,
+                    'label' => $this->translator->trans('Detailed description'),
+                ])
+                ->add('postscriptum', TextareaType::class, [
+                    'required' => false,
+                    'label' => $this->translator->trans('Conclusion'),
+                ]);
         }
     }
 

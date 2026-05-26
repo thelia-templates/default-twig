@@ -14,8 +14,17 @@
 {% endblock %}
 
 {% block content %}
+    {{ safe_hook('countries.top') }}
+
     <div class="container-fluid" data-testid="countries-page">
-        <h1 class="h3 mb-3">{{ 'Countries'|trans }}</h1>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h1 class="h3 mb-0">{{ 'Countries'|trans }}</h1>
+            {% if is_granted('CREATE', 'admin.configuration.country') %}
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#country-create-modal" data-testid="country-create-button">
+                    <i class="bi bi-plus-lg" aria-hidden="true"></i> {{ 'Add a new country'|trans }}
+                </button>
+            {% endif %}
+        </div>
 
         {{ component('BoDataTable', {
             id: 'countries',
@@ -25,7 +34,7 @@
                 column('isoalpha2', 'ISO-2'|trans, 'center'),
                 column('isoalpha3', 'ISO-3'|trans, 'center'),
                 column('isocode', 'Numeric'|trans, 'center'),
-                column_toggle('visible', 'Online'|trans, null),
+                column_toggle('visible', 'Online'|trans, 'toggle_visible_url'),
                 column_radio('default', 'Default'|trans, 'country_default', 'id', 'default', null, 'toggle_default_url'),
                 column_actions('_actions', 'Actions'|trans),
             ],
@@ -33,6 +42,11 @@
             emptyMessage: 'No country defined.'|trans,
         }) }}
     </div>
+
+    {{ safe_hook('countries.bottom') }}
+
+    {% include '@BackOfficeDefaultTwig/configuration/country/_create_modal.html.twig' %}
+    {% include '@BackOfficeDefaultTwig/configuration/country/_delete_modal.html.twig' %}
 {% endblock %}
 
 {% block scripts_extra %}
