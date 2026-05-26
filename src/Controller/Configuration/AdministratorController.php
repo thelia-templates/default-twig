@@ -30,6 +30,7 @@ use Thelia\Core\Event\Administrator\AdministratorEvent;
 use Thelia\Core\Event\TheliaEvents;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
+use Thelia\Core\Security\SecurityContext;
 use Thelia\Model\Admin;
 use Thelia\Model\AdminQuery;
 use Thelia\Model\ProfileQuery;
@@ -51,6 +52,7 @@ final class AdministratorController
         private readonly TokenProvider $tokens,
         private readonly UrlGeneratorInterface $urls,
         private readonly TranslatorInterface $translator,
+        private readonly SecurityContext $securityContext,
     ) {
     }
 
@@ -139,8 +141,16 @@ final class AdministratorController
     #[Route('/delete', name: 'delete', methods: ['POST', 'GET'])]
     public function delete(Request $request): Response
     {
+        $administratorId = (int) $request->get('administrator_id', 0);
+
+        if ($administratorId === $this->currentAdminId()) {
+            $this->flashError($request, $this->translator->trans('You cannot delete your own administrator account.'));
+
+            return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
+        }
+
         $event = new AdministratorEvent();
-        $event->setId((int) $request->get('administrator_id', 0));
+        $event->setId($administratorId);
 
         return $this->action->tokenAction(
             resource: self::RESOURCE,
@@ -185,9 +195,10 @@ final class AdministratorController
         $editForms = [];
         $defaultLocale = $this->resolveDefaultLocale();
         $profileChoices = $this->profileChoices();
+        $currentAdminId = $this->currentAdminId();
 
         foreach ($admins as $admin) {
-            $rows[] = $this->administratorToRow($admin);
+            $rows[] = $this->administratorToRow($admin, $currentAdminId);
             $editForms[$admin->getId()] = $this->createEditForm($admin, $defaultLocale, $profileChoices)->createView();
         }
 
@@ -207,7 +218,7 @@ final class AdministratorController
     /**
      * @return array<string, mixed>
      */
-    private function administratorToRow(Admin $admin): array
+    private function administratorToRow(Admin $admin, ?int $currentAdminId): array
     {
         $id = $admin->getId();
 
@@ -220,15 +231,18 @@ final class AdministratorController
                 grantedSubject: self::RESOURCE,
                 dataAttributes: ['administrator-id' => $id],
             ),
-            new RowAction(
+        ];
+
+        if ($id !== $currentAdminId) {
+            $actions[] = new RowAction(
                 kind: 'delete',
                 label: $this->translator->trans('Delete this administrator'),
                 modalTarget: '#administrator-delete-modal',
                 grantedAttribute: AccessManager::DELETE,
                 grantedSubject: self::RESOURCE,
                 dataAttributes: ['administrator-id' => $id, 'administrator-login' => $admin->getLogin()],
-            ),
-        ];
+            );
+        }
 
         return [
             'id' => $id,
@@ -277,5 +291,23 @@ final class AdministratorController
         $defaultLang = \Thelia\Model\LangQuery::create()->findOneByByDefault(true);
 
         return $defaultLang?->getLocale() ?? 'en_US';
+    }
+
+    private function currentAdminId(): ?int
+    {
+        $admin = $this->securityContext->getAdminUser();
+
+        return $admin instanceof Admin ? (int) $admin->getId() : null;
+    }
+
+    private function flashError(Request $request, string $message): void
+    {
+        try {
+            $session = $request->getSession();
+            if (method_exists($session, 'getFlashBag')) {
+                $session->getFlashBag()->add('danger', $message);
+            }
+        } catch (\Throwable) {
+        }
     }
 }
