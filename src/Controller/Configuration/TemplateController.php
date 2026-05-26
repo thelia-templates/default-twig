@@ -17,6 +17,7 @@ namespace BackOfficeDefaultTwigBundle\Controller\Configuration;
 use BackOfficeDefaultTwigBundle\Form\Template\TemplateType;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
+use BackOfficeDefaultTwigBundle\Service\Catalog\ChoiceFilterPresenter;
 use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
 use Symfony\Component\Form\FormFactoryInterface;
@@ -72,6 +73,7 @@ final class TemplateController
         private readonly TranslatorInterface $translator,
         private readonly \Symfony\Contracts\EventDispatcher\EventDispatcherInterface $events,
         private readonly EditLocaleResolver $editLocale,
+        private readonly ChoiceFilterPresenter $choiceFilterPresenter,
         private readonly ProductRepository $productRepository,
         private readonly CategoryRepository $categoryRepository,
     ) {
@@ -138,6 +140,7 @@ final class TemplateController
             'position_token' => $this->tokens->assignToken(),
             'products_using' => $this->productsUsingTemplate($template, $locale),
             'categories_defaulting' => $this->categoriesDefaultingToTemplate($template, $locale),
+            'choice_filter' => $this->choiceFilterPresenter->forTemplate($templateId, $locale),
         ]));
     }
 

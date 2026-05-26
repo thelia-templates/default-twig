@@ -19,6 +19,7 @@ use BackOfficeDefaultTwigBundle\Form\Catalog\CategoryType;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\Service\Catalog\CategoryListPresenter;
+use BackOfficeDefaultTwigBundle\Service\Catalog\ChoiceFilterPresenter;
 use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
@@ -67,6 +68,7 @@ final class CategoryController
         private readonly TokenProvider $tokens,
         private readonly TranslatorInterface $translator,
         private readonly CategoryListPresenter $listPresenter,
+        private readonly ChoiceFilterPresenter $choiceFilterPresenter,
         private readonly EditLocaleResolver $editLocale,
     ) {
     }
@@ -140,6 +142,7 @@ final class CategoryController
             'available_related_content_url' => $this->urls->generate('admin.category.available-related-content', ['categoryId' => (int) $category->getId(), 'folderId' => 0, '_format' => 'json']),
             'delete_related_content_token' => $this->tokens->assignToken(),
             'selected_folder_id' => (int) $request->query->get('folder_id', 0),
+            'choice_filter' => $this->choiceFilterPresenter->forCategory($categoryId, $locale),
         ]));
     }
 

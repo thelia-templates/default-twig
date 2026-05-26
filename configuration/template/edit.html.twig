@@ -92,6 +92,10 @@
             </div>
         </div>
 
+        {% if choice_filter is defined %}
+            {% include '@BackOfficeDefaultTwig/catalog/_choice_filter_section.html.twig' with { data: choice_filter, scope_template_id: template.id } only %}
+        {% endif %}
+
         <div class="row mt-4">
             <div class="col-md-6">
                 <div class="card" data-testid="template-products-using">

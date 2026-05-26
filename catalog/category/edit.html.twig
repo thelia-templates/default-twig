@@ -256,6 +256,11 @@
                         <input type="hidden" name="current_tab" value="associations">
                     {% endblock %}
                 {% endcomponent %}
+
+                {% if choice_filter is defined %}
+                    {% set scope_category_id = category.id %}
+                    {% include '@BackOfficeDefaultTwig/catalog/_choice_filter_section.html.twig' with { data: choice_filter, scope_category_id: scope_category_id } only %}
+                {% endif %}
             </div>
 
             <div class="tab-pane fade {% if current_tab == 'images' %}show active{% endif %}" id="tab-images" role="tabpanel">
