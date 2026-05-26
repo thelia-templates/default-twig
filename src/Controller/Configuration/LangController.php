@@ -19,7 +19,9 @@ use BackOfficeDefaultTwigBundle\Form\Lang\LangType;
 use BackOfficeDefaultTwigBundle\Form\Lang\LangUrlType;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
+use BackOfficeDefaultTwigBundle\UiComponents\DataTable\ListSort;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
+use Propel\Runtime\ActiveQuery\Criteria;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -64,13 +66,13 @@ final class LangController
     }
 
     #[Route('', name: 'default', methods: ['GET'])]
-    public function list(): Response
+    public function list(Request $request): Response
     {
         if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::VIEW)) {
             return $denied;
         }
 
-        return new Response($this->twig->render(self::LIST_TEMPLATE, $this->buildListContext()));
+        return new Response($this->twig->render(self::LIST_TEMPLATE, $this->buildListContext($request)));
     }
 
     #[Route('/update/{lang_id}', name: 'update', requirements: ['lang_id' => '\d+'], methods: ['GET'])]
@@ -314,9 +316,21 @@ final class LangController
     /**
      * @return array<string, mixed>
      */
-    private function buildListContext(): array
+    private function buildListContext(?Request $request = null): array
     {
-        $languages = LangQuery::create()->orderByPosition()->find();
+        $sort = $request !== null
+            ? ListSort::fromRequest($request, ['id', 'title', 'code', 'locale', 'position'], 'position')
+            : new ListSort('position', 'asc');
+        $criteria = strtoupper($sort->direction) === 'DESC' ? Criteria::DESC : Criteria::ASC;
+        $query = LangQuery::create();
+        match ($sort->field) {
+            'id' => $query->orderById($criteria),
+            'title' => $query->orderByTitle($criteria),
+            'code' => $query->orderByCode($criteria),
+            'locale' => $query->orderByLocale($criteria),
+            default => $query->orderByPosition($criteria),
+        };
+        $languages = $query->find();
         $rows = [];
         $editForms = [];
 
@@ -344,6 +358,8 @@ final class LangController
             'default_behavior_form' => $defaultBehaviorForm->createView(),
             'url_form' => $urlForm->createView(),
             'one_domain_per_lang' => (bool) ConfigQuery::isMultiDomainActivated(),
+            'sort_field' => $sort->field,
+            'sort_direction' => $sort->direction,
         ];
     }
 

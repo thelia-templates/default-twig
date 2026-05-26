@@ -30,12 +30,14 @@
         {{ component('BoDataTable', {
             id: 'templates',
             columns: [
-                column('id', 'ID'|trans),
-                column('name', 'Name'|trans),
+                column('id', 'ID'|trans, 'start', 'id'),
+                column('name', 'Name'|trans, 'start', 'name'),
                 column_actions('_actions', 'Actions'|trans),
             ],
             rows: rows,
             emptyMessage: 'No template defined yet.'|trans,
+            sortField: sort_field,
+            sortDirection: sort_direction,
         }) }}
     </div>
 

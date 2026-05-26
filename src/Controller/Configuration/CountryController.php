@@ -18,7 +18,9 @@ use BackOfficeDefaultTwigBundle\Form\Configuration\CountryType;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
+use BackOfficeDefaultTwigBundle\UiComponents\DataTable\ListSort;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
+use Propel\Runtime\ActiveQuery\Criteria;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -73,10 +75,17 @@ final class CountryController
         }
 
         $locale = $request->getLocale();
-        $countries = CountryQuery::create()
-            ->joinWithI18n($locale)
-            ->orderBy(CountryI18nTableMap::COL_TITLE)
-            ->find();
+        $sort = ListSort::fromRequest($request, ['id', 'title', 'iso_code', 'iso_alpha2', 'iso_alpha3'], 'title');
+        $criteria = strtoupper($sort->direction) === 'DESC' ? Criteria::DESC : Criteria::ASC;
+        $query = CountryQuery::create()->joinWithI18n($locale);
+        match ($sort->field) {
+            'id' => $query->orderById($criteria),
+            'iso_code' => $query->orderByIsocode($criteria),
+            'iso_alpha2' => $query->orderByIsoalpha2($criteria),
+            'iso_alpha3' => $query->orderByIsoalpha3($criteria),
+            default => $query->orderBy(CountryI18nTableMap::COL_TITLE, $criteria),
+        };
+        $countries = $query->find();
         $rows = [];
         foreach ($countries as $country) {
             \assert($country instanceof Country);
@@ -91,6 +100,8 @@ final class CountryController
         return new Response($this->twig->render(self::LIST_TEMPLATE, [
             'rows' => $rows,
             'create_form' => $createForm->createView(),
+            'sort_field' => $sort->field,
+            'sort_direction' => $sort->direction,
         ]));
     }
 

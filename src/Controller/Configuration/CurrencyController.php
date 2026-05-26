@@ -17,7 +17,9 @@ namespace BackOfficeDefaultTwigBundle\Controller\Configuration;
 use BackOfficeDefaultTwigBundle\Form\Currency\CurrencyType;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
+use BackOfficeDefaultTwigBundle\UiComponents\DataTable\ListSort;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
+use Propel\Runtime\ActiveQuery\Criteria;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -70,7 +72,7 @@ final class CurrencyController
 
         return new Response($this->twig->render(
             self::LIST_TEMPLATE,
-            $this->buildListContext(undefinedRates: $undefinedRates),
+            $this->buildListContext($request, undefinedRates: $undefinedRates),
         ));
     }
 
@@ -290,9 +292,22 @@ final class CurrencyController
      *
      * @return array<string, mixed>
      */
-    private function buildListContext(array $undefinedRates = []): array
+    private function buildListContext(?Request $request = null, array $undefinedRates = []): array
     {
-        $currencies = CurrencyQuery::create()->orderByPosition()->find();
+        $sort = $request !== null
+            ? ListSort::fromRequest($request, ['id', 'name', 'code', 'symbol', 'rate', 'position'], 'position')
+            : new ListSort('position', 'asc');
+        $criteria = strtoupper($sort->direction) === 'DESC' ? Criteria::DESC : Criteria::ASC;
+        $query = CurrencyQuery::create();
+        match ($sort->field) {
+            'id' => $query->orderById($criteria),
+            'name' => $query->orderByName($criteria),
+            'code' => $query->orderByCode($criteria),
+            'symbol' => $query->orderBySymbol($criteria),
+            'rate' => $query->orderByRate($criteria),
+            default => $query->orderByPosition($criteria),
+        };
+        $currencies = $query->find();
         $rows = [];
         $editForms = [];
 
@@ -311,6 +326,8 @@ final class CurrencyController
             'undefined_rates' => $this->resolveUndefinedRateNames($undefinedRates),
             'update_position_url' => $this->urls->generate('admin.configuration.currencies.update-position'),
             'update_position_token' => $this->tokens->assignToken(),
+            'sort_field' => $sort->field,
+            'sort_direction' => $sort->direction,
         ];
     }
 

@@ -21,6 +21,7 @@ use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\Service\Catalog\BrandImagePresenter;
 use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
+use BackOfficeDefaultTwigBundle\UiComponents\DataTable\ListSort;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
@@ -347,7 +348,8 @@ final class BrandController
     private function buildListContext(Request $request): array
     {
         $locale = $request->getLocale();
-        $brands = $this->brandRepository->findAllOrderedByPosition();
+        $sort = ListSort::fromRequest($request, ['id', 'title', 'visible', 'position'], 'position');
+        $brands = $this->brandRepository->findAllSorted($sort->field, $sort->direction, $locale);
         $rows = [];
 
         foreach ($brands as $brand) {
@@ -367,6 +369,8 @@ final class BrandController
             'create_form' => $createForm->createView(),
             'update_position_url' => $this->urls->generate('admin.brand.update-position'),
             'update_position_token' => $this->tokens->assignToken(),
+            'sort_field' => $sort->field,
+            'sort_direction' => $sort->direction,
         ];
     }
 

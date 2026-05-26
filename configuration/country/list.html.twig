@@ -29,17 +29,19 @@
         {{ component('BoDataTable', {
             id: 'countries',
             columns: [
-                column('id', 'ID'|trans),
-                column('title', 'Country'|trans),
-                column('isoalpha2', 'ISO-2'|trans, 'center'),
-                column('isoalpha3', 'ISO-3'|trans, 'center'),
-                column('isocode', 'Numeric'|trans, 'center'),
+                column('id', 'ID'|trans, 'start', 'id'),
+                column('title', 'Country'|trans, 'start', 'title'),
+                column('isoalpha2', 'ISO-2'|trans, 'center', 'iso_alpha2'),
+                column('isoalpha3', 'ISO-3'|trans, 'center', 'iso_alpha3'),
+                column('isocode', 'Numeric'|trans, 'center', 'iso_code'),
                 column_toggle('visible', 'Online'|trans, 'toggle_visible_url'),
                 column_radio('default', 'Default'|trans, 'country_default', 'id', 'default', null, 'toggle_default_url'),
                 column_actions('_actions', 'Actions'|trans),
             ],
             rows: rows,
             emptyMessage: 'No country defined.'|trans,
+            sortField: sort_field,
+            sortDirection: sort_direction,
         }) }}
     </div>
 

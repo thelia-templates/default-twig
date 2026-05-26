@@ -30,13 +30,15 @@
         {{ component('BoDataTable', {
             id: 'features',
             columns: [
-                column('id', 'ID'|trans),
-                column('title', 'Title'|trans),
-                column('position', 'Position'|trans, 'center'),
+                column('id', 'ID'|trans, 'start', 'id'),
+                column('title', 'Title'|trans, 'start', 'title'),
+                column('position', 'Position'|trans, 'center', 'position'),
                 column_actions('_actions', 'Actions'|trans),
             ],
             rows: rows,
             emptyMessage: 'No feature defined yet.'|trans,
+            sortField: sort_field,
+            sortDirection: sort_direction,
             tbodyAttributes: {
                 'data-controller': 'bo-sortable',
                 'data-bo-sortable-url-value': update_position_url,

@@ -19,7 +19,9 @@ use BackOfficeDefaultTwigBundle\Form\Feature\FeatureType;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
+use BackOfficeDefaultTwigBundle\UiComponents\DataTable\ListSort;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
+use Propel\Runtime\ActiveQuery\Criteria;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -298,7 +300,15 @@ final class FeatureController
     private function buildListContext(Request $request): array
     {
         $locale = $request->getLocale();
-        $features = FeatureQuery::create()->orderByPosition()->find();
+        $sort = ListSort::fromRequest($request, ['id', 'title', 'position'], 'position');
+        $criteria = strtoupper($sort->direction) === 'DESC' ? Criteria::DESC : Criteria::ASC;
+        $query = FeatureQuery::create();
+        match ($sort->field) {
+            'id' => $query->orderById($criteria),
+            'title' => $query->useFeatureI18nQuery(null, Criteria::LEFT_JOIN)->filterByLocale($locale)->orderByTitle($criteria)->endUse(),
+            default => $query->orderByPosition($criteria),
+        };
+        $features = $query->find();
         $rows = [];
 
         foreach ($features as $feature) {
@@ -318,6 +328,8 @@ final class FeatureController
             'create_form' => $createForm->createView(),
             'update_position_url' => $this->urls->generate('admin.configuration.features.update-position'),
             'update_position_token' => $this->tokens->assignToken(),
+            'sort_field' => $sort->field,
+            'sort_direction' => $sort->direction,
         ];
     }
 

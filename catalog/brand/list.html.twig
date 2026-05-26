@@ -31,14 +31,16 @@
         {{ component('BoDataTable', {
             id: 'brands',
             columns: [
-                column('id', 'ID'|trans),
-                column('title', 'Title'|trans),
-                column_toggle('visible', 'Online'|trans, 'toggle_visible_url'),
-                column('position', 'Position'|trans, 'center'),
+                column('id', 'ID'|trans, 'start', 'id'),
+                column('title', 'Title'|trans, 'start', 'title'),
+                column_toggle('visible', 'Online'|trans, 'toggle_visible_url', 'center', 'bi-check-circle-fill text-success', 'bi-circle text-secondary', 'visible'),
+                column('position', 'Position'|trans, 'center', 'position'),
                 column_actions('_actions', 'Actions'|trans),
             ],
             rows: rows,
             emptyMessage: 'No brand defined yet.'|trans,
+            sortField: sort_field,
+            sortDirection: sort_direction,
             tbodyAttributes: {
                 'data-controller': 'bo-sortable',
                 'data-bo-sortable-url-value': update_position_url,

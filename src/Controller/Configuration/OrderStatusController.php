@@ -18,7 +18,9 @@ use BackOfficeDefaultTwigBundle\Form\Order\OrderStatusType;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
+use BackOfficeDefaultTwigBundle\UiComponents\DataTable\ListSort;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
+use Propel\Runtime\ActiveQuery\Criteria;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -207,7 +209,16 @@ final class OrderStatusController
     private function buildListContext(Request $request): array
     {
         $locale = $request->getLocale();
-        $statuses = OrderStatusQuery::create()->orderByPosition()->find();
+        $sort = ListSort::fromRequest($request, ['id', 'code', 'title', 'position'], 'position');
+        $criteria = strtoupper($sort->direction) === 'DESC' ? Criteria::DESC : Criteria::ASC;
+        $query = OrderStatusQuery::create();
+        match ($sort->field) {
+            'id' => $query->orderById($criteria),
+            'code' => $query->orderByCode($criteria),
+            'title' => $query->useOrderStatusI18nQuery(null, Criteria::LEFT_JOIN)->filterByLocale($locale)->orderByTitle($criteria)->endUse(),
+            default => $query->orderByPosition($criteria),
+        };
+        $statuses = $query->find();
         $rows = [];
         foreach ($statuses as $status) {
             \assert($status instanceof OrderStatus);
@@ -225,6 +236,8 @@ final class OrderStatusController
             'create_form' => $createForm->createView(),
             'update_position_url' => $this->urls->generate('admin.order-status.update-position'),
             'update_position_token' => $this->tokens->assignToken(),
+            'sort_field' => $sort->field,
+            'sort_direction' => $sort->direction,
         ];
     }
 

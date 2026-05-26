@@ -37,6 +37,29 @@ final readonly class BrandRepository
     }
 
     /**
+     * @return ObjectCollection<int, Brand>
+     */
+    public function findAllSorted(string $field, string $direction, string $locale): ObjectCollection
+    {
+        $criteria = strtoupper($direction) === 'DESC' ? Criteria::DESC : Criteria::ASC;
+        $query = BrandQuery::create();
+
+        match ($field) {
+            'id' => $query->orderById($criteria),
+            'visible' => $query->orderByVisible($criteria),
+            'position' => $query->orderByPosition($criteria),
+            'title' => $query
+                ->useBrandI18nQuery(null, Criteria::LEFT_JOIN)
+                    ->filterByLocale($locale)
+                    ->orderByTitle($criteria)
+                ->endUse(),
+            default => $query->orderByPosition($criteria),
+        };
+
+        return $query->find();
+    }
+
+    /**
      * @return ObjectCollection<int, BrandImage>
      */
     public function findImagesForBrand(int $brandId, string $locale): ObjectCollection

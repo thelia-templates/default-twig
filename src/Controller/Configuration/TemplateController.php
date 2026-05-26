@@ -19,7 +19,9 @@ use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\Service\Catalog\ChoiceFilterPresenter;
 use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
+use BackOfficeDefaultTwigBundle\UiComponents\DataTable\ListSort;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
+use Propel\Runtime\ActiveQuery\Criteria;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -387,7 +389,14 @@ final class TemplateController
     private function buildListContext(Request $request): array
     {
         $locale = $request->getLocale();
-        $templates = TemplateQuery::create()->orderById()->find();
+        $sort = ListSort::fromRequest($request, ['id', 'name'], 'id');
+        $criteria = strtoupper($sort->direction) === 'DESC' ? Criteria::DESC : Criteria::ASC;
+        $query = TemplateQuery::create();
+        match ($sort->field) {
+            'name' => $query->orderByName($criteria),
+            default => $query->orderById($criteria),
+        };
+        $templates = $query->find();
         $rows = [];
 
         foreach ($templates as $template) {
@@ -404,6 +413,8 @@ final class TemplateController
         return [
             'rows' => $rows,
             'create_form' => $createForm->createView(),
+            'sort_field' => $sort->field,
+            'sort_direction' => $sort->direction,
         ];
     }
 
