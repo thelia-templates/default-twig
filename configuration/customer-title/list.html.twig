@@ -27,15 +27,17 @@
         {{ component('BoDataTable', {
             id: 'customer-titles',
             columns: [
-                column('id', 'ID'|trans),
-                column('short', 'Short'|trans),
-                column('long', 'Long'|trans),
+                column('id', 'ID'|trans, 'start', 'id'),
+                column('short', 'Short'|trans, 'start', 'short'),
+                column('long', 'Long'|trans, 'start', 'long'),
                 column_badge('default', 'Default'|trans, { yes: 'success' }, 'start', 'default_label'),
-                column('position', 'Position'|trans, 'center'),
+                column('position', 'Position'|trans, 'center', 'position'),
                 column_actions('_actions', 'Actions'|trans),
             ],
             rows: rows,
             emptyMessage: 'No customer title defined.'|trans,
+            sortField: sort_field,
+            sortDirection: sort_direction,
         }) }}
     </div>
 

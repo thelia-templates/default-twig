@@ -29,14 +29,16 @@
         {{ component('BoDataTable', {
             id: 'shipping-configuration',
             columns: [
-                column('id', 'ID'|trans),
-                column('name', 'Zone name'|trans),
+                column('id', 'ID'|trans, 'start', 'id'),
+                column('name', 'Zone name'|trans, 'start', 'name'),
                 column('countries', 'Included countries'|trans),
                 column('modules', 'Assigned modules'|trans),
                 column_actions('_actions', 'Actions'|trans),
             ],
             rows: rows,
             emptyMessage: 'No shipping zone defined yet. Click the + button to create one.'|trans,
+            sortField: sort_field,
+            sortDirection: sort_direction,
         }) }}
     </div>
 

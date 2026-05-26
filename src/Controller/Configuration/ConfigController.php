@@ -17,7 +17,9 @@ namespace BackOfficeDefaultTwigBundle\Controller\Configuration;
 use BackOfficeDefaultTwigBundle\Form\Config\ConfigType;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
+use BackOfficeDefaultTwigBundle\UiComponents\DataTable\ListSort;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
+use Propel\Runtime\ActiveQuery\Criteria;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -58,13 +60,13 @@ final class ConfigController
     }
 
     #[Route('', name: 'default', methods: ['GET'])]
-    public function list(): Response
+    public function list(Request $request): Response
     {
         if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::VIEW)) {
             return $denied;
         }
 
-        return new Response($this->twig->render(self::LIST_TEMPLATE, $this->buildListContext()));
+        return new Response($this->twig->render(self::LIST_TEMPLATE, $this->buildListContext($request)));
     }
 
     #[Route('/update-values', name: 'update-values', methods: ['POST'])]
@@ -210,12 +212,19 @@ final class ConfigController
     /**
      * @return array<string, mixed>
      */
-    private function buildListContext(): array
+    private function buildListContext(?Request $request = null): array
     {
-        $configs = ConfigQuery::create()
-            ->filterByHidden(0)
-            ->orderByName()
-            ->find();
+        $sort = $request !== null
+            ? ListSort::fromRequest($request, ['id', 'name', 'value'], 'name')
+            : new ListSort('name', 'asc');
+        $criteria = strtoupper($sort->direction) === 'DESC' ? Criteria::DESC : Criteria::ASC;
+        $query = ConfigQuery::create()->filterByHidden(0);
+        match ($sort->field) {
+            'id' => $query->orderById($criteria),
+            'value' => $query->orderByValue($criteria),
+            default => $query->orderByName($criteria),
+        };
+        $configs = $query->find();
 
         $rows = [];
         $editForms = [];
@@ -235,6 +244,8 @@ final class ConfigController
             'rows' => $rows,
             'edit_forms' => $editForms,
             'create_form' => $createForm->createView(),
+            'sort_field' => $sort->field,
+            'sort_direction' => $sort->direction,
         ];
     }
 

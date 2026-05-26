@@ -18,7 +18,9 @@ use BackOfficeDefaultTwigBundle\Form\Configuration\StateType;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
+use BackOfficeDefaultTwigBundle\UiComponents\DataTable\ListSort;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
+use Propel\Runtime\ActiveQuery\Criteria;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -73,9 +75,14 @@ final class StateController
 
         $locale = $request->getLocale();
         $countryFilter = (int) $request->query->get('country_id', 0);
-        $query = StateQuery::create()
-            ->joinWithI18n($locale)
-            ->orderBy(StateI18nTableMap::COL_TITLE);
+        $sort = ListSort::fromRequest($request, ['id', 'title', 'iso_code'], 'title');
+        $criteria = strtoupper($sort->direction) === 'DESC' ? Criteria::DESC : Criteria::ASC;
+        $query = StateQuery::create()->joinWithI18n($locale);
+        match ($sort->field) {
+            'id' => $query->orderById($criteria),
+            'iso_code' => $query->orderByIsocode($criteria),
+            default => $query->orderBy(StateI18nTableMap::COL_TITLE, $criteria),
+        };
         if ($countryFilter > 0) {
             $query->filterByCountryId($countryFilter);
         }
@@ -98,6 +105,8 @@ final class StateController
             'countries' => $this->countryChoices($locale),
             'current_country' => $countryFilter,
             'create_form' => $createForm->createView(),
+            'sort_field' => $sort->field,
+            'sort_direction' => $sort->direction,
         ]));
     }
 

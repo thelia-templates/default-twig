@@ -32,12 +32,14 @@
                 id: 'variables',
                 columns: [
                     column('title', 'Purpose'|trans),
-                    column('name', 'Name'|trans),
-                    column_html('value_html', 'Value'|trans),
+                    column('name', 'Name'|trans, 'start', 'name'),
+                    column_html('value_html', 'Value'|trans, 'start', 'value'),
                     column_actions('_actions', 'Actions'|trans),
                 ],
                 rows: rows,
                 emptyMessage: 'No system variable defined yet.'|trans,
+                sortField: sort_field,
+                sortDirection: sort_direction,
             }) }}
 
             {% if is_granted('UPDATE', 'admin.configuration.variable') %}

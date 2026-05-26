@@ -44,15 +44,18 @@
         {{ component('BoDataTable', {
             id: 'states',
             columns: [
-                column('id', 'ID'|trans),
-                column('title', 'State'|trans),
-                column('isocode', 'ISO'|trans, 'center'),
+                column('id', 'ID'|trans, 'start', 'id'),
+                column('title', 'State'|trans, 'start', 'title'),
+                column('isocode', 'ISO'|trans, 'center', 'iso_code'),
                 column('country', 'Country'|trans),
                 column_toggle('visible', 'Online'|trans, 'toggle_visible_url'),
                 column_actions('_actions', 'Actions'|trans),
             ],
             rows: rows,
             emptyMessage: 'No state defined.'|trans,
+            sortField: sort_field,
+            sortDirection: sort_direction,
+            sortKeepParams: { country_id: current_country ?: null },
         }) }}
     </div>
 

@@ -17,7 +17,9 @@ namespace BackOfficeDefaultTwigBundle\Controller\Configuration;
 use BackOfficeDefaultTwigBundle\Form\Configuration\AreaType;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
+use BackOfficeDefaultTwigBundle\UiComponents\DataTable\ListSort;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
+use Propel\Runtime\ActiveQuery\Criteria;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -69,7 +71,15 @@ final class AreaController
         }
 
         $locale = $request->getLocale();
-        $areas = AreaQuery::create()->orderByName()->find();
+        $sort = ListSort::fromRequest($request, ['id', 'name', 'postage'], 'name');
+        $criteria = strtoupper($sort->direction) === 'DESC' ? Criteria::DESC : Criteria::ASC;
+        $query = AreaQuery::create();
+        match ($sort->field) {
+            'id' => $query->orderById($criteria),
+            'postage' => $query->orderByPostage($criteria),
+            default => $query->orderByName($criteria),
+        };
+        $areas = $query->find();
         $rows = [];
         foreach ($areas as $area) {
             \assert($area instanceof Area);
@@ -81,6 +91,8 @@ final class AreaController
         return new Response($this->twig->render(self::LIST_TEMPLATE, [
             'rows' => $rows,
             'create_form' => $createForm->createView(),
+            'sort_field' => $sort->field,
+            'sort_direction' => $sort->direction,
         ]));
     }
 

@@ -59,15 +59,18 @@
         {{ component('BoDataTable', {
             id: 'hooks',
             columns: [
-                column('id', 'ID'|trans),
-                column('code', 'Code'|trans),
-                column('title', 'Title'|trans),
-                column_toggle('native', 'Official'|trans, is_granted('UPDATE', 'admin.hook') ? 'toggle_native_url' : null, 'center', 'bi-star-fill text-warning', 'bi-star text-secondary'),
-                column_toggle('active', 'Active'|trans, is_granted('UPDATE', 'admin.hook') ? 'toggle_active_url' : null),
+                column('id', 'ID'|trans, 'start', 'id'),
+                column('code', 'Code'|trans, 'start', 'code'),
+                column('title', 'Title'|trans, 'start', 'title'),
+                column_toggle('native', 'Official'|trans, is_granted('UPDATE', 'admin.hook') ? 'toggle_native_url' : null, 'center', 'bi-star-fill text-warning', 'bi-star text-secondary', 'native'),
+                column_toggle('active', 'Active'|trans, is_granted('UPDATE', 'admin.hook') ? 'toggle_active_url' : null, 'center', 'bi-check-circle-fill text-success', 'bi-circle text-secondary', 'active'),
                 column_actions('_actions', 'Actions'|trans),
             ],
             rows: rows,
             emptyMessage: 'No hooks has been created yet. Click the + button to create one.'|trans,
+            sortField: sort_field,
+            sortDirection: sort_direction,
+            sortKeepParams: { type: current_type },
         }) }}
 
         <div class="d-flex justify-content-end gap-2 mt-3">

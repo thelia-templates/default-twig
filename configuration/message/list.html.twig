@@ -27,14 +27,16 @@
         {{ component('BoDataTable', {
             id: 'messages',
             columns: [
-                column('id', 'ID'|trans),
-                column('title', 'Purpose'|trans),
-                column('name', 'Name'|trans),
-                column_badge('secured_label', 'Type'|trans, { System: 'warning', User: 'info' }),
+                column('id', 'ID'|trans, 'start', 'id'),
+                column('title', 'Purpose'|trans, 'start', 'title'),
+                column('name', 'Name'|trans, 'start', 'name'),
+                column_badge('secured_label', 'Type'|trans, { System: 'warning', User: 'info' }, 'start', null, null, 'secured'),
                 column_actions('_actions', 'Actions'|trans),
             ],
             rows: rows,
             emptyMessage: 'No mailing template has been created yet. Click the + button to create one.'|trans,
+            sortField: sort_field,
+            sortDirection: sort_direction,
         }) }}
     </div>
 

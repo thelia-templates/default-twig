@@ -18,7 +18,9 @@ use BackOfficeDefaultTwigBundle\Form\Configuration\HookType;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
+use BackOfficeDefaultTwigBundle\UiComponents\DataTable\ListSort;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
+use Propel\Runtime\ActiveQuery\Criteria;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
@@ -81,9 +83,19 @@ final class HookController
 
         $type = (int) ($request->query->get('type') ?? TemplateDefinition::FRONT_OFFICE);
         $locale = $request->getLocale();
+        $sort = ListSort::fromRequest($request, ['id', 'code', 'title', 'native', 'active'], 'id');
+        $criteria = strtoupper($sort->direction) === 'DESC' ? Criteria::DESC : Criteria::ASC;
+        $query = HookQuery::create()->filterByType($type)->joinWithI18n($locale);
+        match ($sort->field) {
+            'code' => $query->orderByCode($criteria),
+            'native' => $query->orderByNative($criteria),
+            'active' => $query->orderByActivate($criteria),
+            'title' => $query->useHookI18nQuery(null, Criteria::LEFT_JOIN)->filterByLocale($locale)->orderByTitle($criteria)->endUse(),
+            default => $query->orderById($criteria),
+        };
 
         $rows = [];
-        foreach (HookQuery::create()->filterByType($type)->joinWithI18n($locale)->orderById()->find() as $hook) {
+        foreach ($query->find() as $hook) {
             \assert($hook instanceof Hook);
             $hook->setLocale($locale);
             $rows[] = [
@@ -131,6 +143,8 @@ final class HookController
                 TemplateDefinition::PDF => $this->translator->trans('pdf'),
                 TemplateDefinition::EMAIL => $this->translator->trans('email'),
             ],
+            'sort_field' => $sort->field,
+            'sort_direction' => $sort->direction,
         ]));
     }
 

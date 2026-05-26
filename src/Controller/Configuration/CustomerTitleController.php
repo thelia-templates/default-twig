@@ -18,7 +18,9 @@ use BackOfficeDefaultTwigBundle\Form\Configuration\CustomerTitleType;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
+use BackOfficeDefaultTwigBundle\UiComponents\DataTable\ListSort;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
+use Propel\Runtime\ActiveQuery\Criteria;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -64,7 +66,16 @@ final class CustomerTitleController
         }
 
         $locale = $request->getLocale();
-        $titles = CustomerTitleQuery::create()->orderByPosition()->find();
+        $sort = ListSort::fromRequest($request, ['id', 'short', 'long', 'position'], 'position');
+        $criteria = strtoupper($sort->direction) === 'DESC' ? Criteria::DESC : Criteria::ASC;
+        $query = CustomerTitleQuery::create();
+        match ($sort->field) {
+            'id' => $query->orderById($criteria),
+            'short' => $query->useCustomerTitleI18nQuery(null, Criteria::LEFT_JOIN)->filterByLocale($locale)->orderByShort($criteria)->endUse(),
+            'long' => $query->useCustomerTitleI18nQuery(null, Criteria::LEFT_JOIN)->filterByLocale($locale)->orderByLong($criteria)->endUse(),
+            default => $query->orderByPosition($criteria),
+        };
+        $titles = $query->find();
         $rows = [];
         foreach ($titles as $title) {
             \assert($title instanceof CustomerTitle);
@@ -79,6 +90,8 @@ final class CustomerTitleController
         return new Response($this->twig->render(self::LIST_TEMPLATE, [
             'rows' => $rows,
             'create_form' => $createForm->createView(),
+            'sort_field' => $sort->field,
+            'sort_direction' => $sort->direction,
         ]));
     }
 

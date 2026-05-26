@@ -19,7 +19,9 @@ use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\Service\Configuration\EmailTemplateFileLister;
 use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
+use BackOfficeDefaultTwigBundle\UiComponents\DataTable\ListSort;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
+use Propel\Runtime\ActiveQuery\Criteria;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -69,8 +71,17 @@ final class MessageController
         }
 
         $locale = $request->getLocale();
+        $sort = ListSort::fromRequest($request, ['id', 'name', 'title', 'secured'], 'name');
+        $criteria = strtoupper($sort->direction) === 'DESC' ? Criteria::DESC : Criteria::ASC;
+        $query = MessageQuery::create();
+        match ($sort->field) {
+            'id' => $query->orderById($criteria),
+            'secured' => $query->orderBySecured($criteria),
+            'title' => $query->useMessageI18nQuery(null, Criteria::LEFT_JOIN)->filterByLocale($locale)->orderByTitle($criteria)->endUse(),
+            default => $query->orderByName($criteria),
+        };
         $rows = [];
-        foreach (MessageQuery::create()->orderByName()->find() as $message) {
+        foreach ($query->find() as $message) {
             \assert($message instanceof Message);
             $message->setLocale($locale);
             $rows[] = $this->messageToRow($message);
@@ -83,6 +94,8 @@ final class MessageController
         return new Response($this->twig->render(self::LIST_TEMPLATE, [
             'rows' => $rows,
             'create_form' => $createForm->createView(),
+            'sort_field' => $sort->field,
+            'sort_direction' => $sort->direction,
         ]));
     }
 
