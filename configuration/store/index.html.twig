@@ -47,9 +47,41 @@
                     <div class="card mb-4">
                         <div class="card-header">{{ 'Media'|trans }}</div>
                         <div class="card-body">
-                            {{ form_row(form.favicon_file) }}
-                            {{ form_row(form.logo_file) }}
-                            {{ form_row(form.banner_file) }}
+                            <div class="row g-3 align-items-end" data-controller="bo-image-preview">
+                                <div class="col-sm-9">{{ form_row(form.favicon_file, { attr: { 'data-bo-image-preview-target': 'input' } }) }}</div>
+                                <div class="col-sm-3 text-end">
+                                    <img src="{{ media_urls.favicon|default('') }}"
+                                         alt="{{ 'Favicon preview'|trans }}"
+                                         class="img-thumbnail"
+                                         width="64"
+                                         height="64"
+                                         style="object-fit: contain; {% if media_urls.favicon is null %}display:none;{% endif %}"
+                                         data-bo-image-preview-target="image"
+                                         data-testid="config-store-favicon-preview">
+                                </div>
+                            </div>
+                            <div class="row g-3 align-items-end mt-2" data-controller="bo-image-preview">
+                                <div class="col-sm-9">{{ form_row(form.logo_file, { attr: { 'data-bo-image-preview-target': 'input' } }) }}</div>
+                                <div class="col-sm-3 text-end">
+                                    <img src="{{ media_urls.logo|default('') }}"
+                                         alt="{{ 'Logo preview'|trans }}"
+                                         class="img-thumbnail"
+                                         style="max-width: 100%; max-height: 80px; {% if media_urls.logo is null %}display:none;{% endif %}"
+                                         data-bo-image-preview-target="image"
+                                         data-testid="config-store-logo-preview">
+                                </div>
+                            </div>
+                            <div class="row g-3 mt-2" data-controller="bo-image-preview">
+                                <div class="col-12">{{ form_row(form.banner_file, { attr: { 'data-bo-image-preview-target': 'input' } }) }}</div>
+                                <div class="col-12 text-center">
+                                    <img src="{{ media_urls.banner|default('') }}"
+                                         alt="{{ 'Banner preview'|trans }}"
+                                         class="img-thumbnail"
+                                         style="max-width: 100%; max-height: 160px; {% if media_urls.banner is null %}display:none;{% endif %}"
+                                         data-bo-image-preview-target="image"
+                                         data-testid="config-store-banner-preview">
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

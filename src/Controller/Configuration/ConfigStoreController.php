@@ -71,6 +71,7 @@ final class ConfigStoreController
 
         return new Response($this->twig->render(self::VIEW_TEMPLATE, [
             'form' => $form->createView(),
+            'media_urls' => $this->storeMediaUrls(),
         ]));
     }
 
@@ -207,5 +208,23 @@ final class ConfigStoreController
             : THELIA_LOCAL_DIR.'media'.\DIRECTORY_SEPARATOR.'images';
 
         return $base.\DIRECTORY_SEPARATOR.'store';
+    }
+
+    /** @return array{favicon: ?string, logo: ?string, banner: ?string} */
+    private function storeMediaUrls(): array
+    {
+        $uploadDir = $this->storeMediaUploadDir();
+        $urls = [];
+
+        foreach (['favicon' => 'favicon_file', 'logo' => 'logo_file', 'banner' => 'banner_file'] as $field => $configKey) {
+            $filename = ConfigQuery::read($configKey);
+            if (!\is_string($filename) || $filename === '' || !\is_file($uploadDir.\DIRECTORY_SEPARATOR.$filename)) {
+                $urls[$field] = null;
+                continue;
+            }
+            $urls[$field] = $this->urls->generate('admin.store-media.show', ['field' => $field]);
+        }
+
+        return $urls;
     }
 }
