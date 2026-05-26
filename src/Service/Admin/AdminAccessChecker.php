@@ -81,6 +81,24 @@ readonly class AdminAccessChecker
         );
     }
 
+    /**
+     * Grants access as soon as ONE of the resources is allowed (logical OR), unlike {@see check()}
+     * which requires all of them. Used to bridge a renamed ACL resource with its legacy name during
+     * the Smarty/Twig cohabitation.
+     *
+     * @param list<string> $resources
+     */
+    public function checkAny(array $resources, string $access): ?Response
+    {
+        foreach ($resources as $resource) {
+            if ($this->securityContext->isGranted([self::ADMIN_ROLE], [$resource], [], [$access])) {
+                return null;
+            }
+        }
+
+        return $this->check($resources, [], $access);
+    }
+
     private function redirectToLogin(): RedirectResponse
     {
         $loginUrl = $this->urls->generate(self::LOGIN_ROUTE);

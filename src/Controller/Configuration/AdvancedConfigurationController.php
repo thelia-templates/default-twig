@@ -36,6 +36,9 @@ use Twig\Environment;
 final class AdvancedConfigurationController
 {
     private const RESOURCE = AdminResources::ADVANCED_CONFIGURATION;
+    /** Legacy Smarty ACL resource for this screen, accepted alongside RESOURCE during cohabitation. */
+    private const LEGACY_RESOURCE = 'admin.cache';
+    private const RESOURCES = [self::RESOURCE, self::LEGACY_RESOURCE];
     private const REDIRECT_ROUTE = 'admin.configuration.advanced';
 
     public function __construct(
@@ -55,7 +58,7 @@ final class AdvancedConfigurationController
     #[Route('', name: '', methods: ['GET'])]
     public function index(): Response
     {
-        if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::VIEW)) {
+        if ($denied = $this->access->checkAny(self::RESOURCES, AccessManager::VIEW)) {
             return $denied;
         }
 
@@ -81,7 +84,7 @@ final class AdvancedConfigurationController
     #[Route('/flush-images-and-documents', name: '.flush-images-and-documents', methods: ['POST', 'GET'])]
     public function flushImagesAndDocuments(Request $request): RedirectResponse
     {
-        if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::UPDATE)) {
+        if ($denied = $this->access->checkAny(self::RESOURCES, AccessManager::UPDATE)) {
             return new RedirectResponse($this->urls->generate(self::REDIRECT_ROUTE));
         }
 
@@ -104,7 +107,7 @@ final class AdvancedConfigurationController
 
     private function dispatchCacheClear(Request $request, string $dir, string $successMessage): RedirectResponse
     {
-        if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::UPDATE)) {
+        if ($denied = $this->access->checkAny(self::RESOURCES, AccessManager::UPDATE)) {
             return new RedirectResponse($this->urls->generate(self::REDIRECT_ROUTE));
         }
 
