@@ -29,7 +29,6 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Thelia\Core\Event\CustomerTitle\CustomerTitleEvent;
 use Thelia\Core\Event\TheliaEvents;
-use Thelia\Core\Event\UpdatePositionEvent;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
 use Thelia\Model\CustomerTitle;
@@ -169,26 +168,6 @@ final class CustomerTitleController
         );
     }
 
-    #[Route('/update-position', name: 'update-position', methods: ['GET', 'POST'])]
-    public function updatePosition(Request $request): Response
-    {
-        $event = new UpdatePositionEvent(
-            (int) $request->get('customer_title_id', 0),
-            (int) $request->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE),
-            (int) $request->get('position', 0),
-        );
-
-        return $this->action->tokenAction(
-            resource: self::RESOURCE,
-            access: AccessManager::UPDATE,
-            request: $request,
-            event: $event,
-            eventName: TheliaEvents::CUSTOMER_TITLE_UPDATE_POSITION ?? 'action.customer-title.update-position',
-            actionLabel: 'Customer title reorder',
-            successRoute: self::LIST_ROUTE,
-        );
-    }
-
     private function createEvent(FormInterface $validated): CustomerTitleEvent
     {
         $data = $validated->getData() ?? [];
@@ -243,7 +222,8 @@ final class CustomerTitleController
             'id' => $id,
             'short' => (string) $title->getShort(),
             'long' => (string) $title->getLong(),
-            'default' => (bool) $title->getByDefault(),
+            'default' => $title->getByDefault() ? 'yes' : '',
+            'default_label' => $title->getByDefault() ? $this->translator->trans('Default') : '',
             'position' => (int) $title->getPosition(),
             '_actions' => $actions,
         ];

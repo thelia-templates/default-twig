@@ -1,0 +1,10 @@
+{{ component('BoConfirmDialog', {
+    id: 'customer-title-delete-modal',
+    title: 'Delete customer title',
+    formAction: path('admin.configuration.customer-titles.delete'),
+    message: 'Do you really want to delete this customer title?',
+    testid: 'customer-title-delete',
+    hook: 'customer-title.delete-form',
+    prefillTrigger: 'data-customer-title-id',
+    prefillInput: 'customer_title_id',
+}) }}

@@ -30,7 +30,7 @@
                 column('id', 'ID'|trans),
                 column('short', 'Short'|trans),
                 column('long', 'Long'|trans),
-                column_toggle('default', 'Default'|trans, null),
+                column_badge('default', 'Default'|trans, { yes: 'success' }, 'start', 'default_label'),
                 column('position', 'Position'|trans, 'center'),
                 column_actions('_actions', 'Actions'|trans),
             ],
@@ -57,4 +57,6 @@
             {% endblock %}
         {% endcomponent %}
     {% endif %}
+
+    {% include '@BackOfficeDefaultTwig/configuration/customer-title/_delete_modal.html.twig' %}
 {% endblock %}
