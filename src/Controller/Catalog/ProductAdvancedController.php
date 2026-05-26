@@ -31,6 +31,8 @@ use Thelia\Core\Event\MetaData\MetaDataCreateOrUpdateEvent;
 use Thelia\Core\Event\MetaData\MetaDataDeleteEvent;
 use Thelia\Core\Event\Product\ProductCombinationGenerationEvent;
 use Thelia\Core\Event\Product\ProductSetTemplateEvent;
+use Thelia\Action\Image as ImageAction;
+use Thelia\Core\Event\Image\ImageEvent;
 use Thelia\Core\Event\ProductSaleElement\ProductSaleElementCreateEvent;
 use Thelia\Core\Event\ProductSaleElement\ProductSaleElementDeleteEvent;
 use Thelia\Core\Event\ProductSaleElement\ProductSaleElementToggleVisibilityEvent;
@@ -57,6 +59,7 @@ use Thelia\Model\Product;
 use Thelia\Model\MetaData;
 use Thelia\Model\MetaDataQuery;
 use Thelia\Model\ProductDocumentQuery;
+use Thelia\Model\ProductImage;
 use Thelia\Model\ProductImageQuery;
 use Thelia\Model\ProductQuery;
 use Thelia\Model\ProductSaleElements;
@@ -73,6 +76,8 @@ final class ProductAdvancedController
 {
     private const RESOURCE = AdminResources::PRODUCT;
     private const EDIT_ROUTE = 'admin.products.update';
+    private const PSE_THUMBNAIL_WIDTH = 200;
+    private const PSE_THUMBNAIL_HEIGHT = 200;
 
     public function __construct(
         private readonly AdminFormAction $action,
@@ -80,6 +85,7 @@ final class ProductAdvancedController
         private readonly Environment $twig,
         private readonly UrlGeneratorInterface $urls,
         private readonly CombinationsTabContextBuilder $combinationsTabContextBuilder,
+        private readonly EventDispatcherInterface $imageEvents,
     ) {
     }
 
@@ -759,13 +765,32 @@ final class ProductAdvancedController
             $items[] = [
                 'id' => (int) $image->getId(),
                 'title' => (string) $image->getTitle(),
-                'url' => (string) $image->getFile(),
+                'url' => $this->processedImageUrl($image),
                 'filename' => (string) $image->getFile(),
                 'is_associated' => isset($assocIds[(int) $image->getId()]),
             ];
         }
 
         return $items;
+    }
+
+    private function processedImageUrl(ProductImage $image): string
+    {
+        $sourcePath = $image->getUploadDir().\DIRECTORY_SEPARATOR.$image->getFile();
+        $event = new ImageEvent();
+        $event->setSourceFilepath($sourcePath);
+        $event->setCacheSubdirectory('product');
+        $event->setWidth(self::PSE_THUMBNAIL_WIDTH);
+        $event->setHeight(self::PSE_THUMBNAIL_HEIGHT);
+        $event->setResizeMode((string) ImageAction::EXACT_RATIO_WITH_BORDERS);
+
+        try {
+            $this->imageEvents->dispatch($event, TheliaEvents::IMAGE_PROCESS);
+        } catch (\Throwable) {
+            return '';
+        }
+
+        return (string) $event->getFileUrl();
     }
 
     /**
