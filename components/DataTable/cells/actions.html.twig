@@ -31,24 +31,93 @@
     'custom': 'btn-outline-secondary',
 } -%}
 {%- set actions = value|default([]) -%}
-<div class="btn-group btn-group-sm" role="group" aria-label="Row actions">
-    {% for action in actions %}
-        {% set granted = action.grantedAttribute is null or is_granted(action.grantedAttribute, action.grantedSubject) %}
-        {% if granted %}
-            {% set tag = action.href ? 'a' : 'button' %}
-            {% set icon = iconByKind[action.kind]|default(iconByKind['custom']) %}
-            {% set btnClass = buttonClassByKind[action.kind]|default(buttonClassByKind['custom']) %}
-            <{{ tag }}
-                {% if action.href %}href="{{ action.href }}"{% else %}type="button"{% endif %}
-                class="btn btn-sm {{ btnClass }} bo-action bo-action--{{ action.kind }}"
-                title="{{ action.label }}"
-                aria-label="{{ action.label }}"
-                data-testid="datatable-action-{{ action.kind }}"
-                {% if action.modalTarget %}data-bs-toggle="modal" data-bs-target="{{ action.modalTarget }}"{% endif %}
-                {% for dataKey, dataValue in action.dataAttributes %}data-{{ dataKey }}="{{ dataValue }}" {% endfor %}>
-                <i class="bi {{ icon }}" aria-hidden="true"></i>
-                <span class="visually-hidden">{{ action.label }}</span>
-            </{{ tag }}>
-        {% endif %}
+{%- set inline = [] -%}
+{%- set overflow = [] -%}
+{%- for action in actions -%}
+    {%- if action.grantedAttribute is null or is_granted(action.grantedAttribute, action.grantedSubject) -%}
+        {%- if action.inMenu -%}
+            {%- set overflow = overflow|merge([action]) -%}
+        {%- else -%}
+            {%- set inline = inline|merge([action]) -%}
+        {%- endif -%}
+    {%- endif -%}
+{%- endfor -%}
+<div class="btn-group btn-group-sm" role="group" aria-label="{{ 'Row actions'|trans }}">
+    {% for action in inline %}
+        {% set tag = action.href ? 'a' : 'button' %}
+        {% set icon = iconByKind[action.kind]|default(iconByKind['custom']) %}
+        {% set btnClass = buttonClassByKind[action.kind]|default(buttonClassByKind['custom']) %}
+        <{{ tag }}
+            {% if action.href %}href="{{ action.href }}"{% else %}type="button"{% endif %}
+            class="btn btn-sm {{ btnClass }} bo-action bo-action--{{ action.kind }}"
+            title="{{ action.label }}"
+            aria-label="{{ action.label }}"
+            data-testid="datatable-action-{{ action.kind }}"
+            {% if action.modalTarget %}data-bs-toggle="modal" data-bs-target="{{ action.modalTarget }}"{% endif %}
+            {% for dataKey, dataValue in action.dataAttributes %}data-{{ dataKey }}="{{ dataValue }}" {% endfor %}>
+            <i class="bi {{ icon }}" aria-hidden="true"></i>
+            <span class="visually-hidden">{{ action.label }}</span>
+        </{{ tag }}>
     {% endfor %}
+
+    {% if overflow is not empty %}
+        <div class="btn-group btn-group-sm" role="group" data-controller="bo-overflow-dropdown">
+            <button type="button"
+                    class="btn btn-sm btn-outline-secondary"
+                    data-bs-toggle="dropdown"
+                    data-bs-boundary="viewport"
+                    aria-expanded="false"
+                    title="{{ 'More actions'|trans }}"
+                    aria-label="{{ 'More actions'|trans }}"
+                    data-testid="datatable-action-overflow">
+                <i class="bi bi-three-dots-vertical" aria-hidden="true"></i>
+                <span class="visually-hidden">{{ 'More actions'|trans }}</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end bo-action-row-dropdown">
+                {% set destructive = [] %}
+                {% set regular = [] %}
+                {% for action in overflow %}
+                    {% if action.kind in ['delete', 'cancel'] %}
+                        {% set destructive = destructive|merge([action]) %}
+                    {% else %}
+                        {% set regular = regular|merge([action]) %}
+                    {% endif %}
+                {% endfor %}
+
+                {% for action in regular %}
+                    {% set tag = action.href ? 'a' : 'button' %}
+                    {% set icon = iconByKind[action.kind]|default(iconByKind['custom']) %}
+                    <li>
+                        <{{ tag }}
+                            {% if action.href %}href="{{ action.href }}"{% else %}type="button"{% endif %}
+                            class="dropdown-item bo-action bo-action--{{ action.kind }}"
+                            data-testid="datatable-action-{{ action.kind }}"
+                            {% if action.modalTarget %}data-bs-toggle="modal" data-bs-target="{{ action.modalTarget }}"{% endif %}
+                            {% for dataKey, dataValue in action.dataAttributes %}data-{{ dataKey }}="{{ dataValue }}" {% endfor %}>
+                            <i class="bi {{ icon }} me-2" aria-hidden="true"></i>{{ action.label }}
+                        </{{ tag }}>
+                    </li>
+                {% endfor %}
+
+                {% if regular is not empty and destructive is not empty %}
+                    <li><hr class="dropdown-divider"></li>
+                {% endif %}
+
+                {% for action in destructive %}
+                    {% set tag = action.href ? 'a' : 'button' %}
+                    {% set icon = iconByKind[action.kind]|default(iconByKind['custom']) %}
+                    <li>
+                        <{{ tag }}
+                            {% if action.href %}href="{{ action.href }}"{% else %}type="button"{% endif %}
+                            class="dropdown-item text-danger bo-action bo-action--{{ action.kind }}"
+                            data-testid="datatable-action-{{ action.kind }}"
+                            {% if action.modalTarget %}data-bs-toggle="modal" data-bs-target="{{ action.modalTarget }}"{% endif %}
+                            {% for dataKey, dataValue in action.dataAttributes %}data-{{ dataKey }}="{{ dataValue }}" {% endfor %}>
+                            <i class="bi {{ icon }} me-2" aria-hidden="true"></i>{{ action.label }}
+                        </{{ tag }}>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
 </div>

@@ -112,29 +112,33 @@ final readonly class ModuleListPresenter
      */
     private function buildRowActions(Module $module, int $id, string $code, int $type, bool $activated, bool $mandatory): array
     {
-        $actions = [];
-
-        $actions[] = new RowAction(
-            kind: 'info',
-            label: $this->translator->trans('Module information'),
-            modalTarget: '#module-information-modal',
-            grantedAttribute: AccessManager::VIEW,
-            grantedSubject: AdminResources::MODULE,
-            dataAttributes: [
-                'fetch-url' => $this->urls->generate('admin.module.information', ['module_id' => $id]),
-            ],
-        );
-
-        $actions[] = new RowAction(
-            kind: 'doc',
-            label: $this->translator->trans('Module documentation'),
-            modalTarget: '#module-documentation-modal',
-            grantedAttribute: AccessManager::VIEW,
-            grantedSubject: AdminResources::MODULE,
-            dataAttributes: [
-                'fetch-url' => $this->urls->generate('admin.module.documentation', ['module_id' => $id]),
-            ],
-        );
+        $actions = [
+            new RowAction(
+                kind: 'edit',
+                label: $this->translator->trans('Edit module info'),
+                href: $this->urls->generate('admin.module.update', ['module_id' => $id]),
+                grantedAttribute: AccessManager::UPDATE,
+                grantedSubject: AdminResources::MODULE,
+            ),
+            new RowAction(
+                kind: 'info',
+                label: $this->translator->trans('Module information'),
+                modalTarget: '#module-information-modal',
+                grantedAttribute: AccessManager::VIEW,
+                grantedSubject: AdminResources::MODULE,
+                dataAttributes: ['fetch-url' => $this->urls->generate('admin.module.information', ['module_id' => $id])],
+                inMenu: true,
+            ),
+            new RowAction(
+                kind: 'doc',
+                label: $this->translator->trans('Module documentation'),
+                modalTarget: '#module-documentation-modal',
+                grantedAttribute: AccessManager::VIEW,
+                grantedSubject: AdminResources::MODULE,
+                dataAttributes: ['fetch-url' => $this->urls->generate('admin.module.documentation', ['module_id' => $id])],
+                inMenu: true,
+            ),
+        ];
 
         if ($activated && $this->capabilities->isConfigurable($module)) {
             $actions[] = new RowAction(
@@ -143,6 +147,7 @@ final readonly class ModuleListPresenter
                 href: $this->urls->generate('admin.module.configure', ['module_code' => $code]),
                 grantedAttribute: AccessManager::UPDATE,
                 grantedSubject: $code,
+                inMenu: true,
             );
         }
 
@@ -153,6 +158,7 @@ final readonly class ModuleListPresenter
                 href: $this->urls->generate('admin.module-hook', ['module' => $id]),
                 grantedAttribute: AccessManager::UPDATE,
                 grantedSubject: AdminResources::MODULE_HOOK,
+                inMenu: true,
             );
         }
 
@@ -163,16 +169,9 @@ final readonly class ModuleListPresenter
                 href: $this->urls->generate('admin.configuration.shipping-zones.update.view', ['delivery_module_id' => $id]),
                 grantedAttribute: AccessManager::UPDATE,
                 grantedSubject: AdminResources::AREA,
+                inMenu: true,
             );
         }
-
-        $actions[] = new RowAction(
-            kind: 'edit',
-            label: $this->translator->trans('Edit module info'),
-            href: $this->urls->generate('admin.module.update', ['module_id' => $id]),
-            grantedAttribute: AccessManager::UPDATE,
-            grantedSubject: AdminResources::MODULE,
-        );
 
         if (!$mandatory) {
             $actions[] = new RowAction(
@@ -182,6 +181,7 @@ final readonly class ModuleListPresenter
                 grantedAttribute: AccessManager::DELETE,
                 grantedSubject: AdminResources::MODULE,
                 dataAttributes: ['module-id' => $id, 'module-label' => (string) $module->getTitle()],
+                inMenu: true,
             );
         }
 

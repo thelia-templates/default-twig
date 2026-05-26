@@ -611,7 +611,7 @@ input[type="color"].form-control {
 }
 
 // Row action buttons inside tables get the same treatment.
-.bo-action {
+.bo-action:not(.dropdown-item) {
     width: 2rem;
     height: 2rem;
     padding: 0;
@@ -1264,6 +1264,16 @@ tr.bo-order-row--urgent {
 }
 .bo-chart-canvas > canvas {
     max-width: 100%;
+}
+
+// Action dropdowns inside DataTable rows: let labels breathe.
+.bo-action-row-dropdown,
+.dropdown-menu .bo-action.dropdown-item {
+    white-space: nowrap;
+}
+.bo-action-row-dropdown {
+    min-width: 12rem;
+    max-width: max-content;
 }
 
 .bo-markdown-body {

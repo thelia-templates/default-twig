@@ -1063,4 +1063,36 @@ return [
     'This image is online' => 'Cette image est en ligne',
     'This document is online' => 'Ce document est en ligne',
     'File' => 'Fichier',
+
+    // Row action dropdown
+    'Row actions' => 'Actions de la ligne',
+    'More actions' => 'Autres actions',
+
+    // Module action labels
+    'Module information' => 'Informations du module',
+    'Module documentation' => 'Documentation du module',
+    'Configure this module' => 'Configurer ce module',
+    'Manage its hooks' => 'Gérer ses hooks',
+    'Shipping zones' => 'Zones de livraison',
+    'Edit module info' => 'Modifier les informations du module',
+    'Delete this module' => 'Supprimer ce module',
+
+    // Module information modal
+    'Module detailed information' => 'Informations détaillées du module',
+    'Module code' => 'Code du module',
+    'Module type' => 'Type de module',
+    'Version' => 'Version',
+    'Subtitle' => 'Sous-titre',
+    'Description' => 'Description',
+    'Tags' => 'Étiquettes',
+    'Supported locales' => 'Langues supportées',
+    'Namespace of main class' => 'Espace de noms de la classe principale',
+    'Minimum required Thelia version' => 'Version Thelia minimale requise',
+    'Required modules' => 'Modules requis',
+    'Stability' => 'Stabilité',
+    'Update URL' => 'URL de mise à jour',
+    'Authors' => 'Auteurs',
+    'Unspecified' => 'Non spécifié',
+    'No module.xml found for this module.' => 'Aucun fichier module.xml trouvé pour ce module.',
+    'No documentation file (README.md) was found for this module.' => 'Aucun fichier de documentation (README.md) trouvé pour ce module.',
 ];
