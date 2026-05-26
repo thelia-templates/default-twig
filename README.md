@@ -122,7 +122,9 @@ Twig functions exposed by `BackOfficeDefaultTwigBundle\Twig\HookExtension`:
 {% if has_hook('product.tab') %}{% endif %}
 ```
 
-Hook names are kept iso with the legacy Smarty template so third-party modules keep working unchanged.
+Most hook names are kept iso with the legacy Smarty template. The few that were renamed are bridged
+to their legacy name (see [Cohabitation & breaking changes](#cohabitation--breaking-changes)), so
+third-party modules keep working unchanged.
 
 ## Tests
 
@@ -134,9 +136,43 @@ Hook names are kept iso with the legacy Smarty template so third-party modules k
   cd tests/Playwright && BO_TEMPLATE=default-twig npx playwright test specs/backoffice
   ```
 
-## Status
+## Cohabitation & breaking changes
 
-See [`BREAKING_CHANGES.md`](BREAKING_CHANGES.md) for the third-party module migration guide.
+This template runs side by side with the legacy Smarty back-office. A few names diverge from the
+legacy ones; here is how third-party modules are affected.
+
+### Hooks — bridged, no change required
+
+Renamed hooks are replayed under their legacy Smarty name by `Service\Hook\LegacyHookAliases`
+(wired into `HookExtension`), so a module listening on the old name keeps contributing. Render
+arguments follow the new (Twig) convention — adapt listeners that read a renamed argument.
+
+| Legacy Smarty hook           | Twig hook                    |
+|------------------------------|------------------------------|
+| `attribute-edit-form.bottom` | `attribute.update-form`      |
+| `feature-edit-form.bottom`   | `feature.update-form`        |
+| `administrator.update-form`  | `administrator.edit-form`    |
+| `advanced-configuration`     | `advanced-configuration.top` |
+
+The `wysiwyg.js` hook on the hook-edit screen keeps its legacy `wysiwyg-hook-edit-js` location.
+
+### ACL — bridged
+
+The advanced-configuration screen accepts both the new `admin.configuration.advanced` resource and
+the legacy `admin.cache` one, so existing profiles keep access without a data migration.
+
+### Routes — update your module
+
+Renamed route names are **not** aliased. A module referencing an old name through `path()` / `url()`
+must update it:
+
+| Legacy route name                       | Twig route name           |
+|-----------------------------------------|---------------------------|
+| `admin.sale.reset`                      | `admin.sale.reset-status` |
+| `admin.configuration.order-status.*`    | `admin.order-status.*`    |
+| `admin.configuration.mailing-system.*`  | `admin.mailingSystem.*`   |
+
+The ACL resource for the mailing system stays `admin.configuration.mailing-system`.
 
 ## License
 
