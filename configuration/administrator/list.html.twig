@@ -30,15 +30,17 @@
         {{ component('BoDataTable', {
             id: 'administrators',
             columns: [
-                column('id', 'ID'|trans),
-                column('login', 'Login'|trans),
-                column('name', 'Name'|trans),
-                column('email', 'Email'|trans),
+                column('id', 'ID'|trans, 'start', 'id'),
+                column('login', 'Login'|trans, 'start', 'login'),
+                column('name', 'Name'|trans, 'start', 'lastname'),
+                column('email', 'Email'|trans, 'start', 'email'),
                 column('profile', 'Profile'|trans),
                 column_actions('_actions', 'Actions'|trans),
             ],
             rows: rows,
             emptyMessage: 'No administrator yet.'|trans,
+            sortField: sort_field,
+            sortDirection: sort_direction,
         }) }}
     </div>
 

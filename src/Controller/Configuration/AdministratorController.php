@@ -17,7 +17,9 @@ namespace BackOfficeDefaultTwigBundle\Controller\Configuration;
 use BackOfficeDefaultTwigBundle\Form\Administrator\AdministratorType;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
+use BackOfficeDefaultTwigBundle\UiComponents\DataTable\ListSort;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
+use Propel\Runtime\ActiveQuery\Criteria;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -57,13 +59,13 @@ final class AdministratorController
     }
 
     #[Route('', name: 'view', methods: ['GET'])]
-    public function list(): Response
+    public function list(Request $request): Response
     {
         if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::VIEW)) {
             return $denied;
         }
 
-        return new Response($this->twig->render(self::LIST_TEMPLATE, $this->buildListContext()));
+        return new Response($this->twig->render(self::LIST_TEMPLATE, $this->buildListContext($request)));
     }
 
     #[Route('/view', name: 'view-profile', methods: ['GET'])]
@@ -188,9 +190,21 @@ final class AdministratorController
     /**
      * @return array<string, mixed>
      */
-    private function buildListContext(): array
+    private function buildListContext(?Request $request = null): array
     {
-        $admins = AdminQuery::create()->orderByLogin()->find();
+        $sort = $request !== null
+            ? ListSort::fromRequest($request, ['id', 'login', 'firstname', 'lastname', 'email'], 'login')
+            : new ListSort('login', 'asc');
+        $criteria = strtoupper($sort->direction) === 'DESC' ? Criteria::DESC : Criteria::ASC;
+        $query = AdminQuery::create();
+        match ($sort->field) {
+            'id' => $query->orderById($criteria),
+            'firstname' => $query->orderByFirstname($criteria),
+            'lastname' => $query->orderByLastname($criteria),
+            'email' => $query->orderByEmail($criteria),
+            default => $query->orderByLogin($criteria),
+        };
+        $admins = $query->find();
         $rows = [];
         $editForms = [];
         $defaultLocale = $this->resolveDefaultLocale();
@@ -212,6 +226,8 @@ final class AdministratorController
             'rows' => $rows,
             'edit_forms' => $editForms,
             'create_form' => $createForm->createView(),
+            'sort_field' => $sort->field,
+            'sort_direction' => $sort->direction,
         ];
     }
 

@@ -18,7 +18,9 @@ use BackOfficeDefaultTwigBundle\Form\Profile\ProfileType;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
+use BackOfficeDefaultTwigBundle\UiComponents\DataTable\ListSort;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
+use Propel\Runtime\ActiveQuery\Criteria;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -62,13 +64,13 @@ final class ProfileController
     }
 
     #[Route('', name: 'list', methods: ['GET'])]
-    public function list(): Response
+    public function list(Request $request): Response
     {
         if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::VIEW)) {
             return $denied;
         }
 
-        return new Response($this->twig->render(self::LIST_TEMPLATE, $this->buildListContext()));
+        return new Response($this->twig->render(self::LIST_TEMPLATE, $this->buildListContext($request)));
     }
 
     #[Route('/update/{profile_id}', name: 'update', requirements: ['profile_id' => '\d+'], methods: ['GET'])]
@@ -248,9 +250,19 @@ final class ProfileController
     /**
      * @return array<string, mixed>
      */
-    private function buildListContext(): array
+    private function buildListContext(?Request $request = null): array
     {
-        $profiles = ProfileQuery::create()->orderById()->find();
+        $sort = $request !== null
+            ? ListSort::fromRequest($request, ['id', 'code', 'title'], 'id')
+            : new ListSort('id', 'asc');
+        $criteria = strtoupper($sort->direction) === 'DESC' ? Criteria::DESC : Criteria::ASC;
+        $query = ProfileQuery::create();
+        match ($sort->field) {
+            'code' => $query->orderByCode($criteria),
+            'title' => $query->useProfileI18nQuery(null, Criteria::LEFT_JOIN)->filterByLocale($this->resolveDefaultLocale())->orderByTitle($criteria)->endUse(),
+            default => $query->orderById($criteria),
+        };
+        $profiles = $query->find();
         $rows = [];
         $defaultLocale = $this->resolveDefaultLocale();
 
@@ -266,6 +278,8 @@ final class ProfileController
         return [
             'rows' => $rows,
             'create_form' => $createForm->createView(),
+            'sort_field' => $sort->field,
+            'sort_direction' => $sort->direction,
         ];
     }
 

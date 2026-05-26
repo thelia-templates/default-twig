@@ -30,13 +30,15 @@
         {{ component('BoDataTable', {
             id: 'profiles',
             columns: [
-                column('id', 'ID'|trans),
-                column('code', 'Code'|trans),
-                column('title', 'Title'|trans),
+                column('id', 'ID'|trans, 'start', 'id'),
+                column('code', 'Code'|trans, 'start', 'code'),
+                column('title', 'Title'|trans, 'start', 'title'),
                 column_actions('_actions', 'Actions'|trans),
             ],
             rows: rows,
             emptyMessage: 'No profile defined yet.'|trans,
+            sortField: sort_field,
+            sortDirection: sort_direction,
         }) }}
     </div>
 
