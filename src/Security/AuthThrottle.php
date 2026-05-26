@@ -67,8 +67,28 @@ final readonly class AuthThrottle
     private function key(string $action): string
     {
         $request = $this->requests->getCurrentRequest();
-        $fingerprint = sha1(($request?->getClientIp() ?? 'unknown').'|'.$action);
+        $fingerprint = sha1($this->ipFingerprint($request?->getClientIp()).'|'.$action);
 
         return 'bo_auth_throttle.'.$fingerprint;
+    }
+
+    /**
+     * Normalise client IPs so the same caller maps to a stable fingerprint:
+     *  - IPv4 → 4 packed bytes (/32, full address)
+     *  - IPv6 → first 8 packed bytes (/64 prefix). The interface ID is
+     *    attacker-controlled, tracking the full /128 lets one rotate at will.
+     */
+    private function ipFingerprint(?string $ip): string
+    {
+        if ($ip === null || $ip === '') {
+            return 'unknown';
+        }
+
+        $packed = @inet_pton($ip);
+        if ($packed === false) {
+            return 'invalid';
+        }
+
+        return \strlen($packed) === 16 ? substr($packed, 0, 8) : $packed;
     }
 }
