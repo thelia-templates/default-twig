@@ -17,6 +17,28 @@ export default class extends Controller {
 
     connect() {
         this.applyFilters();
+        this.prefillEditSelects();
+    }
+
+    // Edit page: the module is already selected, so preload the class list (then the method list)
+    // and reselect the class/method currently bound to the module hook.
+    async prefillEditSelects() {
+        if (!this.hasCreateModuleTarget || !this.hasCreateClassnameTarget) {
+            return;
+        }
+        const currentClass = this.createClassnameTarget.dataset.current || '';
+        if (!this.createModuleTarget.value || currentClass === '') {
+            return;
+        }
+
+        await this.loadClassnames();
+        this.createClassnameTarget.value = currentClass;
+
+        const currentMethod = this.hasCreateMethodTarget ? (this.createMethodTarget.dataset.current || '') : '';
+        if (currentMethod !== '') {
+            await this.loadMethods();
+            this.createMethodTarget.value = currentMethod;
+        }
     }
 
     applyFilters() {

@@ -107,6 +107,8 @@ final class ModuleHookController
             'module_hook' => $moduleHook,
             'available_modules' => $this->moduleChoices(),
             'available_hooks' => $this->hookChoices(),
+            'classnames_url_template' => $this->urls->generate('admin.module-hook.get-module-hook-classnames', ['moduleId' => 0]),
+            'methods_url_template' => $this->urls->generate('admin.module-hook.get-module-hook-methods', ['moduleId' => 0, 'className' => '__CLASS__']),
         ]));
     }
 
