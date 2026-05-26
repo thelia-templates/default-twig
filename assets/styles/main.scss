@@ -1265,3 +1265,24 @@ tr.bo-order-row--urgent {
 .bo-chart-canvas > canvas {
     max-width: 100%;
 }
+
+.bo-markdown-body {
+    font-size: .95rem;
+    line-height: 1.55;
+
+    h1 { font-size: 1.5rem; margin-top: 1.25rem; margin-bottom: .75rem; }
+    h2 { font-size: 1.25rem; margin-top: 1.25rem; margin-bottom: .65rem; }
+    h3 { font-size: 1.1rem; margin-top: 1rem; margin-bottom: .55rem; }
+    h4, h5, h6 { font-size: 1rem; margin-top: 1rem; margin-bottom: .5rem; }
+
+    p { margin-bottom: .75rem; }
+    ul, ol { padding-left: 1.5rem; }
+    code { padding: .15rem .35rem; background-color: var(--bs-tertiary-bg); border-radius: .25rem; font-size: .85em; }
+    pre { padding: .75rem 1rem; background-color: var(--bs-tertiary-bg); border-radius: .375rem; overflow-x: auto; }
+    pre code { padding: 0; background: transparent; }
+    blockquote { border-left: 3px solid var(--bs-border-color); padding-left: 1rem; color: var(--bs-secondary-color); margin: 0 0 .75rem; }
+    table { width: 100%; margin-bottom: .75rem; }
+    img { max-width: 100%; height: auto; }
+    a { word-break: break-word; }
+    hr { margin: 1rem 0; }
+}
