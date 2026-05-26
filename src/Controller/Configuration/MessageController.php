@@ -125,9 +125,9 @@ final class MessageController
             'message' => $message,
             'form' => $this->buildUpdateForm($message, $locale)->createView(),
             'edit_language_id' => (int) $editLang->getId(),
-            'preview_html_url' => $this->urls->generate('admin.email.preview_html', ['messageId' => $message_id]),
-            'preview_text_url' => $this->urls->generate('admin.email.preview_text', ['messageId' => $message_id]),
-            'send_test_url' => $this->urls->generate('admin.email.test_send', ['messageId' => $message_id]),
+            'preview_html_url' => $this->urls->generate('admin.email.preview_html', ['messageId' => $message_id, 'edit_language_id' => $editLang->getId()]),
+            'preview_text_url' => $this->urls->generate('admin.email.preview_text', ['messageId' => $message_id, 'edit_language_id' => $editLang->getId()]),
+            'send_test_url' => $this->urls->generate('admin.email.test_send', ['messageId' => $message_id, 'edit_language_id' => $editLang->getId()]),
             'store_email' => (string) ConfigQuery::read('store_email', ''),
         ]));
     }

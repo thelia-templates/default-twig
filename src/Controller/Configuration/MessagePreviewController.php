@@ -89,7 +89,7 @@ final class MessagePreviewController
                 [(string) ConfigQuery::read('store_email', '') => (string) ConfigQuery::read('store_name', 'Thelia')],
                 [$recipient => $recipient],
                 $parameters,
-                $this->defaultLocale(),
+                $this->resolveLocale($request),
             );
 
             return new Response($this->translator->trans('The message has been successfully sent to %recipient.', ['%recipient' => $recipient]));
@@ -119,13 +119,26 @@ final class MessagePreviewController
                 $parser->assign($key, $value);
             }
 
-            $message->setLocale($this->defaultLocale());
+            $message->setLocale($this->resolveLocale($request));
             $content = $asHtml ? $message->getHtmlMessageBody($parser) : $message->getTextMessageBody($parser);
         } catch (\Throwable $exception) {
             return new Response($this->translator->trans("You probably didn't inject the missing variable to preview the message. Error is : %err", ['%err' => $exception->getMessage()]));
         }
 
         return new Response($content);
+    }
+
+    private function resolveLocale(Request $request): string
+    {
+        $editLanguageId = $request->get('edit_language_id');
+        if ($editLanguageId !== null && '' !== (string) $editLanguageId) {
+            $lang = LangQuery::create()->findPk((int) $editLanguageId);
+            if ($lang !== null) {
+                return $lang->getLocale();
+            }
+        }
+
+        return $this->defaultLocale();
     }
 
     private function defaultLocale(): string
