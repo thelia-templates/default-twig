@@ -126,6 +126,8 @@
                 <div class="card">
                     <div class="card-body">
                         {{ safe_hook('content.seo.update-form', { content_id: content.id, id: content.id }) }}
+                        {{ safe_hook('tab-seo.update-form', { content_id: content.id, id: content.id }) }}
+                        {{ safe_hook('tab-seo.bottom', { content_id: content.id, id: content.id }) }}
                         {{ form_start(seo_form, { action: path('admin.content.seo.save'), method: 'post', attr: { 'data-testid': 'content-seo-form' } }) }}
                             <div class="mb-3">
                                 {{ form_label(seo_form.url) }}

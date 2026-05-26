@@ -5,6 +5,7 @@
     formAction: path('admin.customer.create'),
     submitLabel: 'Create this customer',
     testid: 'customer-create',
+    hook: 'customer.create-form',
 } %}
     {% block fields %}
         <p class="text-muted small">{{ 'A random password will be generated and sent to the customer.'|trans }}</p>

@@ -151,6 +151,7 @@
                         {{ form_widget(create_form.locale) }}
                         {# tax_price is wired into the FormType for the edit screen but not exposed in the create modal #}
                         {% do create_form.tax_price.setRendered %}
+                        {{ safe_hook('product.create-form') }}
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'Cancel'|trans }}</button>

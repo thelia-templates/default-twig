@@ -41,6 +41,7 @@
                             {% endfor %}
                         {% endblock %}
 
+                        {{ safe_hook('main.before-content') }}
                         {% block content %}{% endblock %}
                     </main>
 
@@ -54,5 +55,6 @@
         {% endblock %}
 
         {% block scripts_extra %}{% endblock %}
+        {{ safe_hook('main.footer-js') }}
     </body>
 </html>

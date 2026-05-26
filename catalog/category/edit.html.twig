@@ -292,6 +292,8 @@
                     {{ form_widget(seo_form.id) }}
                     {{ form_widget(seo_form.locale) }}
                     {{ safe_hook('category.seo.update-form', { category: category.id }) }}
+                    {{ safe_hook('tab-seo.update-form', { category: category.id, id: category.id }) }}
+                    {{ safe_hook('tab-seo.bottom', { category: category.id, id: category.id }) }}
                     <button type="submit" class="btn btn-primary" data-testid="category-seo-submit">
                         <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save SEO'|trans }}
                     </button>

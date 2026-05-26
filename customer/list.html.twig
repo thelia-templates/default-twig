@@ -338,3 +338,7 @@
     {% include '@BackOfficeDefaultTwig/customer/_customer_create_modal.html.twig' %}
     {% include '@BackOfficeDefaultTwig/customer/_customer_delete_modal.html.twig' %}
 {% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('customers.js') }}
+{% endblock %}
