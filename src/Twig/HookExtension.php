@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace BackOfficeDefaultTwigBundle\Twig;
 
+use BackOfficeDefaultTwigBundle\Service\Hook\LegacyHookAliases;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Thelia\Core\Event\Hook\HookRenderBlockEvent;
@@ -44,6 +45,7 @@ final class HookExtension extends AbstractExtension
     public function __construct(
         private readonly EventDispatcherInterface $dispatcher,
         private readonly LoggerInterface $logger,
+        private readonly LegacyHookAliases $legacyAliases,
     ) {
     }
 
@@ -94,10 +96,9 @@ final class HookExtension extends AbstractExtension
         $event = new HookRenderEvent($name, $parameters);
 
         try {
-            $this->dispatcher->dispatch(
-                $event,
-                \sprintf('hook.%s.%s', $type, $name),
-            );
+            foreach ($this->hookNamesFor($name) as $hookName) {
+                $this->dispatcher->dispatch($event, \sprintf('hook.%s.%s', $type, $hookName));
+            }
 
             return $event->dump();
         } catch (\Throwable $exception) {
@@ -128,11 +129,20 @@ final class HookExtension extends AbstractExtension
     {
         $event = new HookRenderBlockEvent($name, $parameters);
 
-        $this->dispatcher->dispatch(
-            $event,
-            \sprintf('hook.%s.%s', $type, $name),
-        );
+        foreach ($this->hookNamesFor($name) as $hookName) {
+            $this->dispatcher->dispatch($event, \sprintf('hook.%s.%s', $type, $hookName));
+        }
 
         return $event;
+    }
+
+    /**
+     * The hook name itself, followed by the legacy Smarty names it replaced (cohabitation bridge).
+     *
+     * @return list<string>
+     */
+    private function hookNamesFor(string $name): array
+    {
+        return [$name, ...$this->legacyAliases->legacyNamesFor($name)];
     }
 }
