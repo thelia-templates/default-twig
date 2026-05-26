@@ -40,7 +40,8 @@
                     {% block body %}
                         {% if message %}<p class="mb-0">{{ message|trans }}</p>{% endif %}
                         {% if prefillInput %}<input type="hidden" name="{{ prefillInput }}" value="" data-bo-prefill-modal-target="input">{% endif %}
-                        {% if hook %}{{ safe_hook(hook, hookContext) }}{% endif %}
+                        {%- set effective_hook = hook ?? ((testid and testid ends with '-delete') ? testid|slice(0, -7) ~ '.delete-form' : null) -%}
+                        {% if effective_hook %}{{ safe_hook(effective_hook, hookContext) }}{% endif %}
                     {% endblock %}
                 </div>
                 <div class="modal-footer">
