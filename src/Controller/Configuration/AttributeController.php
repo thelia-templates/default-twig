@@ -395,6 +395,7 @@ final class AttributeController
                 'title' => (string) $av->getTitle(),
                 'position' => (int) $av->getPosition(),
                 'delete_url' => $this->tokenizedUrl('admin.configuration.attributes-av.delete', ['attributeav_id' => (int) $av->getId()]),
+                'update_title_url' => $this->urls->generate('admin.configuration.attributes-av.update-title', ['attribute_av_id' => (int) $av->getId()]),
             ];
         }
 

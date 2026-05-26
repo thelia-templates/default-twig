@@ -96,7 +96,18 @@
                                data-bo-sortable-param-name-value="attributeav_id">
                             {% for av in attribute_avs %}
                                 <tr data-row-id="{{ av.id }}" data-testid="attributeav-row-{{ av.id }}">
-                                    <td>{{ av.title }}</td>
+                                    <td>
+                                        <input type="text"
+                                               class="form-control form-control-sm"
+                                               value="{{ av.title }}"
+                                               data-controller="bo-inline-edit"
+                                               data-bo-inline-edit-url-value="{{ av.update_title_url }}"
+                                               data-bo-inline-edit-token-value="{{ assignToken() }}"
+                                               data-bo-inline-edit-original-value="{{ av.title }}"
+                                               data-action="blur->bo-inline-edit#submit keydown.enter->bo-inline-edit#submitFromEnter"
+                                               data-testid="attributeav-title-{{ av.id }}"
+                                               aria-label="{{ 'Edit attribute value title'|trans }}">
+                                    </td>
                                     <td class="text-center">{{ av.position }}</td>
                                     <td class="text-end">
                                         <a href="{{ av.delete_url }}" class="btn btn-sm btn-outline-danger" data-testid="attributeav-delete-{{ av.id }}" onclick="return confirm('{{ 'Delete this value?'|trans }}')">

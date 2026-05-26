@@ -17,8 +17,11 @@ namespace BackOfficeDefaultTwigBundle\Controller\Configuration;
 use BackOfficeDefaultTwigBundle\Form\Attribute\AttributeAvType;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
+use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -34,6 +37,7 @@ use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
 use Thelia\Model\AttributeAvQuery;
 use Thelia\Model\LangQuery;
+use Thelia\Tools\TokenProvider;
 
 #[Route('/admin/configuration/attributes-av', name: 'admin.configuration.attributes-av.')]
 final class AttributeAvController
@@ -44,9 +48,12 @@ final class AttributeAvController
     public function __construct(
         private readonly AdminFormAction $action,
         private readonly AdminAccessChecker $access,
+        private readonly EventDispatcherInterface $events,
         private readonly FormFactoryInterface $formFactory,
         private readonly UrlGeneratorInterface $urls,
+        private readonly TokenProvider $tokens,
         private readonly TranslatorInterface $translator,
+        private readonly EditLocaleResolver $editLocale,
     ) {
     }
 
@@ -118,6 +125,39 @@ final class AttributeAvController
             successRoute: self::ATTRIBUTE_EDIT_ROUTE,
             successParameters: ['attribute_id' => $attributeId],
         );
+    }
+
+    #[Route('/update-title/{attribute_av_id}', name: 'update-title', methods: ['POST'], requirements: ['attribute_av_id' => '\d+'])]
+    public function updateTitle(Request $request, int $attribute_av_id): JsonResponse
+    {
+        if ($this->access->check(self::RESOURCE, [], AccessManager::UPDATE) !== null) {
+            return new JsonResponse(['success' => false, 'message' => $this->translator->trans('Access denied.')], Response::HTTP_FORBIDDEN);
+        }
+
+        try {
+            $this->tokens->checkToken((string) $request->request->get('_token', ''));
+        } catch (\Throwable) {
+            return new JsonResponse(['success' => false, 'message' => $this->translator->trans('Invalid CSRF token.')], Response::HTTP_BAD_REQUEST);
+        }
+
+        $title = trim((string) $request->request->get('title', ''));
+        if ($title === '') {
+            return new JsonResponse(['success' => false, 'message' => $this->translator->trans('Title cannot be empty.')], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $av = AttributeAvQuery::create()->findPk($attribute_av_id);
+        if ($av === null) {
+            return new JsonResponse(['success' => false, 'message' => $this->translator->trans('Attribute value not found.')], Response::HTTP_NOT_FOUND);
+        }
+
+        $editLang = $this->editLocale->resolveFromRequest($request);
+        $locale = $editLang->getLocale() ?? $this->defaultLocale();
+
+        $event = new AttributeAvUpdateEvent($attribute_av_id);
+        $event->setTitle($title)->setLocale($locale)->setAttributeId((int) $av->getAttributeId());
+        $this->events->dispatch($event, TheliaEvents::ATTRIBUTE_AV_UPDATE);
+
+        return new JsonResponse(['success' => true, 'title' => $title]);
     }
 
     #[Route('/update-position', name: 'update-position', methods: ['GET', 'POST'])]
