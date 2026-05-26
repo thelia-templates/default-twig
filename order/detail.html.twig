@@ -70,7 +70,37 @@
         </div>
 
         <div class="row">
-            <div class="col-md-8">
+            <div class="col-lg-8">
+                <ul class="nav nav-tabs mb-3" id="order-detail-tabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="tab-cart-toggle" data-bs-toggle="tab" data-bs-target="#tab-cart" type="button" role="tab" aria-controls="tab-cart" aria-selected="true" data-testid="order-tab-cart">
+                            <i class="bi bi-bag" aria-hidden="true"></i> {{ 'Ordered products'|trans }}
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="tab-bill-toggle" data-bs-toggle="tab" data-bs-target="#tab-bill" type="button" role="tab" aria-controls="tab-bill" data-testid="order-tab-bill">
+                            <i class="bi bi-receipt" aria-hidden="true"></i> {{ 'Invoice and Delivery'|trans }}
+                        </button>
+                    </li>
+                    {% for block in extra_tabs %}
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#{{ block.id }}"
+                                    {% if block.href is defined and block.href %}data-href="{{ block.href }}"{% endif %}
+                                    type="button" role="tab" data-testid="order-tab-{{ block.id }}">{{ block.title }}</button>
+                        </li>
+                    {% endfor %}
+                    {% if has_hook('order.tab-content') %}
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="tab-modules-toggle" data-bs-toggle="tab" data-bs-target="#tab-modules" type="button" role="tab" aria-controls="tab-modules" data-testid="order-tab-modules">
+                                <i class="bi bi-puzzle" aria-hidden="true"></i> {{ 'Modules'|trans }}
+                            </button>
+                        </li>
+                    {% endif %}
+                </ul>
+
+                <div class="tab-content">
+
+                <div class="tab-pane fade show active" id="tab-cart" role="tabpanel" aria-labelledby="tab-cart-toggle">
                 <div class="card mb-3">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <span>{{ 'Order items'|trans }}</span>
@@ -195,7 +225,9 @@
                         </div>
                     </div>
                 </div>
+                </div>{# /tab-cart #}
 
+                <div class="tab-pane fade" id="tab-bill" role="tabpanel" aria-labelledby="tab-bill-toggle">
                 <div class="card mb-3">
                     <div class="card-header">{{ 'Order management'|trans }}</div>
                     <div class="card-body">
@@ -244,9 +276,28 @@
                         } only %}
                     </div>
                 </div>
+                </div>{# /tab-bill #}
+
+                {% for block in extra_tabs %}
+                    <div class="tab-pane fade" id="{{ block.id }}" role="tabpanel">
+                        {% if block.href is defined and block.href %}
+                            <div class="text-center"><span class="loading">{{ 'Please wait, loading'|trans }}</span></div>
+                        {% else %}
+                            {{ block.content|raw }}
+                        {% endif %}
+                    </div>
+                {% endfor %}
+
+                {% if has_hook('order.tab-content') %}
+                    <div class="tab-pane fade" id="tab-modules" role="tabpanel" aria-labelledby="tab-modules-toggle">
+                        {{ safe_hook('order.tab-content', { order: order.id, order_id: order.id, location: 'order-edit', view: 'order' }) }}
+                    </div>
+                {% endif %}
+
+                </div>{# /tab-content #}
             </div>
 
-            <div class="col-md-4">
+            <div class="col-lg-4">
                 <div class="card mb-3" data-testid="order-totals">
                     <div class="card-header">{{ 'Totals'|trans }}</div>
                     <ul class="list-group list-group-flush small">
@@ -355,39 +406,6 @@
             </div>
         </div>
     </div>
-
-    {% if extra_tabs|length > 0 or has_hook('order.tab-content') %}
-        <div class="container-fluid mt-4" data-testid="order-detail-modules">
-            <ul class="nav nav-tabs mb-3" role="tablist">
-                {% for block in extra_tabs %}
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link {% if loop.first %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#{{ block.id }}"
-                                {% if block.href is defined and block.href %}data-href="{{ block.href }}"{% endif %}
-                                type="button" data-testid="order-tab-{{ block.id }}">{{ block.title }}</button>
-                    </li>
-                {% endfor %}
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link {% if extra_tabs|length == 0 %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-modules" type="button" data-testid="order-tab-modules">
-                        {{ 'Modules'|trans }}
-                    </button>
-                </li>
-            </ul>
-            <div class="tab-content">
-                {% for block in extra_tabs %}
-                    <div class="tab-pane fade {% if loop.first %}show active{% endif %}" id="{{ block.id }}" role="tabpanel">
-                        {% if block.href is defined and block.href %}
-                            <div class="text-center"><span class="loading">{{ 'Please wait, loading'|trans }}</span></div>
-                        {% else %}
-                            {{ block.content|raw }}
-                        {% endif %}
-                    </div>
-                {% endfor %}
-                <div class="tab-pane fade {% if extra_tabs|length == 0 %}show active{% endif %}" id="tab-modules" role="tabpanel">
-                    {{ safe_hook('order.tab-content', { order: order.id, order_id: order.id, location: 'order-edit', view: 'order' }) }}
-                </div>
-            </div>
-        </div>
-    {% endif %}
 
     {% if order_addresses.invoice or order_addresses.delivery %}
         {% include '@BackOfficeDefaultTwig/order/_address_modal.html.twig' with {
