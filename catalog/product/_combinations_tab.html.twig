@@ -34,7 +34,17 @@
             <input type="hidden" name="product_id" value="{{ product.id }}">
             <input type="hidden" name="tax_rule" value="{{ tax_rule_id }}">
             <input type="hidden" name="currency" value="{{ currency.id }}">
-            <input type="hidden" name="use_exchange_rate" value="0">
+
+            {% if available_currencies|default([])|length > 1 and not currency.is_default %}
+                <div class="form-check form-switch mb-2" data-testid="combinations-use-exchange-rate-wrapper">
+                    <input class="form-check-input" type="checkbox" id="combinations-use-exchange-rate" name="use_exchange_rate" value="1" data-testid="combinations-use-exchange-rate">
+                    <label class="form-check-label" for="combinations-use-exchange-rate">
+                        {{ 'Convert prices from the default currency using the exchange rate'|trans }}
+                    </label>
+                </div>
+            {% else %}
+                <input type="hidden" name="use_exchange_rate" value="0">
+            {% endif %}
 
             <div class="table-responsive">
                 <table class="table table-sm align-middle" data-testid="combinations-table">
@@ -50,6 +60,7 @@
                             <th>{{ 'EAN'|trans }}</th>
                             <th>{{ 'Promo'|trans }}</th>
                             <th>{{ 'New'|trans }}</th>
+                            <th>{{ 'Visible'|trans }}</th>
                             <th></th>
                         </tr>
                     </thead>
@@ -68,6 +79,14 @@
                                 <td><input type="text" name="ean_code[]" value="{{ row.ean_code }}" class="form-control form-control-sm"></td>
                                 <td class="text-center"><input type="checkbox" name="onsale[{{ loop.index0 }}]" value="1" {% if row.onsale %}checked{% endif %}></td>
                                 <td class="text-center"><input type="checkbox" name="isnew[{{ loop.index0 }}]" value="1" {% if row.isnew %}checked{% endif %}></td>
+                                <td class="text-center">
+                                    <a href="{{ path('admin.product.combination.toggle-visibility', { pse_id: row.id }) }}?_token={{ assignToken() }}&amp;product_id={{ product.id }}"
+                                       class="btn btn-sm {% if row.visible %}btn-success{% else %}btn-outline-secondary{% endif %}"
+                                       title="{{ row.visible ? 'Visible'|trans : 'Hidden'|trans }}"
+                                       data-testid="combinations-toggle-visible-{{ row.id }}">
+                                        <i class="bi bi-{% if row.visible %}eye{% else %}eye-slash{% endif %}" aria-hidden="true"></i>
+                                    </a>
+                                </td>
                                 <td>
                                     <button type="button" class="btn btn-sm btn-outline-danger"
                                             data-bs-toggle="modal" data-bs-target="#pse-delete-modal"
@@ -98,7 +117,10 @@
                 </div>
             {% endif %}
 
-            <form method="post" action="{{ path('admin.product.combination.defaut-price.update') }}?_token={{ assignToken() }}" data-testid="default-pse-form">
+            <form method="post" action="{{ path('admin.product.combination.defaut-price.update') }}?_token={{ assignToken() }}"
+                  data-testid="default-pse-form"
+                  data-controller="bo-pse-price-with-tax"
+                  data-bo-pse-price-with-tax-calc-url-value="{{ path('admin.product.calculate-price') }}">
                 <input type="hidden" name="product_id" value="{{ product.id }}">
                 <input type="hidden" name="product_sale_element_id" value="{{ default_pse.id }}">
                 <input type="hidden" name="isdefault" value="1">
@@ -111,7 +133,8 @@
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
                         <label class="form-label" for="default_pse_tax_rule">{{ 'Tax rule'|trans }}</label>
-                        <select class="form-select" id="default_pse_tax_rule" name="tax_rule" required>
+                        <select class="form-select" id="default_pse_tax_rule" name="tax_rule" required
+                                data-bo-pse-price-with-tax-target="taxRule">
                             <option value="">{{ 'Select a tax rule'|trans }}</option>
                             {% for rule in tax_rules %}
                                 <option value="{{ rule.id }}" {% if rule.id == tax_rule_id %}selected{% endif %}>{{ rule.title }}</option>
@@ -132,7 +155,9 @@
                                 <div class="mb-3">
                                     <label class="form-label" for="default_pse_price">{{ 'Product price excluding taxes'|trans }}</label>
                                     <div class="input-group">
-                                        <input type="number" step="0.0001" id="default_pse_price" name="price" value="{{ default_pse.price }}" class="form-control" required>
+                                        <input type="number" step="0.0001" id="default_pse_price" name="price" value="{{ default_pse.price }}" class="form-control" required
+                                               data-bo-pse-price-with-tax-target="priceExcl"
+                                               data-action="blur->bo-pse-price-with-tax#onPriceExclBlur">
                                         <span class="input-group-text">{{ currency.symbol }}</span>
                                     </div>
                                 </div>
@@ -140,7 +165,9 @@
                                 <div class="mb-3">
                                     <label class="form-label" for="default_pse_price_with_tax">{{ 'Product price including taxes'|trans }}</label>
                                     <div class="input-group">
-                                        <input type="number" step="0.0001" id="default_pse_price_with_tax" name="price_with_tax" value="" class="form-control" placeholder="{{ 'Auto-computed from price + tax rule'|trans }}">
+                                        <input type="number" step="0.0001" id="default_pse_price_with_tax" name="price_with_tax" value="" class="form-control" placeholder="{{ 'Auto-computed from price + tax rule'|trans }}"
+                                               data-bo-pse-price-with-tax-target="priceIncl"
+                                               data-action="blur->bo-pse-price-with-tax#onPriceInclBlur">
                                         <span class="input-group-text">{{ currency.symbol }}</span>
                                     </div>
                                 </div>
@@ -186,7 +213,9 @@
                                 <div class="mb-3">
                                     <label class="form-label" for="default_pse_sale_price">{{ 'Sale price excluding taxes'|trans }}</label>
                                     <div class="input-group">
-                                        <input type="number" step="0.0001" id="default_pse_sale_price" name="sale_price" value="{{ default_pse.sale_price }}" class="form-control" required>
+                                        <input type="number" step="0.0001" id="default_pse_sale_price" name="sale_price" value="{{ default_pse.sale_price }}" class="form-control" required
+                                               data-bo-pse-price-with-tax-target="salePriceExcl"
+                                               data-action="blur->bo-pse-price-with-tax#onSalePriceExclBlur">
                                         <span class="input-group-text">{{ currency.symbol }}</span>
                                     </div>
                                 </div>
@@ -194,7 +223,9 @@
                                 <div class="mb-3">
                                     <label class="form-label" for="default_pse_sale_price_with_tax">{{ 'Sale price including taxes'|trans }}</label>
                                     <div class="input-group">
-                                        <input type="number" step="0.0001" id="default_pse_sale_price_with_tax" name="sale_price_with_tax" value="" class="form-control" placeholder="{{ 'Auto-computed from sale price + tax rule'|trans }}">
+                                        <input type="number" step="0.0001" id="default_pse_sale_price_with_tax" name="sale_price_with_tax" value="" class="form-control" placeholder="{{ 'Auto-computed from sale price + tax rule'|trans }}"
+                                               data-bo-pse-price-with-tax-target="salePriceIncl"
+                                               data-action="blur->bo-pse-price-with-tax#onSalePriceInclBlur">
                                         <span class="input-group-text">{{ currency.symbol }}</span>
                                     </div>
                                 </div>

@@ -433,6 +433,21 @@ final class ProductAdvancedController
         );
     }
 
+    #[Route('/admin/product/combination/toggle-visibility/{pse_id}', name: 'admin.product.combination.toggle-visibility', methods: ['GET', 'POST'], requirements: ['pse_id' => '\d+'])]
+    public function combinationToggleVisibility(int $pse_id, Request $request): Response
+    {
+        return $this->action->tokenAction(
+            resource: self::RESOURCE,
+            access: AccessManager::UPDATE,
+            request: $request,
+            event: new ProductSaleElementToggleVisibilityEvent($pse_id),
+            eventName: TheliaEvents::PRODUCT_PRODUCT_SALE_ELEMENT_TOGGLE_VISIBILITY,
+            actionLabel: 'PSE visibility toggled',
+            successRoute: self::EDIT_ROUTE,
+            successParameters: ['product_id' => (int) $request->get('product_id', 0), 'current_tab' => 'pse'],
+        );
+    }
+
     #[Route('/admin/product/combination/delete', name: 'admin.product.combination.delete', methods: ['POST', 'GET'])]
     public function combinationDelete(Request $request): Response
     {

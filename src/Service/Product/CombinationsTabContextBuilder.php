@@ -85,6 +85,8 @@ final readonly class CombinationsTabContextBuilder
                 'onsale' => (bool) $pse->getPromo(),
                 'isnew' => (bool) $pse->getNewness(),
                 'isdefault' => (bool) $pse->getIsDefault(),
+                'visible' => (bool) $pse->getVisible(),
+                'position' => (int) $pse->getPosition(),
             ];
             $rows[] = $row;
 
