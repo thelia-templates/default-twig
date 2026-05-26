@@ -78,7 +78,7 @@ final class MessageController
 
         $createForm = $this->formFactory->createNamed('thelia_message_create', MessageType::class, [
             'locale' => $locale,
-        ], []);
+        ], ['include_secured' => false]);
 
         return new Response($this->twig->render(self::LIST_TEMPLATE, [
             'rows' => $rows,
@@ -91,7 +91,7 @@ final class MessageController
     {
         $form = $this->formFactory->createNamed('thelia_message_create', MessageType::class, [
             'locale' => $request->getLocale(),
-        ], []);
+        ], ['include_secured' => false]);
 
         return $this->action->submit(
             resource: self::RESOURCE,
@@ -178,7 +178,7 @@ final class MessageController
         $event->setMessageName((string) ($data['message_name'] ?? ''))
             ->setLocale((string) ($data['locale'] ?? $this->defaultLocale()))
             ->setTitle((string) ($data['title'] ?? ''))
-            ->setSecured((bool) ($data['secured'] ?? false));
+            ->setSecured(false); // system (secured) messages are never created from the admin UI
 
         return $event;
     }

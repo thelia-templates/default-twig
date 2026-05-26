@@ -44,13 +44,16 @@ final class MessageType extends AbstractType
                 'constraints' => [new NotBlank()],
                 'label' => $this->translator->trans('Title'),
             ])
-            ->add('secured', CheckboxType::class, [
-                'required' => false,
-                'label' => $this->translator->trans('Secured (system message)'),
-            ])
             ->add('locale', HiddenType::class, [
                 'constraints' => [new NotBlank()],
             ]);
+
+        if ($options['include_secured']) {
+            $builder->add('secured', CheckboxType::class, [
+                'required' => false,
+                'label' => $this->translator->trans('Secured (system message)'),
+            ]);
+        }
 
         if ($options['include_id']) {
             $builder->add('id', HiddenType::class, [
@@ -105,6 +108,7 @@ final class MessageType extends AbstractType
             ->setDefaults([
                 'include_id' => false,
                 'include_body' => false,
+                'include_secured' => true,
                 'csrf_token_id' => 'admin.message',
                 'layout_choices' => [],
                 'html_template_choices' => [],
@@ -112,6 +116,7 @@ final class MessageType extends AbstractType
             ])
             ->setAllowedTypes('include_id', 'bool')
             ->setAllowedTypes('include_body', 'bool')
+            ->setAllowedTypes('include_secured', 'bool')
             ->setAllowedTypes('layout_choices', 'array')
             ->setAllowedTypes('html_template_choices', 'array')
             ->setAllowedTypes('text_template_choices', 'array');
