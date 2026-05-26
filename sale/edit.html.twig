@@ -96,14 +96,37 @@
                             <div class="border rounded p-3" style="max-height: 320px; overflow-y: auto;"
                                  data-bo-sale-product-picker-target="productZone" data-testid="sale-product-zone">
                                 {% for product in selected_products %}
-                                    <div class="form-check" data-product-id="{{ product.id }}">
-                                        <input class="form-check-input" type="checkbox" name="products[]" value="{{ product.id }}" id="sale-product-{{ product.id }}" checked>
-                                        <label class="form-check-label" for="sale-product-{{ product.id }}">
-                                            <code>{{ product.ref }}</code> {{ product.title }}
-                                        </label>
+                                    {% set product_av_ids = selected_product_attributes[product.id]|default([]) %}
+                                    <div class="d-flex align-items-center gap-2 mb-1" data-product-id="{{ product.id }}">
+                                        <div class="form-check flex-grow-1 mb-0">
+                                            <input class="form-check-input" type="checkbox" name="products[]" value="{{ product.id }}" id="sale-product-{{ product.id }}" checked>
+                                            <label class="form-check-label" for="sale-product-{{ product.id }}">
+                                                <code>{{ product.ref }}</code> {{ product.title }}
+                                            </label>
+                                        </div>
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-secondary"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#sale-product-attributes-modal"
+                                                data-product-id="{{ product.id }}"
+                                                data-product-label="{{ product.title }}"
+                                                title="{{ 'Restrict to attribute values'|trans }}"
+                                                data-testid="sale-product-attributes-{{ product.id }}">
+                                            <i class="bi bi-sliders" aria-hidden="true"></i>
+                                            <span class="badge bg-secondary{% if product_av_ids is empty %} d-none{% endif %} ms-1"
+                                                  data-bo-sale-product-attributes-target="badge">{{ product_av_ids|length }}</span>
+                                        </button>
                                     </div>
                                 {% else %}
                                     <p class="text-body-secondary mb-0" data-bo-sale-product-picker-target="emptyHint">{{ 'No product selected yet. Pick categories and load their products.'|trans }}</p>
+                                {% endfor %}
+                            </div>
+
+                            <div data-bo-sale-product-attributes-inputs>
+                                {% for productId, avIds in selected_product_attributes %}
+                                    {% if avIds is not empty %}
+                                        <input type="hidden" name="product_attributes[{{ productId }}]" value="{{ avIds|join(',') }}">
+                                    {% endif %}
                                 {% endfor %}
                             </div>
                         </div>
@@ -155,6 +178,32 @@
                 </div>
             </div>
         {{ form_end(form) }}
+    </div>
+
+    <div class="modal fade"
+         id="sale-product-attributes-modal"
+         tabindex="-1"
+         aria-labelledby="sale-product-attributes-modal-title"
+         aria-hidden="true"
+         data-controller="bo-sale-product-attributes"
+         data-bo-sale-product-attributes-url-template-value="{{ product_attributes_url_template }}">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title h5" id="sale-product-attributes-modal-title">
+                        {{ 'Attribute values'|trans }}: <span data-bo-sale-product-attributes-target="product"></span>
+                    </h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'Close'|trans }}"></button>
+                </div>
+                <div class="modal-body" data-bo-sale-product-attributes-target="body"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'Cancel'|trans }}</button>
+                    <button type="button" class="btn btn-primary" data-action="bo-sale-product-attributes#save" data-testid="sale-product-attributes-save">
+                        <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save selection'|trans }}
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     {{ safe_hook('sale-edit.bottom', { sale_id: sale.id }) }}

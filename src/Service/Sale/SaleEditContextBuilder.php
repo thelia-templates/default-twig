@@ -26,6 +26,7 @@ final readonly class SaleEditContextBuilder
 {
     public function __construct(
         private UrlGeneratorInterface $urls,
+        private SaleProductAttributesProvider $productAttributesProvider,
     ) {
     }
 
@@ -35,8 +36,10 @@ final readonly class SaleEditContextBuilder
      *     all_categories: list<array{id: int, title: string}>,
      *     selected_category_ids: list<int>,
      *     selected_products: list<array{id: int, ref: string, title: string}>,
+     *     selected_product_attributes: array<int, list<int>>,
      *     currencies: list<array{id: int, code: string, symbol: string, offset: float}>,
-     *     products_url: string
+     *     products_url: string,
+     *     product_attributes_url_template: string
      * }
      */
     public function build(Sale $sale, string $locale): array
@@ -81,8 +84,13 @@ final readonly class SaleEditContextBuilder
             'all_categories' => $this->categoryChoices($locale),
             'selected_category_ids' => $selectedCategoryIds,
             'selected_products' => $selectedProducts,
+            'selected_product_attributes' => $this->productAttributesProvider->selectedForSale($sale),
             'currencies' => $this->currencyOffsets($priceOffsets),
             'products_url' => $this->urls->generate('admin.sale.products-by-categories'),
+            'product_attributes_url_template' => $this->urls->generate(
+                'admin.sale.product-attributes',
+                ['product_id' => 0],
+            ),
         ];
     }
 

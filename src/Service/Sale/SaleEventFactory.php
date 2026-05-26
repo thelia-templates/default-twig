@@ -46,7 +46,7 @@ final readonly class SaleEventFactory
             ->setPriceOffsetType((int) ($formData['price_offset_type'] ?? Sale::OFFSET_TYPE_PERCENTAGE))
             ->setPriceOffsets($this->priceOffsets($request))
             ->setProducts($this->products($request))
-            ->setProductAttributes([])
+            ->setProductAttributes($this->productAttributes($request))
             ->setLocale((string) ($formData['locale'] ?? $fallbackLocale))
             ->setTitle((string) ($formData['title'] ?? ''))
             ->setSaleLabel((string) ($formData['label'] ?? ''))
@@ -76,6 +76,31 @@ final readonly class SaleEventFactory
     private function products(Request $request): array
     {
         return array_values(array_filter(array_map('intval', (array) $request->request->all('products'))));
+    }
+
+    /**
+     * Accepts `product_attributes[productId] = [avId, ...]` or the legacy
+     * Smarty payload `product_attributes[productId] = "av1,av2"`.
+     *
+     * @return array<int, list<int>>
+     */
+    private function productAttributes(Request $request): array
+    {
+        $raw = (array) $request->request->all('product_attributes');
+        $output = [];
+        foreach ($raw as $productId => $avs) {
+            $productId = (int) $productId;
+            if ($productId < 1) {
+                continue;
+            }
+            $list = \is_array($avs) ? $avs : explode(',', (string) $avs);
+            $ids = array_values(array_filter(array_map('intval', $list)));
+            if ($ids !== []) {
+                $output[$productId] = $ids;
+            }
+        }
+
+        return $output;
     }
 
     private function stringOrNull(mixed $value): ?string

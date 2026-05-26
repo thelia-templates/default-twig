@@ -23,6 +23,7 @@ use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
 use BackOfficeDefaultTwigBundle\Service\Sale\SaleEditContextBuilder;
 use BackOfficeDefaultTwigBundle\Service\Sale\SaleEventFactory;
 use BackOfficeDefaultTwigBundle\Service\Sale\SaleListPresenter;
+use BackOfficeDefaultTwigBundle\Service\Sale\SaleProductAttributesProvider;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -61,6 +62,7 @@ final class SaleController
         private readonly SaleListPresenter $listPresenter,
         private readonly SaleEditContextBuilder $editContextBuilder,
         private readonly SaleEventFactory $eventFactory,
+        private readonly SaleProductAttributesProvider $productAttributesProvider,
         private readonly EditLocaleResolver $editLocale,
     ) {
     }
@@ -210,6 +212,27 @@ final class SaleController
         $categoryIds = array_values(array_filter(array_map('intval', explode(',', (string) $request->query->get('categories', '')))));
 
         return new JsonResponse(['products' => $this->sales->findProductsInCategories($categoryIds, $this->defaultLocale())]);
+    }
+
+    #[Route('/sales/product-attributes/{product_id}', name: 'product-attributes', methods: ['GET'], requirements: ['product_id' => '\d+'])]
+    public function productAttributes(int $product_id, Request $request): Response
+    {
+        if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::VIEW)) {
+            return $denied;
+        }
+
+        $selected = array_values(array_filter(array_map(
+            'intval',
+            explode(',', (string) $request->query->get('selected', '')),
+        )));
+
+        $groups = $this->productAttributesProvider->optionsForProduct($product_id, $this->defaultLocale());
+
+        return new Response($this->twig->render('@BackOfficeDefaultTwig/sale/_product_attributes_modal.html.twig', [
+            'product_id' => $product_id,
+            'groups' => $groups,
+            'selected' => $selected,
+        ]));
     }
 
     private function buildCreateForm(string $locale): FormInterface
