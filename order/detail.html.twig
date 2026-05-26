@@ -406,3 +406,7 @@
 
     {{ safe_hook('order-edit.bottom', { order: order.id }) }}
 {% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('order.edit-js', { order_id: order.id, location: 'order-edit-js' }) }}
+{% endblock %}

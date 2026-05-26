@@ -103,5 +103,6 @@
 {% endblock %}
 
 {% block scripts_extra %}
+    {{ safe_hook('tax.edit-js', { location: 'tax-edit-js' }) }}
     {{ safe_hook('wysiwyg.js', { location: 'tax-edit-js' }) }}
 {% endblock %}

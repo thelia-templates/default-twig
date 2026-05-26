@@ -62,3 +62,7 @@
         </div>
     {% endif %}
 {% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('messages.js', { location: 'messages-js' }) }}
+{% endblock %}

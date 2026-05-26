@@ -179,3 +179,7 @@
 
     {{ safe_hook('message-edit.bottom', { message_id: message.id }) }}
 {% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('message.edit-js', { message_id: message.id, location: 'message-edit-js' }) }}
+{% endblock %}

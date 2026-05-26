@@ -179,5 +179,6 @@
 {% endblock %}
 
 {% block scripts_extra %}
+    {{ safe_hook('template.edit-js', { location: 'template-edit-js' }) }}
     {{ safe_hook('wysiwyg.js', { location: 'template-edit-js' }) }}
 {% endblock %}

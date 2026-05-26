@@ -66,3 +66,7 @@
 
     {{ safe_hook('advanced-configuration.bottom') }}
 {% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('advanced-configuration.js', { location: 'advanced-configuration-js' }) }}
+{% endblock %}

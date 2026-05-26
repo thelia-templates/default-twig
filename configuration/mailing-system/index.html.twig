@@ -91,3 +91,7 @@
 
     {{ safe_hook('mailing-system.bottom') }}
 {% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('mailing-system.js', { location: 'mailing-system-js' }) }}
+{% endblock %}

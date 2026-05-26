@@ -34,3 +34,7 @@
         }) }}
     </div>
 {% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('countries.js', { location: 'countries-js' }) }}
+{% endblock %}

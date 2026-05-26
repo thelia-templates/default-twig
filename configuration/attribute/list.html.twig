@@ -82,3 +82,7 @@
         prefillInput: 'attribute_id',
     }) }}
 {% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('attributes.js', { location: 'attributes-js' }) }}
+{% endblock %}

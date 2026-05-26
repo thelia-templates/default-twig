@@ -192,3 +192,7 @@
         </div>
     </div>
 {% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('profile.edit-js', { profile_id: profile.id, location: 'profile-edit-js' }) }}
+{% endblock %}

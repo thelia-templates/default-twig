@@ -71,3 +71,7 @@
 
     {{ safe_hook('module-edit.bottom', { module_id: module.id }) }}
 {% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('module.edit-js', { module_id: module.id, location: 'module-edit-js' }) }}
+{% endblock %}

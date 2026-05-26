@@ -260,3 +260,7 @@
     {% endcomponent %}
     </div>
 {% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('module-hook.js', { location: 'module-hook-js' }) }}
+{% endblock %}

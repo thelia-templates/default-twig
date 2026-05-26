@@ -73,3 +73,7 @@
         </form>
     </div>
 {% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('module-hook.edit-js', { module_hook_id: module_hook.id, location: 'module-hook-edit-js' }) }}
+{% endblock %}

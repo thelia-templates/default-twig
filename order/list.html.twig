@@ -384,3 +384,7 @@
 
     {{ safe_hook('orders.bottom') }}
 {% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('orders.js', { location: 'orders-js' }) }}
+{% endblock %}

@@ -208,3 +208,7 @@
 
     {{ safe_hook('sale-edit.bottom', { sale_id: sale.id }) }}
 {% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('sale.edit-js', { sale_id: sale.id, location: 'sale-edit-js' }) }}
+{% endblock %}

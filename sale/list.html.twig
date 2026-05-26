@@ -129,3 +129,7 @@
 
     {{ safe_hook('sales.bottom', { location: 'sales_bottom' }) }}
 {% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('sales.js', { location: 'sales-js' }) }}
+{% endblock %}

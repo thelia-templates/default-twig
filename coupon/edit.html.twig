@@ -224,5 +224,6 @@
 {% endblock %}
 
 {% block scripts_extra %}
+    {{ safe_hook('coupon.create-js', { location: 'coupon-create-js' }) }}
     {{ safe_hook('wysiwyg.js', { location: 'coupon-edit-js' }) }}
 {% endblock %}

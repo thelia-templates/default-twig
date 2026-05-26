@@ -68,5 +68,6 @@
 {% endblock %}
 
 {% block scripts_extra %}
+    {{ safe_hook('hook.edit-js', { hook_id: hook_id, location: 'hook-edit-js' }) }}
     {{ safe_hook('wysiwyg.js', { location: 'wysiwyg-hook-edit-js' }) }}
 {% endblock %}

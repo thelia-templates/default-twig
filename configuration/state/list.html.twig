@@ -47,3 +47,7 @@
         }) }}
     </div>
 {% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('states.js', { location: 'states-js' }) }}
+{% endblock %}

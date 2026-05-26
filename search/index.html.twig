@@ -117,3 +117,7 @@
         {% endif %}
     </div>
 {% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('search.js', { location: 'search-js' }) }}
+{% endblock %}

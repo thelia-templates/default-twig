@@ -56,3 +56,7 @@
         </div>
     </div>
 {% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('country.edit-js', { country_id: country.id, location: 'country-edit-js' }) }}
+{% endblock %}

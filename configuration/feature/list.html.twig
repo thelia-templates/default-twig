@@ -82,3 +82,7 @@
         prefillInput: 'feature_id',
     }) }}
 {% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('features.js', { location: 'features-js' }) }}
+{% endblock %}

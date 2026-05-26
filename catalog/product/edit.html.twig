@@ -253,5 +253,6 @@
 {% endblock %}
 
 {% block scripts_extra %}
+    {{ safe_hook('product.edit-js', { product_id: product.id, location: 'product-edit-js' }) }}
     {{ safe_hook('wysiwyg.js', { location: 'product-edit-js' }) }}
 {% endblock %}

@@ -163,3 +163,7 @@
 
     {{ safe_hook('customer-edit.bottom', { customer_id: customer.id }) }}
 {% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('customer.edit-js', { customer_id: customer.id, location: 'customer-edit-js' }) }}
+{% endblock %}

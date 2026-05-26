@@ -103,3 +103,7 @@
         prefillInput: 'administrator_id',
     }) }}
 {% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('administrators.js', { location: 'administrators-js' }) }}
+{% endblock %}

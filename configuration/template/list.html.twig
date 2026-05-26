@@ -91,3 +91,7 @@
         prefillInput: 'template_id',
     }) }}
 {% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('templates.js', { location: 'templates-js' }) }}
+{% endblock %}

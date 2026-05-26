@@ -254,3 +254,7 @@
         </form>
     </div>
 {% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('translations.js', { location: 'translations-js' }) }}
+{% endblock %}

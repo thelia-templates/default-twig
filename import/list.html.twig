@@ -45,3 +45,7 @@
         {% endif %}
     </div>
 {% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('imports.js', { location: 'imports-js' }) }}
+{% endblock %}

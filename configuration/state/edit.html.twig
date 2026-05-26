@@ -55,3 +55,7 @@
         </div>
     </div>
 {% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('state.edit-js', { state_id: state.id, location: 'state-edit-js' }) }}
+{% endblock %}

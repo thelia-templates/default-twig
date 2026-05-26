@@ -145,5 +145,6 @@
 {% endblock %}
 
 {% block scripts_extra %}
+    {{ safe_hook('feature.edit-js', { feature_id: feature.id, location: 'feature-edit-js' }) }}
     {{ safe_hook('wysiwyg.js', { location: 'feature-edit-js' }) }}
 {% endblock %}

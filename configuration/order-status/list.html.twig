@@ -81,3 +81,7 @@
         prefillInput: 'order_status_id',
     }) }}
 {% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('order-status.js', { location: 'order-status-js' }) }}
+{% endblock %}

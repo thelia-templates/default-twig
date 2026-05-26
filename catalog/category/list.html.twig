@@ -149,3 +149,7 @@
         }) }}
     {% endif %}
 {% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('categories.js', { location: 'categories-js' }) }}
+{% endblock %}

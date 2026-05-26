@@ -144,5 +144,6 @@
 {% endblock %}
 
 {% block scripts_extra %}
+    {{ safe_hook('attribute.edit-js', { attribute_id: attribute.id, location: 'attribute-edit-js' }) }}
     {{ safe_hook('wysiwyg.js', { location: 'attribute-edit-js' }) }}
 {% endblock %}

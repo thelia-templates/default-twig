@@ -74,3 +74,7 @@
         prefillInput: 'profile_id',
     }) }}
 {% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('profiles.js', { location: 'profiles-js' }) }}
+{% endblock %}
