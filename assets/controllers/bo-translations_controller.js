@@ -22,6 +22,8 @@ import { Controller } from '@hotwired/stimulus';
  *   - `selectUserMode` / `selectDeveloperMode` on the mode buttons.
  *   - `copyAll` on the "copy all translations" link - fills every empty source
  *     translation with the original text.
+ *   - `copyOne` on a row's ` button - copies that row's source text into its
+ *     translation input.
  *   - `trackChange` on translation inputs to flip an internal dirty flag.
  *   - `confirmUnsaved` on form submit; prompts the user when dirty.
  */
@@ -85,6 +87,17 @@ export default class extends Controller {
         });
     }
 
+    copyOne(event) {
+        event?.preventDefault();
+        const row = event.currentTarget.closest('tr');
+        const source = row?.querySelector('input[name="text[]"]');
+        const target = row?.querySelector('input[name="translation[]"]');
+        if (source && target) {
+            target.value = source.value;
+            this.dirty = true;
+        }
+    }
+
     trackChange() {
         this.dirty = true;
     }
@@ -111,9 +124,19 @@ export default class extends Controller {
     #submitNavigation(form) {
         // Navigation submits should not trigger the unsaved-changes guard.
         this.dirty = false;
-        form.method = 'get';
-        form.action = this.hasBaseUrlValue ? this.baseUrlValue : form.action;
-        form.submit();
+        // Navigate with the scope params only: GET-submitting the whole form
+        // would serialise every translation input into the URL and overflow the
+        // server's request-line limit (414) on large catalogs.
+        const base = this.hasBaseUrlValue ? this.baseUrlValue : form.action;
+        const params = new URLSearchParams();
+        ['item_to_translate', 'item_name', 'module_part', 'edit_language_id'].forEach((name) => {
+            const field = form.querySelector(`[name="${name}"]`);
+            if (field && field.value !== '') {
+                params.set(name, field.value);
+            }
+        });
+        const query = params.toString();
+        window.location.assign(query ? `${base}?${query}` : base);
     }
 
     #readMode() {

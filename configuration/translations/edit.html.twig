@@ -26,9 +26,15 @@
 
         <form method="POST" id="translation_form" action="{{ path('admin.configuration.translations.update') }}" data-testid="translations-form"
               data-action="submit->bo-translations#confirmUnsaved">
-            <input type="hidden" name="edit_language_id" value="{{ edit_language_id }}">
-
             <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                    <label class="form-label" for="edit_language_id">{{ 'Edit language'|trans }}</label>
+                    <select id="edit_language_id" name="edit_language_id" class="form-select" data-action="change->bo-translations#submitForm" data-testid="translations-language">
+                        {% for language in available_languages %}
+                            <option value="{{ language.id }}"{% if language.id == edit_language_id %} selected{% endif %}>{{ language.title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
                 <div class="col-md-4">
                     <label class="form-label" for="item_to_translate">{{ 'Items to translate'|trans }}</label>
                     <select id="item_to_translate" name="item_to_translate" class="form-select" data-action="change->bo-translations#changeItem">
@@ -212,7 +218,7 @@
                             </td>
                             <td class="col-md-6">
                                 <div class="input-group input-group-sm mb-1">
-                                    <span class="input-group-text">›</span>
+                                    <button type="button" class="input-group-text" data-action="click->bo-translations#copyOne" title="{{ 'Copy the source text into this translation'|trans }}">›</button>
                                     <input type="text" name="translation[]" value="{{ info.translation }}" class="form-control" data-testid="translation-input"
                                            data-bo-translations-target="defaultInput"
                                            data-action="change->bo-translations#trackChange">
