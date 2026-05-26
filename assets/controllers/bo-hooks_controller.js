@@ -5,8 +5,6 @@ export default class extends Controller {
 
     static values = {
         listUrl: String,
-        toggleActivationUrl: String,
-        toggleNativeUrl: String,
         discoverUrl: String,
         discoverSaveUrl: String,
     };

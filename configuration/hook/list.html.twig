@@ -19,8 +19,6 @@
     <div class="container-fluid" data-testid="hooks-page"
          data-controller="bo-hooks"
          data-bo-hooks-list-url-value="{{ path('admin.hook') }}"
-         data-bo-hooks-toggle-activation-url-value="{{ path('admin.hook.toggle-activation') }}"
-         data-bo-hooks-toggle-native-url-value="{{ path('admin.hook.toggle-native') }}"
          data-bo-hooks-discover-url-value="{{ path('admin.hook.discover') }}"
          data-bo-hooks-discover-save-url-value="{{ path('admin.hook.discover.save') }}">
 
@@ -64,8 +62,8 @@
                 column('id', 'ID'|trans),
                 column('code', 'Code'|trans),
                 column('title', 'Title'|trans),
-                column_badge('native_label', 'Official'|trans, { Yes: 'success', No: 'warning' }),
-                column_badge('active_label', 'Active'|trans, { Yes: 'success', No: 'secondary' }),
+                column_toggle('native', 'Official'|trans, is_granted('UPDATE', 'admin.hook') ? 'toggle_native_url' : null, 'center', 'bi-star-fill text-warning', 'bi-star text-secondary'),
+                column_toggle('active', 'Active'|trans, is_granted('UPDATE', 'admin.hook') ? 'toggle_active_url' : null),
                 column_actions('_actions', 'Actions'|trans),
             ],
             rows: rows,

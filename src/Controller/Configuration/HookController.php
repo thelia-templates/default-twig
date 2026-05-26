@@ -46,6 +46,7 @@ use Thelia\Model\Hook;
 use Thelia\Model\HookQuery;
 use Thelia\Model\Lang;
 use Thelia\Model\LangQuery;
+use Thelia\Tools\TokenProvider;
 use Twig\Environment;
 
 final class HookController
@@ -67,6 +68,7 @@ final class HookController
         #[Autowire(service: 'thelia.hookHelper')]
         private readonly HookHelper $hookHelper,
         private readonly EditLocaleResolver $editLocale,
+        private readonly TokenProvider $tokens,
     ) {
     }
 
@@ -88,8 +90,10 @@ final class HookController
                 'id' => (int) $hook->getId(),
                 'code' => (string) $hook->getCode(),
                 'title' => (string) $hook->getTitle(),
-                'native_label' => $hook->getNative() ? $this->translator->trans('Yes') : $this->translator->trans('No'),
-                'active_label' => $hook->getActivate() ? $this->translator->trans('Yes') : $this->translator->trans('No'),
+                'native' => (bool) $hook->getNative(),
+                'active' => (bool) $hook->getActivate(),
+                'toggle_native_url' => $this->tokenizedUrl('admin.hook.toggle-native', ['hook_id' => (int) $hook->getId(), 'type' => $type]),
+                'toggle_active_url' => $this->tokenizedUrl('admin.hook.toggle-activation', ['hook_id' => (int) $hook->getId(), 'type' => $type]),
                 '_actions' => [
                     new RowAction(
                         kind: 'edit',
@@ -231,51 +235,31 @@ final class HookController
     #[Route('/admin/hook/toggle-activation', name: 'admin.hook.toggle-activation', methods: ['GET', 'POST'])]
     public function toggleActivation(Request $request): Response
     {
-        if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::UPDATE)) {
-            return $denied;
-        }
-
-        $hookId = (int) $request->get('hook_id', 0);
-        if ($hookId === 0) {
-            return new Response('', Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
-
-        try {
-            $event = new HookToggleActivationEvent($hookId);
-            $this->events->dispatch($event, TheliaEvents::HOOK_TOGGLE_ACTIVATION);
-
-            if ($event->hasHook()) {
-                return new Response('', Response::HTTP_NO_CONTENT);
-            }
-        } catch (\Throwable) {
-        }
-
-        return new Response('', Response::HTTP_INTERNAL_SERVER_ERROR);
+        return $this->action->tokenAction(
+            resource: self::RESOURCE,
+            access: AccessManager::UPDATE,
+            request: $request,
+            event: new HookToggleActivationEvent((int) $request->get('hook_id', 0)),
+            eventName: TheliaEvents::HOOK_TOGGLE_ACTIVATION,
+            actionLabel: 'Hook activation toggle',
+            successRoute: self::LIST_ROUTE,
+            successParameters: ['type' => (int) $request->get('type', TemplateDefinition::FRONT_OFFICE)],
+        );
     }
 
     #[Route('/admin/hook/toggle-native', name: 'admin.hook.toggle-native', methods: ['GET', 'POST'])]
     public function toggleNative(Request $request): Response
     {
-        if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::UPDATE)) {
-            return $denied;
-        }
-
-        $hookId = (int) $request->get('hook_id', 0);
-        if ($hookId === 0) {
-            return new Response('', Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
-
-        try {
-            $event = new HookToggleNativeEvent($hookId);
-            $this->events->dispatch($event, TheliaEvents::HOOK_TOGGLE_NATIVE);
-
-            if ($event->hasHook()) {
-                return new Response('', Response::HTTP_NO_CONTENT);
-            }
-        } catch (\Throwable) {
-        }
-
-        return new Response('', Response::HTTP_INTERNAL_SERVER_ERROR);
+        return $this->action->tokenAction(
+            resource: self::RESOURCE,
+            access: AccessManager::UPDATE,
+            request: $request,
+            event: new HookToggleNativeEvent((int) $request->get('hook_id', 0)),
+            eventName: TheliaEvents::HOOK_TOGGLE_NATIVE,
+            actionLabel: 'Hook native toggle',
+            successRoute: self::LIST_ROUTE,
+            successParameters: ['type' => (int) $request->get('type', TemplateDefinition::FRONT_OFFICE)],
+        );
     }
 
     #[Route('/admin/hooks/discover', name: 'admin.hook.discover', methods: ['GET'])]
@@ -418,5 +402,16 @@ final class HookController
         $defaultLang = LangQuery::create()->findOneByByDefault(true);
 
         return $defaultLang?->getLocale() ?? 'en_US';
+    }
+
+    /**
+     * @param array<string, scalar> $parameters
+     */
+    private function tokenizedUrl(string $route, array $parameters): string
+    {
+        $url = $this->urls->generate($route, $parameters);
+        $separator = str_contains($url, '?') ? '&' : '?';
+
+        return $url.$separator.'_token='.$this->tokens->assignToken();
     }
 }
