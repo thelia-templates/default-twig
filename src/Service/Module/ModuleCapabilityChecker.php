@@ -15,13 +15,15 @@ declare(strict_types=1);
 namespace BackOfficeDefaultTwigBundle\Service\Module;
 
 use BackOfficeDefaultTwigBundle\Repository\ModuleRepository;
-use Symfony\Component\Routing\Exception\ResourceNotFoundException;
 use Symfony\Component\Routing\RouterInterface;
 use Thelia\Core\Template\TemplateDefinition;
 use Thelia\Model\Module;
 
 final readonly class ModuleCapabilityChecker
 {
+    /** Generic fallback route that matches every module code — not a real configuration page. */
+    private const GENERIC_CONFIGURE_ROUTE = 'admin.module.configure';
+
     public function __construct(
         private ModuleRepository $modules,
         private RouterInterface $router,
@@ -54,13 +56,13 @@ final readonly class ModuleCapabilityChecker
     private function moduleAdminRouteExists(string $code): bool
     {
         try {
-            $this->router->match('/admin/module/'.$code);
-
-            return true;
-        } catch (ResourceNotFoundException) {
-            return false;
+            $match = $this->router->match('/admin/module/'.$code);
         } catch (\Throwable) {
             return false;
         }
+
+        // The generic ModuleConfigureController route matches every module code, so it would mark
+        // every active module as configurable. Only a route declared by the module itself counts.
+        return ($match['_route'] ?? null) !== self::GENERIC_CONFIGURE_ROUTE;
     }
 }
