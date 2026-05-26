@@ -22,32 +22,125 @@
                 {{ 'Edit customer'|trans }}: <span class="text-muted">{{ customer.firstname }} {{ customer.lastname }}</span>
                 <small class="text-secondary ms-2">{{ customer.ref }}</small>
             </h1>
+            {% include '@BackOfficeDefaultTwig/_prev_next_buttons.html.twig' with {
+                prev_url: prev_url|default(null),
+                next_url: next_url|default(null),
+                prev_label: 'Edit previous customer'|trans,
+                next_label: 'Edit next customer'|trans,
+                testid: 'customer',
+            } only %}
         </div>
 
-        <div class="card">
-            <div class="card-body">
-                {{ form_start(form, {
-                    action: path('admin.customer.update.process'),
-                    method: 'post',
-                    attr: { 'data-testid': 'customer-edit-form' },
-                }) }}
-                    <input type="hidden" name="customer_id" value="{{ customer.id }}">
-                    {% include '@BackOfficeDefaultTwig/customer/_customer_form_fields.html.twig' with { form: form } only %}
+        {{ form_start(form, {
+            action: path('admin.customer.update.process'),
+            method: 'post',
+            attr: { 'data-testid': 'customer-edit-form' },
+        }) }}
+            <input type="hidden" name="customer_id" value="{{ customer.id }}">
+            {% if form.id is defined %}{{ form_widget(form.id) }}{% endif %}
 
-                    <div class="d-flex justify-content-end gap-2 mt-3">
-                        <a href="{{ path('admin.customers') }}" class="btn btn-outline-secondary" data-testid="customer-edit-cancel">
-                            {{ 'Cancel'|trans }}
-                        </a>
-                        <button type="submit" class="btn btn-primary" data-testid="customer-edit-submit">
-                            <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save'|trans }}
-                        </button>
+            <div class="row g-3">
+                {# Left column — identity, account, address, contact #}
+                <div class="col-xl-8">
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <i class="bi bi-person" aria-hidden="true"></i> {{ 'Personal information'|trans }}
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-2">{{ form_row(form.title) }}</div>
+                                <div class="col-md-5">{{ form_row(form.firstname) }}</div>
+                                <div class="col-md-5">{{ form_row(form.lastname) }}</div>
+                                <div class="col-12">{{ form_row(form.email) }}</div>
+                            </div>
+                        </div>
                     </div>
-                {{ form_end(form) }}
+
+                    {% if form.password is defined %}
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <i class="bi bi-key" aria-hidden="true"></i> {{ 'Reset password'|trans }}
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-6">{{ form_row(form.password) }}</div>
+                                    <div class="col-md-6">{{ form_row(form.password_confirm) }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <i class="bi bi-geo-alt" aria-hidden="true"></i> {{ 'Default address'|trans }}
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-12">{{ form_row(form.address1) }}</div>
+                                <div class="col-md-6">{{ form_row(form.address2) }}</div>
+                                <div class="col-md-6">{{ form_row(form.address3) }}</div>
+                                <div class="col-md-3">{{ form_row(form.zipcode) }}</div>
+                                <div class="col-md-5">{{ form_row(form.city) }}</div>
+                                <div class="col-md-4">{{ form_row(form.country) }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <i class="bi bi-telephone" aria-hidden="true"></i> {{ 'Contact'|trans }}
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">{{ form_row(form.phone) }}</div>
+                                <div class="col-md-6">{{ form_row(form.cellphone) }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {# Right column — business + preferences + meta #}
+                <div class="col-xl-4">
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <i class="bi bi-building" aria-hidden="true"></i> {{ 'Business'|trans }}
+                        </div>
+                        <div class="card-body">
+                            {{ form_row(form.company) }}
+                        </div>
+                    </div>
+
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <i class="bi bi-sliders" aria-hidden="true"></i> {{ 'Preferences'|trans }}
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-12">{{ form_row(form.lang_id) }}</div>
+                                <div class="col-12">{{ form_row(form.discount) }}</div>
+                                <div class="col-12">{{ form_row(form.reseller) }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-3">
+                        <div class="card-body small text-muted d-flex align-items-center gap-2">
+                            <i class="bi bi-calendar3" aria-hidden="true"></i>
+                            {{ 'Registered on %date'|trans({ '%date': customer.createdAt ? customer.createdAt|format_datetime('medium', 'short') : '-' }) }}
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="card-footer text-muted small">
-                {{ 'Registered on %date'|trans({ '%date': customer.createdAt ? customer.createdAt|format_datetime('medium', 'short') : '-' }) }}
+
+            <div class="d-flex justify-content-end gap-2 mb-4">
+                <a href="{{ path('admin.customers') }}" class="btn btn-outline-secondary" data-testid="customer-edit-cancel">
+                    {{ 'Cancel'|trans }}
+                </a>
+                <button type="submit" class="btn btn-primary" data-testid="customer-edit-submit">
+                    <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save'|trans }}
+                </button>
             </div>
-        </div>
+        {{ form_end(form) }}
 
         {{ safe_hook('customer.edit', { customer_id: customer.id }) }}
 
@@ -152,6 +245,19 @@
                             </tbody>
                         </table>
                     </div>
+                    {% if orders_last_page|default(1) > 1 %}
+                        <div class="card-footer">
+                            {{ component('BoPagination', {
+                                route: 'admin.customer.update.view',
+                                currentPage: orders_page,
+                                lastPage: orders_last_page,
+                                routeParams: { customer_id: customer.id },
+                                pageParam: 'orders_page',
+                                ariaLabel: 'Customer orders pagination'|trans,
+                                testid: 'customer-orders',
+                            }) }}
+                        </div>
+                    {% endif %}
                 {% endif %}
             </div>
         </div>

@@ -93,6 +93,22 @@ final readonly class OrderRepository
             ->find();
     }
 
+    /**
+     * @return ObjectCollection<int, Order>
+     */
+    public function findByCustomerPage(int $customerId, int $page, int $perPage): ObjectCollection
+    {
+        $page = max(1, $page);
+        $offset = ($page - 1) * $perPage;
+
+        return OrderQuery::create()
+            ->filterByCustomerId($customerId)
+            ->orderByCreatedAt(Criteria::DESC)
+            ->offset($offset)
+            ->limit($perPage)
+            ->find();
+    }
+
     public function countOrderProducts(int $orderId): int
     {
         return OrderProductQuery::create()->filterByOrderId($orderId)->count();

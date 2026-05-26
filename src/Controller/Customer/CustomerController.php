@@ -208,14 +208,23 @@ final class CustomerController
         );
 
         $customerId = (int) $customer->getId();
+        $navigation = $this->customerRepository->findPreviousNext($customer);
+        $ordersTotal = $this->orderRepository->countByCustomer($customerId);
+        $ordersPage = max(1, (int) $request->query->get('orders_page', 1));
+        $ordersPerPage = 20;
+        $ordersLastPage = max(1, (int) ceil($ordersTotal / $ordersPerPage));
 
         return new Response($this->twig->render(self::EDIT_TEMPLATE, [
             'form' => $form->createView(),
             'customer' => $customer,
             'addresses' => $this->addressRows($customer),
             'address_create_form' => $addressCreateForm->createView(),
-            'recent_orders' => $this->recentOrders($customerId),
-            'orders_total' => $this->orderRepository->countByCustomer($customerId),
+            'recent_orders' => $this->customerOrdersPage($customerId, $ordersPage, $ordersPerPage),
+            'orders_total' => $ordersTotal,
+            'orders_page' => $ordersPage,
+            'orders_last_page' => $ordersLastPage,
+            'prev_url' => $navigation['previous'] !== null ? $this->urls->generate(self::EDIT_ROUTE, ['customer_id' => $navigation['previous']]) : null,
+            'next_url' => $navigation['next'] !== null ? $this->urls->generate(self::EDIT_ROUTE, ['customer_id' => $navigation['next']]) : null,
         ]));
     }
 
@@ -412,10 +421,10 @@ final class CustomerController
     /**
      * @return list<array{id: int, ref: string, created_at: \DateTimeInterface|null, status_title: string, status_color: string, amount: float, currency_symbol: string, edit_url: string}>
      */
-    private function recentOrders(int $customerId): array
+    private function customerOrdersPage(int $customerId, int $page, int $perPage): array
     {
         $rows = [];
-        foreach ($this->orderRepository->findRecentByCustomer($customerId) as $order) {
+        foreach ($this->orderRepository->findByCustomerPage($customerId, $page, $perPage) as $order) {
             $status = $order->getOrderStatus();
             $currency = $order->getCurrency();
             $rows[] = [

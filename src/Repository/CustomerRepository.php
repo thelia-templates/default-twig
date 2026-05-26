@@ -430,4 +430,22 @@ final readonly class CustomerRepository
 
         return (int) (ceil($value / 1000) * 1000);
     }
+
+    /** @return array{previous: ?int, next: ?int} */
+    public function findPreviousNext(Customer $current): array
+    {
+        $previous = CustomerQuery::create()
+            ->filterById($current->getId(), Criteria::LESS_THAN)
+            ->orderById(Criteria::DESC)
+            ->findOne();
+        $next = CustomerQuery::create()
+            ->filterById($current->getId(), Criteria::GREATER_THAN)
+            ->orderById(Criteria::ASC)
+            ->findOne();
+
+        return [
+            'previous' => $previous !== null ? (int) $previous->getId() : null,
+            'next' => $next !== null ? (int) $next->getId() : null,
+        ];
+    }
 }
