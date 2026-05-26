@@ -32,6 +32,7 @@ final class AdminLogsController
 {
     private const RESOURCE = AdminResources::ADMIN_LOG;
     private const LIST_TEMPLATE = '@BackOfficeDefaultTwig/configuration/admin-logs/list.html.twig';
+    private const ENTRIES_TEMPLATE = '@BackOfficeDefaultTwig/configuration/admin-logs/_entries.html.twig';
 
     public function __construct(
         private readonly AdminAccessChecker $access,
@@ -62,15 +63,20 @@ final class AdminLogsController
         $fromDate = $request->request->get('fromDate') ?: null;
         $toDate = $request->request->get('toDate') ?: null;
 
-        $entries = AdminLogQuery::getEntries(
+        $entries = $this->formatEntries(AdminLogQuery::getEntries(
             $admins !== [] ? $admins : null,
             $fromDate,
             $toDate,
             array_merge($resources, $modules) ?: null,
-        );
+        ));
+
+        // Legacy contract: an AJAX call to this endpoint expects the results fragment, not the full admin page.
+        if ($request->isXmlHttpRequest()) {
+            return new Response($this->twig->render(self::ENTRIES_TEMPLATE, ['entries' => $entries]));
+        }
 
         return new Response($this->twig->render(self::LIST_TEMPLATE, $this->buildContext(
-            entries: $this->formatEntries($entries),
+            entries: $entries,
             selected: [
                 'admins' => $admins,
                 'resources' => $resources,
