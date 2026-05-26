@@ -20,6 +20,7 @@ use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
 use BackOfficeDefaultTwigBundle\Service\Module\ModuleDocumentationReader;
 use BackOfficeDefaultTwigBundle\Service\Module\ModuleListPresenter;
 use BackOfficeDefaultTwigBundle\Service\Module\ModuleMetadataReader;
+use BackOfficeDefaultTwigBundle\Service\Module\ModuleSynchronizer;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -64,6 +65,7 @@ final class ModuleController
         private readonly EditLocaleResolver $editLocale,
         private readonly ModuleMetadataReader $metadataReader,
         private readonly ModuleDocumentationReader $documentationReader,
+        private readonly ModuleSynchronizer $moduleSynchronizer,
     ) {
     }
 
@@ -78,6 +80,29 @@ final class ModuleController
             self::LIST_TEMPLATE,
             $this->listPresenter->buildListContext($this->defaultLocale()),
         ));
+    }
+
+    #[Route('/modules/refresh', name: 'module.refresh', methods: ['POST'])]
+    public function refresh(Request $request): RedirectResponse
+    {
+        if ($this->access->check(self::RESOURCE, [], AccessManager::UPDATE)) {
+            return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
+        }
+
+        try {
+            $this->tokens->checkToken((string) $request->query->get('_token'));
+        } catch (\Throwable) {
+            return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
+        }
+
+        $errors = $this->moduleSynchronizer->synchronize();
+        if ($errors === null) {
+            $this->flashSuccess($request, $this->translator->trans('Modules checked: the list is up to date.'));
+        } else {
+            $this->flashError($request, $errors);
+        }
+
+        return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
     }
 
     #[Route('/module/update/{module_id}', name: 'module.update', methods: ['GET'], requirements: ['module_id' => '\d+'])]
@@ -342,12 +367,11 @@ final class ModuleController
 
     private function flashError(Request $request, string $message): void
     {
-        try {
-            $session = $request->getSession();
-            if (method_exists($session, 'getFlashBag')) {
-                $session->getFlashBag()->add('danger', $message);
-            }
-        } catch (\Throwable) {
-        }
+        $this->flash($request, 'danger', $message);
+    }
+
+    private function flashSuccess(Request $request, string $message): void
+    {
+        $this->flash($request, 'success', $message);
     }
 }

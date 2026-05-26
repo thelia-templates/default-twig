@@ -16,7 +16,17 @@
     {{ safe_hook('modules.top', { location: 'modules_top' }) }}
 
     <div class="container-fluid" data-testid="modules-page">
-        {% include '@BackOfficeDefaultTwig/_page_header.html.twig' with { title: 'Modules management'|trans } only %}
+        {% embed '@BackOfficeDefaultTwig/_page_header.html.twig' with { title: 'Modules management'|trans } only %}
+            {% block actions %}
+                {% if is_granted('UPDATE', 'admin.module') %}
+                    <form method="post" action="{{ path('admin.module.refresh') }}?_token={{ assignToken() }}" class="d-inline">
+                        <button type="submit" class="btn btn-outline-secondary" data-testid="modules-refresh">
+                            <i class="bi bi-arrow-clockwise" aria-hidden="true"></i> {{ 'Check modules'|trans }}
+                        </button>
+                    </form>
+                {% endif %}
+            {% endblock %}
+        {% endembed %}
 
         {% for type, group in groups %}
             <section class="mb-4" data-testid="modules-block-{{ group.slug }}">
