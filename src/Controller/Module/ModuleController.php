@@ -160,6 +160,12 @@ final class ModuleController
             $this->events->dispatch($event, TheliaEvents::MODULE_UPDATE);
         } catch (\Throwable $exception) {
             $this->flashError($request, $exception->getMessage());
+
+            return new RedirectResponse($this->urls->generate(self::EDIT_ROUTE, ['module_id' => $moduleId]));
+        }
+
+        if ($request->request->get('save_mode') === 'close') {
+            return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }
 
         return new RedirectResponse($this->urls->generate(self::EDIT_ROUTE, ['module_id' => $moduleId]));

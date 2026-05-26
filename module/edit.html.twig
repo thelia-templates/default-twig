@@ -34,6 +34,12 @@
 
         <div class="tab-content">
             <div class="tab-pane fade show active" id="module-tab-general" role="tabpanel" aria-labelledby="module-tab-general-btn">
+                {% if module.createdAt or module.updatedAt %}
+                    <p class="text-body-secondary small mb-3" data-testid="module-edit-dates">
+                        {% if module.createdAt %}{{ 'Created on'|trans }} {{ module.createdAt|date('Y-m-d H:i') }}{% endif %}
+                        {% if module.updatedAt %} · {{ 'last updated on'|trans }} {{ module.updatedAt|date('Y-m-d H:i') }}{% endif %}
+                    </p>
+                {% endif %}
                 <form action="{{ path('admin.module.save') }}" method="post" data-testid="module-edit-form">
                     <input type="hidden" name="module_id" value="{{ module.id }}">
                     <input type="hidden" name="locale" value="{{ locale }}">
@@ -53,8 +59,7 @@
                         <label class="form-label">{{ 'Postscriptum'|trans }}</label>
                         <textarea name="postscriptum" class="form-control" rows="3">{{ module.postscriptum }}</textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary" data-testid="module-edit-submit">{{ 'Save'|trans }}</button>
-                    <a href="{{ path('admin.module') }}" class="btn btn-outline-secondary">{{ 'Back'|trans }}</a>
+                    {{ component('BoSaveModeToolbar', { closeUrl: path('admin.module'), closeLabel: 'Back' }) }}
                 </form>
             </div>
 
