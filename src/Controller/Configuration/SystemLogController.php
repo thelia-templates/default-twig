@@ -17,6 +17,7 @@ namespace BackOfficeDefaultTwigBundle\Controller\Configuration;
 use BackOfficeDefaultTwigBundle\Form\Configuration\SystemLogConfigurationType;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormValidator;
+use BackOfficeDefaultTwigBundle\Service\Admin\AdminLogger;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -41,6 +42,7 @@ final class SystemLogController
         private readonly FormFactoryInterface $formFactory,
         private readonly UrlGeneratorInterface $urls,
         private readonly AdminFormValidator $validator,
+        private readonly AdminLogger $adminLogger,
     ) {
     }
 
@@ -66,6 +68,12 @@ final class SystemLogController
         try {
             $validated = $this->validator->validate($form);
             $this->persist($validated, $request);
+
+            $this->adminLogger->log(
+                AdminResources::SYSTEM_LOG,
+                AccessManager::UPDATE,
+                'System logging configuration modified.',
+            );
 
             return new RedirectResponse($this->urls->generate('admin.configuration.system-logs.default'));
         } catch (\Throwable) {
