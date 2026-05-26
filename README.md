@@ -126,6 +126,25 @@ Most hook names are kept iso with the legacy Smarty template. The few that were 
 to their legacy name (see [Cohabitation & breaking changes](#cohabitation--breaking-changes)), so
 third-party modules keep working unchanged.
 
+#### Hook contract for third-party modules
+
+The back-office emits ~200 native hooks. The **conventional extension points** a module can rely on
+are emitted systematically:
+
+| Convention | Emitted from | Example |
+|---|---|---|
+| `<screen>.top` / `.bottom` | every screen | `attributes.top`, `product-edit.bottom` |
+| `<entities>.table-header` / `.table-row` | `BoDataTable` (every list) | `attributes.table-row` |
+| `<entity>.create-form` | `BoCreateDialog` (derived from `testid`) | `brand.create-form` |
+| `<entity>.delete-form` | `BoConfirmDialog` (derived from `testid`) | `brand.delete-form` |
+| `<entity>.update-form` | edit screens | `feature.update-form` |
+| `<entity>.tab` / `.tab-content` | tabbed edit screens | `product.tab` |
+
+Hooks consumed by bundled modules (CustomerFamily, SEOne, HookAdminHome, VirtualProductControl,
+TheliaBlocks) are all wired. A hook code that is **not** emitted is considered deprecated for the
+Twig back-office — open an issue if your module needs one that is missing. The `<screen>.js` /
+`<entity>.edit-js` script hooks are emitted on a per-screen basis as screens are migrated.
+
 ## Tests
 
 - **PHPStan**: `ddev exec composer phpstan` (baseline 60 errors).
