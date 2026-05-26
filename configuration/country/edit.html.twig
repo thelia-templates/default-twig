@@ -45,6 +45,18 @@
                             </div>
                         </div>
                     </div>
+                    <div class="row g-3 mt-1">
+                        <div class="col-md-4">
+                            <div class="form-check mt-4">
+                                {{ form_widget(form.need_zip_code, { attr: { class: 'form-check-input' } }) }}
+                                {{ form_label(form.need_zip_code, null, { label_attr: { class: 'form-check-label' } }) }}
+                            </div>
+                        </div>
+                        <div class="col-md-8">{{ form_row(form.zip_code_format) }}</div>
+                        <div class="col-12">{{ form_row(form.chapo) }}</div>
+                        <div class="col-12">{{ form_row(form.description) }}</div>
+                        <div class="col-12">{{ form_row(form.postscriptum) }}</div>
+                    </div>
                     {{ form_widget(form.id) }}
                     {{ form_widget(form.locale) }}
                     <div class="d-flex justify-content-end gap-2 mt-3">

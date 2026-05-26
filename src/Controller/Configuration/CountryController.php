@@ -263,7 +263,12 @@ final class CountryController
             ->setIsoAlpha3((string) ($data['isoalpha3'] ?? ''))
             ->setArea((int) ($data['area'] ?? 0))
             ->setVisible((bool) ($data['visible'] ?? false))
-            ->setHasStates((bool) ($data['has_states'] ?? false));
+            ->setHasStates((bool) ($data['has_states'] ?? false))
+            ->setNeedZipCode((bool) ($data['need_zip_code'] ?? false))
+            ->setZipCodeFormat((string) ($data['zip_code_format'] ?? ''))
+            ->setChapo((string) ($data['chapo'] ?? ''))
+            ->setDescription((string) ($data['description'] ?? ''))
+            ->setPostscriptum((string) ($data['postscriptum'] ?? ''));
 
         return $event;
     }
@@ -279,7 +284,12 @@ final class CountryController
             ->setIsoAlpha3((string) ($data['isoalpha3'] ?? ''))
             ->setArea((int) ($data['area'] ?? 0))
             ->setVisible((bool) ($data['visible'] ?? false))
-            ->setHasStates((bool) ($data['has_states'] ?? false));
+            ->setHasStates((bool) ($data['has_states'] ?? false))
+            ->setNeedZipCode((bool) ($data['need_zip_code'] ?? false))
+            ->setZipCodeFormat((string) ($data['zip_code_format'] ?? ''))
+            ->setChapo((string) ($data['chapo'] ?? ''))
+            ->setDescription((string) ($data['description'] ?? ''))
+            ->setPostscriptum((string) ($data['postscriptum'] ?? ''));
 
         return $event;
     }
@@ -296,6 +306,11 @@ final class CountryController
             'area' => null,
             'visible' => (bool) $country->getVisible(),
             'has_states' => (bool) $country->getHasStates(),
+            'need_zip_code' => (bool) $country->getNeedZipCode(),
+            'zip_code_format' => (string) $country->getZipCodeFormat(),
+            'chapo' => $country->getChapo(),
+            'description' => $country->getDescription(),
+            'postscriptum' => $country->getPostscriptum(),
         ], [
             'include_id' => true,
             ]);
