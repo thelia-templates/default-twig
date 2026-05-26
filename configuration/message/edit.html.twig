@@ -59,7 +59,7 @@
                                 <div class="col-md-8">{{ form_row(form.title) }}</div>
                                 <div class="col-12">{{ form_row(form.subject) }}</div>
 
-                                <div class="col-12" data-controller="bo-ace-editor" data-bo-ace-editor-mode-value="html" data-bo-ace-editor-height-value="300">
+                                <div class="col-12" data-controller="bo-ace-editor" data-bo-ace-editor-mode-value="smarty" data-bo-ace-editor-height-value="300">
                                     <h2 class="h6 mt-2" data-testid="message-html-section-title">{{ 'HTML version of this message'|trans }}</h2>
                                     <div class="row g-3 mb-3">
                                         <div class="col-md-6">
@@ -73,7 +73,7 @@
                                     {{ form_widget(form.html_message, { attr: { rows: 12, 'data-testid': 'message-html', class: 'form-control text-monospace', 'data-bo-ace-editor-target': 'textarea' } }) }}
                                 </div>
 
-                                <div class="col-12" data-controller="bo-ace-editor" data-bo-ace-editor-mode-value="plain_text" data-bo-ace-editor-height-value="240">
+                                <div class="col-12" data-controller="bo-ace-editor" data-bo-ace-editor-mode-value="smarty" data-bo-ace-editor-height-value="240">
                                     <h2 class="h6 mt-2" data-testid="message-text-section-title">{{ 'Text version of this message'|trans }}</h2>
                                     <div class="row g-3 mb-3">
                                         <div class="col-md-6">
