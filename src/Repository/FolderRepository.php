@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace BackOfficeDefaultTwigBundle\Repository;
 
+use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\Collection\ObjectCollection;
 use Thelia\Model\Folder;
 use Thelia\Model\FolderQuery;
@@ -39,7 +40,29 @@ final readonly class FolderRepository
      */
     public function findChildrenOrderedByPosition(int $parentId, string $locale): ObjectCollection
     {
-        $folders = FolderQuery::create()->filterByParent($parentId)->orderByPosition()->find();
+        return $this->findChildrenSorted($parentId, $locale, 'position', 'asc');
+    }
+
+    /**
+     * @return ObjectCollection<int, Folder>
+     */
+    public function findChildrenSorted(int $parentId, string $locale, string $field, string $direction): ObjectCollection
+    {
+        $criteria = strtoupper($direction) === 'DESC' ? Criteria::DESC : Criteria::ASC;
+        $query = FolderQuery::create()->filterByParent($parentId);
+
+        match ($field) {
+            'id' => $query->orderById($criteria),
+            'visible' => $query->orderByVisible($criteria),
+            'title' => $query
+                ->useFolderI18nQuery(null, Criteria::LEFT_JOIN)
+                    ->filterByLocale($locale)
+                    ->orderByTitle($criteria)
+                ->endUse(),
+            default => $query->orderByPosition($criteria),
+        };
+
+        $folders = $query->find();
         foreach ($folders as $folder) {
             \assert($folder instanceof Folder);
             $folder->setLocale($locale);

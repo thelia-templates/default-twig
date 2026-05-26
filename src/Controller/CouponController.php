@@ -20,7 +20,9 @@ use BackOfficeDefaultTwigBundle\Service\Coupon\CouponConditionsRenderer;
 use BackOfficeDefaultTwigBundle\Service\Coupon\CouponEditContextBuilder;
 use BackOfficeDefaultTwigBundle\Service\Coupon\CouponInputsRenderer;
 use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
+use BackOfficeDefaultTwigBundle\UiComponents\DataTable\ListSort;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
+use Propel\Runtime\ActiveQuery\Criteria;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -90,8 +92,18 @@ final class CouponController
 
         $locale = $this->defaultLocale();
         $page = max(1, (int) $request->query->get('page', 1));
+        $sort = ListSort::fromRequest($request, ['id', 'code', 'title', 'is_enabled', 'expiration_date'], 'code');
+        $criteria = strtoupper($sort->direction) === 'DESC' ? Criteria::DESC : Criteria::ASC;
 
-        $query = CouponQuery::create()->orderByCode();
+        $query = CouponQuery::create();
+        match ($sort->field) {
+            'id' => $query->orderById($criteria),
+            'is_enabled' => $query->orderByIsEnabled($criteria),
+            'expiration_date' => $query->orderByExpirationDate($criteria),
+            'title' => $query->useCouponI18nQuery(null, Criteria::LEFT_JOIN)->filterByLocale($locale)->orderByTitle($criteria)->endUse(),
+            default => $query->orderByCode($criteria),
+        };
+
         $total = (int) $query->count();
         $pages = max(1, (int) ceil($total / self::PAGE_SIZE));
         $page = min($page, $pages);
@@ -110,6 +122,8 @@ final class CouponController
             'total' => $total,
             'pages' => $pages,
             'current_page' => $page,
+            'sort_field' => $sort->field,
+            'sort_direction' => $sort->direction,
         ]));
     }
 

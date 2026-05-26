@@ -42,14 +42,17 @@
         {{ component('BoDataTable', {
             id: 'folders',
             columns: [
-                column('id', 'ID'|trans),
-                column_html('title_html', 'Title'|trans),
-                column_toggle('visible', 'Online'|trans, 'toggle_visible_url'),
-                column('position', 'Position'|trans, 'center'),
+                column('id', 'ID'|trans, 'start', 'id'),
+                column_html('title_html', 'Title'|trans, 'start', 'title'),
+                column_toggle('visible', 'Online'|trans, 'toggle_visible_url', 'center', 'bi-check-circle-fill text-success', 'bi-circle text-secondary', 'visible'),
+                column('position', 'Position'|trans, 'center', 'position'),
                 column_actions('_actions', 'Actions'|trans),
             ],
             rows: rows,
             emptyMessage: 'No subfolder yet.'|trans,
+            sortField: sort_field,
+            sortDirection: sort_direction,
+            sortKeepParams: { folder_id: parent_id ?: null },
             tbodyAttributes: {
                 'data-controller': 'bo-sortable',
                 'data-bo-sortable-url-value': update_position_url,

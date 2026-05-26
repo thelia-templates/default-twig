@@ -32,19 +32,22 @@
         {{ component('BoDataTable', {
             id: 'coupons',
             columns: [
-                column('id', 'ID'|trans),
-                column('code', 'Code'|trans),
-                column('title', 'Title'|trans),
+                column('id', 'ID'|trans, 'start', 'id'),
+                column('code', 'Code'|trans, 'start', 'code'),
+                column('title', 'Title'|trans, 'start', 'title'),
                 column('type', 'Type'|trans),
-                column_badge('enabled_label', 'Status'|trans, { Enabled: 'success', Disabled: 'secondary' }),
+                column_badge('enabled_label', 'Status'|trans, { Enabled: 'success', Disabled: 'secondary' }, 'start', null, null, 'is_enabled'),
                 column('start_date', 'Start date'|trans),
-                column('expiration_date', 'Expiration date'|trans),
+                column('expiration_date', 'Expiration date'|trans, 'start', 'expiration_date'),
                 column('days_left', 'Days left'|trans, 'center'),
                 column('usages_left', 'Usages left'|trans, 'center'),
                 column_actions('_actions', 'Actions'|trans),
             ],
             rows: rows,
             emptyMessage: 'No coupon is currently defined. Use the (+) button above to create your first coupon.'|trans,
+            sortField: sort_field,
+            sortDirection: sort_direction,
+            sortKeepParams: { page: current_page > 1 ? current_page : null },
         }) }}
 
         <div class="mt-3">

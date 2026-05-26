@@ -26,16 +26,18 @@
         {{ component('BoDataTable', {
             id: 'newsletter',
             columns: [
-                column('id', 'ID'|trans),
-                column('email', 'Email'|trans),
-                column('firstname', 'First name'|trans),
-                column('lastname', 'Last name'|trans),
+                column('id', 'ID'|trans, 'start', 'id'),
+                column('email', 'Email'|trans, 'start', 'email'),
+                column('firstname', 'First name'|trans, 'start', 'firstname'),
+                column('lastname', 'Last name'|trans, 'start', 'lastname'),
                 column('locale', 'Locale'|trans, 'center'),
-                column('created_at', 'Subscribed on'|trans),
+                column('created_at', 'Subscribed on'|trans, 'start', 'created_at'),
                 column_actions('_actions', 'Actions'|trans),
             ],
             rows: rows,
             emptyMessage: 'No newsletter subscribers.'|trans,
+            sortField: sort_field,
+            sortDirection: sort_direction,
         }) }}
     </div>
 {% endblock %}

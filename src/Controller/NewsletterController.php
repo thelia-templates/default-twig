@@ -16,7 +16,9 @@ namespace BackOfficeDefaultTwigBundle\Controller;
 
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
+use BackOfficeDefaultTwigBundle\UiComponents\DataTable\ListSort;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
+use Propel\Runtime\ActiveQuery\Criteria;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -47,13 +49,23 @@ final class NewsletterController
     }
 
     #[Route('', name: 'default', methods: ['GET'])]
-    public function list(): Response
+    public function list(Request $request): Response
     {
         if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::VIEW)) {
             return $denied;
         }
 
-        $subscribers = NewsletterQuery::create()->orderByCreatedAt(\Propel\Runtime\ActiveQuery\Criteria::DESC)->find();
+        $sort = ListSort::fromRequest($request, ['id', 'email', 'firstname', 'lastname', 'created_at'], 'created_at', 'desc');
+        $criteria = strtoupper($sort->direction) === 'DESC' ? Criteria::DESC : Criteria::ASC;
+        $query = NewsletterQuery::create();
+        match ($sort->field) {
+            'id' => $query->orderById($criteria),
+            'email' => $query->orderByEmail($criteria),
+            'firstname' => $query->orderByFirstname($criteria),
+            'lastname' => $query->orderByLastname($criteria),
+            default => $query->orderByCreatedAt($criteria),
+        };
+        $subscribers = $query->find();
         $rows = [];
         foreach ($subscribers as $subscriber) {
             \assert($subscriber instanceof Newsletter);
@@ -63,6 +75,8 @@ final class NewsletterController
         return new Response($this->twig->render(self::LIST_TEMPLATE, [
             'rows' => $rows,
             'export_url' => $this->urls->generate('admin.newsletter.export'),
+            'sort_field' => $sort->field,
+            'sort_direction' => $sort->direction,
         ]));
     }
 

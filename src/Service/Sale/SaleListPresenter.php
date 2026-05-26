@@ -44,10 +44,10 @@ final readonly class SaleListPresenter
      *     toggle_url: string
      * }>
      */
-    public function build(string $locale): array
+    public function build(string $locale, string $sortField = 'start_date', string $sortDirection = 'desc'): array
     {
         $rows = [];
-        foreach ($this->sales->findAllOrderedByStartDate() as $sale) {
+        foreach ($this->sales->findAllSorted($sortField, $sortDirection, $locale) as $sale) {
             \assert($sale instanceof Sale);
             $sale->setLocale($locale);
             $id = (int) $sale->getId();

@@ -20,6 +20,7 @@ use BackOfficeDefaultTwigBundle\Repository\FolderRepository;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
+use BackOfficeDefaultTwigBundle\UiComponents\DataTable\ListSort;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
@@ -75,7 +76,7 @@ final class FolderController
 
         $parentId = (int) $request->query->get('folder_id', 0);
 
-        return new Response($this->twig->render(self::LIST_TEMPLATE, $this->buildListContext($parentId)));
+        return new Response($this->twig->render(self::LIST_TEMPLATE, $this->buildListContext($parentId, $request)));
     }
 
     #[Route('/create', name: 'create', methods: ['POST'])]
@@ -254,11 +255,14 @@ final class FolderController
     /**
      * @return array<string, mixed>
      */
-    private function buildListContext(int $parentId): array
+    private function buildListContext(int $parentId, ?Request $request = null): array
     {
         $locale = $this->defaultLocale();
+        $sort = $request !== null
+            ? ListSort::fromRequest($request, ['id', 'title', 'visible', 'position'], 'position')
+            : new ListSort('position', 'asc');
         $rows = [];
-        foreach ($this->folderRepository->findChildrenOrderedByPosition($parentId, $locale) as $folder) {
+        foreach ($this->folderRepository->findChildrenSorted($parentId, $locale, $sort->field, $sort->direction) as $folder) {
             $rows[] = $this->folderToRow($folder);
         }
 
@@ -273,6 +277,8 @@ final class FolderController
             'create_form' => $createForm->createView(),
             'update_position_url' => $this->urls->generate('admin.folders.update-position'),
             'update_position_token' => $this->tokens->assignToken(),
+            'sort_field' => $sort->field,
+            'sort_direction' => $sort->direction,
         ];
     }
 

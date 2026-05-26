@@ -1,0 +1,16 @@
+{#
+    Sortable header anchor for native <table> markup that doesn't use BoDataTable.
+    Expects:
+      - label:    translated text shown to the user
+      - field:    sort key value sent in ?order=
+      - current:  the current sort field
+      - direction: current sort direction ('asc' or 'desc')
+      - extra_params: extra query params to preserve (optional, defaults to {})
+#}
+{% set isActive = field == (current|default('')) %}
+{% set nextDirection = isActive and direction == 'asc' ? 'desc' : 'asc' %}
+{% set params = (extra_params|default({}))|merge({ order: field, direction: nextDirection }) %}
+<a href="?{{ params|url_encode }}" class="text-decoration-none text-reset d-inline-flex align-items-center gap-1" data-testid="sort-{{ field }}">
+    {{ label }}
+    <i class="bi {{ isActive ? (direction == 'asc' ? 'bi-sort-up' : 'bi-sort-down') : 'bi-arrow-down-up text-muted' }}" aria-hidden="true"></i>
+</a>

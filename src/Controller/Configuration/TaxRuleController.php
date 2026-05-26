@@ -22,7 +22,9 @@ use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormErrorRenderer;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormValidator;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminLogger;
 use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
+use BackOfficeDefaultTwigBundle\UiComponents\DataTable\ListSort;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
+use Propel\Runtime\ActiveQuery\Criteria;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -87,6 +89,8 @@ final class TaxRuleController
         }
 
         $locale = $request->getLocale();
+        $taxSort = ListSort::fromRequest($request, ['id', 'title'], 'id', 'asc', 'tax_order', 'tax_direction');
+        $taxRuleSort = ListSort::fromRequest($request, ['id', 'title', 'is_default'], 'id', 'asc', 'tax_rule_order', 'tax_rule_direction');
 
         $createTaxForm = $this->formFactory->createNamed(self::CREATE_TAX_FORM_NAME, TaxType::class, [
             'locale' => $locale,
@@ -99,12 +103,16 @@ final class TaxRuleController
             ]);
 
         return new Response($this->twig->render(self::LIST_TEMPLATE, [
-            'tax_rows' => $this->taxRows($locale),
-            'tax_rule_rows' => $this->taxRuleRows($locale),
+            'tax_rows' => $this->taxRows($locale, $taxSort),
+            'tax_rule_rows' => $this->taxRuleRows($locale, $taxRuleSort),
             'create_tax_form' => $createTaxForm->createView(),
             'create_tax_rule_form' => $createTaxRuleForm->createView(),
             'delivery_tax_rules' => $this->deliveryTaxRuleOptions($locale),
             'delivery_tax_rule_selected' => (int) ConfigQuery::read('taxrule_id_delivery_module', 0),
+            'tax_sort_field' => $taxSort->field,
+            'tax_sort_direction' => $taxSort->direction,
+            'tax_rule_sort_field' => $taxRuleSort->field,
+            'tax_rule_sort_direction' => $taxRuleSort->direction,
         ]));
     }
 
@@ -353,10 +361,17 @@ final class TaxRuleController
     /**
      * @return array<int, array<string, mixed>>
      */
-    private function taxRows(string $locale): array
+    private function taxRows(string $locale, ListSort $sort): array
     {
+        $criteria = strtoupper($sort->direction) === 'DESC' ? Criteria::DESC : Criteria::ASC;
+        $query = TaxQuery::create();
+        match ($sort->field) {
+            'title' => $query->useTaxI18nQuery(null, Criteria::LEFT_JOIN)->filterByLocale($locale)->orderByTitle($criteria)->endUse(),
+            default => $query->orderById($criteria),
+        };
+
         $rows = [];
-        foreach (TaxQuery::create()->find() as $tax) {
+        foreach ($query->find() as $tax) {
             \assert($tax instanceof Tax);
             $tax->setLocale($locale);
 
@@ -390,10 +405,18 @@ final class TaxRuleController
     /**
      * @return array<int, array<string, mixed>>
      */
-    private function taxRuleRows(string $locale): array
+    private function taxRuleRows(string $locale, ListSort $sort): array
     {
+        $criteria = strtoupper($sort->direction) === 'DESC' ? Criteria::DESC : Criteria::ASC;
+        $query = TaxRuleQuery::create();
+        match ($sort->field) {
+            'is_default' => $query->orderByIsDefault($criteria),
+            'title' => $query->useTaxRuleI18nQuery(null, Criteria::LEFT_JOIN)->filterByLocale($locale)->orderByTitle($criteria)->endUse(),
+            default => $query->orderById($criteria),
+        };
+
         $rows = [];
-        foreach (TaxRuleQuery::create()->orderById()->find() as $taxRule) {
+        foreach ($query->find() as $taxRule) {
             \assert($taxRule instanceof TaxRule);
             $taxRule->setLocale($locale);
             $id = (int) $taxRule->getId();

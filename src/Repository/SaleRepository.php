@@ -39,6 +39,35 @@ final readonly class SaleRepository
     }
 
     /**
+     * @return ObjectCollection<int, Sale>
+     */
+    public function findAllSorted(string $field, string $direction, string $locale): ObjectCollection
+    {
+        $criteria = strtoupper($direction) === 'DESC' ? Criteria::DESC : Criteria::ASC;
+        $query = SaleQuery::create();
+
+        match ($field) {
+            'id' => $query->orderById($criteria),
+            'start_date' => $query->orderByStartDate($criteria),
+            'end_date' => $query->orderByEndDate($criteria),
+            'active' => $query->orderByActive($criteria),
+            'title' => $query
+                ->useSaleI18nQuery(null, Criteria::LEFT_JOIN)
+                    ->filterByLocale($locale)
+                    ->orderByTitle($criteria)
+                ->endUse(),
+            'label' => $query
+                ->useSaleI18nQuery(null, Criteria::LEFT_JOIN)
+                    ->filterByLocale($locale)
+                    ->orderBySaleLabel($criteria)
+                ->endUse(),
+            default => $query->orderByStartDate($criteria),
+        };
+
+        return $query->find();
+    }
+
+    /**
      * @param list<int> $categoryIds
      *
      * @return list<array{id: int, ref: string, title: string}>

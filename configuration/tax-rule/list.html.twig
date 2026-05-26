@@ -38,12 +38,17 @@
             {{ component('BoDataTable', {
                 id: 'taxes',
                 columns: [
-                    column('title', 'Name'|trans),
+                    column('title', 'Name'|trans, 'start', 'title'),
                     column_html('description', 'Description'|trans),
                     column_actions('_actions', 'Actions'|trans),
                 ],
                 rows: tax_rows,
                 emptyMessage: 'No tax defined yet.'|trans,
+                sortField: tax_sort_field,
+                sortDirection: tax_sort_direction,
+                sortParam: 'tax_order',
+                sortDirectionParam: 'tax_direction',
+                sortKeepParams: { tax_rule_order: tax_rule_sort_field != 'id' ? tax_rule_sort_field : null, tax_rule_direction: tax_rule_sort_direction != 'asc' ? tax_rule_sort_direction : null },
             }) }}
         </section>
 
@@ -61,8 +66,8 @@
             {{ component('BoDataTable', {
                 id: 'tax-rules',
                 columns: [
-                    column('title', 'Name'|trans),
-                    column_html('default_badge', 'Default'|trans),
+                    column('title', 'Name'|trans, 'start', 'title'),
+                    column_html('default_badge', 'Default'|trans, 'start', 'is_default'),
                     column_actions('_actions', 'Actions'|trans),
                 ],
                 rows: tax_rule_rows|map(row => row|merge({
@@ -71,6 +76,11 @@
                         : '',
                 })),
                 emptyMessage: 'No tax rule defined yet.'|trans,
+                sortField: tax_rule_sort_field,
+                sortDirection: tax_rule_sort_direction,
+                sortParam: 'tax_rule_order',
+                sortDirectionParam: 'tax_rule_direction',
+                sortKeepParams: { tax_order: tax_sort_field != 'id' ? tax_sort_field : null, tax_direction: tax_sort_direction != 'asc' ? tax_sort_direction : null },
             }) }}
         </section>
 

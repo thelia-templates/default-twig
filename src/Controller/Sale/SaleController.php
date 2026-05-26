@@ -24,6 +24,7 @@ use BackOfficeDefaultTwigBundle\Service\Sale\SaleEditContextBuilder;
 use BackOfficeDefaultTwigBundle\Service\Sale\SaleEventFactory;
 use BackOfficeDefaultTwigBundle\Service\Sale\SaleListPresenter;
 use BackOfficeDefaultTwigBundle\Service\Sale\SaleProductAttributesProvider;
+use BackOfficeDefaultTwigBundle\UiComponents\DataTable\ListSort;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -75,11 +76,14 @@ final class SaleController
         }
 
         $locale = $request->getLocale();
+        $sort = ListSort::fromRequest($request, ['id', 'title', 'label', 'start_date', 'end_date', 'active'], 'start_date', 'desc');
 
         return new Response($this->twig->render(self::LIST_TEMPLATE, [
-            'rows' => $this->listPresenter->build($locale),
+            'rows' => $this->listPresenter->build($locale, $sort->field, $sort->direction),
             'global_actions' => $this->listPresenter->globalActions(),
             'create_form' => $this->buildCreateForm($locale)->createView(),
+            'sort_field' => $sort->field,
+            'sort_direction' => $sort->direction,
         ]));
     }
 

@@ -38,13 +38,13 @@
                 <table class="table align-middle mb-0" data-testid="sales-table">
                     <thead class="table-light">
                         <tr>
-                            <th>{{ 'Title'|trans }}</th>
-                            <th>{{ 'Label'|trans }}</th>
-                            <th>{{ 'Start date'|trans }}</th>
-                            <th>{{ 'End date'|trans }}</th>
+                            <th>{% include '@BackOfficeDefaultTwig/_sort_header.html.twig' with { label: 'Title'|trans, field: 'title', current: sort_field, direction: sort_direction } only %}</th>
+                            <th>{% include '@BackOfficeDefaultTwig/_sort_header.html.twig' with { label: 'Label'|trans, field: 'label', current: sort_field, direction: sort_direction } only %}</th>
+                            <th>{% include '@BackOfficeDefaultTwig/_sort_header.html.twig' with { label: 'Start date'|trans, field: 'start_date', current: sort_field, direction: sort_direction } only %}</th>
+                            <th>{% include '@BackOfficeDefaultTwig/_sort_header.html.twig' with { label: 'End date'|trans, field: 'end_date', current: sort_field, direction: sort_direction } only %}</th>
                             <th>{{ 'Discount type'|trans }}</th>
                             <th class="text-center">{{ 'Products'|trans }}</th>
-                            <th class="text-center">{{ 'Status'|trans }}</th>
+                            <th class="text-center">{% include '@BackOfficeDefaultTwig/_sort_header.html.twig' with { label: 'Status'|trans, field: 'active', current: sort_field, direction: sort_direction } only %}</th>
                             <th class="text-end">{{ 'Actions'|trans }}</th>
                         </tr>
                     </thead>
