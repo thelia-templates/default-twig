@@ -33,7 +33,7 @@
                             {%- endif -%}
                         </th>
                     {% endfor %}
-                    {% if extraColumnsHeaderHook %}{{ safe_hook(extraColumnsHeaderHook, { table_id: id }) }}{% endif %}
+                    {{ safe_hook(extraColumnsHeaderHook ?? ((hook ?: id) ~ '.table-header'), { table_id: id }) }}
                 </tr>
             </thead>
             <tbody{% for attr, value in tbodyAttributes %} {{ attr }}="{{ value }}"{% endfor %}>
@@ -48,7 +48,7 @@
                                 } only %}
                             </td>
                         {% endfor %}
-                        {% if extraColumnsHook %}{{ safe_hook(extraColumnsHook, { table_id: id, row: row, row_id: row.id|default(null) }) }}{% endif %}
+                        {{ safe_hook(extraColumnsHook ?? ((hook ?: id) ~ '.table-row'), { table_id: id, row: row, row_id: row.id|default(null) }) }}
                     </tr>
                 {% else %}
                     <tr>

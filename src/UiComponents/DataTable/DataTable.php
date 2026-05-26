@@ -67,4 +67,10 @@ final class DataTable
      * The hook receives `{ table_id }`.
      */
     public ?string $extraColumnsHeaderHook = null;
+
+    /**
+     * Legacy hook prefix for the `<prefix>.table-header` / `<prefix>.table-row` hooks (Smarty parity).
+     * Defaults to {@see $id}; set it when the table id differs from the legacy hook name.
+     */
+    public string $hook = '';
 }
