@@ -107,12 +107,16 @@ $bo-side-nav-hover-bg: rgba(255, 255, 255, .07);
     }
 
     &__footer {
+        // height matches .bo-footer (mt-4 py-3 + small content) so the Thelia block
+        // aligns with the right-column footer when both are pinned to the viewport
+        // bottom (.bo-layout enforces min-height: 100vh).
         margin-top: auto;
         display: flex;
         align-items: center;
         justify-content: center;
         gap: .5rem;
-        padding: .75rem 1rem;
+        padding: 1rem;
+        min-height: 52px;
         background-color: var(--bs-primary);
         text-decoration: none;
         flex-shrink: 0;
