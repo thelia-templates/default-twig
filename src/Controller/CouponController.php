@@ -18,6 +18,7 @@ use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\Service\Coupon\CouponConditionsRenderer;
 use BackOfficeDefaultTwigBundle\Service\Coupon\CouponEditContextBuilder;
+use BackOfficeDefaultTwigBundle\Service\Coupon\CouponInputsRenderer;
 use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -69,6 +70,7 @@ final class CouponController
         private readonly EventDispatcherInterface $events,
         private readonly CouponEditContextBuilder $contextBuilder,
         private readonly CouponConditionsRenderer $conditionsRenderer,
+        private readonly CouponInputsRenderer $inputsRenderer,
         #[Autowire(service: 'thelia.coupon.factory')]
         private readonly CouponFactory $couponFactory,
         #[Autowire(service: 'thelia.condition.factory')]
@@ -179,6 +181,28 @@ final class CouponController
         $html = $this->contextBuilder->renderCouponInputs($couponServiceId, null);
 
         return new JsonResponse([$html]);
+    }
+
+    #[Route('/attribute-avs-list', name: 'attribute-avs-list', methods: ['POST'])]
+    public function attributeAvsList(Request $request): Response
+    {
+        if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::VIEW)) {
+            return $denied;
+        }
+
+        $attributeId = (int) $request->request->get('attribute_id', 0);
+        $items = $this->inputsRenderer->attributeAvChoices($attributeId);
+
+        $html = '';
+        foreach ($items as $item) {
+            $html .= \sprintf(
+                '<option value="%d">%s</option>',
+                $item['id'],
+                htmlspecialchars($item['title'], ENT_QUOTES | ENT_HTML5, 'UTF-8'),
+            );
+        }
+
+        return new Response($html, Response::HTTP_OK, ['Content-Type' => 'text/html; charset=UTF-8']);
     }
 
     #[Route('/draw/conditionsSummaries/{couponId}', name: 'draw.condition.summaries.ajax', methods: ['GET'], requirements: ['couponId' => '\d+'])]
@@ -363,6 +387,12 @@ final class CouponController
         $couponTypeManager = $this->couponManager->isCouponAvailable($serviceId);
         if ($couponTypeManager === null) {
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
+        }
+
+        // CouponAbstract::getCouponFieldValue() expects a JSON-encoded string
+        // for coupon_specific; the inputs post it as an array.
+        if (isset($data['coupon_specific']) && \is_array($data['coupon_specific'])) {
+            $data['coupon_specific'] = json_encode($data['coupon_specific'], JSON_THROW_ON_ERROR);
         }
 
         $effects = $couponTypeManager->getEffects($data);

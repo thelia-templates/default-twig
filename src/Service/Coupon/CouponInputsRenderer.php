@@ -15,11 +15,14 @@ declare(strict_types=1);
 namespace BackOfficeDefaultTwigBundle\Service\Coupon;
 
 use Symfony\Contracts\Translation\TranslatorInterface;
+use Thelia\Domain\Promotion\Coupon\Type\AbstractRemoveOnAttributeValues;
 use Thelia\Domain\Promotion\Coupon\Type\AbstractRemoveOnCategories;
 use Thelia\Domain\Promotion\Coupon\Type\AbstractRemoveOnProducts;
 use Thelia\Domain\Promotion\Coupon\Type\AmountAndPercentageCouponInterface;
 use Thelia\Domain\Promotion\Coupon\Type\CouponInterface;
 use Thelia\Domain\Promotion\Coupon\Type\FreeProduct;
+use Thelia\Model\AttributeAvQuery;
+use Thelia\Model\AttributeQuery;
 use Thelia\Model\CategoryQuery;
 use Thelia\Model\CurrencyQuery;
 use Thelia\Model\LangQuery;
@@ -59,6 +62,14 @@ final readonly class CouponInputsRenderer
         'thelia.coupon.type.remove_percentage_on_products' => true,
     ];
 
+    private const SERVICE_ON_ATTRIBUTE_AV_AMOUNT = [
+        'thelia.coupon.type.remove_amount_on_attribute_av' => true,
+    ];
+
+    private const SERVICE_ON_ATTRIBUTE_AV_PERCENT = [
+        'thelia.coupon.type.remove_percentage_on_attribute_av' => true,
+    ];
+
     public function __construct(
         private Environment $twig,
         private TranslatorInterface $translator,
@@ -91,6 +102,17 @@ final readonly class CouponInputsRenderer
             $params['selected_products'] = $this->selectedProducts($manager);
         }
 
+        if ($this->needsAttributeAvPicker($serviceId)) {
+            $params['attributes'] = $this->attributeChoices();
+            $params['attribute_value'] = $manager instanceof AbstractRemoveOnAttributeValues ? (int) $manager->attribute : 0;
+            $params['attribute_av_values'] = $manager instanceof AbstractRemoveOnAttributeValues
+                ? array_map('intval', $manager->attributeAvList)
+                : [];
+            $params['attribute_avs'] = $params['attribute_value'] > 0
+                ? $this->attributeAvChoices($params['attribute_value'])
+                : [];
+        }
+
         if ($manager instanceof FreeProduct) {
             $params['offered_product_id'] = $this->reflectProperty($manager, 'offeredProductId');
             $params['offered_category_id'] = $this->reflectProperty($manager, 'offeredCategoryId');
@@ -109,6 +131,46 @@ final readonly class CouponInputsRenderer
     {
         return isset(self::SERVICE_ON_PRODUCTS_AMOUNT[$serviceId])
             || isset(self::SERVICE_ON_PRODUCTS_PERCENT[$serviceId]);
+    }
+
+    private function needsAttributeAvPicker(string $serviceId): bool
+    {
+        return isset(self::SERVICE_ON_ATTRIBUTE_AV_AMOUNT[$serviceId])
+            || isset(self::SERVICE_ON_ATTRIBUTE_AV_PERCENT[$serviceId]);
+    }
+
+    /**
+     * @return list<array{id: int, title: string}>
+     */
+    private function attributeChoices(): array
+    {
+        $locale = $this->defaultLocale();
+        $items = [];
+        foreach (AttributeQuery::create()->orderByPosition()->find() as $attribute) {
+            $attribute->setLocale($locale);
+            $items[] = ['id' => (int) $attribute->getId(), 'title' => (string) $attribute->getTitle()];
+        }
+
+        return $items;
+    }
+
+    /**
+     * @return list<array{id: int, title: string}>
+     */
+    public function attributeAvChoices(int $attributeId): array
+    {
+        if ($attributeId < 1) {
+            return [];
+        }
+
+        $locale = $this->defaultLocale();
+        $items = [];
+        foreach (AttributeAvQuery::create()->filterByAttributeId($attributeId)->orderByPosition()->find() as $av) {
+            $av->setLocale($locale);
+            $items[] = ['id' => (int) $av->getId(), 'title' => (string) $av->getTitle()];
+        }
+
+        return $items;
     }
 
     /**
@@ -213,6 +275,8 @@ final readonly class CouponInputsRenderer
             isset(self::SERVICE_ON_CATEGORIES_PERCENT[$serviceId]) => '@BackOfficeDefaultTwig/coupon/type-fragments/remove-percentage-on-categories.html.twig',
             isset(self::SERVICE_ON_PRODUCTS_AMOUNT[$serviceId]) => '@BackOfficeDefaultTwig/coupon/type-fragments/remove-amount-on-products.html.twig',
             isset(self::SERVICE_ON_PRODUCTS_PERCENT[$serviceId]) => '@BackOfficeDefaultTwig/coupon/type-fragments/remove-percentage-on-products.html.twig',
+            isset(self::SERVICE_ON_ATTRIBUTE_AV_AMOUNT[$serviceId]) => '@BackOfficeDefaultTwig/coupon/type-fragments/remove-amount-on-attributes.html.twig',
+            isset(self::SERVICE_ON_ATTRIBUTE_AV_PERCENT[$serviceId]) => '@BackOfficeDefaultTwig/coupon/type-fragments/remove-percentage-on-attributes.html.twig',
             $serviceId === 'thelia.coupon.type.free_product' => '@BackOfficeDefaultTwig/coupon/type-fragments/free-product.html.twig',
             default => '@BackOfficeDefaultTwig/coupon/type-fragments/remove-x.html.twig',
         };

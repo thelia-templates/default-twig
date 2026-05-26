@@ -1,0 +1,25 @@
+{# Shared partial: attribute + dependent attribute_av picker (AJAX) #}
+
+<div class="mb-3">
+    <label for="coupon-attribute-id" class="form-label">{{ 'Select attribute'|trans }}</label>
+    <select required class="form-select" id="coupon-attribute-id" name="coupon_specific[attribute_id]"
+            data-controller="bo-coupon-attribute-picker"
+            data-bo-coupon-attribute-picker-url-value="{{ path('admin.coupon.attribute-avs-list') }}"
+            data-bo-coupon-attribute-picker-target-id-value="coupon-attribute-avs-id"
+            data-action="change->bo-coupon-attribute-picker#refresh">
+        <option value="0">{{ 'Please select…'|trans }}</option>
+        {% for attribute in attributes|default([]) %}
+            <option value="{{ attribute.id }}"{% if attribute.id == attribute_value|default(0) %} selected{% endif %}>{{ attribute.title }}</option>
+        {% endfor %}
+    </select>
+</div>
+
+<div class="mb-3" id="input-coupon-attribute-avs"{% if (attribute_value|default(0)) == 0 %} hidden{% endif %}>
+    <label for="coupon-attribute-avs-id" class="form-label">{{ 'Applies to attribute values'|trans }}</label>
+    <select required multiple size="8" class="form-select" id="coupon-attribute-avs-id" name="coupon_specific[attribute_avs][]">
+        {% for av in attribute_avs|default([]) %}
+            <option value="{{ av.id }}"{% if av.id in (attribute_av_values|default([])) %} selected{% endif %}>{{ av.title }}</option>
+        {% endfor %}
+    </select>
+    <div class="form-text">{{ 'Use Ctrl+click to select (or deselect) more than one attribute value.'|trans }}</div>
+</div>
