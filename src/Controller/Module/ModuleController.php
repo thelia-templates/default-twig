@@ -116,17 +116,25 @@ final class ModuleController
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }
 
+        $title = trim((string) $request->request->get('title', ''));
+        if ($title === '') {
+            $this->flashError($request, $this->translator->trans('The module title is required.'));
+
+            return new RedirectResponse($this->urls->generate(self::EDIT_ROUTE, ['module_id' => $moduleId]));
+        }
+
         try {
             $event = new ModuleEvent($module);
             $event->setId($moduleId);
             $event->setLocale((string) $request->request->get('locale', $this->defaultLocale()));
-            $event->setTitle((string) $request->request->get('title', ''));
+            $event->setTitle($title);
             $event->setChapo($request->request->get('chapo') !== null ? (string) $request->request->get('chapo') : null);
             $event->setDescription($request->request->get('description') !== null ? (string) $request->request->get('description') : null);
             $event->setPostscriptum($request->request->get('postscriptum') !== null ? (string) $request->request->get('postscriptum') : null);
 
             $this->events->dispatch($event, TheliaEvents::MODULE_UPDATE);
-        } catch (\Throwable) {
+        } catch (\Throwable $exception) {
+            $this->flashError($request, $exception->getMessage());
         }
 
         return new RedirectResponse($this->urls->generate(self::EDIT_ROUTE, ['module_id' => $moduleId]));
@@ -330,5 +338,16 @@ final class ModuleController
         $defaultLang = LangQuery::create()->findOneByByDefault(true);
 
         return $defaultLang?->getLocale() ?? 'en_US';
+    }
+
+    private function flashError(Request $request, string $message): void
+    {
+        try {
+            $session = $request->getSession();
+            if (method_exists($session, 'getFlashBag')) {
+                $session->getFlashBag()->add('danger', $message);
+            }
+        } catch (\Throwable) {
+        }
     }
 }
