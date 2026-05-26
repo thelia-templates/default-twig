@@ -44,6 +44,7 @@ use Thelia\Domain\Customer\Service\CustomerTitleService;
 use Thelia\Model\CountryQuery;
 use Thelia\Model\Customer;
 use Thelia\Model\CustomerQuery;
+use Thelia\Model\OrderQuery;
 use Thelia\Model\Event\CustomerEvent;
 use Thelia\Model\LangQuery;
 use Thelia\Tools\Password;
@@ -286,6 +287,15 @@ final class CustomerController
     public function delete(Request $request): Response
     {
         $customer = CustomerQuery::create()->findPk((int) $request->get('customer_id', 0));
+
+        if ($customer !== null && OrderQuery::create()->filterByCustomerId((int) $customer->getId())->count() > 0) {
+            $this->flashError($request, $this->translator->trans(
+                'This customer has existing orders and cannot be deleted.',
+            ));
+
+            return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
+        }
+
         $event = new CustomerEvent($customer);
 
         return $this->action->tokenAction(
@@ -297,6 +307,17 @@ final class CustomerController
             actionLabel: 'Customer deletion',
             successRoute: self::LIST_ROUTE,
         );
+    }
+
+    private function flashError(Request $request, string $message): void
+    {
+        try {
+            $session = $request->getSession();
+            if (method_exists($session, 'getFlashBag')) {
+                $session->getFlashBag()->add('danger', $message);
+            }
+        } catch (\Throwable) {
+        }
     }
 
     private function buildCreateForm(string $locale): FormInterface
