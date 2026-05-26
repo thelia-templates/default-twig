@@ -95,10 +95,12 @@ final class CouponController
         $page = min($page, $pages);
 
         $rows = [];
+        $dateFormat = $this->defaultDateFormat();
+        $typeLabels = $this->couponTypeLabels();
         foreach ($query->offset(($page - 1) * self::PAGE_SIZE)->limit(self::PAGE_SIZE)->find() as $coupon) {
             \assert($coupon instanceof Coupon);
             $coupon->setLocale($locale);
-            $rows[] = $this->couponToRow($coupon);
+            $rows[] = $this->couponToRow($coupon, $dateFormat, $typeLabels);
         }
 
         return new Response($this->twig->render(self::LIST_TEMPLATE, [
@@ -455,8 +457,12 @@ final class CouponController
         $this->events->dispatch($event, TheliaEvents::COUPON_CONDITION_UPDATE);
     }
 
-    /** @return array<string, mixed> */
-    private function couponToRow(Coupon $coupon): array
+    /**
+     * @param array<string, string> $typeLabels
+     *
+     * @return array<string, mixed>
+     */
+    private function couponToRow(Coupon $coupon, string $dateFormat, array $typeLabels): array
     {
         $id = (int) $coupon->getId();
         $editHref = $this->urls->generate(self::EDIT_ROUTE, ['couponId' => $id]);
@@ -469,15 +475,26 @@ final class CouponController
             'id' => $id,
             'code' => (string) $coupon->getCode(),
             'title' => (string) $coupon->getTitle(),
-            'type' => (string) $coupon->getType(),
+            'type' => $typeLabels[$coupon->getType()] ?? (string) $coupon->getType(),
             'enabled' => (bool) $coupon->getIsEnabled(),
             'enabled_label' => $coupon->getIsEnabled() ? $this->translator->trans('Enabled') : $this->translator->trans('Disabled'),
-            'start_date' => $coupon->getStartDate(),
-            'expiration_date' => $coupon->getExpirationDate(),
+            'start_date' => null === $coupon->getStartDate() ? '' : (string) $coupon->getStartDate($dateFormat),
+            'expiration_date' => null === $coupon->getExpirationDate() ? '' : (string) $coupon->getExpirationDate($dateFormat),
             'days_left' => $this->daysLeftLabel($coupon),
             'usages_left' => $coupon->isUsageUnlimited() ? $this->translator->trans('Unlimited') : (string) max(0, (int) $coupon->getUsagesLeft()),
             '_actions' => $actions,
         ];
+    }
+
+    /** @return array<string, string> */
+    private function couponTypeLabels(): array
+    {
+        $labels = [];
+        foreach ($this->couponManager->getAvailableCoupons() as $type) {
+            $labels[$type->getServiceId()] = $type->getName();
+        }
+
+        return $labels;
     }
 
     private function daysLeftLabel(Coupon $coupon): string
