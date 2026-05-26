@@ -158,11 +158,14 @@ final class ModuleController
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }
 
+        $event = new ModuleDeleteEvent($moduleId);
+        $event->setDeleteData($request->request->getBoolean('delete-module-data'));
+
         return $this->action->tokenAction(
             resource: self::RESOURCE,
             access: AccessManager::DELETE,
             request: $request,
-            event: new ModuleDeleteEvent($moduleId),
+            event: $event,
             eventName: TheliaEvents::MODULE_DELETE,
             actionLabel: 'Module deletion',
             successRoute: self::LIST_ROUTE,
