@@ -1,0 +1,72 @@
+<h3 class="h6 text-uppercase text-body-secondary mb-3">{{ 'Module detailed information'|trans }}</h3>
+
+<table class="table table-sm table-striped align-middle">
+    <tbody>
+        {% if module.title %}
+            <tr><th class="w-25">{{ 'Title'|trans }}</th><td>{{ module.title }}</td></tr>
+        {% endif %}
+        <tr><th>{{ 'Module code'|trans }}</th><td><code>{{ module.code }}</code></td></tr>
+        {% if metadata %}
+            <tr><th>{{ 'Module type'|trans }}</th><td>{{ metadata.type }}</td></tr>
+            <tr><th>{{ 'Version'|trans }}</th><td>{{ metadata.version }}</td></tr>
+        {% endif %}
+        {% if module.chapo %}
+            <tr><th>{{ 'Subtitle'|trans }}</th><td>{{ module.chapo }}</td></tr>
+        {% endif %}
+        {% if module.description %}
+            <tr><th>{{ 'Description'|trans }}</th><td>{{ module.description|raw }}</td></tr>
+        {% endif %}
+        {% if module.postscriptum %}
+            <tr><th>{{ 'Postscriptum'|trans }}</th><td>{{ module.postscriptum }}</td></tr>
+        {% endif %}
+        {% if metadata %}
+            {% if metadata.tags is not empty %}
+                <tr><th>{{ 'Tags'|trans }}</th><td>{{ metadata.tags|join(', ') }}</td></tr>
+            {% endif %}
+            {% if metadata.languages is not empty %}
+                <tr><th>{{ 'Supported locales'|trans }}</th><td>{{ metadata.languages|join(', ') }}</td></tr>
+            {% endif %}
+            <tr><th>{{ 'Namespace of main class'|trans }}</th><td><code>{{ metadata.fullNamespace }}</code></td></tr>
+            <tr><th>{{ 'Minimum required Thelia version'|trans }}</th><td>{{ metadata.theliaVersionMin }}</td></tr>
+            {% if metadata.requiredModules is not empty %}
+                <tr>
+                    <th>{{ 'Required modules'|trans }}</th>
+                    <td>
+                        <ul class="list-unstyled mb-0">
+                            {% for required in metadata.requiredModules %}<li>{{ required }}</li>{% endfor %}
+                        </ul>
+                    </td>
+                </tr>
+            {% endif %}
+            {% if metadata.stability %}
+                <tr><th>{{ 'Stability'|trans }}</th><td>{{ metadata.stability }}</td></tr>
+            {% endif %}
+            {% if metadata.updateUrl %}
+                <tr>
+                    <th>{{ 'Update URL'|trans }}</th>
+                    <td><a href="{{ metadata.updateUrl }}" target="_blank" rel="noopener">{{ metadata.updateUrl }}</a></td>
+                </tr>
+            {% endif %}
+            {% if metadata.authors is not empty %}
+                <tr><th colspan="2" class="pt-3">{{ 'Authors'|trans }}</th></tr>
+                {% for author in metadata.authors %}
+                    <tr>
+                        <th><i class="bi bi-person" aria-hidden="true"></i> {{ author.name ?: 'Unspecified'|trans }}{% if author.company %}, {{ author.company }}{% endif %}</th>
+                        <td>
+                            {% if author.email %}<a href="mailto:{{ author.email }}"><i class="bi bi-envelope" aria-hidden="true"></i> {{ author.email }}</a>{% endif %}
+                            {% if author.website %}{% if author.email %} &nbsp;·&nbsp; {% endif %}<a href="{{ author.website }}" target="_blank" rel="noopener"><i class="bi bi-globe" aria-hidden="true"></i> {{ author.website }}</a>{% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% endif %}
+        {% else %}
+            <tr>
+                <td colspan="2">
+                    <div class="alert alert-warning mb-0">
+                        {{ 'No module.xml found for this module.'|trans }}
+                    </div>
+                </td>
+            </tr>
+        {% endif %}
+    </tbody>
+</table>

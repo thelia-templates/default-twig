@@ -114,6 +114,28 @@ final readonly class ModuleListPresenter
     {
         $actions = [];
 
+        $actions[] = new RowAction(
+            kind: 'info',
+            label: $this->translator->trans('Module information'),
+            modalTarget: '#module-information-modal',
+            grantedAttribute: AccessManager::VIEW,
+            grantedSubject: AdminResources::MODULE,
+            dataAttributes: [
+                'fetch-url' => $this->urls->generate('admin.module.information', ['module_id' => $id]),
+            ],
+        );
+
+        $actions[] = new RowAction(
+            kind: 'doc',
+            label: $this->translator->trans('Module documentation'),
+            modalTarget: '#module-documentation-modal',
+            grantedAttribute: AccessManager::VIEW,
+            grantedSubject: AdminResources::MODULE,
+            dataAttributes: [
+                'fetch-url' => $this->urls->generate('admin.module.documentation', ['module_id' => $id]),
+            ],
+        );
+
         if ($activated && $this->capabilities->isConfigurable($module)) {
             $actions[] = new RowAction(
                 kind: 'config',

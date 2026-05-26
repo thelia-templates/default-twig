@@ -1,0 +1,9 @@
+<h3 class="h6 text-uppercase text-body-secondary mb-3">{{ 'Module documentation'|trans }} : {{ module.title ?: module.code }}</h3>
+
+{% if documentation %}
+    <div class="bo-markdown-body">{{ documentation|raw }}</div>
+{% else %}
+    <div class="alert alert-info mb-0">
+        {{ 'No documentation file (README.md) was found for this module.'|trans }}
+    </div>
+{% endif %}

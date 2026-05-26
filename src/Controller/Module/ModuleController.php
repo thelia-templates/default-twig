@@ -17,7 +17,9 @@ namespace BackOfficeDefaultTwigBundle\Controller\Module;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
+use BackOfficeDefaultTwigBundle\Service\Module\ModuleDocumentationReader;
 use BackOfficeDefaultTwigBundle\Service\Module\ModuleListPresenter;
+use BackOfficeDefaultTwigBundle\Service\Module\ModuleMetadataReader;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -60,6 +62,8 @@ final class ModuleController
         private readonly TranslatorInterface $translator,
         private readonly ModuleListPresenter $listPresenter,
         private readonly EditLocaleResolver $editLocale,
+        private readonly ModuleMetadataReader $metadataReader,
+        private readonly ModuleDocumentationReader $documentationReader,
     ) {
     }
 
@@ -279,30 +283,43 @@ final class ModuleController
     }
 
     #[Route('/module/information/{module_id}', name: 'module.information', methods: ['GET'], requirements: ['module_id' => '\d+'])]
-    public function information(int $module_id): RedirectResponse
-    {
-        return new RedirectResponse($this->urls->generate(self::EDIT_ROUTE, ['module_id' => $module_id]));
-    }
-
-    #[Route('/module/documentation/{module_id}', name: 'module.documentation', methods: ['GET'], requirements: ['module_id' => '\d+'])]
-    public function documentation(int $module_id): RedirectResponse
-    {
-        return new RedirectResponse($this->urls->generate(self::EDIT_ROUTE, ['module_id' => $module_id]));
-    }
-
-    #[Route('/module/{module_code}', name: 'module.configure', methods: ['GET', 'POST'], requirements: ['module_code' => '[A-Za-z][A-Za-z0-9_-]*'])]
-    public function configure(string $module_code): Response
+    public function information(int $module_id, Request $request): Response
     {
         if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::VIEW)) {
             return $denied;
         }
 
-        $module = ModuleQuery::create()->findOneByCode($module_code);
+        $module = ModuleQuery::create()->findPk($module_id);
         if ($module === null) {
-            return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
+            return new Response('', Response::HTTP_NOT_FOUND);
         }
 
-        return new RedirectResponse($this->urls->generate(self::EDIT_ROUTE, ['module_id' => (int) $module->getId()]));
+        $module->setLocale($this->editLocale->resolveFromRequest($request)->getLocale() ?? 'en_US');
+
+        return new Response($this->twig->render('@BackOfficeDefaultTwig/module/_information_body.html.twig', [
+            'module' => $module,
+            'metadata' => $this->metadataReader->read($module),
+        ]));
+    }
+
+    #[Route('/module/documentation/{module_id}', name: 'module.documentation', methods: ['GET'], requirements: ['module_id' => '\d+'])]
+    public function documentation(int $module_id, Request $request): Response
+    {
+        if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::VIEW)) {
+            return $denied;
+        }
+
+        $module = ModuleQuery::create()->findPk($module_id);
+        if ($module === null) {
+            return new Response('', Response::HTTP_NOT_FOUND);
+        }
+
+        $module->setLocale($this->editLocale->resolveFromRequest($request)->getLocale() ?? 'en_US');
+
+        return new Response($this->twig->render('@BackOfficeDefaultTwig/module/_documentation_body.html.twig', [
+            'module' => $module,
+            'documentation' => $this->documentationReader->read($module),
+        ]));
     }
 
     private function defaultLocale(): string

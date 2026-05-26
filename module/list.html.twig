@@ -81,6 +81,18 @@
         prefillTrigger: 'data-module-id',
         prefillInput: 'module_id',
     }) }}
+
+    {{ component('BoFetchDialog', {
+        id: 'module-information-modal',
+        title: 'Module information'|trans,
+        testid: 'module-information',
+    }) }}
+
+    {{ component('BoFetchDialog', {
+        id: 'module-documentation-modal',
+        title: 'Module documentation'|trans,
+        testid: 'module-documentation',
+    }) }}
 {% endblock %}
 
 {% block scripts_extra %}
