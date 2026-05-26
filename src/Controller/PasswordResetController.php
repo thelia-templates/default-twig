@@ -14,6 +14,11 @@ declare(strict_types=1);
 
 namespace BackOfficeDefaultTwigBundle\Controller;
 
+use BackOfficeDefaultTwigBundle\Form\Auth\CreatePasswordType;
+use BackOfficeDefaultTwigBundle\Form\Auth\LostPasswordType;
+use BackOfficeDefaultTwigBundle\Security\AuthThrottle;
+use Symfony\Component\Form\FormFactoryInterface;
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -33,7 +38,11 @@ use Twig\Environment;
 
 final class PasswordResetController
 {
-    private const TOKEN_KEY = 'admin.password_renew_token';
+    private const TOKEN_KEY = 'thelia_admin_password_renew_token';
+
+    private const THROTTLE_LOST_PASSWORD = 'lost-password';
+
+    private const THROTTLE_CREATE_PASSWORD = 'create-password';
 
     public function __construct(
         private readonly Environment $twig,
@@ -41,68 +50,64 @@ final class PasswordResetController
         private readonly SecurityContext $securityContext,
         private readonly UrlGeneratorInterface $urls,
         private readonly TranslatorInterface $translator,
+        private readonly FormFactoryInterface $forms,
+        private readonly AuthThrottle $throttle,
     ) {
     }
 
-    #[Route('/admin/lost-password', name: 'admin.lost-password', methods: ['GET'])]
-    public function showLostPassword(Request $request): Response
+    #[Route('/admin/lost-password', name: 'admin.lost-password', methods: ['GET', 'POST'])]
+    public function lostPassword(Request $request): Response
     {
-        if (($denied = $this->guardRecovery()) !== null || ($denied = $this->guardLoggedOut()) !== null) {
+        if ($denied = $this->guard()) {
             return $denied;
         }
 
-        return $this->renderLostPassword(['form_error_message' => $request->getSession() instanceof TheliaSession ? '' : '']);
-    }
+        $form = $this->forms->create(LostPasswordType::class);
+        $form->handleRequest($request);
 
-    #[Route('/admin/password-create-request', name: 'admin.password-create', methods: ['POST'])]
-    public function passwordCreateRequest(Request $request): Response
-    {
-        if (($denied = $this->guardRecovery()) !== null || ($denied = $this->guardLoggedOut()) !== null) {
-            return $denied;
+        if ($form->isSubmitted()) {
+            if (!$this->throttle->consume(self::THROTTLE_LOST_PASSWORD)) {
+                $form->addError(new \Symfony\Component\Form\FormError(
+                    $this->translator->trans('Too many attempts, please try again later.'),
+                ));
+
+                return $this->renderLostPassword($form);
+            }
+
+            if ($form->isValid()) {
+                return $this->handleLostPasswordRequest($request, $form);
+            }
         }
 
-        $usernameOrEmail = trim((string) $request->request->get('username_or_email', ''));
-        if (\strlen($usernameOrEmail) < 3) {
-            return $this->renderLostPassword(['error' => $this->translator->trans('Please enter a username or email address.')]);
-        }
-
-        $admin = AdminQuery::create()->findOneByEmail($usernameOrEmail) ?? AdminQuery::create()->findOneByLogin($usernameOrEmail);
-        if ($admin === null) {
-            AdminLog::append('admin', 'ADMIN_LOST_PASSWORD', 'Invalid username or email', $request);
-
-            return $this->renderLostPassword(['error' => $this->translator->trans('Invalid username or email.')]);
-        }
-
-        $email = (string) $admin->getEmail();
-        if ($email === '') {
-            return $this->renderLostPassword(['error' => $this->translator->trans('Sorry, no email defined for this administrator.')]);
-        }
-
-        $this->events->dispatch(new AdministratorEvent($admin), TheliaEvents::ADMINISTRATOR_CREATEPASSWORD);
-
-        return new RedirectResponse($this->urls->generate('admin.password-create-success'));
+        return $this->renderLostPassword($form);
     }
 
     #[Route('/admin/password-create-request-success', name: 'admin.password-create-success', methods: ['GET'])]
-    public function passwordCreateSuccess(): Response
+    public function lostPasswordSuccess(): Response
     {
-        if (($denied = $this->guardRecovery()) !== null || ($denied = $this->guardLoggedOut()) !== null) {
+        if ($denied = $this->guard()) {
             return $denied;
         }
 
-        return $this->renderLostPassword(['create_request_success' => true]);
+        return $this->renderLostPassword(
+            $this->forms->create(LostPasswordType::class),
+            ['create_request_success' => true],
+        );
     }
 
-    #[Route('/admin/password-create/{token}', name: 'admin.password-create-form', methods: ['GET'], requirements: ['token' => '.*'])]
-    public function displayCreateForm(Request $request, string $token): Response
+    #[Route('/admin/password-create/{token}', name: 'admin.password-create-form', methods: ['GET', 'POST'], requirements: ['token' => '.*'])]
+    public function createPassword(Request $request, string $token): Response
     {
-        if (($denied = $this->guardRecovery()) !== null || ($denied = $this->guardLoggedOut()) !== null) {
+        if ($denied = $this->guard()) {
             return $denied;
         }
 
         $admin = AdminQuery::create()->findOneByPasswordRenewToken($token);
         if ($admin === null) {
-            return $this->renderLostPassword(['token_error' => true]);
+            return $this->renderLostPassword(
+                $this->forms->create(LostPasswordType::class),
+                ['token_error' => true],
+            );
         }
 
         $session = $request->getSession();
@@ -110,47 +115,30 @@ final class PasswordResetController
             $session->set(self::TOKEN_KEY, $token);
         }
 
-        return $this->renderCreatePassword();
-    }
+        $form = $this->forms->create(CreatePasswordType::class);
+        $form->handleRequest($request);
 
-    #[Route('/admin/password-created', name: 'admin.password-renewed', methods: ['POST'])]
-    public function passwordCreated(Request $request): Response
-    {
-        if (($denied = $this->guardRecovery()) !== null || ($denied = $this->guardLoggedOut()) !== null) {
-            return $denied;
+        if ($form->isSubmitted()) {
+            if (!$this->throttle->consume(self::THROTTLE_CREATE_PASSWORD)) {
+                $form->addError(new \Symfony\Component\Form\FormError(
+                    $this->translator->trans('Too many attempts, please try again later.'),
+                ));
+
+                return $this->renderCreatePassword($form);
+            }
+
+            if ($form->isValid()) {
+                return $this->handlePasswordChange($request, $form);
+            }
         }
 
-        $password = (string) $request->request->get('password', '');
-        $confirm = (string) $request->request->get('password_confirm', '');
-        if ($password === '' || $password !== $confirm) {
-            return $this->renderCreatePassword(['error' => $this->translator->trans('The two passwords do not match or are empty.')]);
-        }
-
-        $session = $request->getSession();
-        $token = '';
-        if ($session instanceof TheliaSession) {
-            $token = (string) ($session->get(self::TOKEN_KEY) ?? '');
-        }
-
-        if ($token === '' || ($admin = AdminQuery::create()->findOneByPasswordRenewToken($token)) === null) {
-            return $this->renderCreatePassword(['error' => $this->translator->trans('An invalid token was provided, your password cannot be changed')]);
-        }
-
-        $event = new AdministratorUpdatePasswordEvent($admin);
-        $event->setPassword($password);
-        $this->events->dispatch($event, TheliaEvents::ADMINISTRATOR_UPDATEPASSWORD);
-
-        if ($session instanceof TheliaSession) {
-            $session->set(self::TOKEN_KEY, null);
-        }
-
-        return new RedirectResponse($this->urls->generate('admin.password-renewed-success'));
+        return $this->renderCreatePassword($form);
     }
 
     #[Route('/admin/password-create-success', name: 'admin.password-renewed-success', methods: ['GET'])]
     public function passwordRenewedSuccess(): Response
     {
-        if (($denied = $this->guardRecovery()) !== null || ($denied = $this->guardLoggedOut()) !== null) {
+        if ($denied = $this->guard()) {
             return $denied;
         }
 
@@ -165,25 +153,80 @@ final class PasswordResetController
         ]));
     }
 
-    /** @param array<string, mixed> $extra */
-    private function renderLostPassword(array $extra = []): Response
+    private function handleLostPasswordRequest(Request $request, FormInterface $form): Response
     {
-        return new Response($this->twig->render(
-            '@BackOfficeDefaultTwig/auth/lost-password.html.twig',
-            $extra + ['create_request_success' => false, 'token_error' => false, 'error' => null],
-        ));
+        $usernameOrEmail = trim((string) $form->get('username_or_email')->getData());
+        $admin = AdminQuery::create()->findOneByEmail($usernameOrEmail)
+            ?? AdminQuery::create()->findOneByLogin($usernameOrEmail);
+
+        if ($admin === null) {
+            AdminLog::append('admin', 'ADMIN_LOST_PASSWORD', 'Invalid username or email', $request);
+            $form->addError(new \Symfony\Component\Form\FormError(
+                $this->translator->trans('Invalid username or email.'),
+            ));
+
+            return $this->renderLostPassword($form);
+        }
+
+        if (((string) $admin->getEmail()) === '') {
+            $form->addError(new \Symfony\Component\Form\FormError(
+                $this->translator->trans('Sorry, no email defined for this administrator.'),
+            ));
+
+            return $this->renderLostPassword($form);
+        }
+
+        $this->throttle->reset(self::THROTTLE_LOST_PASSWORD);
+        $this->events->dispatch(new AdministratorEvent($admin), TheliaEvents::ADMINISTRATOR_CREATEPASSWORD);
+
+        return new RedirectResponse($this->urls->generate('admin.password-create-success'));
+    }
+
+    private function handlePasswordChange(Request $request, FormInterface $form): Response
+    {
+        $session = $request->getSession();
+        $token = $session instanceof TheliaSession ? (string) ($session->get(self::TOKEN_KEY) ?? '') : '';
+        $admin = $token === '' ? null : AdminQuery::create()->findOneByPasswordRenewToken($token);
+
+        if ($admin === null) {
+            $form->addError(new \Symfony\Component\Form\FormError(
+                $this->translator->trans('An invalid token was provided, your password cannot be changed.'),
+            ));
+
+            return $this->renderCreatePassword($form);
+        }
+
+        $event = new AdministratorUpdatePasswordEvent($admin);
+        $event->setPassword((string) $form->get('password')->getData());
+        $this->events->dispatch($event, TheliaEvents::ADMINISTRATOR_UPDATEPASSWORD);
+
+        if ($session instanceof TheliaSession) {
+            $session->set(self::TOKEN_KEY, null);
+        }
+
+        $this->throttle->reset(self::THROTTLE_CREATE_PASSWORD);
+
+        return new RedirectResponse($this->urls->generate('admin.password-renewed-success'));
     }
 
     /** @param array<string, mixed> $extra */
-    private function renderCreatePassword(array $extra = []): Response
+    private function renderLostPassword(FormInterface $form, array $extra = []): Response
     {
-        return new Response($this->twig->render(
-            '@BackOfficeDefaultTwig/auth/create-password.html.twig',
-            $extra + ['error' => null],
-        ));
+        return new Response($this->twig->render('@BackOfficeDefaultTwig/auth/lost-password.html.twig', array_merge([
+            'form' => $form->createView(),
+            'create_request_success' => false,
+            'token_error' => false,
+        ], $extra)));
     }
 
-    private function guardRecovery(): ?Response
+    private function renderCreatePassword(FormInterface $form): Response
+    {
+        return new Response($this->twig->render('@BackOfficeDefaultTwig/auth/create-password.html.twig', [
+            'form' => $form->createView(),
+        ]));
+    }
+
+    private function guard(): ?Response
     {
         if (!ConfigQuery::read('enable_lost_admin_password_recovery', false)) {
             return new Response(
@@ -194,11 +237,6 @@ final class PasswordResetController
             );
         }
 
-        return null;
-    }
-
-    private function guardLoggedOut(): ?Response
-    {
         if ($this->securityContext->getAdminUser() !== null) {
             return new RedirectResponse('/admin');
         }

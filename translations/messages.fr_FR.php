@@ -1095,4 +1095,11 @@ return [
     'Unspecified' => 'Non spécifié',
     'No module.xml found for this module.' => 'Aucun fichier module.xml trouvé pour ce module.',
     'No documentation file (README.md) was found for this module.' => 'Aucun fichier de documentation (README.md) trouvé pour ce module.',
+
+    // Auth recovery
+    'Forgot your password?' => 'Mot de passe oublié ?',
+    'Too many attempts, please try again later.' => 'Trop de tentatives, veuillez réessayer plus tard.',
+    'The two passwords do not match.' => 'Les deux mots de passe ne correspondent pas.',
+    'Password must be at least %d characters long.' => 'Le mot de passe doit contenir au moins %d caractères.',
+    'An invalid token was provided, your password cannot be changed.' => 'Jeton invalide, le mot de passe ne peut pas être modifié.',
 ];

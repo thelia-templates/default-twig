@@ -63,6 +63,12 @@
                 {{ form_widget(login_form.remember_me, {'attr': {'class': 'form-check-input'}}) }}
                 {{ form_label(login_form.remember_me, null, {'label_attr': {'class': 'form-check-label'}}) }}
             </div>
+
+            {% if thelia_config('enable_lost_admin_password_recovery', false) %}
+                <a class="text-decoration-none small" href="{{ path('admin.lost-password') }}" data-testid="login-forgot-password">
+                    {{ 'Forgot your password?'|trans }}
+                </a>
+            {% endif %}
         </div>
 
         <button type="submit" class="btn btn-primary btn-lg w-100" data-testid="login-submit">
