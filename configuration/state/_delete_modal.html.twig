@@ -1,0 +1,10 @@
+{{ component('BoConfirmDialog', {
+    id: 'state-delete-modal',
+    title: 'Delete state',
+    formAction: path('admin.configuration.states.delete'),
+    message: 'Do you really want to delete this state?',
+    testid: 'state-delete',
+    hook: 'state.delete-form',
+    prefillTrigger: 'data-state-id',
+    prefillInput: 'state_id',
+}) }}

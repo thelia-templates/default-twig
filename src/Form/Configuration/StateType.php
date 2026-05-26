@@ -16,8 +16,8 @@ namespace BackOfficeDefaultTwigBundle\Form\Configuration;
 
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
-use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -43,9 +43,11 @@ final class StateType extends AbstractType
                 'constraints' => [new NotBlank()],
                 'label' => $this->translator->trans('ISO code'),
             ])
-            ->add('country', IntegerType::class, [
+            ->add('country', ChoiceType::class, [
                 'constraints' => [new NotBlank(), new GreaterThan(0)],
                 'label' => $this->translator->trans('Country'),
+                'choices' => $options['country_choices'],
+                'placeholder' => false,
             ])
             ->add('visible', CheckboxType::class, [
                 'required' => false,
@@ -65,7 +67,8 @@ final class StateType extends AbstractType
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver
-            ->setDefaults(['include_id' => false, 'csrf_token_id' => 'admin.state'])
-            ->setAllowedTypes('include_id', 'bool');
+            ->setDefaults(['include_id' => false, 'country_choices' => [], 'csrf_token_id' => 'admin.state'])
+            ->setAllowedTypes('include_id', 'bool')
+            ->setAllowedTypes('country_choices', 'array');
     }
 }

@@ -40,6 +40,7 @@ use Thelia\Model\Map\CountryI18nTableMap;
 use Thelia\Model\Map\StateI18nTableMap;
 use Thelia\Model\State;
 use Thelia\Model\StateQuery;
+use Thelia\Tools\TokenProvider;
 use Twig\Environment;
 
 #[Route('/admin/configuration/states', name: 'admin.configuration.states.')]
@@ -59,6 +60,7 @@ final class StateController
         private readonly UrlGeneratorInterface $urls,
         private readonly TranslatorInterface $translator,
         private readonly EditLocaleResolver $editLocale,
+        private readonly TokenProvider $tokens,
     ) {
     }
 
@@ -85,10 +87,17 @@ final class StateController
             $rows[] = $this->stateToRow($state);
         }
 
+        $createForm = $this->formFactory->createNamed('thelia_state_create', StateType::class, [
+            'locale' => $locale,
+        ], [
+            'country_choices' => $this->countryChoiceMap($locale),
+        ]);
+
         return new Response($this->twig->render(self::LIST_TEMPLATE, [
             'rows' => $rows,
             'countries' => $this->countryChoices($locale),
             'current_country' => $countryFilter,
+            'create_form' => $createForm->createView(),
         ]));
     }
 
@@ -97,7 +106,9 @@ final class StateController
     {
         $form = $this->formFactory->createNamed('thelia_state_create', StateType::class, [
             'locale' => $request->getLocale(),
-        ], []);
+        ], [
+            'country_choices' => $this->countryChoiceMap($request->getLocale()),
+        ]);
 
         return $this->action->submit(
             resource: self::RESOURCE,
@@ -140,7 +151,8 @@ final class StateController
     {
         $form = $this->formFactory->createNamed('thelia_state_update', StateType::class, null, [
             'include_id' => true,
-            ]);
+            'country_choices' => $this->countryChoiceMap($request->getLocale()),
+        ]);
 
         $stateId = (int) $request->request->get('state_id', 0);
 
@@ -227,7 +239,8 @@ final class StateController
             'visible' => (bool) $state->getVisible(),
         ], [
             'include_id' => true,
-            ]);
+            'country_choices' => $this->countryChoiceMap($locale),
+        ]);
     }
 
     /** @return array<string, mixed> */
@@ -245,6 +258,7 @@ final class StateController
             'isocode' => (string) $state->getIsocode(),
             'country' => (string) $state->getCountry()?->getTitle(),
             'visible' => (bool) $state->getVisible(),
+            'toggle_visible_url' => $this->tokenizedUrl('admin.configuration.states.toggle-visibility', ['state_id' => $id]),
             '_actions' => $actions,
         ];
     }
@@ -267,6 +281,28 @@ final class StateController
         }
 
         return $rows;
+    }
+
+    /** @return array<string, int> */
+    private function countryChoiceMap(string $locale): array
+    {
+        $map = [];
+        foreach ($this->countryChoices($locale) as $choice) {
+            $map[$choice['title']] = $choice['id'];
+        }
+
+        return $map;
+    }
+
+    /**
+     * @param array<string, scalar> $parameters
+     */
+    private function tokenizedUrl(string $route, array $parameters): string
+    {
+        $url = $this->urls->generate($route, $parameters);
+        $separator = str_contains($url, '?') ? '&' : '?';
+
+        return $url.$separator.'_token='.$this->tokens->assignToken();
     }
 
     private function defaultLocale(): string

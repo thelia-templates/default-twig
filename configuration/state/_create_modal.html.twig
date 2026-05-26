@@ -1,0 +1,10 @@
+{{ component('BoCreateDialog', {
+    id: 'state-create-modal',
+    title: 'Create a new state',
+    form: create_form,
+    formAction: path('admin.configuration.states.create'),
+    fieldsTemplate: '@BackOfficeDefaultTwig/configuration/state/_form_fields.html.twig',
+    submitLabel: 'Create this state',
+    testid: 'state-create',
+    hook: 'state.create-form',
+}) }}

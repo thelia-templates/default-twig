@@ -29,16 +29,9 @@
                     <div class="row g-3">
                         <div class="col-md-6">{{ form_row(form.title) }}</div>
                         <div class="col-md-3">{{ form_row(form.isocode) }}</div>
-                        <div class="col-md-3">
-                            <label class="form-label" for="state-country-select">{{ 'Country'|trans }}</label>
-                            <select name="thelia_state_update[country]" id="state-country-select" class="form-select">
-                                {% for country in countries %}
-                                    <option value="{{ country.id }}" {% if country.id == state.countryId %}selected{% endif %}>{{ country.title }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
+                        <div class="col-md-3">{{ form_row(form.country) }}</div>
                         <div class="col-12">
-                            <div class="form-check mt-2">
+                            <div class="form-check form-switch">
                                 {{ form_widget(form.visible, { attr: { class: 'form-check-input' } }) }}
                                 {{ form_label(form.visible, null, { label_attr: { class: 'form-check-label' } }) }}
                             </div>
