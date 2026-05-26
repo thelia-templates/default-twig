@@ -229,6 +229,11 @@
                                 <option value="">{{ 'Select a class first…'|trans }}</option>
                             </select>
                         </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="module-hook-create-templates">{{ 'Templates'|trans }}</label>
+                            <input type="text" id="module-hook-create-templates" name="templates" class="form-control" data-testid="module-hook-create-templates">
+                            <div class="form-text">{{ 'Comma-separated templates this binding is limited to. Leave empty to apply everywhere.'|trans }}</div>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'Cancel'|trans }}</button>

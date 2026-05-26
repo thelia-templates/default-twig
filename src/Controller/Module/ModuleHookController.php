@@ -83,6 +83,7 @@ final class ModuleHookController
             $event->setHookId((int) $request->request->get('hook_id', 0));
             $event->setClassname((string) $request->request->get('classname', ''));
             $event->setMethod((string) $request->request->get('method', ''));
+            $event->setTemplates((string) $request->request->get('templates', ''));
 
             $this->events->dispatch($event, TheliaEvents::MODULE_HOOK_CREATE);
         } catch (\Throwable) {
