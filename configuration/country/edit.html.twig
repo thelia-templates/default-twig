@@ -27,32 +27,39 @@
                 {{ form_start(form, { action: path('admin.configuration.countries.save'), method: 'post' }) }}
                     <input type="hidden" name="country_id" value="{{ country.id }}">
                     <div class="row g-3">
-                        <div class="col-md-6">{{ form_row(form.title) }}</div>
-                        <div class="col-md-2">{{ form_row(form.isocode) }}</div>
-                        <div class="col-md-2">{{ form_row(form.isoalpha2) }}</div>
-                        <div class="col-md-2">{{ form_row(form.isoalpha3) }}</div>
-                        <div class="col-md-4">{{ form_row(form.area) }}</div>
-                        <div class="col-md-4">
-                            <div class="form-check mt-4">
-                                {{ form_widget(form.visible, { attr: { class: 'form-check-input' } }) }}
-                                {{ form_label(form.visible, null, { label_attr: { class: 'form-check-label' } }) }}
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-check mt-4">
-                                {{ form_widget(form.has_states, { attr: { class: 'form-check-input' } }) }}
-                                {{ form_label(form.has_states, null, { label_attr: { class: 'form-check-label' } }) }}
-                            </div>
-                        </div>
+                        <div class="col-lg-6">{{ form_row(form.title) }}</div>
+                        <div class="col-md-4 col-lg-2">{{ form_row(form.isocode) }}</div>
+                        <div class="col-md-4 col-lg-2">{{ form_row(form.isoalpha2) }}</div>
+                        <div class="col-md-4 col-lg-2">{{ form_row(form.isoalpha3) }}</div>
                     </div>
-                    <div class="row g-3 mt-1">
-                        <div class="col-md-4">
-                            <div class="form-check mt-4">
-                                {{ form_widget(form.need_zip_code, { attr: { class: 'form-check-input' } }) }}
-                                {{ form_label(form.need_zip_code, null, { label_attr: { class: 'form-check-label' } }) }}
+
+                    <hr class="my-4">
+
+                    <div class="row g-3">
+                        <div class="col-md-5">{{ form_row(form.area) }}</div>
+                        <div class="col-md-7">
+                            <span class="form-label d-block">{{ 'Options'|trans }}</span>
+                            <div class="d-flex flex-wrap gap-4">
+                                <div class="form-check form-switch">
+                                    {{ form_widget(form.visible, { attr: { class: 'form-check-input' } }) }}
+                                    {{ form_label(form.visible, null, { label_attr: { class: 'form-check-label' } }) }}
+                                </div>
+                                <div class="form-check form-switch">
+                                    {{ form_widget(form.has_states, { attr: { class: 'form-check-input' } }) }}
+                                    {{ form_label(form.has_states, null, { label_attr: { class: 'form-check-label' } }) }}
+                                </div>
+                                <div class="form-check form-switch">
+                                    {{ form_widget(form.need_zip_code, { attr: { class: 'form-check-input' } }) }}
+                                    {{ form_label(form.need_zip_code, null, { label_attr: { class: 'form-check-label' } }) }}
+                                </div>
                             </div>
                         </div>
-                        <div class="col-md-8">{{ form_row(form.zip_code_format) }}</div>
+                        <div class="col-md-6">{{ form_row(form.zip_code_format) }}</div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="row g-3">
                         <div class="col-12">{{ form_row(form.chapo) }}</div>
                         <div class="col-12">{{ form_row(form.description) }}</div>
                         <div class="col-12">{{ form_row(form.postscriptum) }}</div>

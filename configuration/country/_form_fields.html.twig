@@ -3,21 +3,22 @@
 {% endif %}
 {{ form_widget(form.locale) }}
 <div class="row g-3">
-    <div class="col-md-6">{{ form_row(form.title) }}</div>
-    <div class="col-md-2">{{ form_row(form.isocode) }}</div>
-    <div class="col-md-2">{{ form_row(form.isoalpha2) }}</div>
-    <div class="col-md-2">{{ form_row(form.isoalpha3) }}</div>
+    <div class="col-12">{{ form_row(form.title) }}</div>
+    <div class="col-md-4">{{ form_row(form.isocode) }}</div>
+    <div class="col-md-4">{{ form_row(form.isoalpha2) }}</div>
+    <div class="col-md-4">{{ form_row(form.isoalpha3) }}</div>
     <div class="col-md-6">{{ form_row(form.area) }}</div>
-    <div class="col-md-3">
-        <div class="form-check mt-4">
-            {{ form_widget(form.visible, { attr: { class: 'form-check-input' } }) }}
-            {{ form_label(form.visible, null, { label_attr: { class: 'form-check-label' } }) }}
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="form-check mt-4">
-            {{ form_widget(form.has_states, { attr: { class: 'form-check-input' } }) }}
-            {{ form_label(form.has_states, null, { label_attr: { class: 'form-check-label' } }) }}
+    <div class="col-md-6">
+        <span class="form-label d-block">{{ 'Options'|trans }}</span>
+        <div class="d-flex flex-wrap gap-4">
+            <div class="form-check form-switch">
+                {{ form_widget(form.visible, { attr: { class: 'form-check-input' } }) }}
+                {{ form_label(form.visible, null, { label_attr: { class: 'form-check-label' } }) }}
+            </div>
+            <div class="form-check form-switch">
+                {{ form_widget(form.has_states, { attr: { class: 'form-check-input' } }) }}
+                {{ form_label(form.has_states, null, { label_attr: { class: 'form-check-label' } }) }}
+            </div>
         </div>
     </div>
 </div>
