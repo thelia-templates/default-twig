@@ -46,11 +46,9 @@ use BackOfficeDefaultTwigBundle\Repository\CategoryRepository;
 use BackOfficeDefaultTwigBundle\Repository\ProductRepository;
 use Thelia\Model\AttributeQuery;
 use Thelia\Model\AttributeTemplateQuery;
-use Thelia\Model\Category;
 use Thelia\Model\FeatureQuery;
 use Thelia\Model\FeatureTemplateQuery;
 use Thelia\Model\LangQuery;
-use Thelia\Model\Product;
 use Thelia\Model\Template;
 use Thelia\Model\TemplateQuery;
 use Thelia\Tools\TokenProvider;
@@ -495,7 +493,7 @@ final class TemplateController
 
         foreach ($links as $link) {
             $feature = $link->getFeature();
-            $feature->setLocale($template->getLocale() ?? $this->defaultLocale());
+            $feature->setLocale($template->getLocale());
             $rows[] = [
                 'id' => (int) $feature->getId(),
                 'title' => (string) $feature->getTitle(),
@@ -521,7 +519,7 @@ final class TemplateController
 
         foreach ($links as $link) {
             $attribute = $link->getAttribute();
-            $attribute->setLocale($template->getLocale() ?? $this->defaultLocale());
+            $attribute->setLocale($template->getLocale());
             $rows[] = [
                 'id' => (int) $attribute->getId(),
                 'title' => (string) $attribute->getTitle(),
@@ -596,7 +594,6 @@ final class TemplateController
     {
         $rows = [];
         foreach ($this->productRepository->findByTemplateId((int) $template->getId()) as $product) {
-            \assert($product instanceof Product);
             $product->setLocale($locale);
             $rows[] = [
                 'id' => (int) $product->getId(),
@@ -616,7 +613,6 @@ final class TemplateController
     {
         $rows = [];
         foreach ($this->categoryRepository->findByDefaultTemplateId((int) $template->getId()) as $category) {
-            \assert($category instanceof Category);
             $category->setLocale($locale);
             $rows[] = [
                 'id' => (int) $category->getId(),

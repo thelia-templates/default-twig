@@ -234,7 +234,7 @@ final class TaxController
     {
         $requirements = [];
         foreach ($data as $key => $value) {
-            if (!\is_string($key) || !str_contains($key, ':')) {
+            if (!str_contains($key, ':')) {
                 continue;
             }
 

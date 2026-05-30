@@ -65,7 +65,6 @@ final readonly class CouponEditContextBuilder
     {
         $coupon->setLocale($locale);
         $manager = $this->couponFactory->buildCouponFromModel($coupon);
-        \assert($manager instanceof CouponInterface);
 
         $conditionCollection = $manager->getConditions();
 

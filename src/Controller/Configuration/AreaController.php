@@ -260,7 +260,7 @@ final class AreaController
         $countryIds = (array) $request->request->all('country_id');
         foreach ($countryIds as $countryId) {
             $parts = explode('-', (string) $countryId);
-            $countryPk = (int) ($parts[0] ?? 0);
+            $countryPk = (int) $parts[0];
             $statePk = isset($parts[1]) && (int) $parts[1] !== 0 ? (int) $parts[1] : null;
 
             $event = new AreaRemoveCountryEvent($area, [$countryPk], $statePk);

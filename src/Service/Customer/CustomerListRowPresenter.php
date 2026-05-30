@@ -40,9 +40,6 @@ final readonly class CustomerListRowPresenter
     }
 
     /**
-     * @param array<int, string> $countryFlagsByCustomer
-     * @param array<int, string> $countryTitlesByCustomer
-     *
      * @return array<string, mixed>
      */
     public function present(

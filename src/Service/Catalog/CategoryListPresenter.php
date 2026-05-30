@@ -46,7 +46,6 @@ final readonly class CategoryListPresenter
         $children = $this->categories->findChildrenOrderedByPosition($parentId, $locale);
         $rows = [];
         foreach ($children as $child) {
-            \assert($child instanceof Category);
             $rows[] = $this->categoryToRow($child);
         }
 
@@ -97,7 +96,6 @@ final readonly class CategoryListPresenter
 
         $productRows = [];
         foreach ($products as $product) {
-            \assert($product instanceof Product);
             $productRows[] = $this->productToRow($product);
         }
 

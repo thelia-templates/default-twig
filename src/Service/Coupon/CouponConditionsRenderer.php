@@ -335,7 +335,7 @@ final readonly class CouponConditionsRenderer
         $result = [];
         foreach ($inputs as $field => $config) {
             $items = [];
-            foreach (array_keys($config['availableOperators'] ?? []) as $op) {
+            foreach (array_keys($config['availableOperators']) as $op) {
                 $items[] = ['value' => (string) $op, 'label' => $labels[(string) $op] ?? (string) $op];
             }
             $result[$field] = $items;

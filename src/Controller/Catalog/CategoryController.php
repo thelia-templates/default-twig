@@ -593,15 +593,4 @@ final class CategoryController
 
         return (int) $value;
     }
-
-    /**
-     * @param array<string, scalar> $parameters
-     */
-    private function tokenizedUrl(string $route, array $parameters): string
-    {
-        $url = $this->urls->generate($route, $parameters);
-        $separator = str_contains($url, '?') ? '&' : '?';
-
-        return $url.$separator.'_token='.$this->tokens->assignToken();
-    }
 }

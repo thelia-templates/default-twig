@@ -61,7 +61,7 @@ readonly class AdminFormValidator
         $firstError = $errors->current();
 
         throw new FormValidationException(
-            $firstError ? (string) $firstError->getMessage() : 'Form contains validation errors.',
+            (string) $firstError->getMessage(),
         );
     }
 }

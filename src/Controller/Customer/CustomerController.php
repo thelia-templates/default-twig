@@ -97,7 +97,6 @@ final class CustomerController
 
         $customerIds = [];
         foreach ($paginated['rows'] as $customer) {
-            \assert($customer instanceof Customer);
             $customerIds[] = (int) $customer->getId();
         }
 
@@ -111,7 +110,6 @@ final class CustomerController
 
         $rows = [];
         foreach ($paginated['rows'] as $customer) {
-            \assert($customer instanceof Customer);
             $customerId = (int) $customer->getId();
             $countryId = $primaryCountryIds[$customerId] ?? 0;
             $country = $countriesIndex[$countryId] ?? ['flag' => '', 'title' => ''];
@@ -432,7 +430,7 @@ final class CustomerController
                 'ref' => (string) $order->getRef(),
                 'created_at' => $order->getCreatedAt(),
                 'status_title' => $status !== null ? (string) $status->getTitle() : '',
-                'status_color' => $status !== null && method_exists($status, 'getColor') ? (string) $status->getColor() : '#6c757d',
+                'status_color' => $status !== null ? (string) $status->getColor() : '#6c757d',
                 'amount' => (float) $order->getTotalAmount(),
                 'currency_symbol' => $currency !== null ? (string) $currency->getSymbol() : '',
                 'edit_url' => $this->urls->generate('admin.order.update.view', ['order_id' => (int) $order->getId()]),

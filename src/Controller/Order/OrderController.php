@@ -86,7 +86,6 @@ final class OrderController
 
         $rows = [];
         foreach ($paginated['rows'] as $order) {
-            \assert($order instanceof Order);
             $rows[] = $this->rowPresenter->present($order, $locale);
         }
 

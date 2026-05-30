@@ -43,7 +43,6 @@ final readonly class ModuleListPresenter
         $groups = $this->initialGroups();
 
         foreach ($this->modules->findAllOrderedByPosition($locale) as $module) {
-            \assert($module instanceof Module);
             $type = (int) $module->getType();
             if (!isset($groups[$type])) {
                 $groups[$type] = ['slug' => 'other', 'label' => $this->translator->trans('Other modules'), 'rows' => []];

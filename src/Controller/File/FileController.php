@@ -258,9 +258,7 @@ final class FileController
         $model->setChapo((string) ($data['chapo'] ?? ''));
         $model->setDescription((string) ($data['description'] ?? ''));
         $model->setPostscriptum((string) ($data['postscriptum'] ?? ''));
-        if (method_exists($model, 'setVisible')) {
-            $model->setVisible(!empty($data['visible']) ? 1 : 0);
-        }
+        $model->setVisible(!empty($data['visible']) ? 1 : 0);
 
         $event = new FileCreateOrUpdateEvent((int) $model->getParentId());
         $event->setModel($model);

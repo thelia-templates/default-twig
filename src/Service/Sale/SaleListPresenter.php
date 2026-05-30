@@ -48,7 +48,6 @@ final readonly class SaleListPresenter
     {
         $rows = [];
         foreach ($this->sales->findAllSorted($sortField, $sortDirection, $locale) as $sale) {
-            \assert($sale instanceof Sale);
             $sale->setLocale($locale);
             $id = (int) $sale->getId();
             $rows[] = [

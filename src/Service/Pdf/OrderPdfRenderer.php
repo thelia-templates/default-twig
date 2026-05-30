@@ -133,6 +133,6 @@ final class OrderPdfRenderer
     {
         $parts = explode('_', $locale);
 
-        return strtolower($parts[0] ?? 'fr');
+        return strtolower($parts[0]);
     }
 }

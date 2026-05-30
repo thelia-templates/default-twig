@@ -267,7 +267,7 @@ final class StateController
             'id' => $id,
             'title' => (string) $state->getTitle(),
             'isocode' => (string) $state->getIsocode(),
-            'country' => (string) $state->getCountry()?->getTitle(),
+            'country' => (string) $state->getCountry()->getTitle(),
             'visible' => (bool) $state->getVisible(),
             'toggle_visible_url' => $this->tokenizedUrl('admin.configuration.states.toggle-visibility', ['state_id' => $id]),
             '_actions' => $actions,

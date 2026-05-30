@@ -114,7 +114,7 @@ final class TranslationsController
         ];
 
         $resolved = $this->resolveTarget($itemToTranslate, $itemName, $modulePart, $locale);
-        $context = array_merge($context, $resolved['context'] ?? []);
+        $context = array_merge($context, $resolved['context']);
 
         if ($resolved['directory'] !== null && $resolved['domain'] !== '') {
             $i18nDirectory = $resolved['i18n_directory'];
@@ -189,7 +189,7 @@ final class TranslationsController
             'context' => [],
         ];
 
-        if ($itemToTranslate === '' && $itemName === '' && $itemToTranslate !== 'co' && $itemToTranslate !== 'in' && $itemToTranslate !== 'wi') {
+        if ($itemToTranslate === '' && $itemName === '') {
             return $result;
         }
 

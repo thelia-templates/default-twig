@@ -20,7 +20,6 @@ use Thelia\Action\Image as ImageAction;
 use Thelia\Core\Event\Image\ImageEvent;
 use Thelia\Core\Event\TheliaEvents;
 use Thelia\Log\Tlog;
-use Thelia\Model\BrandImage;
 use Thelia\Model\ConfigQuery;
 
 final readonly class BrandImagePresenter
@@ -48,7 +47,6 @@ final readonly class BrandImagePresenter
         $items = [];
 
         foreach ($images as $image) {
-            \assert($image instanceof BrandImage);
             $sourceFile = \sprintf('%s/%s/%s', $baseSourcePath, self::CACHE_SUBDIR, (string) $image->getFile());
 
             $items[] = [

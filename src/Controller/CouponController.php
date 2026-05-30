@@ -59,7 +59,6 @@ final class CouponController
     private const LIST_TEMPLATE = '@BackOfficeDefaultTwig/coupon/list.html.twig';
     private const EDIT_TEMPLATE = '@BackOfficeDefaultTwig/coupon/edit.html.twig';
     private const CONDITIONS_TEMPLATE = '@BackOfficeDefaultTwig/coupon/conditions.html.twig';
-    private const CONDITION_INPUT_TEMPLATE = '@BackOfficeDefaultTwig/coupon/condition-input-ajax.html.twig';
     private const PAGE_SIZE = 25;
 
     public function __construct(
@@ -232,9 +231,6 @@ final class CouponController
         }
 
         $manager = $this->couponFactory->buildCouponFromModel($coupon);
-        if (!$manager instanceof CouponInterface) {
-            return new Response('', Response::HTTP_NOT_FOUND);
-        }
 
         return new Response($this->twig->render(self::CONDITIONS_TEMPLATE, [
             'conditions' => $this->contextBuilder->summarizeConditions($manager->getConditions()),
@@ -265,9 +261,6 @@ final class CouponController
         }
 
         $manager = $this->couponFactory->buildCouponFromModel($coupon);
-        if (!$manager instanceof CouponInterface) {
-            return new Response('', Response::HTTP_NOT_FOUND);
-        }
 
         $conditions = $manager->getConditions();
         if (!isset($conditions[$conditionIndex])) {
@@ -290,9 +283,6 @@ final class CouponController
         }
 
         $manager = $this->couponFactory->buildCouponFromModel($coupon);
-        if (!$manager instanceof CouponInterface) {
-            return new Response('', Response::HTTP_NOT_FOUND);
-        }
 
         $built = $this->conditionsRenderer->buildConditionFromRequest($request);
         $conditions = $manager->getConditions();
@@ -323,9 +313,6 @@ final class CouponController
         }
 
         $manager = $this->couponFactory->buildCouponFromModel($coupon);
-        if (!$manager instanceof CouponInterface) {
-            return new Response('', Response::HTTP_NOT_FOUND);
-        }
 
         $conditions = $manager->getConditions();
         unset($conditions[$conditionIndex]);
@@ -352,9 +339,6 @@ final class CouponController
         $this->tokens->checkToken($token);
 
         $manager = $this->couponFactory->buildCouponFromModel($coupon);
-        if (!$manager instanceof CouponInterface) {
-            return new Response('', Response::HTTP_NOT_FOUND);
-        }
 
         $fromIndex = (int) $request->query->get('id', $request->request->get('id', -1));
         $newPosition = (int) $request->query->get('position', $request->request->get('position', 0));
@@ -607,7 +591,7 @@ final class CouponController
         return (bool) $value;
     }
 
-    private function maxUsage(mixed $value, mixed $unlimited): ?int
+    private function maxUsage(mixed $value, mixed $unlimited): int
     {
         if ($this->boolish($unlimited)) {
             return -1;

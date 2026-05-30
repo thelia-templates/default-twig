@@ -145,7 +145,7 @@ final readonly class ProductRepository
         $list = array_values(iterator_to_array($collection));
 
         foreach ($list as $pse) {
-            $pse->getProduct()?->setLocale($locale);
+            $pse->getProduct()->setLocale($locale);
         }
 
         return $list;

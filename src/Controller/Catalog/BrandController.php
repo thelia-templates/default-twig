@@ -353,7 +353,6 @@ final class BrandController
         $rows = [];
 
         foreach ($brands as $brand) {
-            \assert($brand instanceof Brand);
             $brand->setLocale($locale);
             $rows[] = $this->brandToRow($brand);
         }

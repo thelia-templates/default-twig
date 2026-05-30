@@ -595,7 +595,7 @@ final class ProductAdvancedController
     {
         $grouped = [];
         foreach ($tokens as $token) {
-            if (!\is_string($token) || !str_contains($token, ':')) {
+            if (!str_contains($token, ':')) {
                 continue;
             }
             [$attributeId, $avId] = explode(':', $token, 2);
@@ -1061,7 +1061,7 @@ final class ProductAdvancedController
         }
 
         $updated = [];
-        $featureValues = (array) $request->request->all()['feature_value'] ?? [];
+        $featureValues = (array) $request->request->all()['feature_value'];
         foreach ($featureValues as $featureId => $values) {
             $featureId = (int) $featureId;
             $events->dispatch(new FeatureProductDeleteEvent($productId, $featureId), TheliaEvents::PRODUCT_FEATURE_DELETE_VALUE);
@@ -1075,7 +1075,7 @@ final class ProductAdvancedController
             $updated[] = $featureId;
         }
 
-        $featureTextValues = (array) $request->request->all()['feature_text_value'] ?? [];
+        $featureTextValues = (array) $request->request->all()['feature_text_value'];
         foreach ($featureTextValues as $featureId => $value) {
             $featureId = (int) $featureId;
             $value = (string) $value;
