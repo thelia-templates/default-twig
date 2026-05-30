@@ -34,6 +34,7 @@ use Thelia\Core\Translation\Translator;
 use Thelia\Model\LangQuery;
 use Thelia\Model\Module;
 use Thelia\Model\ModuleQuery;
+use Thelia\Tools\TokenProvider;
 use Twig\Environment;
 
 final class TranslationsController
@@ -49,6 +50,7 @@ final class TranslationsController
         private readonly TemplateHelperInterface $templateHelper,
         private readonly TranslatorInterface $translator,
         private readonly UrlGeneratorInterface $urls,
+        private readonly TokenProvider $tokens,
     ) {
     }
 
@@ -68,6 +70,8 @@ final class TranslationsController
         if ($denied = $this->access->check(AdminResources::LANGUAGE, [], AccessManager::UPDATE)) {
             return $denied;
         }
+
+        $this->tokens->checkToken((string) $request->get('_token'));
 
         return $this->renderEditor($request);
     }

@@ -31,6 +31,7 @@
                     <div class="card-body">
                         {% if available_areas|length > 0 %}
                             <form method="POST" action="{{ path('admin.configuration.shipping-zones.area.add') }}" data-testid="shipping-zones-add-area-form">
+                                <input type="hidden" name="_token" value="{{ assignToken() }}">
                                 <input type="hidden" name="shipping_zone_id" value="{{ delivery_module_id }}">
 
                                 <label for="bo-shipping-zones-area-id" class="form-label">{{ 'Available shipping zones'|trans }}</label>
@@ -99,6 +100,7 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <form method="POST" action="{{ path('admin.configuration.shipping-zones.area.remove') }}" data-testid="shipping-zones-remove-area-form">
+                    <input type="hidden" name="_token" value="{{ assignToken() }}">
                     <input type="hidden" name="shipping_zone_id" value="{{ delivery_module_id }}">
                     <input type="hidden" name="area_id" data-bo-prefill-modal-target="input">
                     <div class="modal-header">

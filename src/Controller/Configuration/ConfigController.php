@@ -76,6 +76,8 @@ final class ConfigController
             return $denied;
         }
 
+        $this->tokens->checkToken((string) $request->get('_token'));
+
         /** @var array<int|string, string> $variables */
         $variables = $request->request->all('variable');
 

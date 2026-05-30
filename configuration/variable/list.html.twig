@@ -28,6 +28,7 @@
         </div>
 
         <form action="{{ path('admin.configuration.variables.update-values') }}" method="post" data-testid="variable-update-values-form">
+            <input type="hidden" name="_token" value="{{ assignToken() }}">
             {{ component('BoDataTable', {
                 id: 'variables',
                 columns: [

@@ -38,6 +38,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 use Thelia\Core\Event\Tax\TaxRuleEvent;
 use Thelia\Core\Event\TheliaEvents;
 use Thelia\Core\Security\AccessManager;
+use Thelia\Core\Security\Exception\TokenAuthenticationException;
 use Thelia\Core\Security\Resource\AdminResources;
 use Thelia\Model\ConfigQuery;
 use Thelia\Model\Country;
@@ -228,6 +229,12 @@ final class TaxRuleController
     {
         if ($this->access->check(self::RESOURCE, [], AccessManager::UPDATE) !== null) {
             return new JsonResponse(['success' => false, 'message' => $this->translator->trans('Access denied.')], 403);
+        }
+
+        try {
+            $this->tokens->checkToken((string) $request->request->get('_token'));
+        } catch (TokenAuthenticationException $exception) {
+            return new JsonResponse(['success' => false, 'message' => $exception->getMessage()], 403);
         }
 
         $taxRuleId = (int) $request->request->get('id', 0);

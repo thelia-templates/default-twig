@@ -136,6 +136,15 @@ final class ModuleController
         }
 
         $moduleId = (int) $request->request->get('module_id', $request->request->get('id', 0));
+
+        try {
+            $this->tokens->checkToken((string) $request->request->get('_token'));
+        } catch (\Throwable) {
+            $this->flashError($request, $this->translator->trans('Invalid CSRF token.'));
+
+            return new RedirectResponse($this->urls->generate(self::EDIT_ROUTE, ['module_id' => $moduleId]));
+        }
+
         $module = ModuleQuery::create()->findPk($moduleId);
         if ($module === null) {
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));

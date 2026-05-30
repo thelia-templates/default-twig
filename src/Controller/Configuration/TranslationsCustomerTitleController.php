@@ -26,6 +26,7 @@ use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
 use Thelia\Model\CustomerTitleQuery;
 use Thelia\Model\LangQuery;
+use Thelia\Tools\TokenProvider;
 use Twig\Environment;
 
 final class TranslationsCustomerTitleController
@@ -39,6 +40,7 @@ final class TranslationsCustomerTitleController
         private readonly Environment $twig,
         private readonly UrlGeneratorInterface $urls,
         private readonly TranslatorInterface $translator,
+        private readonly TokenProvider $tokens,
     ) {
     }
 
@@ -74,6 +76,8 @@ final class TranslationsCustomerTitleController
         if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::UPDATE)) {
             return $denied;
         }
+
+        $this->tokens->checkToken((string) $request->get('_token'));
 
         $locale = (string) ($request->request->get('locale') ?? $this->editionLocale($request));
         foreach (CustomerTitleQuery::create()->find() as $title) {

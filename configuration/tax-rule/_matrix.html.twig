@@ -179,6 +179,7 @@
                     data-action="submit->bo-tax-rule-matrix#submitApply"
                     data-testid="tax-rule-matrix-apply-form"
                 >
+                    <input type="hidden" name="_token" value="{{ assignToken() }}">
                     <input type="hidden" name="id" value="{{ tax_rule.id }}">
                     <input type="hidden" name="tax_list" value="[]" data-bo-tax-rule-matrix-target="taxListInput">
                     <input type="hidden" name="country_list" value="[]" data-bo-tax-rule-matrix-target="countryListInput">

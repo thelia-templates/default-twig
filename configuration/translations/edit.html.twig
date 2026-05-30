@@ -26,6 +26,7 @@
 
         <form method="POST" id="translation_form" action="{{ path('admin.configuration.translations.update') }}" data-testid="translations-form"
               data-action="submit->bo-translations#confirmUnsaved">
+            <input type="hidden" name="_token" value="{{ assignToken() }}">
             <div class="row g-3 mb-3">
                 <div class="col-md-4">
                     <label class="form-label" for="edit_language_id">{{ 'Edit language'|trans }}</label>

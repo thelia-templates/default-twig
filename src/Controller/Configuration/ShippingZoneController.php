@@ -34,6 +34,7 @@ use Thelia\Model\CountryQuery;
 use Thelia\Model\LangQuery;
 use Thelia\Model\ModuleQuery;
 use Thelia\Module\BaseModule;
+use Thelia\Tools\TokenProvider;
 use Twig\Environment;
 
 #[Route('/admin/configuration/shipping_zones', name: 'admin.configuration.shipping-zones.')]
@@ -51,6 +52,7 @@ final class ShippingZoneController
         private readonly UrlGeneratorInterface $urls,
         private readonly TranslatorInterface $translator,
         private readonly EventDispatcherInterface $events,
+        private readonly TokenProvider $tokens,
     ) {
     }
 
@@ -122,6 +124,8 @@ final class ShippingZoneController
             return $denied;
         }
 
+        $this->tokens->checkToken((string) $request->get('_token'));
+
         $deliveryModuleId = (int) $request->request->get('shipping_zone_id', 0);
         $areaId = (int) $request->request->get('area_id', 0);
 
@@ -141,6 +145,8 @@ final class ShippingZoneController
         if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::UPDATE)) {
             return $denied;
         }
+
+        $this->tokens->checkToken((string) $request->get('_token'));
 
         $deliveryModuleId = (int) $request->request->get('shipping_zone_id', 0);
         $areaId = (int) $request->request->get('area_id', 0);
