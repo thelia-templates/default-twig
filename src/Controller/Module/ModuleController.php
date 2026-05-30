@@ -29,7 +29,6 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
-use Thelia\Core\Archiver\Archiver\ZipArchiver;
 use Thelia\Core\Event\Module\ModuleDeleteEvent;
 use Thelia\Core\Event\Module\ModuleEvent;
 use Thelia\Core\Event\Module\ModuleInstallEvent;
@@ -297,20 +296,22 @@ final class ModuleController
 
     private function extractModule(UploadedFile $file): string
     {
-        $zip = new ZipArchiver(true);
+        $zip = new \ZipArchive();
 
-        if (!$zip->open($file->getRealPath())) {
+        if ($zip->open((string) $file->getRealPath()) !== true) {
             throw new \RuntimeException($this->translator->trans('Unable to open the uploaded archive.'));
         }
 
         $tempName = tempnam(sys_get_temp_dir(), 'thelia_module_');
         if ($tempName === false) {
+            $zip->close();
+
             throw new \RuntimeException($this->translator->trans('Unable to create a temporary directory.'));
         }
         unlink($tempName);
         mkdir($tempName);
 
-        if (!$zip->extract($tempName)) {
+        if ($zip->extractTo($tempName) === false) {
             $zip->close();
 
             throw new \RuntimeException($this->translator->trans('Unable to extract the uploaded archive.'));
