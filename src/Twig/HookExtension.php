@@ -114,7 +114,7 @@ final class HookExtension extends AbstractExtension
     private function safelyRenderHookBlock(string $name, array $parameters, int $type): FragmentBag
     {
         try {
-            return $this->dispatchHookBlock($name, $parameters, $type)->getFragmentBag();
+            return $this->dispatchHookBlock($name, $parameters, $type)->get();
         } catch (\Throwable $exception) {
             $this->logger->warning(
                 \sprintf('hook_block(%s) caught a listener error: %s', $name, $exception->getMessage()),
