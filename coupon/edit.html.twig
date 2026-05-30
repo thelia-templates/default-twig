@@ -53,6 +53,7 @@
         {% endif %}
 
         <form action="{{ form_action }}" method="POST" data-testid="coupon-edit-form">
+            <input type="hidden" name="_token" value="{{ assignToken() }}">
             <input type="hidden" name="locale" value="{{ data.locale }}">
 
             <div class="card mb-3">

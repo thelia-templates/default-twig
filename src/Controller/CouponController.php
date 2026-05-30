@@ -138,7 +138,7 @@ final class CouponController
             return $this->handleCreateOrUpdate($request, null);
         }
 
-        $context = $this->contextBuilder->buildForCreate($this->defaultLocale());
+        $context = $this->contextBuilder->buildForCreate($request->getLocale());
 
         return new Response($this->twig->render(self::EDIT_TEMPLATE, $context));
     }
@@ -384,6 +384,8 @@ final class CouponController
 
     private function handleCreateOrUpdate(Request $request, ?Coupon $coupon): Response
     {
+        $this->tokens->checkToken((string) $request->get('_token'));
+
         $eventName = $coupon === null ? TheliaEvents::COUPON_CREATE : TheliaEvents::COUPON_UPDATE;
         $data = $request->request->all();
 
@@ -453,10 +455,12 @@ final class CouponController
 
     private function renderWithError(Request $request, ?Coupon $coupon, string $message): Response
     {
-        $locale = $this->defaultLocale();
+        $editLang = $this->editLocale->resolveFromRequest($request);
+        $locale = $editLang->getLocale() ?? 'en_US';
         $context = $coupon === null
             ? $this->contextBuilder->buildForCreate($locale)
             : $this->contextBuilder->buildForUpdate($coupon, $locale);
+        $context['edit_language_id'] = (int) $editLang->getId();
         $context['error_message'] = $message;
         $context['posted'] = $request->request->all();
 
