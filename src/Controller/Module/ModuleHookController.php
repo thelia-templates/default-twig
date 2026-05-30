@@ -17,10 +17,13 @@ namespace BackOfficeDefaultTwigBundle\Controller\Module;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\Service\Module\ModuleHookListPresenter;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Session\Flash\FlashBagInterface;
+use Symfony\Component\HttpFoundation\Session\FlashBagAwareSessionInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -57,6 +60,7 @@ final class ModuleHookController
         private readonly EventDispatcherInterface $events,
         private readonly TranslatorInterface $translator,
         private readonly ModuleHookListPresenter $listPresenter,
+        private readonly LoggerInterface $logger,
     ) {
     }
 
@@ -86,7 +90,8 @@ final class ModuleHookController
             $event->setTemplates((string) $request->request->get('templates', ''));
 
             $this->events->dispatch($event, TheliaEvents::MODULE_HOOK_CREATE);
-        } catch (\Throwable) {
+        } catch (\Throwable $exception) {
+            $this->reportFailure($request, 'Module hook creation', $exception);
         }
 
         return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
@@ -132,7 +137,8 @@ final class ModuleHookController
             $event->setActive((bool) $request->request->get('active', false));
 
             $this->events->dispatch($event, TheliaEvents::MODULE_HOOK_UPDATE);
-        } catch (\Throwable) {
+        } catch (\Throwable $exception) {
+            $this->reportFailure($request, 'Module hook modification', $exception);
         }
 
         return new RedirectResponse($this->urls->generate(self::EDIT_ROUTE, ['module_hook_id' => $module_hook_id]));
@@ -309,5 +315,30 @@ final class ModuleHookController
         $defaultLang = LangQuery::create()->findOneByByDefault(1);
 
         return $defaultLang?->getLocale() ?? 'en_US';
+    }
+
+    private function reportFailure(Request $request, string $actionLabel, \Throwable $exception): void
+    {
+        $this->logger->error(
+            $this->translator->trans(
+                'Error during %action process: %error',
+                ['%action' => $this->translator->trans($actionLabel), '%error' => $exception->getMessage()],
+            ),
+        );
+
+        $this->flashBag($request)?->add(
+            'danger',
+            $this->translator->trans('%action failed: %error', [
+                '%action' => $this->translator->trans($actionLabel),
+                '%error' => $exception->getMessage(),
+            ]),
+        );
+    }
+
+    private function flashBag(Request $request): ?FlashBagInterface
+    {
+        $session = $request->hasSession() ? $request->getSession() : null;
+
+        return $session instanceof FlashBagAwareSessionInterface ? $session->getFlashBag() : null;
     }
 }
