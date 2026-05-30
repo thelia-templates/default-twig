@@ -256,7 +256,7 @@ final readonly class CouponEditContextBuilder
 
     private function resolveDateFormat(): string
     {
-        $defaultLang = LangQuery::create()->findOneByByDefault(true);
+        $defaultLang = LangQuery::create()->findOneByByDefault(1);
 
         return $defaultLang?->getDatetimeFormat() ?? 'Y-m-d H:i:s';
     }

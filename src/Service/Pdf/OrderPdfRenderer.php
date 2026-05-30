@@ -124,7 +124,7 @@ final class OrderPdfRenderer
             }
         }
 
-        $defaultLang = LangQuery::create()->findOneByByDefault(true);
+        $defaultLang = LangQuery::create()->findOneByByDefault(1);
 
         return $defaultLang?->getLocale() ?? 'en_US';
     }

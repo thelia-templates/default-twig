@@ -862,14 +862,14 @@ final class ProductAdvancedController
 
     private function defaultLocale(): string
     {
-        $defaultLang = LangQuery::create()->findOneByByDefault(true);
+        $defaultLang = LangQuery::create()->findOneByByDefault(1);
 
         return $defaultLang?->getLocale() ?? 'en_US';
     }
 
     private function defaultCurrencyId(): int
     {
-        $defaultCurrency = CurrencyQuery::create()->findOneByByDefault(true);
+        $defaultCurrency = CurrencyQuery::create()->findOneByByDefault(1);
 
         return (int) ($defaultCurrency?->getId() ?? 1);
     }

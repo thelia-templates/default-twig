@@ -127,7 +127,7 @@ final class TranslationsCustomerTitleController
             return (string) $session->getAdminEditionLang()->getLocale();
         }
 
-        $defaultLang = LangQuery::create()->findOneByByDefault(true);
+        $defaultLang = LangQuery::create()->findOneByByDefault(1);
 
         return (string) ($defaultLang?->getLocale() ?? 'en_US');
     }
@@ -144,7 +144,7 @@ final class TranslationsCustomerTitleController
             return (int) $session->getAdminEditionLang()->getId();
         }
 
-        $defaultLang = LangQuery::create()->findOneByByDefault(true);
+        $defaultLang = LangQuery::create()->findOneByByDefault(1);
 
         return (int) ($defaultLang?->getId() ?? 0);
     }

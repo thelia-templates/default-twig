@@ -44,7 +44,7 @@ final class ModuleConfigureController
             return $denied;
         }
 
-        $defaultLang = LangQuery::create()->findOneByByDefault(true);
+        $defaultLang = LangQuery::create()->findOneByByDefault(1);
         $locale = $defaultLang?->getLocale() ?? 'en_US';
         $module->setLocale($locale);
 

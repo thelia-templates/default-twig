@@ -308,7 +308,7 @@ final readonly class CouponConditionsRenderer
 
     private function defaultLocale(): string
     {
-        $defaultLang = LangQuery::create()->findOneByByDefault(true);
+        $defaultLang = LangQuery::create()->findOneByByDefault(1);
 
         return $defaultLang?->getLocale() ?? 'en_US';
     }
@@ -346,14 +346,14 @@ final readonly class CouponConditionsRenderer
 
     private function resolveDateFormat(): string
     {
-        $defaultLang = LangQuery::create()->findOneByByDefault(true);
+        $defaultLang = LangQuery::create()->findOneByByDefault(1);
 
         return $defaultLang?->getDatetimeFormat() ?? 'Y-m-d H:i:s';
     }
 
     private function currencySymbol(): string
     {
-        $currency = CurrencyQuery::create()->findOneByByDefault(true);
+        $currency = CurrencyQuery::create()->findOneByByDefault(1);
 
         return $currency === null ? '$' : (string) $currency->getSymbol();
     }

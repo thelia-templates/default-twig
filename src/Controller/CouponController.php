@@ -571,14 +571,14 @@ final class CouponController
 
     private function defaultLocale(): string
     {
-        $defaultLang = LangQuery::create()->findOneByByDefault(true);
+        $defaultLang = LangQuery::create()->findOneByByDefault(1);
 
         return $defaultLang?->getLocale() ?? 'en_US';
     }
 
     private function defaultDateFormat(): string
     {
-        $defaultLang = LangQuery::create()->findOneByByDefault(true);
+        $defaultLang = LangQuery::create()->findOneByByDefault(1);
 
         return $defaultLang?->getDatetimeFormat() ?? 'Y-m-d H:i:s';
     }

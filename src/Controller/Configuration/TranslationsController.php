@@ -398,7 +398,7 @@ final class TranslationsController
 
     private function defaultLocale(): string
     {
-        $defaultLang = LangQuery::create()->findOneByByDefault(true);
+        $defaultLang = LangQuery::create()->findOneByByDefault(1);
 
         return $defaultLang?->getLocale() ?? 'en_US';
     }
@@ -437,7 +437,7 @@ final class TranslationsController
             return (int) $lang->getId();
         }
 
-        $defaultLang = LangQuery::create()->findOneByByDefault(true);
+        $defaultLang = LangQuery::create()->findOneByByDefault(1);
 
         return (int) ($defaultLang?->getId() ?? 0);
     }

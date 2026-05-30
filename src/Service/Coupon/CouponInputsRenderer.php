@@ -261,7 +261,7 @@ final readonly class CouponInputsRenderer
 
     private function defaultLocale(): string
     {
-        $lang = LangQuery::create()->findOneByByDefault(true);
+        $lang = LangQuery::create()->findOneByByDefault(1);
 
         return $lang?->getLocale() ?? 'en_US';
     }
@@ -322,7 +322,7 @@ final readonly class CouponInputsRenderer
 
     private function currencySymbol(): string
     {
-        $currency = CurrencyQuery::create()->findOneByByDefault(true);
+        $currency = CurrencyQuery::create()->findOneByByDefault(1);
 
         return $currency === null ? '$' : (string) $currency->getSymbol();
     }

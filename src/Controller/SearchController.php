@@ -49,6 +49,6 @@ final class SearchController
 
     private function defaultLocale(): string
     {
-        return LangQuery::create()->findOneByByDefault(true)?->getLocale() ?? 'en_US';
+        return LangQuery::create()->findOneByByDefault(1)?->getLocale() ?? 'en_US';
     }
 }

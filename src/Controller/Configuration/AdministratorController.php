@@ -304,7 +304,7 @@ final class AdministratorController
 
     private function resolveDefaultLocale(): string
     {
-        $defaultLang = \Thelia\Model\LangQuery::create()->findOneByByDefault(true);
+        $defaultLang = \Thelia\Model\LangQuery::create()->findOneByByDefault(1);
 
         return $defaultLang?->getLocale() ?? 'en_US';
     }
