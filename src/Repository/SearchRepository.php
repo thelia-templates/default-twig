@@ -16,91 +16,126 @@ namespace BackOfficeDefaultTwigBundle\Repository;
 
 use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\Collection\ObjectCollection;
+use Thelia\Model\Brand;
 use Thelia\Model\BrandQuery;
+use Thelia\Model\Category;
 use Thelia\Model\CategoryQuery;
+use Thelia\Model\Content;
 use Thelia\Model\ContentQuery;
+use Thelia\Model\Customer;
 use Thelia\Model\CustomerQuery;
+use Thelia\Model\Folder;
 use Thelia\Model\FolderQuery;
+use Thelia\Model\Order;
 use Thelia\Model\OrderQuery;
+use Thelia\Model\Product;
 use Thelia\Model\ProductQuery;
 
 final readonly class SearchRepository
 {
     private const SEARCH_LIMIT = 10;
 
+    /** @return ObjectCollection<int, Product> */
     public function findProducts(string $term): ObjectCollection
     {
-        return ProductQuery::create()
+        /** @var ObjectCollection<int, Product> $result */
+        $result = ProductQuery::create()
             ->useProductI18nQuery()
                 ->filterByTitle('%'.$term.'%', Criteria::LIKE)
             ->endUse()
             ->distinct()
             ->limit(self::SEARCH_LIMIT)
             ->find();
+
+        return $result;
     }
 
+    /** @return ObjectCollection<int, Category> */
     public function findCategories(string $term): ObjectCollection
     {
-        return CategoryQuery::create()
+        /** @var ObjectCollection<int, Category> $result */
+        $result = CategoryQuery::create()
             ->useCategoryI18nQuery()
                 ->filterByTitle('%'.$term.'%', Criteria::LIKE)
             ->endUse()
             ->distinct()
             ->limit(self::SEARCH_LIMIT)
             ->find();
+
+        return $result;
     }
 
+    /** @return ObjectCollection<int, Folder> */
     public function findFolders(string $term): ObjectCollection
     {
-        return FolderQuery::create()
+        /** @var ObjectCollection<int, Folder> $result */
+        $result = FolderQuery::create()
             ->useFolderI18nQuery()
                 ->filterByTitle('%'.$term.'%', Criteria::LIKE)
             ->endUse()
             ->distinct()
             ->limit(self::SEARCH_LIMIT)
             ->find();
+
+        return $result;
     }
 
+    /** @return ObjectCollection<int, Content> */
     public function findContents(string $term): ObjectCollection
     {
-        return ContentQuery::create()
+        /** @var ObjectCollection<int, Content> $result */
+        $result = ContentQuery::create()
             ->useContentI18nQuery()
                 ->filterByTitle('%'.$term.'%', Criteria::LIKE)
             ->endUse()
             ->distinct()
             ->limit(self::SEARCH_LIMIT)
             ->find();
+
+        return $result;
     }
 
+    /** @return ObjectCollection<int, Brand> */
     public function findBrands(string $term): ObjectCollection
     {
-        return BrandQuery::create()
+        /** @var ObjectCollection<int, Brand> $result */
+        $result = BrandQuery::create()
             ->useBrandI18nQuery()
                 ->filterByTitle('%'.$term.'%', Criteria::LIKE)
             ->endUse()
             ->distinct()
             ->limit(self::SEARCH_LIMIT)
             ->find();
+
+        return $result;
     }
 
+    /** @return ObjectCollection<int, Customer> */
     public function findCustomers(string $term): ObjectCollection
     {
-        return CustomerQuery::create()
+        /** @var ObjectCollection<int, Customer> $result */
+        $result = CustomerQuery::create()
             ->filterByFirstname('%'.$term.'%', Criteria::LIKE)
             ->_or()->filterByLastname('%'.$term.'%', Criteria::LIKE)
             ->_or()->filterByEmail('%'.$term.'%', Criteria::LIKE)
             ->_or()->filterByRef('%'.$term.'%', Criteria::LIKE)
             ->limit(self::SEARCH_LIMIT)
             ->find();
+
+        return $result;
     }
 
+    /** @return ObjectCollection<int, Order> */
     public function findOrders(string $term): ObjectCollection
     {
-        return OrderQuery::create()
+        /** @var ObjectCollection<int, Order> $result */
+        $result = OrderQuery::create()
             ->filterByRef('%'.$term.'%', Criteria::LIKE)
             ->_or()->filterByInvoiceRef('%'.$term.'%', Criteria::LIKE)
             ->_or()->filterByTransactionRef('%'.$term.'%', Criteria::LIKE)
             ->limit(self::SEARCH_LIMIT)
             ->find();
+
+        return $result;
     }
 }
