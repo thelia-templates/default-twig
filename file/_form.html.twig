@@ -17,9 +17,8 @@
         </form>
         <div class="mt-3" data-bo-file-upload-target="status" hidden></div>
     </div>
-</div>
 
-<div data-bo-file-upload-target="list">
+    <div class="card-body pt-0" data-bo-file-upload-target="list">
     {% include '@BackOfficeDefaultTwig/file/_list.html.twig' with {
         kind: kind,
         parent_type: parent_type,
@@ -29,6 +28,7 @@
         can_delete: true,
         urls: urls,
     } only %}
+    </div>
 </div>
 
 {{ safe_hook(kind == 'image' ? 'tab-image.bottom' : 'tab-document.bottom', { id: parent_id, type: parent_type }) }}
