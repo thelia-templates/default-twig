@@ -198,9 +198,9 @@ final class FileController
             'locale' => $locale,
             'success_url' => $editUrl,
             'title' => (string) $model->getTitle(),
-            'chapo' => (string) $model->getChapo(),
-            'postscriptum' => (string) $model->getPostscriptum(),
-            'description' => (string) $model->getDescription(),
+            'chapo' => method_exists($model, 'getChapo') ? (string) $model->getChapo() : '',
+            'postscriptum' => method_exists($model, 'getPostscriptum') ? (string) $model->getPostscriptum() : '',
+            'description' => method_exists($model, 'getDescription') ? (string) $model->getDescription() : '',
             'visible' => method_exists($model, 'getVisible') ? (bool) $model->getVisible() : true,
         ]);
 
@@ -327,7 +327,10 @@ final class FileController
         }
 
         $ids = [];
-        foreach ($query->orderByPosition()->find() as $record) {
+        if (method_exists($query, 'orderByPosition')) {
+            $query->orderByPosition();
+        }
+        foreach ($query->find() as $record) {
             $ids[] = (int) $record->getId();
         }
 
@@ -545,9 +548,10 @@ final class FileController
         if (method_exists($query, $filterMethod)) {
             $query->{$filterMethod}($parentId);
         }
-        $records = $query
-            ->orderByPosition()
-            ->find();
+        if (method_exists($query, 'orderByPosition')) {
+            $query->orderByPosition();
+        }
+        $records = $query->find();
 
         $items = [];
         foreach ($records as $record) {
