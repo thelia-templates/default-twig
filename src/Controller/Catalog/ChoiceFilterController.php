@@ -25,6 +25,7 @@ use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
 use Thelia\Model\ChoiceFilter;
 use Thelia\Model\ChoiceFilterQuery;
+use Thelia\Tools\TokenProvider;
 
 final class ChoiceFilterController
 {
@@ -32,6 +33,7 @@ final class ChoiceFilterController
         private readonly AdminAccessChecker $access,
         private readonly UrlGeneratorInterface $urls,
         private readonly TranslatorInterface $translator,
+        private readonly TokenProvider $tokens,
     ) {
     }
 
@@ -41,6 +43,8 @@ final class ChoiceFilterController
         if ($denied = $this->access->check(AdminResources::PRODUCT, [], AccessManager::UPDATE)) {
             return $denied;
         }
+
+        $this->tokens->checkToken((string) $request->get('_token'));
 
         $data = (array) $request->request->all('ChoiceFilter');
         [$templateId, $categoryId, $redirectUrl] = $this->resolveScope($data);
@@ -83,6 +87,8 @@ final class ChoiceFilterController
         if ($denied = $this->access->check(AdminResources::PRODUCT, [], AccessManager::UPDATE)) {
             return $denied;
         }
+
+        $this->tokens->checkToken((string) $request->get('_token'));
 
         $data = (array) $request->request->all('ChoiceFilter');
         [$templateId, $categoryId, $redirectUrl] = $this->resolveScope($data);

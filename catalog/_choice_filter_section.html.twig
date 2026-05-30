@@ -25,6 +25,7 @@
     {% endif %}
 
     <form action="{{ path('admin.choicefilter.save') }}" method="post" data-testid="choice-filter-form">
+        <input type="hidden" name="_token" value="{{ assignToken() }}">
         {% if scope_template_id is defined and scope_template_id %}
             <input type="hidden" name="ChoiceFilter[template_id]" value="{{ scope_template_id }}">
         {% endif %}
@@ -97,6 +98,7 @@
     {% if data.enabled and scope_category_id is defined and scope_category_id %}
         <form action="{{ path('admin.choicefilter.clear') }}" method="post" class="mt-3"
               data-testid="choice-filter-clear-form">
+            <input type="hidden" name="_token" value="{{ assignToken() }}">
             <input type="hidden" name="ChoiceFilter[category_id]" value="{{ scope_category_id }}">
             <button type="submit" class="btn btn-outline-danger btn-sm" data-testid="choice-filter-reset">
                 <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>
