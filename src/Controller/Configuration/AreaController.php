@@ -111,10 +111,15 @@ final class AreaController
             successRoute: self::EDIT_ROUTE,
             successParameters: [],
             renderError: fn (): RedirectResponse => new RedirectResponse($this->urls->generate(self::LIST_ROUTE)),
-            describeForLog: fn (AreaEvent $event): array => [
-                \sprintf('Shipping zone "%s" (ID %d) created', (string) $event->getModel()->getName(), (int) $event->getModel()->getId()),
-                (int) $event->getModel()->getId(),
-            ],
+            describeForLog: function (AreaEvent $event): array {
+                $area = $event->getModel();
+                \assert($area instanceof Area);
+
+                return [
+                    \sprintf('Shipping zone "%s" (ID %d) created', (string) $area->getName(), (int) $area->getId()),
+                    (int) $area->getId(),
+                ];
+            },
         );
     }
 
