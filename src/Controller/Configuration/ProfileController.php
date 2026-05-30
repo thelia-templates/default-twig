@@ -264,14 +264,14 @@ final class ProfileController
         };
         $profiles = $query->find();
         $rows = [];
-        $defaultLocale = $this->resolveDefaultLocale();
+        $createLocale = $request?->getLocale() ?? $this->resolveDefaultLocale();
 
         foreach ($profiles as $profile) {
             $rows[] = $this->profileToRow($profile);
         }
 
         $createForm = $this->formFactory->createNamed('thelia_profile_create', ProfileType::class, [
-            'locale' => $defaultLocale,
+            'locale' => $createLocale,
         ], [
             ]);
 
