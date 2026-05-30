@@ -26,10 +26,10 @@ final readonly class ModuleRepository
      */
     public function findAllOrderedByPosition(string $locale): ObjectCollection
     {
+        /** @var ObjectCollection<int, Module> $modules */
         $modules = ModuleQuery::create()->orderByPosition()->find();
 
         foreach ($modules as $module) {
-            \assert($module instanceof Module);
             $module->setLocale($locale);
         }
 
@@ -41,6 +41,7 @@ final readonly class ModuleRepository
      */
     public function findActiveByType(int $type, string $locale): array
     {
+        /** @var ObjectCollection<int, Module> $modules */
         $modules = ModuleQuery::create()
             ->filterByType($type)
             ->filterByActivate(1)
@@ -49,7 +50,6 @@ final readonly class ModuleRepository
 
         $items = [];
         foreach ($modules as $module) {
-            \assert($module instanceof Module);
             $module->setLocale($locale);
             $items[] = [
                 'id' => (int) $module->getId(),

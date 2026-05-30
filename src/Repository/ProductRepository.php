@@ -32,10 +32,13 @@ final readonly class ProductRepository
      */
     public function findByTemplateId(int $templateId): ObjectCollection
     {
-        return ProductQuery::create()
+        /** @var ObjectCollection<int, Product> $result */
+        $result = ProductQuery::create()
             ->filterByTemplateId($templateId)
             ->orderByRef()
             ->find();
+
+        return $result;
     }
 
     /**
@@ -43,6 +46,7 @@ final readonly class ProductRepository
      */
     public function findInCategoryPage(int $categoryId, string $locale, int $offset, int $limit): ObjectCollection
     {
+        /** @var ObjectCollection<int, Product> $products */
         $products = ProductQuery::create()
             ->useProductCategoryQuery()
                 ->filterByCategoryId($categoryId)
@@ -53,7 +57,6 @@ final readonly class ProductRepository
             ->find();
 
         foreach ($products as $product) {
-            \assert($product instanceof Product);
             $product->setLocale($locale);
         }
 
@@ -101,13 +104,13 @@ final readonly class ProductRepository
         }
 
         $refs = array_column($rows, 'ref');
+        /** @var ObjectCollection<int, Product> $products */
         $products = ProductQuery::create()
             ->filterByRef($refs, Criteria::IN)
             ->find();
 
         $byRef = [];
         foreach ($products as $product) {
-            \assert($product instanceof Product);
             $product->setLocale($locale);
             $byRef[(string) $product->getRef()] = $product;
         }
@@ -132,13 +135,14 @@ final readonly class ProductRepository
      */
     public function findLowStock(int $threshold, int $limit, string $locale): array
     {
-        $list = array_values(iterator_to_array(
-            ProductSaleElementsQuery::create()
-                ->filterByQuantity($threshold, Criteria::LESS_EQUAL)
-                ->orderByQuantity(Criteria::ASC)
-                ->limit($limit)
-                ->find(),
-        ));
+        /** @var ObjectCollection<int, ProductSaleElements> $collection */
+        $collection = ProductSaleElementsQuery::create()
+            ->filterByQuantity($threshold, Criteria::LESS_EQUAL)
+            ->orderByQuantity(Criteria::ASC)
+            ->limit($limit)
+            ->find();
+
+        $list = array_values(iterator_to_array($collection));
 
         foreach ($list as $pse) {
             $pse->getProduct()?->setLocale($locale);

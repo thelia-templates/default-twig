@@ -20,6 +20,7 @@ use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\Collection\ObjectCollection;
 use Propel\Runtime\Propel;
 use Thelia\Model\Order;
+use Thelia\Model\OrderProduct;
 use Thelia\Model\OrderProductQuery;
 use Thelia\Model\OrderQuery;
 use Thelia\Model\OrderStatus;
@@ -51,6 +52,7 @@ final readonly class OrderRepository
         $sortColumn = self::SORT_FIELDS[$filters->sort] ?? self::SORT_FIELDS[OrderFilters::DEFAULT_SORT];
         $sortDirection = $filters->direction === 'asc' ? Criteria::ASC : Criteria::DESC;
 
+        /** @var ObjectCollection<int, Order> $rows */
         $rows = $query
             ->joinWithCustomer()
             ->joinWithOrderAddressRelatedByDeliveryOrderAddressId()
@@ -86,11 +88,14 @@ final readonly class OrderRepository
      */
     public function findRecentByCustomer(int $customerId, int $limit = 25): ObjectCollection
     {
-        return OrderQuery::create()
+        /** @var ObjectCollection<int, Order> $result */
+        $result = OrderQuery::create()
             ->filterByCustomerId($customerId)
             ->orderByCreatedAt(Criteria::DESC)
             ->limit($limit)
             ->find();
+
+        return $result;
     }
 
     /**
@@ -101,12 +106,15 @@ final readonly class OrderRepository
         $page = max(1, $page);
         $offset = ($page - 1) * $perPage;
 
-        return OrderQuery::create()
+        /** @var ObjectCollection<int, Order> $result */
+        $result = OrderQuery::create()
             ->filterByCustomerId($customerId)
             ->orderByCreatedAt(Criteria::DESC)
             ->offset($offset)
             ->limit($perPage)
             ->find();
+
+        return $result;
     }
 
     public function countOrderProducts(int $orderId): int
@@ -114,17 +122,23 @@ final readonly class OrderRepository
         return OrderProductQuery::create()->filterByOrderId($orderId)->count();
     }
 
+    /**
+     * @return ObjectCollection<int, OrderProduct>
+     */
     public function findOrderProductsPage(int $orderId, int $page, int $perPage): ObjectCollection
     {
         $page = max(1, $page);
         $offset = ($page - 1) * $perPage;
 
-        return OrderProductQuery::create()
+        /** @var ObjectCollection<int, OrderProduct> $result */
+        $result = OrderProductQuery::create()
             ->filterByOrderId($orderId)
             ->orderById()
             ->offset($offset)
             ->limit($perPage)
             ->find();
+
+        return $result;
     }
 
     /**
@@ -132,7 +146,10 @@ final readonly class OrderRepository
      */
     public function findAllStatuses(): ObjectCollection
     {
-        return OrderStatusQuery::create()->orderById()->find();
+        /** @var ObjectCollection<int, OrderStatus> $result */
+        $result = OrderStatusQuery::create()->orderById()->find();
+
+        return $result;
     }
 
     /**

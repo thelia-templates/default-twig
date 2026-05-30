@@ -33,7 +33,10 @@ final readonly class BrandRepository
      */
     public function findAllOrderedByPosition(): ObjectCollection
     {
-        return BrandQuery::create()->orderByPosition()->find();
+        /** @var ObjectCollection<int, Brand> $result */
+        $result = BrandQuery::create()->orderByPosition()->find();
+
+        return $result;
     }
 
     /**
@@ -56,7 +59,10 @@ final readonly class BrandRepository
             default => $query->orderByPosition($criteria),
         };
 
-        return $query->find();
+        /** @var ObjectCollection<int, Brand> $result */
+        $result = $query->find();
+
+        return $result;
     }
 
     /**
@@ -64,13 +70,13 @@ final readonly class BrandRepository
      */
     public function findImagesForBrand(int $brandId, string $locale): ObjectCollection
     {
+        /** @var ObjectCollection<int, BrandImage> $images */
         $images = BrandImageQuery::create()
             ->filterByBrandId($brandId)
             ->orderByPosition()
             ->find();
 
         foreach ($images as $image) {
-            \assert($image instanceof BrandImage);
             $image->setLocale($locale);
         }
 

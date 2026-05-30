@@ -26,10 +26,13 @@ final readonly class CategoryRepository
      */
     public function findByDefaultTemplateId(int $templateId): ObjectCollection
     {
-        return CategoryQuery::create()
+        /** @var ObjectCollection<int, Category> $result */
+        $result = CategoryQuery::create()
             ->filterByDefaultTemplateId($templateId)
             ->orderByPosition()
             ->find();
+
+        return $result;
     }
 
     /**
@@ -37,13 +40,13 @@ final readonly class CategoryRepository
      */
     public function findChildrenOrderedByPosition(int $parentId, string $locale): ObjectCollection
     {
+        /** @var ObjectCollection<int, Category> $categories */
         $categories = CategoryQuery::create()
             ->filterByParent($parentId)
             ->orderByPosition()
             ->find();
 
         foreach ($categories as $category) {
-            \assert($category instanceof Category);
             $category->setLocale($locale);
         }
 

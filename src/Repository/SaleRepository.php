@@ -33,9 +33,12 @@ final readonly class SaleRepository
      */
     public function findAllOrderedByStartDate(): ObjectCollection
     {
-        return SaleQuery::create()
+        /** @var ObjectCollection<int, Sale> $result */
+        $result = SaleQuery::create()
             ->orderByStartDate(Criteria::DESC)
             ->find();
+
+        return $result;
     }
 
     /**
@@ -64,7 +67,10 @@ final readonly class SaleRepository
             default => $query->orderByStartDate($criteria),
         };
 
-        return $query->find();
+        /** @var ObjectCollection<int, Sale> $result */
+        $result = $query->find();
+
+        return $result;
     }
 
     /**
@@ -78,6 +84,7 @@ final readonly class SaleRepository
             return [];
         }
 
+        /** @var ObjectCollection<int, Product> $products */
         $products = ProductQuery::create()
             ->useProductCategoryQuery()
                 ->filterByCategoryId($categoryIds, Criteria::IN)
@@ -88,7 +95,6 @@ final readonly class SaleRepository
 
         $items = [];
         foreach ($products as $product) {
-            \assert($product instanceof Product);
             $product->setLocale($locale);
             $items[] = [
                 'id' => (int) $product->getId(),

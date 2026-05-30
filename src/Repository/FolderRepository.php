@@ -26,9 +26,9 @@ final readonly class FolderRepository
      */
     public function findAllOrderedByPosition(string $locale): ObjectCollection
     {
+        /** @var ObjectCollection<int, Folder> $folders */
         $folders = FolderQuery::create()->orderByPosition()->find();
         foreach ($folders as $folder) {
-            \assert($folder instanceof Folder);
             $folder->setLocale($locale);
         }
 
@@ -62,9 +62,9 @@ final readonly class FolderRepository
             default => $query->orderByPosition($criteria),
         };
 
+        /** @var ObjectCollection<int, Folder> $folders */
         $folders = $query->find();
         foreach ($folders as $folder) {
-            \assert($folder instanceof Folder);
             $folder->setLocale($locale);
         }
 

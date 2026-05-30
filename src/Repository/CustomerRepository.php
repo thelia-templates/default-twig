@@ -85,6 +85,7 @@ final readonly class CustomerRepository
             $rowsQuery->orderBy('customer.'.$column, $direction);
         }
 
+        /** @var ObjectCollection<int, Customer> $rows */
         $rows = $rowsQuery
             ->offset(($page - 1) * $perPage)
             ->limit($perPage)
