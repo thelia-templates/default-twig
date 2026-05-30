@@ -46,6 +46,7 @@ use Thelia\Core\Security\Resource\AdminResources;
 use Thelia\Model\CategoryQuery;
 use Thelia\Model\CurrencyQuery;
 use Thelia\Model\LangQuery;
+use Thelia\Model\Map\ProductTableMap;
 use Thelia\Model\Product;
 use Thelia\Model\ProductQuery;
 use Thelia\Model\TaxRuleQuery;
@@ -466,10 +467,16 @@ final class ProductController
                 ->find()
                 ->toArray();
 
-            $query->_or()
-                ->filterById($titleIds, Criteria::IN)
-                ->_or()
-                ->filterByRef('%'.$search.'%', Criteria::LIKE);
+            // select(['Id']) yields a flat list of scalar ids; normalize to int.
+            $ids = array_map(static fn ($id): int => (int) $id, $titleIds);
+
+            // condition+combine groups the title/ref match as a single OR cluster,
+            // otherwise chaining _or() bleeds into the category scope above and turns
+            // the whole WHERE into an OR (products from every category leak in).
+            $query
+                ->condition('search_title', ProductTableMap::COL_ID.' IN ('.implode(',', $ids ?: [0]).')')
+                ->condition('search_ref', ProductTableMap::COL_REF.' LIKE ?', '%'.$search.'%', \PDO::PARAM_STR)
+                ->combine(['search_title', 'search_ref'], Criteria::LOGICAL_OR);
         }
 
         $this->applyOrder($query, $order);
