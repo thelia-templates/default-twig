@@ -226,11 +226,16 @@ final class ContentController
         $contentId = (int) $request->request->get('content_id', 0);
         $folderId = (int) $request->request->get('additional_folder_id', 0);
 
+        $content = ContentQuery::create()->findPk($contentId);
+        if ($content === null) {
+            return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
+        }
+
         return $this->action->tokenAction(
             resource: self::RESOURCE,
             access: AccessManager::UPDATE,
             request: $request,
-            event: new ContentAddFolderEvent($contentId, $folderId),
+            event: new ContentAddFolderEvent($content, $folderId),
             eventName: TheliaEvents::CONTENT_ADD_FOLDER,
             actionLabel: 'Content additional folder add',
             successRoute: self::EDIT_ROUTE,
@@ -244,11 +249,16 @@ final class ContentController
         $contentId = (int) $request->get('content_id', 0);
         $folderId = (int) $request->get('additional_folder_id', 0);
 
+        $content = ContentQuery::create()->findPk($contentId);
+        if ($content === null) {
+            return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
+        }
+
         return $this->action->tokenAction(
             resource: self::RESOURCE,
             access: AccessManager::UPDATE,
             request: $request,
-            event: new ContentRemoveFolderEvent($contentId, $folderId),
+            event: new ContentRemoveFolderEvent($content, $folderId),
             eventName: TheliaEvents::CONTENT_REMOVE_FOLDER,
             actionLabel: 'Content additional folder remove',
             successRoute: self::EDIT_ROUTE,
