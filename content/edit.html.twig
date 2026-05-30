@@ -98,6 +98,7 @@
                                                 <option value="{{ folder.id }}" {% if folder.id == content.defaultFolderId %}selected{% endif %}>{{ folder.title }}</option>
                                             {% endfor %}
                                         </select>
+                                        {% do form.default_folder.setRendered %}
                                     </div>
                                 </div>
                             </div>
