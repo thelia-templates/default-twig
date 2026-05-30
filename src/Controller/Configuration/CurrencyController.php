@@ -25,6 +25,8 @@ use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Session\FlashBagAwareSessionInterface;
+use Symfony\Component\HttpFoundation\Session\Flash\FlashBagInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -68,7 +70,7 @@ final class CurrencyController
             return $denied;
         }
 
-        $undefinedRates = $request->getSession()->getFlashBag()->get('currency_undefined_rates');
+        $undefinedRates = $this->flashBag($request)?->get('currency_undefined_rates') ?? [];
 
         return new Response($this->twig->render(
             self::LIST_TEMPLATE,
@@ -215,12 +217,12 @@ final class CurrencyController
             $this->events->dispatch($event, TheliaEvents::CURRENCY_UPDATE_RATES);
 
             if ($event->hasUndefinedRates()) {
-                $request->getSession()->getFlashBag()->set('currency_undefined_rates', $event->getUndefinedRates());
+                $this->flashBag($request)?->set('currency_undefined_rates', $event->getUndefinedRates());
             }
 
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         } catch (\Throwable $exception) {
-            $request->getSession()->getFlashBag()->add(
+            $this->flashBag($request)?->add(
                 'danger',
                 $this->translator->trans('Currency rates update failed: %error', ['%error' => $exception->getMessage()]),
             );
@@ -287,6 +289,13 @@ final class CurrencyController
         );
     }
 
+    private function flashBag(Request $request): ?FlashBagInterface
+    {
+        $session = $request->hasSession() ? $request->getSession() : null;
+
+        return $session instanceof FlashBagAwareSessionInterface ? $session->getFlashBag() : null;
+    }
+
     /**
      * @param list<int> $undefinedRates
      *
@@ -301,13 +310,22 @@ final class CurrencyController
         $query = CurrencyQuery::create();
         match ($sort->field) {
             'id' => $query->orderById($criteria),
-            'name' => $query->orderByName($criteria),
             'code' => $query->orderByCode($criteria),
             'symbol' => $query->orderBySymbol($criteria),
             'rate' => $query->orderByRate($criteria),
             default => $query->orderByPosition($criteria),
         };
-        $currencies = $query->find();
+
+        /** @var list<Currency> $currencies */
+        $currencies = iterator_to_array($query->find(), false);
+
+        // Currency name is an i18n field (no SQL column), so order it in PHP on the resolved label.
+        if ($sort->field === 'name') {
+            usort($currencies, static fn (Currency $a, Currency $b): int => strcasecmp((string) $a->getName(), (string) $b->getName()));
+            if (strtoupper($sort->direction) === 'DESC') {
+                $currencies = array_reverse($currencies);
+            }
+        }
         $rows = [];
         $editForms = [];
 
