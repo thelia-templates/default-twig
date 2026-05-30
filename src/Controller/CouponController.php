@@ -398,7 +398,7 @@ final class CouponController
         }
 
         $serviceId = urldecode((string) ($data['type'] ?? ''));
-        $couponTypeManager = $this->couponManager->isCouponAvailable($serviceId);
+        $couponTypeManager = $this->findCouponType($serviceId);
         if ($couponTypeManager === null) {
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }
@@ -528,6 +528,17 @@ final class CouponController
             'usages_left' => $coupon->isUsageUnlimited() ? $this->translator->trans('Unlimited') : (string) max(0, (int) $coupon->getUsagesLeft()),
             '_actions' => $actions,
         ];
+    }
+
+    private function findCouponType(string $serviceId): ?CouponInterface
+    {
+        foreach ($this->couponManager->getAvailableCoupons() as $type) {
+            if ($type instanceof CouponInterface && $type->getServiceId() === $serviceId) {
+                return $type;
+            }
+        }
+
+        return null;
     }
 
     /** @return array<string, string> */
