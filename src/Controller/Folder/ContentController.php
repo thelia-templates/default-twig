@@ -272,13 +272,15 @@ final class ContentController
     {
         $data = $validated->getData() ?? [];
         $event = new ContentUpdateEvent((int) ($data['id'] ?? 0));
-        $event->setLocale((string) ($data['locale'] ?? $this->defaultLocale()))
-            ->setTitle((string) ($data['title'] ?? ''))
-            ->setDefaultFolder((int) ($data['default_folder'] ?? 0))
-            ->setVisible((bool) ($data['visible'] ?? false))
-            ->setChapo($this->stringOrNull($data['chapo'] ?? null))
-            ->setDescription($this->stringOrNull($data['description'] ?? null))
-            ->setPostscriptum($this->stringOrNull($data['postscriptum'] ?? null));
+        // Non-fluent: ContentCreateEvent::setVisible() is typed ": self", which would
+        // downgrade the chain type and hide ContentUpdateEvent::setChapo() et al.
+        $event->setLocale((string) ($data['locale'] ?? $this->defaultLocale()));
+        $event->setTitle((string) ($data['title'] ?? ''));
+        $event->setDefaultFolder((int) ($data['default_folder'] ?? 0));
+        $event->setVisible((bool) ($data['visible'] ?? false));
+        $event->setChapo($this->stringOrNull($data['chapo'] ?? null));
+        $event->setDescription($this->stringOrNull($data['description'] ?? null));
+        $event->setPostscriptum($this->stringOrNull($data['postscriptum'] ?? null));
 
         return $event;
     }
