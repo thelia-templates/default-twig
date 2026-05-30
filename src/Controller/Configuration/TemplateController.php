@@ -391,17 +391,25 @@ final class TemplateController
         $locale = $request->getLocale();
         $sort = ListSort::fromRequest($request, ['id', 'name'], 'id');
         $criteria = strtoupper($sort->direction) === 'DESC' ? Criteria::DESC : Criteria::ASC;
-        $query = TemplateQuery::create();
-        match ($sort->field) {
-            'name' => $query->orderByName($criteria),
-            default => $query->orderById($criteria),
-        };
-        $templates = $query->find();
-        $rows = [];
+        $query = TemplateQuery::create()->orderById($criteria);
+
+        /** @var list<Template> $templates */
+        $templates = iterator_to_array($query->find(), false);
 
         foreach ($templates as $template) {
-            \assert($template instanceof Template);
             $template->setLocale($locale);
+        }
+
+        // Template name is an i18n field (no SQL column), so order it in PHP on the resolved label.
+        if ($sort->field === 'name') {
+            usort($templates, static fn (Template $a, Template $b): int => strcasecmp((string) $a->getName(), (string) $b->getName()));
+            if (strtoupper($sort->direction) === 'DESC') {
+                $templates = array_reverse($templates);
+            }
+        }
+
+        $rows = [];
+        foreach ($templates as $template) {
             $rows[] = $this->templateToRow($template);
         }
 
