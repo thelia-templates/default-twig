@@ -96,6 +96,7 @@ final class StateController
 
         $createForm = $this->formFactory->createNamed('thelia_state_create', StateType::class, [
             'locale' => $locale,
+            'visible' => true,
         ], [
             'country_choices' => $this->countryChoiceMap($locale),
         ]);
@@ -115,6 +116,7 @@ final class StateController
     {
         $form = $this->formFactory->createNamed('thelia_state_create', StateType::class, [
             'locale' => $request->getLocale(),
+            'visible' => true,
         ], [
             'country_choices' => $this->countryChoiceMap($request->getLocale()),
         ]);

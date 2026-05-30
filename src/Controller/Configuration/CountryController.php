@@ -95,6 +95,7 @@ final class CountryController
 
         $createForm = $this->formFactory->createNamed('thelia_country_create', CountryType::class, [
             'locale' => $request->getLocale(),
+            'visible' => true,
         ], []);
 
         return new Response($this->twig->render(self::LIST_TEMPLATE, [
@@ -110,6 +111,7 @@ final class CountryController
     {
         $form = $this->formFactory->createNamed('thelia_country_create', CountryType::class, [
             'locale' => $request->getLocale(),
+            'visible' => true,
         ], []);
 
         return $this->action->submit(
