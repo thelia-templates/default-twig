@@ -17,7 +17,6 @@ namespace BackOfficeDefaultTwigBundle\Service\Coupon;
 use Thelia\Domain\Promotion\Coupon\Type\AbstractRemoveOnAttributeValues;
 use Thelia\Domain\Promotion\Coupon\Type\AbstractRemoveOnCategories;
 use Thelia\Domain\Promotion\Coupon\Type\AbstractRemoveOnProducts;
-use Thelia\Domain\Promotion\Coupon\Type\AmountAndPercentageCouponInterface;
 use Thelia\Domain\Promotion\Coupon\Type\CouponInterface;
 use Thelia\Domain\Promotion\Coupon\Type\FreeProduct;
 use Thelia\Model\AttributeAvQuery;
@@ -302,17 +301,19 @@ final readonly class CouponInputsRenderer
 
     private function percentageValue(?CouponInterface $manager): string
     {
-        if (!$manager instanceof AmountAndPercentageCouponInterface && $manager !== null) {
-            try {
-                $reflection = new \ReflectionClass($manager);
-                if ($reflection->hasProperty('percentage')) {
-                    $property = $reflection->getProperty('percentage');
+        if ($manager === null) {
+            return '';
+        }
 
-                    return (string) ($property->getValue($manager) ?? '');
-                }
-            } catch (\ReflectionException) {
-                // fallthrough
+        try {
+            $reflection = new \ReflectionClass($manager);
+            if ($reflection->hasProperty('percentage')) {
+                $property = $reflection->getProperty('percentage');
+
+                return (string) ($property->getValue($manager) ?? '');
             }
+        } catch (\ReflectionException) {
+            // fallthrough
         }
 
         return '';
