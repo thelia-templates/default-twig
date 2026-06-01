@@ -81,6 +81,8 @@ final class ModuleHookController
             return $denied;
         }
 
+        $this->tokens->checkToken((string) $request->query->get('_token', $request->request->get('_token', '')));
+
         try {
             $event = new ModuleHookCreateEvent();
             $event->setModuleId((int) $request->request->get('module_id', 0));
@@ -124,6 +126,8 @@ final class ModuleHookController
         if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::UPDATE)) {
             return $denied;
         }
+
+        $this->tokens->checkToken((string) $request->query->get('_token', $request->request->get('_token', '')));
 
         try {
             $moduleHook = ModuleHookQuery::create()->findPk($module_hook_id);
