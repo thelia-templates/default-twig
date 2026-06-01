@@ -345,7 +345,6 @@ final readonly class CustomerFilters
             'EXISTS (SELECT 1 FROM address a WHERE a.customer_id = '.CustomerTableMap::COL_ID
                 .' AND (a.phone LIKE ? OR a.cellphone LIKE ?))',
             [$needle, $needle],
-            [\PDO::PARAM_STR, \PDO::PARAM_STR],
         );
     }
 
