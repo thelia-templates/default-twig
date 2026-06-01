@@ -131,16 +131,21 @@ final class CategoryController
         $locale = $editLang->getLocale() ?? 'en_US';
         $category->setLocale($locale);
 
+        // UI locale labels the choice lists + breadcrumb; edit locale drives edited fields + preview.
+        $uiLocale = $request->getLocale();
+
         $parentId = (int) $category->getParent();
         $parentCategory = $parentId > 0 ? CategoryQuery::create()->findPk($parentId) : null;
         $navigation = $this->categories->findPreviousNext($category);
 
         return new Response($this->twig->render(self::EDIT_TEMPLATE, [
             'category' => $category,
+            'preview_url' => $category->getUrl($locale),
             'form' => $this->buildUpdateForm($category, $locale)->createView(),
             'seo_form' => $this->buildSeoForm($category, $locale)->createView(),
             'children' => $this->childRows($category, $locale),
-            'available_templates' => $this->availableTemplates($locale),
+            'available_categories' => $this->categories->flatTree($uiLocale),
+            'available_templates' => $this->availableTemplates($uiLocale),
             'current_tab' => (string) $request->query->get('current_tab', 'general'),
             'edit_language_id' => (int) $editLang->getId(),
             'folder_tree' => $this->folderTree($locale),
@@ -149,7 +154,7 @@ final class CategoryController
             'delete_related_content_token' => $this->tokens->assignToken(),
             'selected_folder_id' => (int) $request->query->get('folder_id', 0),
             'choice_filter' => $this->choiceFilterPresenter->forCategory($categoryId, $locale),
-            'breadcrumb_path' => $this->categories->buildBreadcrumbPath($parentCategory, $locale),
+            'breadcrumb_path' => $this->categories->buildBreadcrumbPath($parentCategory, $uiLocale),
             'prev_url' => $navigation['previous'] !== null ? $this->urls->generate(self::EDIT_ROUTE, ['category_id' => $navigation['previous']]) : null,
             'next_url' => $navigation['next'] !== null ? $this->urls->generate(self::EDIT_ROUTE, ['category_id' => $navigation['next']]) : null,
         ]));

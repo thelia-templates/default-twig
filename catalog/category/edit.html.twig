@@ -32,6 +32,11 @@
                     next_label: 'Edit next category'|trans,
                     testid: 'category',
                 } only %}
+                {% if preview_url is defined and preview_url %}
+                    <a href="{{ preview_url }}" target="_blank" rel="noopener" class="btn btn-outline-secondary flex-shrink-0" title="{{ 'Preview category page'|trans }}" data-testid="category-preview-btn">
+                        <i class="bi bi-eye" aria-hidden="true"></i> {{ 'Preview'|trans }}
+                    </a>
+                {% endif %}
                 <a href="{{ path('admin.categories.default', { category_id: category.parent }) }}" class="btn btn-outline-secondary">
                     <i class="bi bi-arrow-left" aria-hidden="true"></i> {{ 'Back'|trans }}
                 </a>
@@ -119,7 +124,13 @@
                             </div>
                             <div class="mb-3">
                                 {{ form_label(form.parent) }}
-                                {{ form_widget(form.parent, { attr: { class: 'form-control' } }) }}
+                                <select name="{{ form.parent.vars.full_name }}" class="form-select" data-testid="category-edit-parent" required>
+                                    <option value="0"{{ not form.parent.vars.value ? ' selected' }}>{{ '- Root category -'|trans }}</option>
+                                    {% for cat in available_categories|filter(c => c.id != category.id) %}
+                                        <option value="{{ cat.id }}"{{ cat.id == form.parent.vars.value ? ' selected' }}>{% if cat.depth > 0 %}{% for i in 1..cat.depth %}&nbsp;&nbsp;&nbsp;{% endfor %}{% endif %}{{ cat.title }}</option>
+                                    {% endfor %}
+                                </select>
+                                {% do form.parent.setRendered %}
                             </div>
                             <div class="mb-3">
                                 {{ form_label(form.default_template_id) }}
