@@ -39,7 +39,6 @@ use Thelia\Model\Profile;
 use Thelia\Model\ProfileQuery;
 use Thelia\Model\ResourceQuery;
 use Thelia\Model\ModuleQuery;
-use Thelia\Tools\TokenProvider;
 use Twig\Environment;
 
 #[Route('/admin/configuration/profiles', name: 'admin.configuration.profiles.')]
@@ -55,7 +54,6 @@ final class ProfileController
         private readonly AdminAccessChecker $access,
         private readonly Environment $twig,
         private readonly FormFactoryInterface $formFactory,
-        private readonly TokenProvider $tokens,
         private readonly UrlGeneratorInterface $urls,
         private readonly TranslatorInterface $translator,
         private readonly EventDispatcherInterface $events,
@@ -125,7 +123,7 @@ final class ProfileController
             'include_id' => true,
             ]);
 
-        $profileId = (int) $request->request->get('thelia_profile_update', ['id' => 0])['id'];
+        $profileId = (int) ($request->request->all('thelia_profile_update')['id'] ?? 0);
 
         return $this->action->submit(
             resource: self::RESOURCE,
