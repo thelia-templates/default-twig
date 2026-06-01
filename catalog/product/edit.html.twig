@@ -116,13 +116,13 @@
                                 {{ form_widget(form.postscriptum, { attr: { class: 'form-control', rows: 3 } }) }}
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-4" data-controller="bo-virtual-toggle">
                             <div class="form-check mb-3">
                                 {{ form_widget(form.visible, { attr: { class: 'form-check-input' } }) }}
                                 {{ form_label(form.visible, null, { label_attr: { class: 'form-check-label' } }) }}
                             </div>
                             <div class="form-check mb-3">
-                                {{ form_widget(form.virtual, { attr: { class: 'form-check-input' } }) }}
+                                {{ form_widget(form.virtual, { attr: { class: 'form-check-input', 'data-bo-virtual-toggle-target': 'trigger', 'data-action': 'change->bo-virtual-toggle#update' } }) }}
                                 {{ form_label(form.virtual, null, { label_attr: { class: 'form-check-label' } }) }}
                             </div>
                             <div class="mb-3">
@@ -158,7 +158,7 @@
                                 </select>
                                 {% do form.brand_id.setRendered %}
                             </div>
-                            <div class="mb-3">
+                            <div class="mb-3" data-bo-virtual-toggle-target="field">
                                 {{ form_label(form.virtual_document_id) }}
                                 <select name="{{ form.virtual_document_id.vars.full_name }}" class="form-select" data-testid="product-edit-virtual-document">
                                     <option value="0">{{ '- No document -'|trans }}</option>

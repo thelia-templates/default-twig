@@ -51,6 +51,8 @@ use Thelia\Model\Map\ProductTableMap;
 use Thelia\Model\Product;
 use Thelia\Model\ProductDocumentQuery;
 use Thelia\Model\ProductQuery;
+use Thelia\Model\ProductSaleElementsProductDocumentQuery;
+use Thelia\Model\ProductSaleElementsQuery;
 use Thelia\Model\TaxRuleQuery;
 use Thelia\Model\TemplateQuery;
 use Thelia\Tools\TokenProvider;
@@ -345,7 +347,7 @@ final class ProductController
             'postscriptum' => $product->getPostscriptum(),
             'template_id' => $product->getTemplateId(),
             'brand_id' => $product->getBrandId(),
-            'virtual_document_id' => null,
+            'virtual_document_id' => $this->currentVirtualDocumentId($product),
         ], [
             'include_id' => true,
             ]);
@@ -610,6 +612,27 @@ final class ProductController
         }
 
         return $items;
+    }
+
+    /**
+     * Current virtual document assigned to the product's default sale element, if any.
+     * The link lives in product_sale_elements_product_document, not on the product row.
+     */
+    private function currentVirtualDocumentId(Product $product): ?int
+    {
+        $defaultPse = ProductSaleElementsQuery::create()
+            ->filterByProductId($product->getId())
+            ->filterByIsDefault(true)
+            ->findOne();
+        if ($defaultPse === null) {
+            return null;
+        }
+
+        $link = ProductSaleElementsProductDocumentQuery::create()
+            ->filterByProductSaleElementsId($defaultPse->getId())
+            ->findOne();
+
+        return $link !== null ? (int) $link->getProductDocumentId() : null;
     }
 
     /**
