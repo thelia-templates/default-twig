@@ -396,7 +396,11 @@ final class CouponController
             $data['coupon_specific'] = json_encode($data['coupon_specific'], JSON_THROW_ON_ERROR);
         }
 
-        $effects = $couponTypeManager->getEffects($data);
+        try {
+            $effects = $couponTypeManager->getEffects($data);
+        } catch (\Throwable $exception) {
+            return $this->renderWithError($request, $coupon, $exception->getMessage());
+        }
 
         $event = new CouponCreateOrUpdateEvent(
             (string) ($data['code'] ?? ''),
