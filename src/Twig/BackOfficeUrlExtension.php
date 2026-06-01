@@ -14,7 +14,9 @@ declare(strict_types=1);
 
 namespace BackOfficeDefaultTwigBundle\Twig;
 
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Thelia\Core\HttpFoundation\Session\Session as TheliaSession;
 use Thelia\Model\Lang;
@@ -29,6 +31,8 @@ final class BackOfficeUrlExtension extends AbstractExtension
         private readonly UrlGeneratorInterface $urls,
         private readonly TokenProvider $tokens,
         private readonly RequestStack $requestStack,
+        #[Autowire(param: 'thelia.token_id')]
+        private readonly string $tokenId = 'thelia.token_provider',
     ) {
     }
 
@@ -74,6 +78,17 @@ final class BackOfficeUrlExtension extends AbstractExtension
 
     public function assignToken(): string
     {
+        // Reuse the per-session token if one already exists, so concurrent requests
+        // (e.g. the image/document list-ajax fragments fired on load) don't regenerate
+        // it and invalidate the GET links/forms already rendered on the page.
+        $session = $this->requestStack->getMainRequest()?->getSession();
+        if ($session instanceof SessionInterface) {
+            $existing = $session->get($this->tokenId);
+            if (is_string($existing) && $existing !== '') {
+                return $existing;
+            }
+        }
+
         return $this->tokens->assignToken() ?? '';
     }
 }
