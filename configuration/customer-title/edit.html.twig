@@ -16,9 +16,9 @@
 
 {% block content %}
     <div class="container-fluid" data-testid="customer-title-edit-page">
-        <h1 class="h3 mb-3">{{ 'Customer title'|trans }} <small class="text-muted">#{{ title.id }}</small></h1>
+        <h1 class="h3 mb-2">{{ 'Customer title'|trans }} <small class="text-muted">#{{ title.id }}</small></h1>
 
-        <div class="d-flex justify-content-end mb-3">
+        <div class="mb-3">
             {{ component('BoLanguageSwitcher', { currentLanguageId: edit_language_id }) }}
         </div>
 

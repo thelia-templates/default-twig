@@ -20,9 +20,9 @@
     {% set tax_title = tax.title ?: ('Tax #' ~ tax.id) %}
 
     <div class="container-fluid" data-testid="tax-edit-page">
-        <h1 class="h3 mb-3">{{ 'Edit tax'|trans }}: <span class="text-muted" data-testid="tax-edit-title">{{ tax_title }}</span></h1>
+        <h1 class="h3 mb-2">{{ 'Edit tax'|trans }}: <span class="text-muted" data-testid="tax-edit-title">{{ tax_title }}</span></h1>
 
-        <div class="d-flex justify-content-end mb-3">
+        <div class="mb-3">
             {{ component('BoLanguageSwitcher', { currentLanguageId: edit_language_id }) }}
         </div>
 

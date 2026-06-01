@@ -21,10 +21,6 @@
          data-controller="bo-sale-product-picker"
          data-bo-sale-product-picker-products-url-value="{{ products_url }}">
 
-        <div class="d-flex justify-content-end mb-3">
-            {{ component('BoLanguageSwitcher', { currentLanguageId: edit_language_id }) }}
-        </div>
-
         {{ form_start(form, { action: path('admin.sale.save', { sale_id: sale.id }), attr: { 'data-testid': 'sale-edit-form' } }) }}
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h1 class="h3 mb-0">{{ sale.title ?: '#' ~ sale.id }}</h1>
@@ -36,6 +32,10 @@
                         <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save'|trans }}
                     </button>
                 </div>
+            </div>
+
+            <div class="mb-3">
+                {{ component('BoLanguageSwitcher', { currentLanguageId: edit_language_id }) }}
             </div>
 
             {{ form_widget(form.id) }}
