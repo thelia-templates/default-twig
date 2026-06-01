@@ -124,6 +124,7 @@ final class BrandController
 
         return new Response($this->twig->render(self::EDIT_TEMPLATE, [
             'brand' => $brand,
+            'preview_url' => $brand->getUrl($locale),
             'form' => $form->createView(),
             'seo_form' => $seoForm->createView(),
             'current_tab' => (string) $request->query->get('current_tab', 'general'),

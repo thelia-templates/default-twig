@@ -117,6 +117,7 @@ final class FolderController
 
         return new Response($this->twig->render(self::EDIT_TEMPLATE, [
             'folder' => $folder,
+            'preview_url' => $folder->getUrl($locale),
             'form' => $this->buildUpdateForm($folder, $locale)->createView(),
             'seo_form' => $this->buildSeoForm($folder, $locale)->createView(),
             'current_tab' => (string) $request->query->get('current_tab', 'general'),

@@ -29,6 +29,11 @@
                     next_label: 'Edit next brand'|trans,
                     testid: 'brand',
                 } only %}
+                {% if preview_url is defined and preview_url %}
+                    <a href="{{ preview_url }}" target="_blank" rel="noopener" class="btn btn-outline-secondary flex-shrink-0" title="{{ 'Preview brand page'|trans }}" data-testid="brand-preview-btn">
+                        <i class="bi bi-eye" aria-hidden="true"></i> {{ 'Preview'|trans }}
+                    </a>
+                {% endif %}
                 <a href="{{ path('admin.brand.default') }}" class="btn btn-outline-secondary" data-testid="brand-edit-back">
                     <i class="bi bi-arrow-left" aria-hidden="true"></i> {{ 'Back to list'|trans }}
                 </a>
