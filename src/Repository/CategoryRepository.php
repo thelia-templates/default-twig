@@ -53,6 +53,34 @@ final readonly class CategoryRepository
         return $categories;
     }
 
+    /**
+     * Depth-first flattened tree (position order) for indented <select> options.
+     *
+     * @return list<array{id: int, title: string, depth: int}>
+     */
+    public function flatTree(string $locale): array
+    {
+        $out = [];
+        $this->appendTree(0, $locale, 0, $out);
+
+        return $out;
+    }
+
+    /**
+     * @param list<array{id: int, title: string, depth: int}> $out
+     */
+    private function appendTree(int $parentId, string $locale, int $depth, array &$out): void
+    {
+        foreach ($this->findChildrenOrderedByPosition($parentId, $locale) as $category) {
+            $out[] = [
+                'id' => (int) $category->getId(),
+                'title' => (string) $category->getTitle(),
+                'depth' => $depth,
+            ];
+            $this->appendTree((int) $category->getId(), $locale, $depth + 1, $out);
+        }
+    }
+
     public function find(int $id, string $locale): ?Category
     {
         $category = CategoryQuery::create()->findPk($id);

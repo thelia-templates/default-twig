@@ -32,6 +32,11 @@
                     next_label: 'Edit next product'|trans,
                     testid: 'product',
                 } only %}
+                {% if preview_url is defined and preview_url %}
+                    <a href="{{ preview_url }}" target="_blank" rel="noopener" class="btn btn-outline-secondary flex-shrink-0" title="{{ 'Preview product page'|trans }}" data-testid="product-preview-btn">
+                        <i class="bi bi-eye" aria-hidden="true"></i> {{ 'Preview'|trans }}
+                    </a>
+                {% endif %}
                 {% if is_granted('CREATE', 'admin.product') %}
                     <button type="button" class="btn btn-outline-primary flex-shrink-0" data-bs-toggle="modal" data-bs-target="#product-clone-modal" data-testid="product-clone-btn">
                         <i class="bi bi-files" aria-hidden="true"></i> {{ 'Clone product'|trans }}
@@ -122,7 +127,12 @@
                             </div>
                             <div class="mb-3">
                                 {{ form_label(form.default_category) }}
-                                {{ form_widget(form.default_category, { attr: { class: 'form-control' } }) }}
+                                <select name="{{ form.default_category.vars.full_name }}" class="form-select" data-testid="product-edit-category" required>
+                                    {% for cat in available_categories %}
+                                        <option value="{{ cat.id }}"{{ cat.id == form.default_category.vars.value ? ' selected' }}>{% if cat.depth > 0 %}{% for i in 1..cat.depth %}&nbsp;&nbsp;&nbsp;{% endfor %}{% endif %}{{ cat.title }}</option>
+                                    {% endfor %}
+                                </select>
+                                {% do form.default_category.setRendered %}
                             </div>
                             <div class="mb-3">
                                 {{ form_label(form.template_id) }}
@@ -140,11 +150,24 @@
                             </div>
                             <div class="mb-3">
                                 {{ form_label(form.brand_id) }}
-                                {{ form_widget(form.brand_id, { attr: { class: 'form-control' } }) }}
+                                <select name="{{ form.brand_id.vars.full_name }}" class="form-select" data-testid="product-edit-brand">
+                                    <option value="0">{{ '- No brand -'|trans }}</option>
+                                    {% for brand in available_brands %}
+                                        <option value="{{ brand.id }}"{{ brand.id == form.brand_id.vars.value ? ' selected' }}>{{ brand.title }}</option>
+                                    {% endfor %}
+                                </select>
+                                {% do form.brand_id.setRendered %}
                             </div>
                             <div class="mb-3">
                                 {{ form_label(form.virtual_document_id) }}
-                                {{ form_widget(form.virtual_document_id, { attr: { class: 'form-control' } }) }}
+                                <select name="{{ form.virtual_document_id.vars.full_name }}" class="form-select" data-testid="product-edit-virtual-document">
+                                    <option value="0">{{ '- No document -'|trans }}</option>
+                                    {% for doc in available_documents %}
+                                        <option value="{{ doc.id }}"{{ doc.id == form.virtual_document_id.vars.value ? ' selected' }}>{{ doc.title }}</option>
+                                    {% endfor %}
+                                </select>
+                                {% if available_documents is empty %}<small class="form-text text-muted">{{ 'Upload documents in the Documents tab to make one downloadable.'|trans }}</small>{% endif %}
+                                {% do form.virtual_document_id.setRendered %}
                             </div>
                         </div>
                     </div>

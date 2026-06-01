@@ -43,11 +43,13 @@ use Thelia\Core\Event\UpdatePositionEvent;
 use Thelia\Core\Event\UpdateSeoEvent;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
+use Thelia\Model\BrandQuery;
 use Thelia\Model\CategoryQuery;
 use Thelia\Model\CurrencyQuery;
 use Thelia\Model\LangQuery;
 use Thelia\Model\Map\ProductTableMap;
 use Thelia\Model\Product;
+use Thelia\Model\ProductDocumentQuery;
 use Thelia\Model\ProductQuery;
 use Thelia\Model\TaxRuleQuery;
 use Thelia\Model\TemplateQuery;
@@ -178,6 +180,10 @@ final class ProductController
         $locale = $editLang->getLocale() ?? 'en_US';
         $product->setLocale($locale);
 
+        // UI locale (admin interface language) labels the choice lists and breadcrumb;
+        // the edit locale only drives the edited product fields and the front preview URL.
+        $uiLocale = $request->getLocale();
+
         $form = $this->buildUpdateForm($product, $locale);
         $seoForm = $this->buildSeoForm($product, $locale);
 
@@ -194,7 +200,11 @@ final class ProductController
                 'current_tab' => (string) $request->query->get('current_tab', 'general'),
                 'edit_language_id' => (int) $editLang->getId(),
                 'available_templates' => $this->templateChoices(),
-                'breadcrumb_path' => $this->categories->buildBreadcrumbPath($defaultCategory, $locale),
+                'available_categories' => $this->categories->flatTree($uiLocale),
+                'available_brands' => $this->brandChoices($uiLocale),
+                'available_documents' => $this->documentChoices($product, $uiLocale),
+                'preview_url' => $product->getUrl($locale),
+                'breadcrumb_path' => $this->categories->buildBreadcrumbPath($defaultCategory, $uiLocale),
                 'prev_url' => $navigation['previous'] !== null ? $this->urls->generate(self::EDIT_ROUTE, ['product_id' => $navigation['previous']]) : null,
                 'next_url' => $navigation['next'] !== null ? $this->urls->generate(self::EDIT_ROUTE, ['product_id' => $navigation['next']]) : null,
             ],
@@ -568,6 +578,35 @@ final class ProductController
         foreach (CategoryQuery::create()->orderById()->find() as $category) {
             $category->setLocale($locale);
             $items[] = ['id' => (int) $category->getId(), 'title' => (string) $category->getTitle()];
+        }
+
+        return $items;
+    }
+
+    /**
+     * @return list<array{id: int, title: string}>
+     */
+    private function brandChoices(string $locale): array
+    {
+        $items = [];
+        foreach (BrandQuery::create()->orderByPosition()->find() as $brand) {
+            $brand->setLocale($locale);
+            $items[] = ['id' => (int) $brand->getId(), 'title' => (string) $brand->getTitle()];
+        }
+
+        return $items;
+    }
+
+    /**
+     * @return list<array{id: int, title: string}>
+     */
+    private function documentChoices(Product $product, string $locale): array
+    {
+        $items = [];
+        foreach (ProductDocumentQuery::create()->filterByProductId($product->getId())->orderByPosition()->find() as $document) {
+            $document->setLocale($locale);
+            $label = (string) $document->getTitle();
+            $items[] = ['id' => (int) $document->getId(), 'title' => $label !== '' ? $label : (string) $document->getFile()];
         }
 
         return $items;
