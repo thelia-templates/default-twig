@@ -36,6 +36,7 @@ use Thelia\Core\Serializer\SerializerManager;
 use Thelia\Domain\DataTransfer\ExportHandler;
 use Thelia\Domain\DataTransfer\ImportHandler;
 use Thelia\Model\LangQuery;
+use Thelia\Tools\TokenProvider;
 use Twig\Environment;
 
 final class ExportImportController
@@ -52,7 +53,14 @@ final class ExportImportController
         private readonly TranslatorInterface $translator,
         private readonly RequestStack $requestStack,
         private readonly DataTransferRepository $dataTransferRepository,
+        private readonly TokenProvider $tokens,
     ) {
+    }
+
+    private function checkCsrf(): void
+    {
+        $request = $this->requestStack->getCurrentRequest();
+        $this->tokens->checkToken((string) ($request?->request->get('_token') ?? ''));
     }
 
     #[Route('/admin/export', name: 'export.list', methods: ['GET'])]
@@ -196,6 +204,8 @@ final class ExportImportController
             return new RedirectResponse($this->urls->generate('export.list'));
         }
 
+        $this->checkCsrf();
+
         @set_time_limit(0);
 
         $lang = LangQuery::create()->findPk((int) $request->request->get('language', 0));
@@ -311,6 +321,8 @@ final class ExportImportController
         if ($import === null) {
             return new RedirectResponse($this->urls->generate('import.list'));
         }
+
+        $this->checkCsrf();
 
         $uploaded = $request->files->get('file_upload');
         if (!$uploaded instanceof UploadedFile) {

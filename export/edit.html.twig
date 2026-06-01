@@ -28,6 +28,7 @@
         {% endfor %}
 
         <form method="post" action="{{ path('export.process', { id: export_id }) }}" enctype="multipart/form-data" data-testid="export-form">
+            <input type="hidden" name="_token" value="{{ assignToken() }}">
             <div class="card">
                 <div class="card-body">
                     {% if export.description %}
