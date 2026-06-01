@@ -81,6 +81,34 @@ final readonly class CategoryRepository
         }
     }
 
+    /**
+     * A category id plus every descendant id — the set that must NOT be selectable
+     * as the category's own parent (prevents a parent cycle). Self-guarded against loops.
+     *
+     * @return list<int>
+     */
+    public function subtreeIds(int $rootId): array
+    {
+        $ids = [$rootId];
+        $this->collectDescendants($rootId, $ids);
+
+        return $ids;
+    }
+
+    /**
+     * @param list<int> $ids
+     */
+    private function collectDescendants(int $parentId, array &$ids): void
+    {
+        foreach (CategoryQuery::create()->filterByParent($parentId)->select('Id')->find() as $childId) {
+            $childId = (int) $childId;
+            if (!in_array($childId, $ids, true)) {
+                $ids[] = $childId;
+                $this->collectDescendants($childId, $ids);
+            }
+        }
+    }
+
     public function find(int $id, string $locale): ?Category
     {
         $category = CategoryQuery::create()->findPk($id);

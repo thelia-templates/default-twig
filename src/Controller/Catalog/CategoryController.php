@@ -145,6 +145,7 @@ final class CategoryController
             'seo_form' => $this->buildSeoForm($category, $locale)->createView(),
             'children' => $this->childRows($category, $locale),
             'available_categories' => $this->categories->flatTree($uiLocale),
+            'parent_excluded_ids' => $this->categories->subtreeIds((int) $category->getId()),
             'available_templates' => $this->availableTemplates($uiLocale),
             'current_tab' => (string) $request->query->get('current_tab', 'general'),
             'edit_language_id' => (int) $editLang->getId(),
