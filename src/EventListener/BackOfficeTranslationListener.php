@@ -20,15 +20,14 @@ use Thelia\Core\Translation\Translator;
 
 /**
  * The Twig `|trans` filter resolves against the Symfony translator (domain
- * 'messages', fed by the translations/ directory), while PHP-side code such as
- * presenters and forms resolves against the Thelia translator (domain 'core').
- * This listener feeds the same catalogue to the Thelia translator so both paths
- * share one source of French strings.
+ * 'messages', auto-fed by every translations/messages.<locale>.php), while
+ * PHP-side code such as presenters, controllers and forms resolves against the
+ * Thelia translator (domain 'core'). This listener feeds the same catalogues to
+ * the Thelia translator so both paths share one source of strings — for every
+ * shipped locale, not just the default ones.
  */
 final class BackOfficeTranslationListener
 {
-    private const LOCALES = ['fr_FR', 'en_US'];
-
     #[AsEventListener(event: 'kernel.request', priority: 40)]
     public function onKernelRequest(RequestEvent $event): void
     {
@@ -43,10 +42,9 @@ final class BackOfficeTranslationListener
         $translator = Translator::getInstance();
         $dir = \dirname(__DIR__, 2).'/translations';
 
-        foreach (self::LOCALES as $locale) {
-            $file = $dir.'/messages.'.$locale.'.php';
-            if (is_file($file)) {
-                $translator->addResource('php', $file, $locale, 'core');
+        foreach (glob($dir.'/messages.*.php') ?: [] as $file) {
+            if (preg_match('#/messages\.([a-z]{2}_[A-Z]{2})\.php$#', $file, $m)) {
+                $translator->addResource('php', $file, $m[1], 'core');
             }
         }
     }
