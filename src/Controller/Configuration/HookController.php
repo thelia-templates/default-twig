@@ -327,12 +327,14 @@ final class HookController
         }
     }
 
-    #[Route('/admin/hooks/discover/save', name: 'admin.hook.discover.save', methods: ['POST', 'GET'])]
+    #[Route('/admin/hooks/discover/save', name: 'admin.hook.discover.save', methods: ['POST'])]
     public function discoverSave(Request $request): Response
     {
         if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::UPDATE)) {
             return $denied;
         }
+
+        $this->tokens->checkToken((string) $request->request->get('_token', ''));
 
         $messages = [];
         $templateType = (int) $request->request->get('templateType', TemplateDefinition::FRONT_OFFICE);

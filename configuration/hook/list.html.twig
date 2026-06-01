@@ -20,7 +20,8 @@
          data-controller="bo-hooks"
          data-bo-hooks-list-url-value="{{ path('admin.hook') }}"
          data-bo-hooks-discover-url-value="{{ path('admin.hook.discover') }}"
-         data-bo-hooks-discover-save-url-value="{{ path('admin.hook.discover.save') }}">
+         data-bo-hooks-discover-save-url-value="{{ path('admin.hook.discover.save') }}"
+         data-bo-hooks-token-value="{{ assignToken() }}">
 
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h1 class="h3 mb-0">{{ 'Hooks'|trans }}</h1>

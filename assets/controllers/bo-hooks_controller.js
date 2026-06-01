@@ -7,6 +7,7 @@ export default class extends Controller {
         listUrl: String,
         discoverUrl: String,
         discoverSaveUrl: String,
+        token: String,
     };
 
     connect() {
@@ -92,6 +93,7 @@ export default class extends Controller {
         missingSelected.forEach((id, index) => {
             formData.append(`missing[${index}]`, id);
         });
+        formData.append('_token', this.tokenValue);
 
         fetch(this.discoverSaveUrlValue, { method: 'POST', body: formData, credentials: 'same-origin' })
             .then((r) => (r.ok ? r.json() : r.json().then((d) => Promise.reject(new Error((d.messages || [r.statusText]).join(' ; '))))))
