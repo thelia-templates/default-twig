@@ -7,15 +7,20 @@ export default class extends Controller {
         toggleUrlTemplate: String,
         deleteUrlTemplate: String,
         positionUrl: String,
+        token: String,
     };
+
+    withToken(url) {
+        return `${url}${url.includes('?') ? '&' : '?'}_token=${encodeURIComponent(this.tokenValue)}`;
+    }
 
     async toggle(event) {
         const id = String(event.params.id);
-        const url = (this.toggleUrlTemplateValue || '').replace(/\/0(?=\/toggle|$)/, `/${id}`);
+        const url = this.withToken((this.toggleUrlTemplateValue || '').replace(/\/0(?=\/toggle|$)/, `/${id}`));
 
         try {
             const response = await fetch(url, {
-                method: 'GET',
+                method: 'POST',
                 headers: { 'X-Requested-With': 'XMLHttpRequest' },
             });
             if (response.ok) {
@@ -36,7 +41,7 @@ export default class extends Controller {
         if (!confirm('Are you sure?')) {
             return;
         }
-        const url = (this.deleteUrlTemplateValue || '').replace(/\/0$/, `/${id}`).replace(/\/0(?=\/)/, `/${id}`);
+        const url = this.withToken((this.deleteUrlTemplateValue || '').replace(/\/0$/, `/${id}`).replace(/\/0(?=\/)/, `/${id}`));
 
         try {
             const response = await fetch(url, {

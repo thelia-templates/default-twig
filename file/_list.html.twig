@@ -2,7 +2,8 @@
 <div class="bo-file-list" data-controller="bo-file-list"
      data-bo-file-list-toggle-url-template-value="{{ path(urls.toggle, id_placeholder) }}"
      data-bo-file-list-delete-url-template-value="{{ path(urls.delete, id_placeholder) }}"
-     data-bo-file-list-position-url-value="{{ path(urls.position, { parentType: parent_type, parentId: parent_id }) }}">
+     data-bo-file-list-position-url-value="{{ path(urls.position, { parentType: parent_type, parentId: parent_id }) }}"
+     data-bo-file-list-token-value="{{ assignToken() }}">
     {% if items|length == 0 %}
         <div class="alert alert-info" data-testid="bo-file-list-empty">
             {% if kind == 'image' %}
@@ -32,6 +33,7 @@
                             {% if can_update %}
                                 <form method="post" action="{{ path(urls.update_title, kind == 'image' ? { parentType: parent_type, imageId: item.id } : { parentType: parent_type, documentId: item.id }) }}"
                                       class="input-group input-group-sm mb-2" data-testid="bo-file-title-form-{{ item.id }}">
+                                    <input type="hidden" name="_token" value="{{ assignToken() }}">
                                     <input type="hidden" name="success_url" value="">
                                     <input type="text" name="title" value="{{ item.title }}" class="form-control" placeholder="{{ 'Title'|trans }}">
                                     <button type="submit" name="save_mode" value="stay" class="btn btn-outline-primary" title="{{ 'Save'|trans }}">

@@ -23,6 +23,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -39,6 +40,7 @@ use Thelia\Core\File\Service\FileVisibilityService;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
 use Thelia\Model\LangQuery;
+use Thelia\Tools\TokenProvider;
 use Twig\Environment;
 
 final class FileController
@@ -57,7 +59,16 @@ final class FileController
         private readonly AdminResources $resources,
         private readonly FormFactoryInterface $formFactory,
         private readonly EditLocaleResolver $editLocale,
+        private readonly TokenProvider $tokens,
+        private readonly RequestStack $requestStack,
     ) {
+    }
+
+    private function checkCsrf(): void
+    {
+        $request = $this->requestStack->getCurrentRequest();
+        $token = (string) ($request?->request->get('_token') ?? $request?->query->get('_token') ?? '');
+        $this->tokens->checkToken($token);
     }
 
     #[Route('/admin/image/type/{parentType}/{parentId}/list-ajax', name: 'admin.image.list-ajax', requirements: ['parentId' => '\d+', 'parentType' => '.+'])]
@@ -428,6 +439,8 @@ final class FileController
             return $denied;
         }
 
+        $this->checkCsrf();
+
         $uploadedFile = $request->files->get('file');
         if ($uploadedFile === null) {
             return new JsonResponse(['error' => $this->translator->trans('No file uploaded.')], Response::HTTP_BAD_REQUEST);
@@ -449,6 +462,8 @@ final class FileController
             return $denied;
         }
 
+        $this->checkCsrf();
+
         try {
             $this->fileDeleter->deleteFile($this->events, $fileId, $parentType, $kind, $eventName);
         } catch (\Throwable $exception) {
@@ -465,6 +480,8 @@ final class FileController
             return $denied;
         }
 
+        $this->checkCsrf();
+
         try {
             $this->fileVisibility->toggleFileVisibility($this->events, $fileId, $parentType, $kind, $eventName);
         } catch (\Throwable $exception) {
@@ -480,6 +497,8 @@ final class FileController
         if ($denied = $this->access->check($resource, [], AccessManager::UPDATE)) {
             return $denied;
         }
+
+        $this->checkCsrf();
 
         $fileId = (int) $request->request->get('file_id', 0);
         $position = (int) $request->request->get('position', 0);
@@ -502,6 +521,8 @@ final class FileController
         if ($denied = $this->access->check($resource, [], AccessManager::UPDATE)) {
             return $denied;
         }
+
+        $this->checkCsrf();
 
         $title = trim((string) $request->request->get('title', ''));
         $modelInstance = $this->fileManager->getModelInstance($kind, $parentType);

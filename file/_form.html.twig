@@ -2,7 +2,8 @@
 
 <div class="bo-file-upload card mb-3" data-controller="bo-file-upload"
      data-bo-file-upload-save-url-value="{{ path(urls.save, { parentType: parent_type, parentId: parent_id }) }}"
-     data-bo-file-upload-list-url-value="{{ path(urls.list, { parentType: parent_type, parentId: parent_id }) }}">
+     data-bo-file-upload-list-url-value="{{ path(urls.list, { parentType: parent_type, parentId: parent_id }) }}"
+     data-bo-file-upload-token-value="{{ assignToken() }}">
     <div class="card-body">
         <form method="post" enctype="multipart/form-data" class="d-flex flex-column gap-2"
               data-testid="bo-file-upload-form-{{ kind }}"

@@ -6,6 +6,7 @@ export default class extends Controller {
     static values = {
         saveUrl: String,
         listUrl: String,
+        token: String,
     };
 
     connect() {
@@ -20,6 +21,7 @@ export default class extends Controller {
 
         const formData = new FormData();
         formData.append('file', this.inputTarget.files[0]);
+        formData.append('_token', this.tokenValue);
 
         this.showStatus('uploading');
         try {
