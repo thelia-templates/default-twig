@@ -47,7 +47,8 @@ final class BackOfficeDefaultTwigBundle extends AbstractBundle
 
         $container->registerAttributeForAutoconfiguration(
             AsHook::class,
-            static function (ChildDefinition $definition, AsHook $attribute, \ReflectionMethod $reflector): void {
+            static function (ChildDefinition $definition, AsHook $attribute, \Reflector $reflector): void {
+                \assert($reflector instanceof \ReflectionMethod);
                 $tag = [
                     'event' => $attribute->event,
                     'type' => $attribute->type,
