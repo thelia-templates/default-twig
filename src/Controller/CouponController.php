@@ -279,6 +279,8 @@ final class CouponController
             return new Response('', Response::HTTP_NOT_FOUND);
         }
 
+        $this->tokens->checkToken((string) $request->query->get('_token', $request->request->get('_token', '')));
+
         $manager = $this->couponFactory->buildCouponFromModel($coupon);
 
         $built = $this->conditionsRenderer->buildConditionFromRequest($request);
@@ -298,7 +300,7 @@ final class CouponController
     }
 
     #[Route('/{couponId}/condition/delete/{conditionIndex}', name: 'condition.delete', methods: ['GET', 'POST'], requirements: ['couponId' => '\d+', 'conditionIndex' => '\d+'])]
-    public function conditionDelete(int $couponId, int $conditionIndex): Response
+    public function conditionDelete(Request $request, int $couponId, int $conditionIndex): Response
     {
         if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::UPDATE)) {
             return $denied;
@@ -308,6 +310,8 @@ final class CouponController
         if ($coupon === null) {
             return new Response('', Response::HTTP_NOT_FOUND);
         }
+
+        $this->tokens->checkToken((string) $request->query->get('_token', ''));
 
         $manager = $this->couponFactory->buildCouponFromModel($coupon);
 
