@@ -14,7 +14,6 @@ declare(strict_types=1);
 
 namespace BackOfficeDefaultTwigBundle\Service\Coupon;
 
-use Symfony\Contracts\Translation\TranslatorInterface;
 use Thelia\Domain\Promotion\Coupon\Type\AbstractRemoveOnAttributeValues;
 use Thelia\Domain\Promotion\Coupon\Type\AbstractRemoveOnCategories;
 use Thelia\Domain\Promotion\Coupon\Type\AbstractRemoveOnProducts;
@@ -72,7 +71,6 @@ final readonly class CouponInputsRenderer
 
     public function __construct(
         private Environment $twig,
-        private TranslatorInterface $translator,
     ) {
     }
 

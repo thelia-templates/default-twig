@@ -15,7 +15,6 @@ declare(strict_types=1);
 namespace BackOfficeDefaultTwigBundle\Controller\Configuration;
 
 use BackOfficeDefaultTwigBundle\Form\Feature\FeatureAvType;
-use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
@@ -24,7 +23,6 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 use Thelia\Core\Event\Feature\FeatureAvCreateEvent;
 use Thelia\Core\Event\Feature\FeatureAvDeleteEvent;
 use Thelia\Core\Event\Feature\FeatureAvUpdateEvent;
@@ -43,10 +41,8 @@ final class FeatureAvController
 
     public function __construct(
         private readonly AdminFormAction $action,
-        private readonly AdminAccessChecker $access,
         private readonly FormFactoryInterface $formFactory,
         private readonly UrlGeneratorInterface $urls,
-        private readonly TranslatorInterface $translator,
     ) {
     }
 

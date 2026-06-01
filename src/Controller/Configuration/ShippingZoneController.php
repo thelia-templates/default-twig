@@ -21,7 +21,6 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 use Thelia\Core\Event\ShippingZone\ShippingZoneAddAreaEvent;
 use Thelia\Core\Event\ShippingZone\ShippingZoneRemoveAreaEvent;
 use Thelia\Core\Event\TheliaEvents;
@@ -50,7 +49,6 @@ final class ShippingZoneController
         private readonly AdminAccessChecker $access,
         private readonly Environment $twig,
         private readonly UrlGeneratorInterface $urls,
-        private readonly TranslatorInterface $translator,
         private readonly EventDispatcherInterface $events,
         private readonly TokenProvider $tokens,
     ) {

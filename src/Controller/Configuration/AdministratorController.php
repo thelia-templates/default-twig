@@ -36,7 +36,6 @@ use Thelia\Core\Security\SecurityContext;
 use Thelia\Model\Admin;
 use Thelia\Model\AdminQuery;
 use Thelia\Model\ProfileQuery;
-use Thelia\Tools\TokenProvider;
 use Twig\Environment;
 
 #[Route('/admin/configuration/administrators', name: 'admin.configuration.administrators.')]
@@ -51,7 +50,6 @@ final class AdministratorController
         private readonly AdminAccessChecker $access,
         private readonly Environment $twig,
         private readonly FormFactoryInterface $formFactory,
-        private readonly TokenProvider $tokens,
         private readonly UrlGeneratorInterface $urls,
         private readonly TranslatorInterface $translator,
         private readonly SecurityContext $securityContext,

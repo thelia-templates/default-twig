@@ -33,7 +33,6 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Thelia\Condition\ConditionCollection;
-use Thelia\Condition\ConditionFactory;
 use Thelia\Core\Event\Coupon\CouponCreateOrUpdateEvent;
 use Thelia\Core\Event\Coupon\CouponDeleteEvent;
 use Thelia\Core\Event\TheliaEvents;
@@ -74,8 +73,6 @@ final class CouponController
         private readonly CouponInputsRenderer $inputsRenderer,
         #[Autowire(service: 'thelia.coupon.factory')]
         private readonly CouponFactory $couponFactory,
-        #[Autowire(service: 'thelia.condition.factory')]
-        private readonly ConditionFactory $conditionFactory,
         #[Autowire(service: 'thelia.coupon.manager')]
         private readonly CouponManager $couponManager,
         private readonly EditLocaleResolver $editLocale,

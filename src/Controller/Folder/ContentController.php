@@ -28,7 +28,6 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 use Thelia\Core\Event\Content\ContentAddFolderEvent;
 use Thelia\Core\Event\Content\ContentCreateEvent;
 use Thelia\Core\Event\Content\ContentDeleteEvent;
@@ -61,7 +60,6 @@ final class ContentController
         private readonly FormFactoryInterface $formFactory,
         private readonly UrlGeneratorInterface $urls,
         private readonly TokenProvider $tokens,
-        private readonly TranslatorInterface $translator,
         private readonly EditLocaleResolver $editLocale,
         private readonly FolderRepository $folderRepository,
     ) {

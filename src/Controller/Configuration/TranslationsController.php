@@ -22,7 +22,6 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 use Thelia\Core\Event\TheliaEvents;
 use Thelia\Core\Event\Translation\TranslationEvent;
 use Thelia\Core\HttpFoundation\Session\Session as TheliaSession;
@@ -48,7 +47,6 @@ final class TranslationsController
         private readonly Environment $twig,
         private readonly EventDispatcherInterface $events,
         private readonly TemplateHelperInterface $templateHelper,
-        private readonly TranslatorInterface $translator,
         private readonly UrlGeneratorInterface $urls,
         private readonly TokenProvider $tokens,
     ) {

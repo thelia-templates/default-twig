@@ -20,7 +20,6 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 use Thelia\Core\HttpFoundation\Session\Session as TheliaSession;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
@@ -39,7 +38,6 @@ final class TranslationsCustomerTitleController
         private readonly AdminAccessChecker $access,
         private readonly Environment $twig,
         private readonly UrlGeneratorInterface $urls,
-        private readonly TranslatorInterface $translator,
         private readonly TokenProvider $tokens,
     ) {
     }
