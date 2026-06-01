@@ -566,6 +566,30 @@ input[type="color"].form-control {
     }
 }
 
+// Tab bar hosting a trailing toolbar (e.g. the edit-language switcher) on the
+// same row as the tabs. The wrapper carries the bottom border so the line runs
+// full width; the inner nav-tabs drops its own border and nudges down 1px to
+// sit flush on it. On narrow screens the aside wraps below the tabs.
+.bo-tab-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: .5rem 1.5rem;
+    border-bottom: 1px solid $card-border-color;
+    margin-bottom: 2rem;
+
+    > .nav-tabs {
+        flex: 1 1 auto;
+        margin-bottom: -1px;
+        border-bottom: 0;
+    }
+
+    > .bo-tab-bar__aside {
+        padding-bottom: .6rem;
+    }
+}
+
 // Alerts - slightly bolder edge
 .alert {
     border-radius: .5rem;

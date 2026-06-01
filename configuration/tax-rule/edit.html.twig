@@ -21,11 +21,8 @@
     <div class="container-fluid" data-testid="tax-rule-edit-page">
         <h1 class="h3 mb-3">{{ 'Edit tax rule'|trans }}: <span class="text-muted" data-testid="tax-rule-edit-title">{{ tax_rule.title ?: ('#' ~ tax_rule.id) }}</span></h1>
 
-        <div class="d-flex justify-content-end mb-3">
-            {{ component('BoLanguageSwitcher', { currentLanguageId: edit_language_id }) }}
-        </div>
-
-        <ul class="nav nav-tabs mb-3" role="tablist" data-testid="tax-rule-edit-tabs">
+        <div class="bo-tab-bar">
+            <ul class="nav nav-tabs" role="tablist" data-testid="tax-rule-edit-tabs">
             <li class="nav-item" role="presentation">
                 <button class="nav-link {{ active_tab == 'data' ? 'active' : '' }}" id="tax-rule-tab-data" data-bs-toggle="tab" data-bs-target="#tax-rule-pane-data" type="button" role="tab">
                     <i class="bi bi-card-list" aria-hidden="true"></i> {{ 'Description'|trans }}
@@ -37,6 +34,10 @@
                 </button>
             </li>
         </ul>
+            <div class="bo-tab-bar__aside">
+                {{ component('BoLanguageSwitcher', { currentLanguageId: edit_language_id }) }}
+            </div>
+        </div>
 
         <div class="tab-content">
             <div class="tab-pane fade {{ active_tab == 'data' ? 'show active' : '' }}" id="tax-rule-pane-data" role="tabpanel">
