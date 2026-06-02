@@ -31,7 +31,11 @@ export default class extends Controller {
         readInputsUrl: String,
         updateInputsUrl: String,
         deleteConditionUrl: String,
+        deleteConfirm: String,
+        everyoneConfirm: String,
     };
+
+    static everyoneServiceId = 'thelia.condition.match_for_everyone';
 
     connect() {
         this.attachConditionListeners();
@@ -132,6 +136,14 @@ export default class extends Controller {
         if (!conditionServiceId) {
             return;
         }
+        if (
+            conditionServiceId === this.constructor.everyoneServiceId
+            && this.hasEveryoneConfirmValue
+            && !window.confirm(this.everyoneConfirmValue)
+        ) {
+            return;
+        }
+
         formData.append('categoryCondition', conditionServiceId);
 
         const inputs = this.conditionInputsTarget.querySelectorAll('input, select, textarea');
@@ -156,6 +168,10 @@ export default class extends Controller {
 
     deleteCondition(conditionIndex) {
         if (!this.hasDeleteConditionUrlValue) {
+            return;
+        }
+
+        if (this.hasDeleteConfirmValue && !window.confirm(this.deleteConfirmValue)) {
             return;
         }
 
