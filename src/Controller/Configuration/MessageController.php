@@ -256,7 +256,7 @@ final class MessageController
     private function messageToRow(Message $message): array
     {
         $id = (int) $message->getId();
-        $actions = [
+        $actions = $message->getSecured() ? [] : [
             new RowAction(kind: 'edit', label: $this->translator->trans('Edit'), href: $this->urls->generate(self::EDIT_ROUTE, ['message_id' => $id]), grantedAttribute: AccessManager::UPDATE, grantedSubject: self::RESOURCE),
             new RowAction(kind: 'delete', label: $this->translator->trans('Delete'), modalTarget: '#message-delete-modal', grantedAttribute: AccessManager::DELETE, grantedSubject: self::RESOURCE, dataAttributes: ['message-id' => $id, 'message-label' => (string) $message->getName()]),
         ];
