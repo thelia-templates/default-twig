@@ -16,6 +16,7 @@
 
 {% block content %}
     <div class="container-fluid" data-testid="profile-edit-page">
+        {{ safe_hook('profile-edit.top', { profile_id: profile.id }) }}
         <h1 class="h3 mb-3">{{ 'Edit profile'|trans }}: <span class="text-muted">{{ profile.code }}</span></h1>
 
         <div class="bo-tab-bar">
@@ -191,6 +192,7 @@
                 </form>
             </div>
         </div>
+        {{ safe_hook('profile-edit.bottom', { profile_id: profile.id }) }}
     </div>
 {% endblock %}
 

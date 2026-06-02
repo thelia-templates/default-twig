@@ -16,6 +16,7 @@
 
 {% block content %}
     <div class="container-fluid" data-testid="country-edit-page">
+        {{ safe_hook('country-edit.top', { country_id: country.id }) }}
         <h1 class="h3 mb-2">{{ 'Country'|trans }} <small class="text-muted">{{ country.isoalpha2 }} - #{{ country.id }}</small></h1>
 
         <div class="mb-3">
@@ -73,6 +74,7 @@
                 {{ form_end(form) }}
             </div>
         </div>
+        {{ safe_hook('country-edit.bottom', { country_id: country.id }) }}
     </div>
 {% endblock %}
 
