@@ -20,6 +20,7 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
+use Thelia\Model\ConfigQuery;
 use Thelia\Model\Module;
 use Thelia\Module\BaseModule;
 use Thelia\Tools\TokenProvider;
@@ -52,6 +53,7 @@ final readonly class ModuleListPresenter
 
         return [
             'groups' => $groups,
+            'allow_module_zip_install' => (bool) (int) ConfigQuery::read('allow_module_zip_install', 0),
             'update_position_url' => $this->urls->generate('admin.module.update-position'),
             'update_position_token' => $this->tokens->assignToken(),
         ];

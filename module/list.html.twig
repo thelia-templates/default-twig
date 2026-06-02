@@ -63,21 +63,23 @@
             </a>
         </div>
 
-        <form action="{{ path('admin.module.install') }}" method="post" enctype="multipart/form-data" class="mt-4" data-testid="module-install-form">
-            <input type="hidden" name="_token" value="{{ assignToken() }}">
-            <div class="row g-2 align-items-center">
-                <div class="col-md-8">
-                    <label class="form-label">{{ 'Install a new module from a .zip file'|trans }}</label>
-                    <input type="file" name="module" class="form-control" data-testid="module-install-file" accept=".zip" required>
-                    <div class="form-text small">{{ 'The archive must contain a single root directory matching the module code.'|trans }}</div>
+        {% if allow_module_zip_install|default(false) %}
+            <form action="{{ path('admin.module.install') }}" method="post" enctype="multipart/form-data" class="mt-4" data-testid="module-install-form">
+                <input type="hidden" name="_token" value="{{ assignToken() }}">
+                <div class="row g-2 align-items-center">
+                    <div class="col-md-8">
+                        <label class="form-label">{{ 'Install a new module from a .zip file'|trans }}</label>
+                        <input type="file" name="module" class="form-control" data-testid="module-install-file" accept=".zip" required>
+                        <div class="form-text small">{{ 'The archive must contain a single root directory matching the module code.'|trans }}</div>
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100" data-testid="module-install-submit">
+                            <i class="bi bi-cloud-upload" aria-hidden="true"></i> {{ 'Install'|trans }}
+                        </button>
+                    </div>
                 </div>
-                <div class="col-md-4 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary w-100" data-testid="module-install-submit">
-                        <i class="bi bi-cloud-upload" aria-hidden="true"></i> {{ 'Install'|trans }}
-                    </button>
-                </div>
-            </div>
-        </form>
+            </form>
+        {% endif %}
     </div>
 
     {{ safe_hook('modules.bottom', { location: 'modules_bottom' }) }}

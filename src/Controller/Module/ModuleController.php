@@ -37,6 +37,7 @@ use Thelia\Core\Event\TheliaEvents;
 use Thelia\Core\Event\UpdatePositionEvent;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
+use Thelia\Model\ConfigQuery;
 use Thelia\Model\LangQuery;
 use Thelia\Model\ModuleQuery;
 use Thelia\Module\Validator\ModuleValidator;
@@ -244,6 +245,12 @@ final class ModuleController
     {
         if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::CREATE)) {
             return $denied;
+        }
+
+        if (!(bool) (int) ConfigQuery::read('allow_module_zip_install', 0)) {
+            $this->flash($request, 'danger', $this->translator->trans('Module installation from a zip file is disabled.'));
+
+            return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }
 
         try {
