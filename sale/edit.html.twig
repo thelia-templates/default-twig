@@ -19,7 +19,8 @@
     <div class="container-fluid"
          data-testid="sale-edit-page"
          data-controller="bo-sale-product-picker"
-         data-bo-sale-product-picker-products-url-value="{{ products_url }}">
+         data-bo-sale-product-picker-products-url-value="{{ products_url }}"
+         data-bo-sale-product-picker-attributes-label-value="{{ 'Restrict to attribute values'|trans }}">
 
         {{ form_start(form, { action: path('admin.sale.save', { sale_id: sale.id }), attr: { 'data-testid': 'sale-edit-form' } }) }}
             <div class="d-flex justify-content-between align-items-center mb-3">

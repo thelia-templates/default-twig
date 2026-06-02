@@ -7,7 +7,7 @@ import { Controller } from '@hotwired/stimulus';
  */
 export default class extends Controller {
     static targets = ['categories', 'productZone', 'emptyHint'];
-    static values = { productsUrl: String };
+    static values = { productsUrl: String, attributesLabel: String };
 
     async loadProducts() {
         const categoryIds = Array.from(this.categoriesTarget.selectedOptions).map((option) => option.value);
@@ -41,8 +41,11 @@ export default class extends Controller {
 
     buildRow(product) {
         const wrapper = document.createElement('div');
-        wrapper.className = 'form-check';
+        wrapper.className = 'd-flex align-items-center gap-2 mb-1';
         wrapper.dataset.productId = product.id;
+
+        const check = document.createElement('div');
+        check.className = 'form-check flex-grow-1 mb-0';
 
         const input = document.createElement('input');
         input.className = 'form-check-input';
@@ -59,7 +62,31 @@ export default class extends Controller {
         ref.textContent = product.ref;
         label.append(ref, ` ${product.title}`);
 
-        wrapper.append(input, label);
+        check.append(input, label);
+        wrapper.append(check, this.buildAttributesButton(product));
         return wrapper;
+    }
+
+    buildAttributesButton(product) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'btn btn-sm btn-outline-secondary';
+        button.dataset.bsToggle = 'modal';
+        button.dataset.bsTarget = '#sale-product-attributes-modal';
+        button.dataset.productId = product.id;
+        button.dataset.productLabel = product.title;
+        button.title = this.attributesLabelValue;
+
+        const icon = document.createElement('i');
+        icon.className = 'bi bi-sliders';
+        icon.setAttribute('aria-hidden', 'true');
+
+        const badge = document.createElement('span');
+        badge.className = 'badge bg-secondary d-none ms-1';
+        badge.dataset.boSaleProductAttributesTarget = 'badge';
+        badge.textContent = '0';
+
+        button.append(icon, badge);
+        return button;
     }
 }
