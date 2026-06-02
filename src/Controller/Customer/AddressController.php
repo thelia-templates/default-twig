@@ -134,7 +134,7 @@ final class AddressController
             return $denied;
         }
 
-        $addressId = (int) $request->request->get('id', 0);
+        $addressId = (int) ($request->request->all(self::UPDATE_FORM_NAME)['id'] ?? 0);
         $address = AddressQuery::create()->findPk($addressId);
         $customerId = (int) $address?->getCustomerId();
         $form = $this->buildUpdateForm(null);
