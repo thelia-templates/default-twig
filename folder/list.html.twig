@@ -60,6 +60,50 @@
                 'data-bo-sortable-param-name-value': 'folder_id',
             },
         }) }}
+
+        {% if parent_id > 0 %}
+            <section class="mt-4" data-testid="folder-contents-section">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h2 class="h5 mb-0">{{ 'Contents in this folder'|trans }} <span class="badge bg-secondary">{{ content_total }}</span></h2>
+                    {% if is_granted('CREATE', 'admin.content') %}
+                        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#content-create-modal" data-testid="content-create-button">
+                            <i class="bi bi-plus-lg" aria-hidden="true"></i> {{ 'Add a new content'|trans }}
+                        </button>
+                    {% endif %}
+                </div>
+
+                {{ component('BoDataTable', {
+                    id: 'folder-contents',
+                    columns: [
+                        column('id', 'ID'|trans, 'start'),
+                        column_html('title_html', 'Title'|trans, 'start'),
+                        column_toggle('visible', 'Online'|trans, 'toggle_visible_url', 'center', 'bi-check-circle-fill text-success', 'bi-circle text-secondary', 'visible'),
+                        column('position', 'Position'|trans, 'center'),
+                        column_actions('_actions', 'Actions'|trans),
+                    ],
+                    rows: content_rows,
+                    emptyMessage: 'No content in this folder yet.'|trans,
+                    tbodyAttributes: {
+                        'data-controller': 'bo-sortable',
+                        'data-bo-sortable-url-value': content_update_position_url,
+                        'data-bo-sortable-token-value': content_update_position_token,
+                        'data-bo-sortable-param-name-value': 'content_id',
+                    },
+                }) }}
+
+                {% if content_pages > 1 %}
+                    {{ component('BoPagination', {
+                        route: 'admin.folders.default',
+                        currentPage: content_current_page,
+                        lastPage: content_pages,
+                        routeParams: { folder_id: parent_id },
+                        pageParam: 'content_page',
+                        ariaLabel: 'Folder contents pagination'|trans,
+                        testid: 'folder-contents-pagination',
+                    }) }}
+                {% endif %}
+            </section>
+        {% endif %}
     </div>
 
     {{ safe_hook('folders.bottom') }}
@@ -103,6 +147,48 @@
         prefillTrigger: 'data-folder-id',
         prefillInput: 'folder_id',
     }) }}
+
+    {% if parent_id > 0 and is_granted('CREATE', 'admin.content') %}
+        <div class="modal fade" id="content-create-modal" tabindex="-1" aria-labelledby="content-create-modal-title" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    {{ form_start(content_create_form, { action: path('admin.content.create'), method: 'post', attr: { 'data-testid': 'content-create-form' } }) }}
+                        <div class="modal-header">
+                            <h2 class="modal-title h5" id="content-create-modal-title">{{ 'Create a new content'|trans }}</h2>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'Close'|trans }}"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                {{ form_label(content_create_form.title) }}
+                                {{ form_widget(content_create_form.title, { attr: { class: 'form-control' } }) }}
+                                {{ form_errors(content_create_form.title) }}
+                            </div>
+                            <div class="form-check mb-3">
+                                {{ form_widget(content_create_form.visible, { attr: { class: 'form-check-input' } }) }}
+                                {{ form_label(content_create_form.visible, null, { label_attr: { class: 'form-check-label' } }) }}
+                            </div>
+                            {{ form_widget(content_create_form.locale) }}
+                            {{ form_widget(content_create_form.default_folder) }}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'Cancel'|trans }}</button>
+                            <button type="submit" class="btn btn-primary" data-testid="content-create-submit">{{ 'Create'|trans }}</button>
+                        </div>
+                    {{ form_end(content_create_form) }}
+                </div>
+            </div>
+        </div>
+
+        {{ component('BoConfirmDialog', {
+            id: 'content-delete-modal',
+            title: 'Delete content',
+            formAction: path('admin.content.delete'),
+            message: 'Do you really want to delete this content?',
+            testid: 'content-delete',
+            prefillTrigger: 'data-content-id',
+            prefillInput: 'content_id',
+        }) }}
+    {% endif %}
 {% endblock %}
 
 {% block scripts_extra %}

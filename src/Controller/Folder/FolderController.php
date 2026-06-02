@@ -14,8 +14,10 @@ declare(strict_types=1);
 
 namespace BackOfficeDefaultTwigBundle\Controller\Folder;
 
+use BackOfficeDefaultTwigBundle\Form\Content\ContentType;
 use BackOfficeDefaultTwigBundle\Form\Folder\FolderSeoType;
 use BackOfficeDefaultTwigBundle\Form\Folder\FolderType;
+use BackOfficeDefaultTwigBundle\Repository\ContentRepository;
 use BackOfficeDefaultTwigBundle\Repository\FolderRepository;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
@@ -39,6 +41,7 @@ use Thelia\Core\Event\UpdatePositionEvent;
 use Thelia\Core\Event\UpdateSeoEvent;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
+use Thelia\Model\Content;
 use Thelia\Model\Folder;
 use Thelia\Model\FolderQuery;
 use Thelia\Model\LangQuery;
@@ -64,8 +67,11 @@ final class FolderController
         private readonly TranslatorInterface $translator,
         private readonly EditLocaleResolver $editLocale,
         private readonly FolderRepository $folderRepository,
+        private readonly ContentRepository $contentRepository,
     ) {
     }
+
+    private const CONTENT_PAGE_SIZE = 20;
 
     #[Route('', name: 'default', methods: ['GET'])]
     public function list(Request $request): Response
@@ -272,14 +278,71 @@ final class FolderController
             'parent' => $parentId,
         ], []);
 
+        $contentCreateForm = $this->formFactory->createNamed('thelia_content_creation', ContentType::class, [
+            'locale' => $locale,
+            'default_folder' => $parentId,
+            'visible' => true,
+        ], []);
+
         return [
             'rows' => $rows,
             'parent_id' => $parentId,
             'create_form' => $createForm->createView(),
+            'content_create_form' => $contentCreateForm->createView(),
+            'content_update_position_url' => $this->urls->generate('admin.content.update-position'),
+            'content_update_position_token' => $this->tokens->assignToken(),
             'update_position_url' => $this->urls->generate('admin.folders.update-position'),
             'update_position_token' => $this->tokens->assignToken(),
             'sort_field' => $sort->field,
             'sort_direction' => $sort->direction,
+        ] + $this->buildContentSection($parentId, $request !== null ? max(1, (int) $request->query->get('content_page', 1)) : 1, $locale);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildContentSection(int $folderId, int $page, string $locale): array
+    {
+        $total = $folderId > 0 ? $this->contentRepository->countInFolder($folderId) : 0;
+        if ($total === 0) {
+            return ['content_rows' => [], 'content_total' => 0, 'content_pages' => 0, 'content_current_page' => 1];
+        }
+
+        $pages = max(1, (int) ceil($total / self::CONTENT_PAGE_SIZE));
+        $page = max(1, min($page, $pages));
+
+        $rows = [];
+        foreach ($this->contentRepository->findInFolderPage($folderId, $locale, ($page - 1) * self::CONTENT_PAGE_SIZE, self::CONTENT_PAGE_SIZE) as $content) {
+            $rows[] = $this->contentToRow($content);
+        }
+
+        return ['content_rows' => $rows, 'content_total' => $total, 'content_pages' => $pages, 'content_current_page' => $page];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function contentToRow(Content $content): array
+    {
+        $id = (int) $content->getId();
+        $title = (string) $content->getTitle();
+        $editUrl = $this->urls->generate('admin.content.update', ['content_id' => $id]);
+
+        return [
+            'id' => $id,
+            'title' => $title,
+            'title_html' => \sprintf(
+                '<a href="%s" class="text-decoration-none fw-medium">%s</a>',
+                htmlspecialchars($editUrl, \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8'),
+                htmlspecialchars($title, \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8'),
+            ),
+            'visible' => (bool) $content->getVisible(),
+            'position' => (int) $content->getPosition(),
+            'toggle_visible_url' => $this->tokenizedUrl('admin.content.toggle-online', ['content_id' => $id]),
+            '_actions' => [
+                new RowAction(kind: 'edit', label: $this->translator->trans('Edit'), href: $editUrl, grantedAttribute: AccessManager::UPDATE, grantedSubject: AdminResources::CONTENT),
+                new RowAction(kind: 'delete', label: $this->translator->trans('Delete'), modalTarget: '#content-delete-modal', grantedAttribute: AccessManager::DELETE, grantedSubject: AdminResources::CONTENT, dataAttributes: ['content-id' => $id, 'content-label' => $title]),
+            ],
         ];
     }
 
