@@ -320,14 +320,27 @@ final class ConfigController
 
         $templateType = $this->templateTypeForVariable($name);
         if ($templateType !== null) {
-            return $this->renderTemplateSelect($id, $value, $templateType);
+            return $this->wrapWithRevert($this->renderTemplateSelect($id, $value, $templateType));
         }
 
-        return \sprintf(
-            '<input type="text" class="form-control form-control-sm" name="variable[%d]" value="%s" data-testid="variable-inline-value-%d">',
+        return $this->wrapWithRevert(\sprintf(
+            '<input type="text" class="form-control form-control-sm" name="variable[%d]" value="%s" data-bo-inline-revert-target="field" data-action="input->bo-inline-revert#dirty change->bo-inline-revert#dirty" data-testid="variable-inline-value-%d">',
             $id,
             $escapedValue,
             $id,
+        ));
+    }
+
+    private function wrapWithRevert(string $fieldHtml): string
+    {
+        return \sprintf(
+            '<div class="d-flex gap-1 align-items-center" data-controller="bo-inline-revert">%s'
+            .'<button type="button" class="btn btn-sm btn-outline-secondary flex-shrink-0" data-bo-inline-revert-target="button" data-action="bo-inline-revert#revert" title="%s"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i></button></div>',
+            $fieldHtml,
+            htmlspecialchars(
+                $this->translator->trans('Cancel changes and revert to original value'),
+                \ENT_QUOTES | \ENT_HTML5,
+            ),
         );
     }
 
@@ -359,7 +372,7 @@ final class ConfigController
         }
 
         return \sprintf(
-            '<select class="form-select form-select-sm" name="variable[%d]" data-testid="variable-inline-value-%d">%s</select>',
+            '<select class="form-select form-select-sm" name="variable[%d]" data-bo-inline-revert-target="field" data-action="change->bo-inline-revert#dirty" data-testid="variable-inline-value-%d">%s</select>',
             $id,
             $id,
             $options,
