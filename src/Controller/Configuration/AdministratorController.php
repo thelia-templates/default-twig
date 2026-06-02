@@ -220,12 +220,19 @@ final class AdministratorController
             'profile_choices' => $profileChoices,
         ]);
 
+        $showEmailChangeNotice = $request !== null
+            && $request->query->getBoolean('show_email_change_notice')
+            && $currentAdminId !== null
+            && isset($editForms[$currentAdminId]);
+
         return [
             'rows' => $rows,
             'edit_forms' => $editForms,
             'create_form' => $createForm->createView(),
             'sort_field' => $sort->field,
             'sort_direction' => $sort->direction,
+            'show_email_change_notice' => $showEmailChangeNotice,
+            'current_admin_id' => $currentAdminId,
         ];
     }
 
