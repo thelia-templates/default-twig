@@ -111,7 +111,7 @@ final class AreaController
             successRoute: self::EDIT_ROUTE,
             successParameters: [],
             renderError: fn (): RedirectResponse => new RedirectResponse($this->urls->generate(self::LIST_ROUTE)),
-            describeForLog: function (AreaEvent $event): array {
+            describeForLog: static function (AreaEvent $event): array {
                 $area = $event->getModel();
                 \assert($area instanceof Area);
 
@@ -157,7 +157,7 @@ final class AreaController
     {
         $form = $this->formFactory->createNamed('thelia_area_modification', AreaType::class, null, [
             'include_id' => true,
-            ]);
+        ]);
 
         return $this->action->submit(
             resource: self::RESOURCE,

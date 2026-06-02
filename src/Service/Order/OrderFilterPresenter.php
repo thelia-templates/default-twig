@@ -225,7 +225,7 @@ final readonly class OrderFilterPresenter
     }
 
     /**
-     * @param list<int>                                              $ids
+     * @param list<int>                                               $ids
      * @param array<int, array{id: int, title: string, code: string}> $index
      */
     private function joinTitles(array $ids, array $index): string

@@ -208,7 +208,7 @@ final class AddressController
     private function buildCreateForm(): FormInterface
     {
         return $this->formFactory->createNamed(self::CREATE_FORM_NAME, AddressType::class, null, array_merge($this->formOptions(), [
-            ]));
+        ]));
     }
 
     /**
@@ -218,7 +218,7 @@ final class AddressController
     {
         return $this->formFactory->createNamed(self::UPDATE_FORM_NAME, AddressType::class, $data, array_merge($this->formOptions(), [
             'include_id' => true,
-            ]));
+        ]));
     }
 
     /**

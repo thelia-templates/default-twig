@@ -208,7 +208,7 @@ final class CouponController
             $html .= \sprintf(
                 '<option value="%d">%s</option>',
                 $item['id'],
-                htmlspecialchars($item['title'], ENT_QUOTES | ENT_HTML5, 'UTF-8'),
+                htmlspecialchars($item['title'], \ENT_QUOTES | \ENT_HTML5, 'UTF-8'),
             );
         }
 
@@ -393,7 +393,7 @@ final class CouponController
         // CouponAbstract::getCouponFieldValue() expects a JSON-encoded string
         // for coupon_specific; the inputs post it as an array.
         if (isset($data['coupon_specific']) && \is_array($data['coupon_specific'])) {
-            $data['coupon_specific'] = json_encode($data['coupon_specific'], JSON_THROW_ON_ERROR);
+            $data['coupon_specific'] = json_encode($data['coupon_specific'], \JSON_THROW_ON_ERROR);
         }
 
         try {

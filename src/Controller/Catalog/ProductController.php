@@ -219,7 +219,7 @@ final class ProductController
     {
         $form = $this->formFactory->createNamed('thelia_product_modification', ProductType::class, null, [
             'include_id' => true,
-            ]);
+        ]);
 
         $productId = (int) $request->request->get('product_id', 0);
 
@@ -241,7 +241,7 @@ final class ProductController
     public function processSeo(Request $request): Response
     {
         $form = $this->formFactory->createNamed('thelia_product_seo', ProductSeoType::class, null, [
-            ]);
+        ]);
 
         $productId = (int) $request->request->get('product_id', 0);
         if ($productId === 0 && $request->request->has('thelia_product_seo')) {
@@ -323,13 +323,13 @@ final class ProductController
             'locale' => $request->getLocale(),
             'visible' => true,
         ], [
-            ]);
+        ]);
     }
 
     private function buildCloneForm(): FormInterface
     {
         return $this->formFactory->createNamed('thelia_product_clone', ProductCloneType::class, null, [
-            ]);
+        ]);
     }
 
     private function buildUpdateForm(Product $product, string $locale): FormInterface
@@ -350,7 +350,7 @@ final class ProductController
             'virtual_document_id' => $this->currentVirtualDocumentId($product),
         ], [
             'include_id' => true,
-            ]);
+        ]);
     }
 
     private function buildSeoForm(Product $product, string $locale): FormInterface
@@ -363,7 +363,7 @@ final class ProductController
             'meta_description' => $product->getMetaDescription(),
             'meta_keywords' => $product->getMetaKeywords(),
         ], [
-            ]);
+        ]);
     }
 
     private function createEvent(FormInterface $validated): ProductCreateEvent

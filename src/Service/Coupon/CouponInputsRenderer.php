@@ -94,7 +94,7 @@ final readonly class CouponInputsRenderer
         }
 
         if ($this->needsProductsPicker($serviceId) || $serviceId === 'thelia.coupon.type.free_product') {
-            $params['categories'] = $params['categories'] ?? $this->categoryChoices();
+            $params['categories'] ??= $this->categoryChoices();
             $params['products_by_category'] = $this->productChoicesByCategory();
             $params['selected_products'] = $this->selectedProducts($manager);
         }

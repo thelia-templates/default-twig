@@ -25,8 +25,8 @@ use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\Session\FlashBagAwareSessionInterface;
 use Symfony\Component\HttpFoundation\Session\Flash\FlashBagInterface;
+use Symfony\Component\HttpFoundation\Session\FlashBagAwareSessionInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -82,7 +82,7 @@ final class CurrencyController
     public function create(): Response
     {
         $form = $this->formFactory->createNamed('thelia_currency_create', CurrencyType::class, null, [
-            ]);
+        ]);
 
         return $this->action->submit(
             resource: self::RESOURCE,
@@ -113,7 +113,7 @@ final class CurrencyController
     {
         $form = $this->formFactory->createNamed('thelia_currency_update', CurrencyType::class, null, [
             'include_id' => true,
-            ]);
+        ]);
 
         return $this->action->submit(
             resource: self::RESOURCE,
@@ -335,7 +335,7 @@ final class CurrencyController
         }
 
         $createForm = $this->formFactory->createNamed('thelia_currency_create', CurrencyType::class, null, [
-            ]);
+        ]);
 
         return [
             'rows' => $rows,
@@ -409,7 +409,7 @@ final class CurrencyController
             'rate' => $currency->getRate(),
         ], [
             'include_id' => true,
-            ]);
+        ]);
     }
 
     /**

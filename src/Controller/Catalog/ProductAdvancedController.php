@@ -25,14 +25,14 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
+use Thelia\Action\Image as ImageAction;
 use Thelia\Core\Event\FeatureProduct\FeatureProductDeleteEvent;
 use Thelia\Core\Event\FeatureProduct\FeatureProductUpdateEvent;
+use Thelia\Core\Event\Image\ImageEvent;
 use Thelia\Core\Event\MetaData\MetaDataCreateOrUpdateEvent;
 use Thelia\Core\Event\MetaData\MetaDataDeleteEvent;
 use Thelia\Core\Event\Product\ProductCombinationGenerationEvent;
 use Thelia\Core\Event\Product\ProductSetTemplateEvent;
-use Thelia\Action\Image as ImageAction;
-use Thelia\Core\Event\Image\ImageEvent;
 use Thelia\Core\Event\ProductSaleElement\ProductSaleElementCreateEvent;
 use Thelia\Core\Event\ProductSaleElement\ProductSaleElementDeleteEvent;
 use Thelia\Core\Event\ProductSaleElement\ProductSaleElementToggleVisibilityEvent;
@@ -45,7 +45,6 @@ use Thelia\Model\Attribute;
 use Thelia\Model\AttributeAvQuery;
 use Thelia\Model\AttributeQuery;
 use Thelia\Model\AttributeTemplateQuery;
-use Thelia\Model\CategoryQuery;
 use Thelia\Model\ContentQuery;
 use Thelia\Model\CurrencyQuery;
 use Thelia\Model\Feature;
@@ -55,9 +54,9 @@ use Thelia\Model\FeatureProductQuery;
 use Thelia\Model\FeatureQuery;
 use Thelia\Model\FeatureTemplateQuery;
 use Thelia\Model\LangQuery;
-use Thelia\Model\Product;
 use Thelia\Model\MetaData;
 use Thelia\Model\MetaDataQuery;
+use Thelia\Model\Product;
 use Thelia\Model\ProductDocumentQuery;
 use Thelia\Model\ProductImage;
 use Thelia\Model\ProductImageQuery;
@@ -106,7 +105,7 @@ final class ProductAdvancedController
             ->useContentFolderQuery()
             ->filterByFolderId($folderId)
             ->endUse()
-            ->filterById($alreadyAssigned, \Propel\Runtime\ActiveQuery\Criteria::NOT_IN)
+            ->filterById($alreadyAssigned, Criteria::NOT_IN)
             ->orderByPosition();
 
         $items = [];
@@ -136,7 +135,7 @@ final class ProductAdvancedController
             ->useProductCategoryQuery()
             ->filterByCategoryId($categoryId)
             ->endUse()
-            ->filterById($excluded, \Propel\Runtime\ActiveQuery\Criteria::NOT_IN)
+            ->filterById($excluded, Criteria::NOT_IN)
             ->orderByPosition();
 
         $items = [];
@@ -267,11 +266,11 @@ final class ProductAdvancedController
         $price = (float) $request->query->get('price', 0);
         $defaultCurrencyId = (int) $request->query->get('default_currency_id', 0);
 
-        $base = \Thelia\Model\CurrencyQuery::create()->findPk($defaultCurrencyId)
-            ?? \Thelia\Model\CurrencyQuery::create()->findOneByByDefault(1);
+        $base = CurrencyQuery::create()->findPk($defaultCurrencyId)
+            ?? CurrencyQuery::create()->findOneByByDefault(1);
 
         $prices = [];
-        foreach (\Thelia\Model\CurrencyQuery::create()->find() as $currency) {
+        foreach (CurrencyQuery::create()->find() as $currency) {
             $rate = (float) $currency->getRate();
             $baseRate = $base ? (float) $base->getRate() : 1.0;
             $converted = $baseRate > 0 ? ($price / $baseRate) * $rate : $price;

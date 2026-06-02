@@ -109,8 +109,8 @@ final class NewsletterController
             return $denied;
         }
 
-        $response = new StreamedResponse(function (): void {
-            $handle = fopen('php://output', 'wb');
+        $response = new StreamedResponse(static function (): void {
+            $handle = fopen('php://output', 'w');
             if ($handle === false) {
                 return;
             }

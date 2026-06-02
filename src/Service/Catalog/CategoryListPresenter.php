@@ -147,10 +147,10 @@ final readonly class CategoryListPresenter
 
         return \sprintf(
             '<a href="%s" class="text-decoration-none fw-medium">%s</a> <small class="text-muted">(%s, %s)</small>',
-            htmlspecialchars($browseUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
-            htmlspecialchars($title, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
-            htmlspecialchars($products, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
-            htmlspecialchars($children, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
+            htmlspecialchars($browseUrl, \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8'),
+            htmlspecialchars($title, \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8'),
+            htmlspecialchars($products, \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8'),
+            htmlspecialchars($children, \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8'),
         );
     }
 
@@ -204,8 +204,8 @@ final readonly class CategoryListPresenter
             'title' => $title,
             'title_html' => \sprintf(
                 '<a href="%s" class="text-decoration-none">%s</a>',
-                htmlspecialchars($editUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
-                htmlspecialchars($title, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
+                htmlspecialchars($editUrl, \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8'),
+                htmlspecialchars($title, \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8'),
             ),
             'visible' => (bool) $product->getVisible(),
             'position' => (int) $product->getPosition(),

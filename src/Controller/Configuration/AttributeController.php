@@ -86,7 +86,7 @@ final class AttributeController
             'locale' => $request->getLocale(),
         ], [
             'include_creation_extras' => true,
-            ]);
+        ]);
 
         return $this->action->submit(
             resource: self::RESOURCE,
@@ -135,7 +135,7 @@ final class AttributeController
         $form = $this->formFactory->createNamed('thelia_attribute_modification', AttributeType::class, null, [
             'include_id' => true,
             'include_description' => true,
-            ]);
+        ]);
 
         $attributeId = (int) $request->request->get('attribute_id', 0);
         $closeAfterSave = $request->request->get('save_mode') === 'close';
@@ -259,7 +259,7 @@ final class AttributeController
         }
 
         foreach ($values as $id => $title) {
-            if (!is_string($title)) {
+            if (!\is_string($title)) {
                 continue;
             }
             $event = new AttributeAvUpdateEvent((int) $id);
@@ -321,7 +321,7 @@ final class AttributeController
             'locale' => $locale,
         ], [
             'include_creation_extras' => true,
-            ]);
+        ]);
 
         return [
             'rows' => $rows,
@@ -381,7 +381,7 @@ final class AttributeController
         ], [
             'include_id' => true,
             'include_description' => true,
-            ]);
+        ]);
     }
 
     private function buildAvCreateForm(int $attributeId, string $locale): FormInterface
@@ -390,7 +390,7 @@ final class AttributeController
             'attribute_id' => $attributeId,
             'locale' => $locale,
         ], [
-            ]);
+        ]);
     }
 
     /**

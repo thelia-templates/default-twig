@@ -124,7 +124,7 @@ final readonly class ChoiceFilterPresenter
     }
 
     /**
-     * @param iterable<mixed>      $choiceFilters
+     * @param iterable<mixed>                                            $choiceFilters
      * @param iterable<array-key, array<string, mixed>>|ObjectCollection $features
      * @param iterable<array-key, array<string, mixed>>|ObjectCollection $attributes
      * @param iterable<array-key, array<string, mixed>>|ObjectCollection $others

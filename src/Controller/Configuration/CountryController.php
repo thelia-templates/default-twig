@@ -23,6 +23,7 @@ use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -37,7 +38,6 @@ use Thelia\Core\Event\Country\CountryUpdateEvent;
 use Thelia\Core\Event\TheliaEvents;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Thelia\Model\Country;
 use Thelia\Model\CountryQuery;
 use Thelia\Model\LangQuery;
@@ -154,7 +154,7 @@ final class CountryController
     {
         $form = $this->formFactory->createNamed('thelia_country_update', CountryType::class, null, [
             'include_id' => true,
-            ]);
+        ]);
 
         $countryId = (int) $request->request->get('country_id', 0);
 
@@ -329,7 +329,7 @@ final class CountryController
             'postscriptum' => $country->getPostscriptum(),
         ], [
             'include_id' => true,
-            ]);
+        ]);
     }
 
     /** @return array<string, mixed> */

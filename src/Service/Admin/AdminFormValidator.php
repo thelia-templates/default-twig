@@ -31,7 +31,7 @@ readonly class AdminFormValidator
 
     /**
      * @throws FormValidationException when the form is not submitted, the HTTP method does not match,
-     *                                 or at least one constraint violation is present.
+     *                                 or at least one constraint violation is present
      */
     public function validate(FormInterface $form, string $expectedMethod = 'POST'): FormInterface
     {
@@ -42,9 +42,7 @@ readonly class AdminFormValidator
         }
 
         if (strtoupper($request->getMethod()) !== strtoupper($expectedMethod)) {
-            throw new FormValidationException(
-                \sprintf('Invalid HTTP method [%s], expected [%s].', $request->getMethod(), $expectedMethod),
-            );
+            throw new FormValidationException(\sprintf('Invalid HTTP method [%s], expected [%s].', $request->getMethod(), $expectedMethod));
         }
 
         $form->handleRequest($request);
@@ -60,8 +58,6 @@ readonly class AdminFormValidator
         $errors = $form->getErrors(true, true);
         $firstError = $errors->current();
 
-        throw new FormValidationException(
-            (string) $firstError->getMessage(),
-        );
+        throw new FormValidationException((string) $firstError->getMessage());
     }
 }

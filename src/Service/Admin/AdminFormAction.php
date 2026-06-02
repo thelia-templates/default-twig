@@ -51,10 +51,10 @@ readonly class AdminFormAction
     }
 
     /**
-     * @param callable(FormInterface): object $eventFactory  Build the event from the validated form.
-     * @param callable(\Throwable): Response  $renderError    Build the error response (typically a re-render with errors).
-     * @param callable(object): array{0: string, 1: int|null}|null $describeForLog  Optional. Build [message, resourceId] from the dispatched event.
-     * @param array<string, scalar> $successParameters
+     * @param callable(FormInterface): object                      $eventFactory      build the event from the validated form
+     * @param callable(\Throwable): Response                       $renderError       build the error response (typically a re-render with errors)
+     * @param callable(object): array{0: string, 1: int|null}|null $describeForLog    Optional. Build [message, resourceId] from the dispatched event.
+     * @param array<string, scalar>                                $successParameters
      */
     public function submit(
         string $resource,
@@ -94,8 +94,8 @@ readonly class AdminFormAction
 
     /**
      * @param callable(object): array{0: string, 1: int|null}|null $describeForLog
-     * @param callable(\Throwable): Response|null $renderError    Optional. When omitted, errors redirect to $successRoute.
-     * @param array<string, scalar> $successParameters
+     * @param callable(\Throwable): Response|null                  $renderError       Optional. When omitted, errors redirect to $successRoute.
+     * @param array<string, scalar>                                $successParameters
      */
     public function tokenAction(
         string $resource,

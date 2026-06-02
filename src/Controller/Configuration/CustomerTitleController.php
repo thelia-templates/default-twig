@@ -142,7 +142,7 @@ final class CustomerTitleController
     {
         $form = $this->formFactory->createNamed('thelia_customer_title_update', CustomerTitleType::class, null, [
             'include_id' => true,
-            ]);
+        ]);
 
         $titleId = (int) $request->request->get('customer_title_id', 0);
 
@@ -219,7 +219,7 @@ final class CustomerTitleController
             'default' => (bool) $title->getByDefault(),
         ], [
             'include_id' => true,
-            ]);
+        ]);
     }
 
     /** @return array<string, mixed> */

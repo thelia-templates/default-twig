@@ -84,7 +84,7 @@ final class BackOfficeUrlExtension extends AbstractExtension
         $session = $this->requestStack->getMainRequest()?->getSession();
         if ($session instanceof SessionInterface) {
             $existing = $session->get($this->tokenId);
-            if (is_string($existing) && $existing !== '') {
+            if (\is_string($existing) && $existing !== '') {
                 return $existing;
             }
         }

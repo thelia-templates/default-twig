@@ -97,14 +97,14 @@ final class ConfigController
     public function create(): Response
     {
         $form = $this->formFactory->createNamed('thelia_config_create', ConfigType::class, null, [
-            ]);
+        ]);
 
         return $this->action->submit(
             resource: self::RESOURCE,
             access: AccessManager::CREATE,
             form: $form,
             eventName: TheliaEvents::CONFIG_CREATE,
-            eventFactory: function (FormInterface $validated): ConfigCreateEvent {
+            eventFactory: static function (FormInterface $validated): ConfigCreateEvent {
                 $event = new ConfigCreateEvent();
                 $event
                     ->setEventName((string) $validated->get('name')->getData())
@@ -134,14 +134,14 @@ final class ConfigController
     {
         $form = $this->formFactory->createNamed('thelia_config_update', ConfigType::class, null, [
             'include_id' => true,
-            ]);
+        ]);
 
         return $this->action->submit(
             resource: self::RESOURCE,
             access: AccessManager::UPDATE,
             form: $form,
             eventName: TheliaEvents::CONFIG_UPDATE,
-            eventFactory: function (FormInterface $validated): ConfigUpdateEvent {
+            eventFactory: static function (FormInterface $validated): ConfigUpdateEvent {
                 $event = new ConfigUpdateEvent((int) $validated->get('id')->getData());
                 $event
                     ->setEventName((string) $validated->get('name')->getData())
@@ -243,7 +243,7 @@ final class ConfigController
         $createForm = $this->formFactory->createNamed('thelia_config_create', ConfigType::class, [
             'locale' => $defaultLocale,
         ], [
-            ]);
+        ]);
 
         return [
             'rows' => $rows,
@@ -383,7 +383,7 @@ final class ConfigController
             'postscriptum' => $config->getPostscriptum(),
         ], [
             'include_id' => true,
-            ]);
+        ]);
     }
 
     private function resolveDefaultLocale(): string

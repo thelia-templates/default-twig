@@ -92,7 +92,7 @@ final class TaxController
         }
 
         $form = $this->formFactory->createNamed(self::CREATE_FORM_NAME, TaxType::class, null, [
-            ]);
+        ]);
 
         try {
             $validated = $this->validator->validate($form);
@@ -131,7 +131,7 @@ final class TaxController
             return $denied;
         }
 
-        $taxId = (int) ($request->request->get('tax_id', $request->get('tax_id', 0)));
+        $taxId = (int) $request->request->get('tax_id', $request->get('tax_id', 0));
         $form = $this->createUpdateForm(null);
 
         try {
@@ -193,7 +193,7 @@ final class TaxController
     {
         return $this->formFactory->createNamed(self::UPDATE_FORM_NAME, TaxType::class, $data, [
             'include_id' => true,
-            ]);
+        ]);
     }
 
     private function renderEdit(FormInterface $form, Tax $tax, int $status = Response::HTTP_OK, int $editLanguageId = 0): Response

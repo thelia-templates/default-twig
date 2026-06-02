@@ -72,7 +72,7 @@ final class MailingSystemController
     public function save(): Response
     {
         $form = $this->formFactory->createNamed('thelia_mailing_system_modification', MailingSystemType::class, null, [
-            ]);
+        ]);
 
         return $this->action->submit(
             resource: self::RESOURCE,

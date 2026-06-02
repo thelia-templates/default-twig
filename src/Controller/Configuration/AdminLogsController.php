@@ -89,7 +89,7 @@ final class AdminLogsController
 
     /**
      * @param list<array{date: string, admin: string, resource: string, action: string, resource_id: ?int, message: string}> $entries
-     * @param array<string, mixed> $selected
+     * @param array<string, mixed>                                                                                           $selected
      *
      * @return array<string, mixed>
      */

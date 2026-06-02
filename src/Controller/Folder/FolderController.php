@@ -131,7 +131,7 @@ final class FolderController
         $form = $this->formFactory->createNamed('thelia_folder_modification', FolderType::class, null, [
             'include_id' => true,
             'include_description' => true,
-            ]);
+        ]);
 
         $folderId = (int) $request->request->get('folder_id', 0);
 
@@ -327,7 +327,7 @@ final class FolderController
         ], [
             'include_id' => true,
             'include_description' => true,
-            ]);
+        ]);
     }
 
     private function buildSeoForm(Folder $folder, string $locale): FormInterface

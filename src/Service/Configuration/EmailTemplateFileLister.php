@@ -48,11 +48,11 @@ final readonly class EmailTemplateFileLister
                 continue;
             }
             $extension = strtolower($file->getExtension());
-            if (in_array($extension, ['html', 'htm', 'twig'], true)) {
+            if (\in_array($extension, ['html', 'htm', 'twig'], true)) {
                 $htmlTemplates[] = $name;
                 continue;
             }
-            if (in_array($extension, ['txt', 'text'], true)) {
+            if (\in_array($extension, ['txt', 'text'], true)) {
                 $textTemplates[] = $name;
             }
         }

@@ -77,14 +77,14 @@ final class AdministratorController
     {
         $form = $this->formFactory->createNamed('thelia_administrator_create', AdministratorType::class, null, [
             'profile_choices' => $this->profileChoices(),
-            ]);
+        ]);
 
         return $this->action->submit(
             resource: self::RESOURCE,
             access: AccessManager::CREATE,
             form: $form,
             eventName: TheliaEvents::ADMINISTRATOR_CREATE,
-            eventFactory: function (FormInterface $validated): AdministratorEvent {
+            eventFactory: static function (FormInterface $validated): AdministratorEvent {
                 $event = new AdministratorEvent();
                 $event
                     ->setLogin((string) $validated->get('login')->getData())
@@ -110,14 +110,14 @@ final class AdministratorController
         $form = $this->formFactory->createNamed('thelia_administrator_update', AdministratorType::class, null, [
             'include_id' => true,
             'profile_choices' => $this->profileChoices(),
-            ]);
+        ]);
 
         return $this->action->submit(
             resource: self::RESOURCE,
             access: AccessManager::UPDATE,
             form: $form,
             eventName: TheliaEvents::ADMINISTRATOR_UPDATE,
-            eventFactory: function (FormInterface $validated): AdministratorEvent {
+            eventFactory: static function (FormInterface $validated): AdministratorEvent {
                 $event = new AdministratorEvent();
                 $event
                     ->setId((int) $validated->get('id')->getData())
@@ -218,7 +218,7 @@ final class AdministratorController
             'locale' => $defaultLocale,
         ], [
             'profile_choices' => $profileChoices,
-            ]);
+        ]);
 
         return [
             'rows' => $rows,
@@ -284,7 +284,7 @@ final class AdministratorController
         ], [
             'include_id' => true,
             'profile_choices' => $profileChoices,
-            ]);
+        ]);
     }
 
     /**

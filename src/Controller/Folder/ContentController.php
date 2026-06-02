@@ -20,7 +20,6 @@ use BackOfficeDefaultTwigBundle\Repository\FolderRepository;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
-use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -121,7 +120,7 @@ final class ContentController
         $form = $this->formFactory->createNamed('thelia_content_modification', ContentType::class, null, [
             'include_id' => true,
             'include_description' => true,
-            ]);
+        ]);
 
         $contentId = (int) $request->request->get('content_id', 0);
 
@@ -308,7 +307,7 @@ final class ContentController
         ], [
             'include_id' => true,
             'include_description' => true,
-            ]);
+        ]);
     }
 
     private function buildSeoForm(Content $content, string $locale): FormInterface

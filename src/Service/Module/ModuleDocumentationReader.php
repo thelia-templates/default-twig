@@ -45,7 +45,7 @@ final readonly class ModuleDocumentationReader
     private function locateMarkdown(string $baseDir): ?string
     {
         foreach (self::CANDIDATE_FILES as $candidate) {
-            $path = $baseDir.DIRECTORY_SEPARATOR.$candidate;
+            $path = $baseDir.\DIRECTORY_SEPARATOR.$candidate;
             if (is_file($path)) {
                 return $path;
             }

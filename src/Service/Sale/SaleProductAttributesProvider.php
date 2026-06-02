@@ -75,7 +75,7 @@ final readonly class SaleProductAttributesProvider
     }
 
     /**
-     * @return array<int, list<int>> productId → list of selected attribute_av_id.
+     * @return array<int, list<int>> productId → list of selected attribute_av_id
      */
     public function selectedForSale(Sale $sale): array
     {

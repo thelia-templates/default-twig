@@ -189,7 +189,6 @@ final readonly class CouponConditionsRenderer
     }
 
     /**
-     * @param mixed $values
      * @return list<int>
      */
     private function normalizeIdList(mixed $values): array
@@ -264,6 +263,7 @@ final readonly class CouponConditionsRenderer
 
     /**
      * @param list<int|string>|mixed $alreadySelected
+     *
      * @return list<array{id: int, label: string}>
      */
     private function customerChoices(mixed $alreadySelected): array

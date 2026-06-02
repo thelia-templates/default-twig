@@ -20,7 +20,6 @@ use Propel\Runtime\Collection\ObjectCollection;
 use Propel\Runtime\Propel;
 use Thelia\Model\Product;
 use Thelia\Model\ProductCategoryQuery;
-use Thelia\Model\ProductI18nQuery;
 use Thelia\Model\ProductQuery;
 use Thelia\Model\ProductSaleElements;
 use Thelia\Model\ProductSaleElementsQuery;

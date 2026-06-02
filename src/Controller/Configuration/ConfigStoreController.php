@@ -116,7 +116,7 @@ final class ConfigStoreController
     {
         return $this->formFactory->createNamed(self::FORM_NAME, ConfigStoreType::class, $this->readStoreData(), [
             'country_choices' => $this->countryChoices($locale),
-            ]);
+        ]);
     }
 
     /**
@@ -218,7 +218,7 @@ final class ConfigStoreController
 
         foreach (['favicon' => 'favicon_file', 'logo' => 'logo_file', 'banner' => 'banner_file'] as $field => $configKey) {
             $filename = ConfigQuery::read($configKey);
-            if (!\is_string($filename) || $filename === '' || !\is_file($uploadDir.\DIRECTORY_SEPARATOR.$filename)) {
+            if (!\is_string($filename) || $filename === '' || !is_file($uploadDir.\DIRECTORY_SEPARATOR.$filename)) {
                 $urls[$field] = null;
                 continue;
             }

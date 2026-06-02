@@ -203,8 +203,8 @@ final readonly class CustomerFilterPresenter
     }
 
     /**
-     * @param list<int>                                  $ids
-     * @param array<int, array{id: int, title: string}>  $index
+     * @param list<int>                                 $ids
+     * @param array<int, array{id: int, title: string}> $index
      */
     private function joinTitles(array $ids, array $index): string
     {

@@ -323,7 +323,7 @@ final class FileController
             return [0, 0];
         }
         $previous = $index > 0 ? $orderedIds[$index - 1] : 0;
-        $next = $index < (count($orderedIds) - 1) ? $orderedIds[$index + 1] : 0;
+        $next = $index < (\count($orderedIds) - 1) ? $orderedIds[$index + 1] : 0;
 
         return [$previous, $next];
     }

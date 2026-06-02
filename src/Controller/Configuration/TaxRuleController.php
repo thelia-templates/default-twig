@@ -96,12 +96,12 @@ final class TaxRuleController
         $createTaxForm = $this->formFactory->createNamed(self::CREATE_TAX_FORM_NAME, TaxType::class, [
             'locale' => $locale,
         ], [
-            ]);
+        ]);
 
         $createTaxRuleForm = $this->formFactory->createNamed(self::CREATE_TAX_RULE_FORM_NAME, TaxRuleType::class, [
             'locale' => $locale,
         ], [
-            ]);
+        ]);
 
         return new Response($this->twig->render(self::LIST_TEMPLATE, [
             'tax_rows' => $this->taxRows($locale, $taxSort),
@@ -161,7 +161,7 @@ final class TaxRuleController
     public function add(): Response
     {
         $form = $this->formFactory->createNamed(self::CREATE_TAX_RULE_FORM_NAME, TaxRuleType::class, null, [
-            ]);
+        ]);
 
         return $this->action->submit(
             resource: self::RESOURCE,
@@ -335,7 +335,7 @@ final class TaxRuleController
     {
         return $this->formFactory->createNamed(self::UPDATE_TAX_RULE_FORM_NAME, TaxRuleType::class, $data, [
             'include_id' => true,
-            ]);
+        ]);
     }
 
     private function buildCreationEvent(FormInterface $validated): TaxRuleEvent

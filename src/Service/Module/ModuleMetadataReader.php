@@ -29,7 +29,7 @@ final readonly class ModuleMetadataReader
 
     public function read(Module $module): ?ModuleMetadata
     {
-        $xmlPath = $module->getAbsoluteConfigPath().DIRECTORY_SEPARATOR.'module.xml';
+        $xmlPath = $module->getAbsoluteConfigPath().\DIRECTORY_SEPARATOR.'module.xml';
         if (!is_file($xmlPath)) {
             return null;
         }

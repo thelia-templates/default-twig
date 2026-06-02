@@ -44,9 +44,9 @@ use Thelia\Domain\Customer\Service\CustomerTitleService;
 use Thelia\Model\CountryQuery;
 use Thelia\Model\Customer;
 use Thelia\Model\CustomerQuery;
-use Thelia\Model\OrderQuery;
 use Thelia\Model\Event\CustomerEvent;
 use Thelia\Model\LangQuery;
+use Thelia\Model\OrderQuery;
 use Thelia\Tools\Password;
 use Twig\Environment;
 
@@ -202,7 +202,7 @@ final class CustomerController
             [
                 'title_choices' => $this->titleService->getTitleAsFormChoices(),
                 'country_choices' => $this->countryChoices($this->defaultLocale()),
-                ],
+            ],
         );
 
         $customerId = (int) $customer->getId();
@@ -332,7 +332,7 @@ final class CustomerController
         return $this->formFactory->createNamed(self::CREATE_FORM_NAME, CustomerType::class, [
             'discount' => 0,
         ], array_merge($this->formOptions($locale), [
-            ]));
+        ]));
     }
 
     /**
@@ -344,7 +344,7 @@ final class CustomerController
             'include_id' => true,
             'include_password' => true,
             'password_required' => false,
-            ]));
+        ]));
     }
 
     /**

@@ -102,7 +102,7 @@ final readonly class CategoryRepository
     {
         foreach (CategoryQuery::create()->filterByParent($parentId)->select('Id')->find() as $childId) {
             $childId = (int) $childId;
-            if (!in_array($childId, $ids, true)) {
+            if (!\in_array($childId, $ids, true)) {
                 $ids[] = $childId;
                 $this->collectDescendants($childId, $ids);
             }

@@ -15,6 +15,8 @@ declare(strict_types=1);
 namespace BackOfficeDefaultTwigBundle\Controller\Configuration;
 
 use BackOfficeDefaultTwigBundle\Form\Template\TemplateType;
+use BackOfficeDefaultTwigBundle\Repository\CategoryRepository;
+use BackOfficeDefaultTwigBundle\Repository\ProductRepository;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\Service\Catalog\ChoiceFilterPresenter;
@@ -39,11 +41,8 @@ use Thelia\Core\Event\Template\TemplateDeleteFeatureEvent;
 use Thelia\Core\Event\Template\TemplateDuplicateEvent;
 use Thelia\Core\Event\Template\TemplateUpdateEvent;
 use Thelia\Core\Event\TheliaEvents;
-use Thelia\Core\Event\UpdatePositionEvent;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
-use BackOfficeDefaultTwigBundle\Repository\CategoryRepository;
-use BackOfficeDefaultTwigBundle\Repository\ProductRepository;
 use Thelia\Model\AttributeQuery;
 use Thelia\Model\AttributeTemplateQuery;
 use Thelia\Model\FeatureQuery;
@@ -95,7 +94,7 @@ final class TemplateController
         $form = $this->formFactory->createNamed('thelia_template_creation', TemplateType::class, [
             'locale' => $request->getLocale(),
         ], [
-            ]);
+        ]);
 
         return $this->action->submit(
             resource: self::RESOURCE,
@@ -150,7 +149,7 @@ final class TemplateController
         $form = $this->formFactory->createNamed('thelia_template_modification', TemplateType::class, null, [
             'include_id' => true,
             'include_description' => true,
-            ]);
+        ]);
 
         $templateId = (int) $request->request->get('template_id', 0);
         $closeAfterSave = $request->request->get('save_mode') === 'close';
@@ -202,7 +201,7 @@ final class TemplateController
 
         if ($newName !== '' && $event->hasTemplate()) {
             $clone = $event->getTemplate();
-            $updateEvent = (new \Thelia\Core\Event\Template\TemplateUpdateEvent((int) $clone->getId()))
+            $updateEvent = (new TemplateUpdateEvent((int) $clone->getId()))
                 ->setLocale($this->defaultLocale())
                 ->setTemplateName($newName);
             $this->events->dispatch($updateEvent, TheliaEvents::TEMPLATE_UPDATE);
@@ -414,7 +413,7 @@ final class TemplateController
         $createForm = $this->formFactory->createNamed('thelia_template_creation', TemplateType::class, [
             'locale' => $locale,
         ], [
-            ]);
+        ]);
 
         return [
             'rows' => $rows,
@@ -476,7 +475,7 @@ final class TemplateController
         ], [
             'include_id' => true,
             'include_description' => true,
-            ]);
+        ]);
     }
 
     /**
@@ -543,7 +542,7 @@ final class TemplateController
             ->toArray();
 
         $features = FeatureQuery::create()
-            ->filterById($existingIds, \Propel\Runtime\ActiveQuery\Criteria::NOT_IN)
+            ->filterById($existingIds, Criteria::NOT_IN)
             ->orderByPosition()
             ->find();
 
@@ -571,7 +570,7 @@ final class TemplateController
             ->toArray();
 
         $attributes = AttributeQuery::create()
-            ->filterById($existingIds, \Propel\Runtime\ActiveQuery\Criteria::NOT_IN)
+            ->filterById($existingIds, Criteria::NOT_IN)
             ->orderByPosition()
             ->find();
 

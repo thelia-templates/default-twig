@@ -22,7 +22,6 @@ use BackOfficeDefaultTwigBundle\Service\Order\OrderFilterPresenter;
 use BackOfficeDefaultTwigBundle\Service\Order\OrderFilters;
 use BackOfficeDefaultTwigBundle\Service\Order\OrderListRowPresenter;
 use BackOfficeDefaultTwigBundle\Service\Pdf\OrderPdfRenderer;
-use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -330,7 +329,6 @@ final class OrderController
         return $this->pdfRenderer->render($orderId, $kind, $browser);
     }
 
-
     /**
      * @return list<array<string, mixed>>
      */
@@ -504,5 +502,4 @@ final class OrderController
             $this->translator->trans('- All statuses -'),
         );
     }
-
 }

@@ -86,7 +86,7 @@ final class FeatureController
             'locale' => $request->getLocale(),
         ], [
             'include_creation_extras' => true,
-            ]);
+        ]);
 
         return $this->action->submit(
             resource: self::RESOURCE,
@@ -135,7 +135,7 @@ final class FeatureController
         $form = $this->formFactory->createNamed('thelia_feature_modification', FeatureType::class, null, [
             'include_id' => true,
             'include_description' => true,
-            ]);
+        ]);
 
         $featureId = (int) $request->request->get('feature_id', 0);
         $closeAfterSave = $request->request->get('save_mode') === 'close';
@@ -259,7 +259,7 @@ final class FeatureController
         }
 
         foreach ($values as $id => $title) {
-            if (!is_string($title)) {
+            if (!\is_string($title)) {
                 continue;
             }
             $event = new FeatureAvUpdateEvent((int) $id);
@@ -321,7 +321,7 @@ final class FeatureController
             'locale' => $locale,
         ], [
             'include_creation_extras' => true,
-            ]);
+        ]);
 
         return [
             'rows' => $rows,
@@ -381,7 +381,7 @@ final class FeatureController
         ], [
             'include_id' => true,
             'include_description' => true,
-            ]);
+        ]);
     }
 
     private function buildAvCreateForm(int $featureId, string $locale): FormInterface
@@ -390,7 +390,7 @@ final class FeatureController
             'feature_id' => $featureId,
             'locale' => $locale,
         ], [
-            ]);
+        ]);
     }
 
     /**

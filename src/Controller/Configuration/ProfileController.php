@@ -35,10 +35,10 @@ use Thelia\Core\Event\TheliaEvents;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
 use Thelia\Model\Lang;
+use Thelia\Model\ModuleQuery;
 use Thelia\Model\Profile;
 use Thelia\Model\ProfileQuery;
 use Thelia\Model\ResourceQuery;
-use Thelia\Model\ModuleQuery;
 use Twig\Environment;
 
 #[Route('/admin/configuration/profiles', name: 'admin.configuration.profiles.')]
@@ -90,14 +90,14 @@ final class ProfileController
     public function add(): Response
     {
         $form = $this->formFactory->createNamed('thelia_profile_create', ProfileType::class, null, [
-            ]);
+        ]);
 
         return $this->action->submit(
             resource: self::RESOURCE,
             access: AccessManager::CREATE,
             form: $form,
             eventName: TheliaEvents::PROFILE_CREATE,
-            eventFactory: function (FormInterface $validated): ProfileEvent {
+            eventFactory: static function (FormInterface $validated): ProfileEvent {
                 $event = new ProfileEvent();
                 $event
                     ->setLocale((string) $validated->get('locale')->getData())
@@ -121,7 +121,7 @@ final class ProfileController
     {
         $form = $this->formFactory->createNamed('thelia_profile_update', ProfileType::class, null, [
             'include_id' => true,
-            ]);
+        ]);
 
         $profileId = (int) ($request->request->all('thelia_profile_update')['id'] ?? 0);
 
@@ -130,7 +130,7 @@ final class ProfileController
             access: AccessManager::UPDATE,
             form: $form,
             eventName: TheliaEvents::PROFILE_UPDATE,
-            eventFactory: function (FormInterface $validated): ProfileEvent {
+            eventFactory: static function (FormInterface $validated): ProfileEvent {
                 $event = new ProfileEvent();
                 $event
                     ->setId((int) $validated->get('id')->getData())
@@ -208,9 +208,9 @@ final class ProfileController
     }
 
     /**
-     * @param array<string, mixed> $rawInput Keys like "admin:configuration:lang" → list of access codes.
+     * @param array<string, mixed> $rawInput keys like "admin:configuration:lang" → list of access codes
      *
-     * @return array<string, list<string>> Keys flattened to dot-separated resource codes.
+     * @return array<string, list<string>> keys flattened to dot-separated resource codes
      */
     private function flattenAccessKeys(array $rawInput): array
     {
@@ -271,7 +271,7 @@ final class ProfileController
         $createForm = $this->formFactory->createNamed('thelia_profile_create', ProfileType::class, [
             'locale' => $createLocale,
         ], [
-            ]);
+        ]);
 
         return [
             'rows' => $rows,
@@ -299,7 +299,7 @@ final class ProfileController
             'postscriptum' => $profile->getPostscriptum(),
         ], [
             'include_id' => true,
-            ]);
+        ]);
 
         return [
             'profile' => $profile,
@@ -319,7 +319,7 @@ final class ProfileController
     }
 
     /**
-     * @return array<string, list<string>> resource/module code → list of granted access codes.
+     * @return array<string, list<string>> resource/module code → list of granted access codes
      */
     private function buildAccessMap(Profile $profile, string $kind): array
     {

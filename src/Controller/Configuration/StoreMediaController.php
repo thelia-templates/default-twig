@@ -55,7 +55,7 @@ final class StoreMediaController
         }
 
         $absolutePath = $this->uploadDirectory().\DIRECTORY_SEPARATOR.$filename;
-        if (!\is_file($absolutePath)) {
+        if (!is_file($absolutePath)) {
             throw new NotFoundHttpException(\sprintf('Stored %s file is missing on disk.', $field));
         }
 
