@@ -444,7 +444,7 @@ return [
     'Do you really want to delete this administrator?' => 'Voulez-vous vraiment supprimer cet administrateur ?',
     'Do you really want to delete this attribute?' => 'Voulez-vous vraiment supprimer cette déclinaison ?',
     'Do you really want to delete this brand?' => 'Voulez-vous vraiment supprimer cette marque ?',
-    'Do you really want to delete this category? Subcategories and products are not deleted but become orphaned.' => 'Voulez-vous vraiment supprimer cette catégorie ? Les sous-catégories et produits ne sont pas supprimés mais deviennent orphelins.',
+    'Do you really want to delete this category? Its subcategories and the products it owns will also be deleted.' => 'Voulez-vous vraiment supprimer cette catégorie ? Ses sous-catégories et les produits qui lui appartiennent seront également supprimés.',
     'Do you really want to delete this country?' => 'Voulez-vous vraiment supprimer ce pays ?',
     'Do you really want to delete this coupon ?' => 'Voulez-vous vraiment supprimer ce coupon ?',
     'Do you really want to delete this currency?' => 'Voulez-vous vraiment supprimer cette devise ?',
