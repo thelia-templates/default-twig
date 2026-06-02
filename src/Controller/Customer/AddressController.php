@@ -20,6 +20,7 @@ use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormErrorRenderer;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormValidator;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminLogger;
+use BackOfficeDefaultTwigBundle\Service\I18n\StateChoiceProvider;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -61,6 +62,7 @@ final class AddressController
         private readonly UrlGeneratorInterface $urls,
         private readonly TranslatorInterface $translator,
         private readonly CustomerTitleService $titleService,
+        private readonly StateChoiceProvider $stateChoices,
     ) {
     }
 
@@ -229,6 +231,7 @@ final class AddressController
         return [
             'title_choices' => $this->titleService->getTitleAsFormChoices(),
             'country_choices' => $this->countryChoices(),
+            'states' => $this->stateChoices->forLocale(),
         ];
     }
 
@@ -251,7 +254,7 @@ final class AddressController
             phone: $this->stringOrNull($data['phone'] ?? null),
             company: $this->stringOrNull($data['company'] ?? null),
             isDefault: 0,
-            state: null,
+            state: isset($data['state']) && $data['state'] !== '' ? (int) $data['state'] : null,
         );
     }
 
@@ -274,6 +277,7 @@ final class AddressController
             'zipcode' => $address->getZipcode(),
             'city' => $address->getCity(),
             'country' => $address->getCountryId(),
+            'state' => $address->getStateId(),
             'phone' => $address->getPhone(),
             'cellphone' => $address->getCellphone(),
         ];

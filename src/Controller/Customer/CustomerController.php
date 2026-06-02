@@ -27,6 +27,7 @@ use BackOfficeDefaultTwigBundle\Service\Admin\AdminLogger;
 use BackOfficeDefaultTwigBundle\Service\Customer\CustomerFilterPresenter;
 use BackOfficeDefaultTwigBundle\Service\Customer\CustomerFilters;
 use BackOfficeDefaultTwigBundle\Service\Customer\CustomerListRowPresenter;
+use BackOfficeDefaultTwigBundle\Service\I18n\StateChoiceProvider;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -79,6 +80,7 @@ final class CustomerController
         private readonly CustomerFilterPresenter $filterPresenter,
         private readonly CustomerListRowPresenter $rowPresenter,
         private readonly OrderRepository $orderRepository,
+        private readonly StateChoiceProvider $stateChoices,
     ) {
     }
 
@@ -202,6 +204,7 @@ final class CustomerController
             [
                 'title_choices' => $this->titleService->getTitleAsFormChoices(),
                 'country_choices' => $this->countryChoices($this->defaultLocale()),
+                'states' => $this->stateChoices->forLocale($this->defaultLocale()),
             ],
         );
 
@@ -356,6 +359,7 @@ final class CustomerController
             'title_choices' => $this->titleService->getTitleAsFormChoices(),
             'country_choices' => $this->countryChoices($locale),
             'lang_choices' => $this->langChoices(),
+            'states' => $this->stateChoices->forLocale($locale),
         ];
     }
 
@@ -393,7 +397,7 @@ final class CustomerController
             discount: isset($data['discount']) && $data['discount'] !== '' ? (float) $data['discount'] : null,
             company: $this->stringOrNull($data['company'] ?? null),
             ref: null,
-            state: null,
+            state: isset($data['state']) && $data['state'] !== '' ? (int) $data['state'] : null,
         );
     }
 
@@ -482,6 +486,7 @@ final class CustomerController
             'zipcode' => $address?->getZipcode(),
             'city' => $address?->getCity(),
             'country' => $address?->getCountryId(),
+            'state' => $address?->getStateId(),
         ];
     }
 

@@ -34,6 +34,13 @@ final class AddressType extends AbstractType
     {
         $tr = $this->translator;
 
+        $stateChoices = [];
+        $stateCountry = [];
+        foreach ($options['states'] as $state) {
+            $stateChoices[$state['title']] = $state['id'];
+            $stateCountry[$state['id']] = $state['country_id'];
+        }
+
         $builder
             ->add('label', TextType::class, [
                 'constraints' => [new NotBlank()],
@@ -82,6 +89,18 @@ final class AddressType extends AbstractType
                 'constraints' => [new NotBlank()],
                 'label' => $tr->trans('Country'),
                 'placeholder' => false,
+                'attr' => [
+                    'data-bo-state-cascade-target' => 'country',
+                    'data-action' => 'change->bo-state-cascade#sync',
+                ],
+            ])
+            ->add('state', ChoiceType::class, [
+                'choices' => $stateChoices,
+                'choice_attr' => static fn ($id): array => ['data-country-id' => (string) ($stateCountry[$id] ?? '')],
+                'required' => false,
+                'placeholder' => '-',
+                'label' => $tr->trans('State'),
+                'attr' => ['data-bo-state-cascade-target' => 'state'],
             ])
             ->add('phone', TextType::class, [
                 'required' => false,
@@ -108,10 +127,12 @@ final class AddressType extends AbstractType
             ->setDefaults([
                 'include_id' => false,
                 'csrf_token_id' => 'admin.address',
+                'states' => [],
             ])
             ->setRequired(['title_choices', 'country_choices'])
             ->setAllowedTypes('include_id', 'bool')
             ->setAllowedTypes('title_choices', 'array')
-            ->setAllowedTypes('country_choices', 'array');
+            ->setAllowedTypes('country_choices', 'array')
+            ->setAllowedTypes('states', 'array');
     }
 }

@@ -40,6 +40,13 @@ final class CustomerType extends AbstractType
     {
         $tr = $this->translator;
 
+        $stateChoices = [];
+        $stateCountry = [];
+        foreach ($options['states'] as $state) {
+            $stateChoices[$state['title']] = $state['id'];
+            $stateCountry[$state['id']] = $state['country_id'];
+        }
+
         $builder
             ->add('title', ChoiceType::class, [
                 'choices' => $options['title_choices'],
@@ -84,6 +91,18 @@ final class CustomerType extends AbstractType
                 'constraints' => [new NotBlank()],
                 'label' => $tr->trans('Country'),
                 'placeholder' => false,
+                'attr' => [
+                    'data-bo-state-cascade-target' => 'country',
+                    'data-action' => 'change->bo-state-cascade#sync',
+                ],
+            ])
+            ->add('state', ChoiceType::class, [
+                'choices' => $stateChoices,
+                'choice_attr' => static fn ($id): array => ['data-country-id' => (string) ($stateCountry[$id] ?? '')],
+                'required' => false,
+                'placeholder' => '-',
+                'label' => $tr->trans('State'),
+                'attr' => ['data-bo-state-cascade-target' => 'state'],
             ])
             ->add('phone', TextType::class, [
                 'required' => false,
@@ -141,6 +160,7 @@ final class CustomerType extends AbstractType
                 'include_password' => false,
                 'password_required' => false,
                 'csrf_token_id' => 'admin.customer',
+                'states' => [],
             ])
             ->setRequired(['title_choices', 'country_choices', 'lang_choices'])
             ->setAllowedTypes('include_id', 'bool')
@@ -148,6 +168,7 @@ final class CustomerType extends AbstractType
             ->setAllowedTypes('password_required', 'bool')
             ->setAllowedTypes('title_choices', 'array')
             ->setAllowedTypes('country_choices', 'array')
-            ->setAllowedTypes('lang_choices', 'array');
+            ->setAllowedTypes('lang_choices', 'array')
+            ->setAllowedTypes('states', 'array');
     }
 }
