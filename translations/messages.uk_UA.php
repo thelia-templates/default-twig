@@ -1,5 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the Thelia package.
+ * http://www.thelia.net
+ *
+ * (c) OpenStudio <info@thelia.net>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 return [
     '%action failed: %error' => '%action не вдалося: %error',
     '%count% article' => '%count% стаття',
@@ -241,6 +253,7 @@ return [
     'Configure this module' => 'Налаштувати цей модуль',
     'Confirm' => 'Підтвердити',
     'Confirm changes' => 'Підтвердити зміни',
+    'Confirm email address' => 'Підтвердьте адресу електронної пошти',
     'Confirm new password' => 'Підтвердіть новий пароль',
     'Confirm password' => 'Підтвердіть пароль',
     'Connection timeout (seconds)' => 'Час очікування з\'єднання (секунди)',
@@ -433,7 +446,7 @@ return [
     'Do you really want to delete this administrator?' => 'Ви дійсно хочете видалити цього адміністратора?',
     'Do you really want to delete this attribute?' => 'Ви дійсно хочете видалити цей атрибут?',
     'Do you really want to delete this brand?' => 'Ви дійсно хочете видалити цю торгову марку?',
-    'Do you really want to delete this category? Subcategories and products are not deleted but become orphaned.' => 'Ви дійсно хочете видалити цю категорію? Підкатегорії та товари не будуть видалені, але стануть безкатегорійними.',
+    'Do you really want to delete this category? Its subcategories and the products it owns will also be deleted.' => 'Ви дійсно хочете видалити цю категорію? Її підкатегорії та товари, що їй належать, також будуть видалені.',
     'Do you really want to delete this country?' => 'Ви дійсно хочете видалити цю країну?',
     'Do you really want to delete this coupon ?' => 'Ви дійсно хочете видалити цей купон?',
     'Do you really want to delete this currency?' => 'Ви дійсно хочете видалити цю валюту?',
@@ -790,6 +803,7 @@ return [
     'Modules checked: the list is up to date.' => 'Модулі перевірено: список актуальний.',
     'Modules management' => 'Управління модулями',
     'More actions' => 'Більше дій',
+    'More results are available. Please refine your search.' => 'Доступні додаткові результати. Будь ласка, уточніть пошук.',
     'Move' => 'Перемістити',
     'Name' => 'Назва',
     'Namespace of main class' => 'Простір імен головного класу',
@@ -981,6 +995,7 @@ return [
     'Phone & Fax' => 'Телефон і факс',
     'Pick one value per attribute to define this combination.' => 'Виберіть одне значення для кожного атрибута, щоб визначити цю комбінацію.',
     'Plain text message body' => 'Тіло повідомлення у простому тексті',
+    'Please enter at least %count% characters to search.' => 'Введіть щонайменше %count% символів для пошуку.',
     'Please enter the date using the %fmt format' => 'Будь ласка, введіть дату у форматі %fmt',
     'Please select a condition' => 'Будь ласка, виберіть умову',
     'Please select a coupon type' => 'Будь ласка, виберіть тип купона',
@@ -1198,6 +1213,7 @@ return [
     'State name' => 'Назва регіону',
     'States' => 'Регіони',
     'States / Provinces' => 'Регіони / Провінції',
+    'States pagination' => 'Посторінкова навігація областей',
     'Status' => 'Статус',
     'Stock' => 'Залишок',
     'Stock quantity' => 'Кількість на складі',
@@ -1256,6 +1272,7 @@ return [
     'The archive must contain a single root directory matching the module code.' => 'Архів повинен містити одну кореневу директорію, що відповідає коду модуля.',
     'The default pricing is used when no combination is defined.' => 'Стандартне ціноутворення використовується, коли не визначено жодної комбінації.',
     'The directory local/I18n does not exist or is not writable. Please fix this issue before.' => 'Директорія local/I18n не існує або недоступна для запису. Будь ласка, виправте цю проблему спочатку.',
+    'The end date must be after the start date.' => 'Дата завершення має бути пізнішою за дату початку.',
     'The lost admin password recovery feature is disabled.' => 'Функція відновлення забутого пароля адміністратора вимкнена.',
     'The message has been successfully sent to %recipient.' => 'Повідомлення успішно надіслано %recipient.',
     'The module title is required.' => 'Назва модуля є обов\'язковою.',
@@ -1266,6 +1283,7 @@ return [
     'The short label shown on discounted products (e.g. "Sale", "-20%").' => 'Короткий ярлик на товарах зі знижкою (наприклад, "Розпродаж", "-20%").',
     'The symbol, such as $, £, €, ...' => 'Символ, наприклад $, £, €, ...',
     'The Twig editor does not support this condition type yet (%name).' => 'Редактор Twig ще не підтримує цей тип умови (%name).',
+    'The two email addresses do not match.' => 'Дві адреси електронної пошти не збігаються.',
     'The two passwords do not match.' => 'Два паролі не збігаються.',
     'Thelia' => 'Thelia',
     'Thelia core' => 'Ядро Thelia',

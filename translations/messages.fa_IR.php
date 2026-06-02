@@ -1,5 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the Thelia package.
+ * http://www.thelia.net
+ *
+ * (c) OpenStudio <info@thelia.net>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 return [
     '%action failed: %error' => '%action انجام نشد: %error',
     '%count% article' => '%count% مقاله',
@@ -241,6 +253,7 @@ return [
     'Configure this module' => 'پیکربندی این ماژول',
     'Confirm' => 'تایید',
     'Confirm changes' => 'تایید تغییرات',
+    'Confirm email address' => 'تأیید نشانی ایمیل',
     'Confirm new password' => 'تأیید رمز عبور جدید',
     'Confirm password' => 'تأیید رمز عبور',
     'Connection timeout (seconds)' => 'مهلت اتصال (ثانیه)',
@@ -433,7 +446,7 @@ return [
     'Do you really want to delete this administrator?' => 'آیا مطمئن هستید که می‌خواهید این مدیر را حذف کنید؟',
     'Do you really want to delete this attribute?' => 'آیا مطمئن هستید که می‌خواهید این خصوصیت را حذف کنید؟',
     'Do you really want to delete this brand?' => 'آیا مطمئن هستید که می‌خواهید این برند را حذف کنید؟',
-    'Do you really want to delete this category? Subcategories and products are not deleted but become orphaned.' => 'آیا مطمئن هستید که می‌خواهید این دسته‌بندی را حذف کنید؟ زیردسته‌ها و محصولات حذف نمی‌شوند اما بی‌والد می‌مانند.',
+    'Do you really want to delete this category? Its subcategories and the products it owns will also be deleted.' => 'آیا واقعاً می‌خواهید این دسته را حذف کنید؟ زیردسته‌های آن و محصولات متعلق به آن نیز حذف خواهند شد.',
     'Do you really want to delete this country?' => 'آیا مطمئن هستید که می‌خواهید این کشور را حذف کنید؟',
     'Do you really want to delete this coupon ?' => 'آیا مطمئنید که می خواهید این کوپن را حذف کنید؟',
     'Do you really want to delete this currency?' => 'آیا مطمئن هستید که می‌خواهید این ارز را حذف کنید؟',
@@ -790,6 +803,7 @@ return [
     'Modules checked: the list is up to date.' => 'ماژول‌ها بررسی شدند: لیست به‌روز است.',
     'Modules management' => 'مدیریت ماژول‌ها',
     'More actions' => 'عملیات بیشتر',
+    'More results are available. Please refine your search.' => 'نتایج بیشتری در دسترس است. لطفاً جستجوی خود را محدودتر کنید.',
     'Move' => 'انتقال',
     'Name' => 'نام',
     'Namespace of main class' => 'فضای نام کلاس اصلی',
@@ -981,6 +995,7 @@ return [
     'Phone & Fax' => 'تلفن و فکس',
     'Pick one value per attribute to define this combination.' => 'برای تعریف این ترکیب، یک مقدار به ازای هر خصوصیت انتخاب کنید.',
     'Plain text message body' => 'متن پیام ساده',
+    'Please enter at least %count% characters to search.' => 'برای جستجو حداقل %count% نویسه وارد کنید.',
     'Please enter the date using the %fmt format' => 'ممنون برای مشخص کردن فرمت برای تاریخ %fmt',
     'Please select a condition' => 'لطفا شرایط را انتخاب کنید',
     'Please select a coupon type' => 'لطفا نوع کوپن را انتخاب کنید',
@@ -1199,6 +1214,7 @@ return [
     'State name' => 'نام ایالت',
     'States' => 'ایالت‌ها',
     'States / Provinces' => 'ایالت‌ها / استان‌ها',
+    'States pagination' => 'صفحه‌بندی استان‌ها',
     'Status' => 'وضعیت',
     'Stock' => 'موجودی',
     'Stock quantity' => 'موجودی انبار',
@@ -1257,6 +1273,7 @@ return [
     'The archive must contain a single root directory matching the module code.' => 'آرشیو باید شامل یک دایرکتوری ریشه منفرد مطابق با کد ماژول باشد.',
     'The default pricing is used when no combination is defined.' => 'وقتی هیچ ترکیبی تعریف نشده باشد، قیمت گذاری پیش فرض استفاده خواهد شد.',
     'The directory local/I18n does not exist or is not writable. Please fix this issue before.' => 'پوشه‌ی local/I18n یا وجود ندارد، یا قابل نوشتن نیست. لطفا اول این مشکل را حل کنید.',
+    'The end date must be after the start date.' => 'تاریخ پایان باید بعد از تاریخ شروع باشد.',
     'The lost admin password recovery feature is disabled.' => 'قابلیت بازیابی رمز عبور فراموش شده مدیر غیرفعال است.',
     'The message has been successfully sent to %recipient.' => 'پیام با موفقیت به %recipient ارسال شد.',
     'The module title is required.' => 'عنوان ماژول الزامی است.',
@@ -1267,6 +1284,7 @@ return [
     'The short label shown on discounted products (e.g. "Sale", "-20%").' => 'برچسب کوتاهی که روی محصولات تخفیف‌دار نمایش داده می‌شود (مثلاً "حراج"، "-۲۰٪").',
     'The symbol, such as $, £, €, ...' => 'نماد، مانند $، £، €، ...',
     'The Twig editor does not support this condition type yet (%name).' => 'ویرایشگر Twig هنوز از این نوع شرط پشتیبانی نمی‌کند (%name).',
+    'The two email addresses do not match.' => 'دو نشانی ایمیل با هم مطابقت ندارند.',
     'The two passwords do not match.' => 'دو رمز عبور با هم مطابقت ندارند.',
     'Thelia' => 'Thelia',
     'Thelia core' => 'هسته فروشگاه',

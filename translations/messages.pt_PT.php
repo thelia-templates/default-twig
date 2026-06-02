@@ -1,5 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the Thelia package.
+ * http://www.thelia.net
+ *
+ * (c) OpenStudio <info@thelia.net>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 return [
     '%action failed: %error' => '%action falhou: %error',
     '%count% article' => '%count% artigo',
@@ -241,6 +253,7 @@ return [
     'Configure this module' => 'Configurar este módulo',
     'Confirm' => 'Confirmar',
     'Confirm changes' => 'Confirmar alterações',
+    'Confirm email address' => 'Confirmar o endereço de e-mail',
     'Confirm new password' => 'Confirmar nova palavra-passe',
     'Confirm password' => 'Confirmar palavra-passe',
     'Connection timeout (seconds)' => 'Tempo limite de ligação (segundos)',
@@ -433,7 +446,7 @@ return [
     'Do you really want to delete this administrator?' => 'Tem a certeza de que pretende eliminar este administrador?',
     'Do you really want to delete this attribute?' => 'Tem a certeza de que pretende eliminar este atributo?',
     'Do you really want to delete this brand?' => 'Tem a certeza de que pretende eliminar esta marca?',
-    'Do you really want to delete this category? Subcategories and products are not deleted but become orphaned.' => 'Tem a certeza de que pretende eliminar esta categoria? As subcategorias e os produtos não são eliminados, mas ficam órfãos.',
+    'Do you really want to delete this category? Its subcategories and the products it owns will also be deleted.' => 'Tem a certeza de que pretende eliminar esta categoria? As suas subcategorias e os produtos que lhe pertencem também serão eliminados.',
     'Do you really want to delete this country?' => 'Tem a certeza de que pretende eliminar este país?',
     'Do you really want to delete this coupon ?' => 'Tem a certeza de que pretende eliminar este cupão?',
     'Do you really want to delete this currency?' => 'Tem a certeza de que pretende eliminar esta moeda?',
@@ -790,6 +803,7 @@ return [
     'Modules checked: the list is up to date.' => 'Módulos verificados: a lista está atualizada.',
     'Modules management' => 'Gestão de módulos',
     'More actions' => 'Mais ações',
+    'More results are available. Please refine your search.' => 'Estão disponíveis mais resultados. Refine a sua pesquisa.',
     'Move' => 'Mover',
     'Name' => 'Nome',
     'Namespace of main class' => 'Namespace da classe principal',
@@ -981,6 +995,7 @@ return [
     'Phone & Fax' => 'Telefone e Fax',
     'Pick one value per attribute to define this combination.' => 'Selecione um valor por atributo para definir esta combinação.',
     'Plain text message body' => 'Corpo da mensagem em texto simples',
+    'Please enter at least %count% characters to search.' => 'Introduza pelo menos %count% caracteres para pesquisar.',
     'Please enter the date using the %fmt format' => 'Por favor, introduza a data no formato %fmt',
     'Please select a condition' => 'Por favor, selecione uma condição',
     'Please select a coupon type' => 'Por favor, selecione um tipo de cupão',
@@ -1198,6 +1213,7 @@ return [
     'State name' => 'Nome do estado/distrito',
     'States' => 'Estados/Distritos',
     'States / Provinces' => 'Estados / Províncias',
+    'States pagination' => 'Paginação dos estados',
     'Status' => 'Estado',
     'Stock' => 'Stock',
     'Stock quantity' => 'Quantidade em stock',
@@ -1256,6 +1272,7 @@ return [
     'The archive must contain a single root directory matching the module code.' => 'O arquivo deve conter um único diretório raiz correspondente ao código do módulo.',
     'The default pricing is used when no combination is defined.' => 'O preço predefinido é utilizado quando não está definida nenhuma combinação.',
     'The directory local/I18n does not exist or is not writable. Please fix this issue before.' => 'O diretório local/I18n não existe ou não tem permissão de escrita. Por favor, corrija este problema antes de continuar.',
+    'The end date must be after the start date.' => 'A data de fim deve ser posterior à data de início.',
     'The lost admin password recovery feature is disabled.' => 'A funcionalidade de recuperação de palavra-passe do administrador está desativada.',
     'The message has been successfully sent to %recipient.' => 'A mensagem foi enviada com sucesso para %recipient.',
     'The module title is required.' => 'O título do módulo é obrigatório.',
@@ -1266,6 +1283,7 @@ return [
     'The short label shown on discounted products (e.g. "Sale", "-20%").' => 'A etiqueta curta exibida nos produtos com desconto (ex: "Promoção", "-20%").',
     'The symbol, such as $, £, €, ...' => 'O símbolo, como $, £, €, ...',
     'The Twig editor does not support this condition type yet (%name).' => 'O editor Twig ainda não suporta este tipo de condição (%name).',
+    'The two email addresses do not match.' => 'Os dois endereços de e-mail não coincidem.',
     'The two passwords do not match.' => 'As duas palavras-passe não coincidem.',
     'Thelia' => 'Thelia',
     'Thelia core' => 'Thelia core',

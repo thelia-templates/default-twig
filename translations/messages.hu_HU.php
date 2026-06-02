@@ -1,5 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the Thelia package.
+ * http://www.thelia.net
+ *
+ * (c) OpenStudio <info@thelia.net>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 return [
     '%action failed: %error' => '%action sikertelen: %error',
     '%count% article' => '%count% cikk',
@@ -241,6 +253,7 @@ return [
     'Configure this module' => 'Modul konfigurálása',
     'Confirm' => 'Jóváhagy',
     'Confirm changes' => 'Változtatások megerősítése',
+    'Confirm email address' => 'E-mail-cím megerősítése',
     'Confirm new password' => 'Új jelszó megerősítése',
     'Confirm password' => 'Jelszó megerősítése',
     'Connection timeout (seconds)' => 'Kapcsolódási időtúllépés (másodperc)',
@@ -433,7 +446,7 @@ return [
     'Do you really want to delete this administrator?' => 'Biztosan törölni kívánja ezt az adminisztrátort?',
     'Do you really want to delete this attribute?' => 'Biztosan törölni kívánja ezt a tulajdonságot?',
     'Do you really want to delete this brand?' => 'Biztosan törölni kívánja ezt a márkát?',
-    'Do you really want to delete this category? Subcategories and products are not deleted but become orphaned.' => 'Biztosan törölni kívánja ezt a kategóriát? Az alkategóriák és termékek nem törlődnek, de árva elemekké válnak.',
+    'Do you really want to delete this category? Its subcategories and the products it owns will also be deleted.' => 'Biztosan törli ezt a kategóriát? Az alkategóriái és a hozzá tartozó termékek is törlődnek.',
     'Do you really want to delete this country?' => 'Biztosan törölni kívánja ezt az országot?',
     'Do you really want to delete this coupon ?' => 'Valóban törölni akarja ezt a kupont?',
     'Do you really want to delete this currency?' => 'Biztosan törölni kívánja ezt a pénznemet?',
@@ -790,6 +803,7 @@ return [
     'Modules checked: the list is up to date.' => 'Modulok ellenőrizve: a lista naprakész.',
     'Modules management' => 'Modulok kezelése',
     'More actions' => 'További műveletek',
+    'More results are available. Please refine your search.' => 'További találatok érhetők el. Kérjük, pontosítsa a keresést.',
     'Move' => 'Áthelyez',
     'Name' => 'Név',
     'Namespace of main class' => 'Főosztály névtere',
@@ -981,6 +995,7 @@ return [
     'Phone & Fax' => 'Telefon és fax',
     'Pick one value per attribute to define this combination.' => 'Válasszon egy értéket minden tulajdonsághoz a kombináció meghatározásához.',
     'Plain text message body' => 'Egyszerű szöveges üzenet törzse',
+    'Please enter at least %count% characters to search.' => 'A kereséshez adjon meg legalább %count% karaktert.',
     'Please enter the date using the %fmt format' => 'Kérem az következő formátumba adja meg a dátumot: %fmt',
     'Please select a condition' => 'Kérem válasszon feltételt',
     'Please select a coupon type' => 'Kérem válasszson kupon típust',
@@ -1199,6 +1214,7 @@ return [
     'State name' => 'Állam / Megye neve',
     'States' => 'Államok / Megyék',
     'States / Provinces' => 'Államok / Tartományok',
+    'States pagination' => 'Államok lapozása',
     'Status' => 'Státusz',
     'Stock' => 'Raktár',
     'Stock quantity' => 'Készlet mennyisége',
@@ -1257,6 +1273,7 @@ return [
     'The archive must contain a single root directory matching the module code.' => 'Az archívumnak egyetlen gyökérkönyvtárat kell tartalmaznia, amely megfelel a modulkódnak.',
     'The default pricing is used when no combination is defined.' => 'Az alapértelmezett árazást akkor alkalmazza a rendszer, ha nincs kombináció megadva.',
     'The directory local/I18n does not exist or is not writable. Please fix this issue before.' => 'A local/I18n könyvtár nem létezik vagy nem írható. Kérjük, előbb oldja meg ezt a problémát.',
+    'The end date must be after the start date.' => 'A befejezés dátumának a kezdő dátum utáninak kell lennie.',
     'The lost admin password recovery feature is disabled.' => 'Az elfelejtett rendszergazdai jelszó visszaállítása le van tiltva.',
     'The message has been successfully sent to %recipient.' => 'Az üzenet sikeresen elküldésre került a következő címzettnek: %recipient.',
     'The module title is required.' => 'A modul neve kötelező.',
@@ -1267,6 +1284,7 @@ return [
     'The short label shown on discounted products (e.g. "Sale", "-20%").' => 'A kedvezményes termékeken megjelenő rövid felirat (pl. "Akció", "-20%").',
     'The symbol, such as $, £, €, ...' => 'A szimbólum, például $, £, €, ...',
     'The Twig editor does not support this condition type yet (%name).' => 'A Twig szerkesztő még nem támogatja ezt a feltételtípust (%name).',
+    'The two email addresses do not match.' => 'A két e-mail-cím nem egyezik.',
     'The two passwords do not match.' => 'A két jelszó nem egyezik.',
     'Thelia' => 'Thelia',
     'Thelia core' => 'Thelia mag',

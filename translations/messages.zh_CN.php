@@ -1,5 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the Thelia package.
+ * http://www.thelia.net
+ *
+ * (c) OpenStudio <info@thelia.net>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 return [
     '%action failed: %error' => '%action 失败：%error',
     '%count% article' => '%count% 篇文章',
@@ -241,6 +253,7 @@ return [
     'Configure this module' => '配置此模块',
     'Confirm' => '确认',
     'Confirm changes' => '确认更改',
+    'Confirm email address' => '确认电子邮件地址',
     'Confirm new password' => '确认新密码',
     'Confirm password' => '确认密码',
     'Connection timeout (seconds)' => '连接超时（秒）',
@@ -433,7 +446,7 @@ return [
     'Do you really want to delete this administrator?' => '确定要删除此管理员吗？',
     'Do you really want to delete this attribute?' => '确定要删除此属性吗？',
     'Do you really want to delete this brand?' => '确定要删除此品牌吗？',
-    'Do you really want to delete this category? Subcategories and products are not deleted but become orphaned.' => '确定要删除此分类吗？子分类和商品不会被删除，但将变为孤立状态。',
+    'Do you really want to delete this category? Its subcategories and the products it owns will also be deleted.' => '您确定要删除此分类吗？其子分类以及归属于它的产品也将被删除。',
     'Do you really want to delete this country?' => '确定要删除此国家吗？',
     'Do you really want to delete this coupon ?' => '确定要删除此优惠券吗？',
     'Do you really want to delete this currency?' => '确定要删除此货币吗？',
@@ -790,6 +803,7 @@ return [
     'Modules checked: the list is up to date.' => '模块已检查：列表为最新状态。',
     'Modules management' => '模块管理',
     'More actions' => '更多操作',
+    'More results are available. Please refine your search.' => '还有更多结果可用。请优化您的搜索。',
     'Move' => '移动',
     'Name' => '名称',
     'Namespace of main class' => '主类命名空间',
@@ -981,6 +995,7 @@ return [
     'Phone & Fax' => '电话与传真',
     'Pick one value per attribute to define this combination.' => '请为每个属性选择一个值以定义此组合。',
     'Plain text message body' => '纯文本邮件正文',
+    'Please enter at least %count% characters to search.' => '请输入至少 %count% 个字符进行搜索。',
     'Please enter the date using the %fmt format' => '请使用 %fmt 格式输入日期',
     'Please select a condition' => '请选择条件',
     'Please select a coupon type' => '请选择优惠券类型',
@@ -1198,6 +1213,7 @@ return [
     'State name' => '省/州名称',
     'States' => '省/州',
     'States / Provinces' => '省/州',
+    'States pagination' => '州/省分页',
     'Status' => '状态',
     'Stock' => '库存',
     'Stock quantity' => '库存数量',
@@ -1256,6 +1272,7 @@ return [
     'The archive must contain a single root directory matching the module code.' => '压缩包必须包含一个与模块代码匹配的单一根目录。',
     'The default pricing is used when no combination is defined.' => '未定义组合时使用默认定价。',
     'The directory local/I18n does not exist or is not writable. Please fix this issue before.' => '目录 local/I18n 不存在或不可写，请先解决此问题。',
+    'The end date must be after the start date.' => '结束日期必须晚于开始日期。',
     'The lost admin password recovery feature is disabled.' => '管理员密码找回功能已禁用。',
     'The message has been successfully sent to %recipient.' => '消息已成功发送至 %recipient。',
     'The module title is required.' => '模块标题为必填项。',
@@ -1266,6 +1283,7 @@ return [
     'The short label shown on discounted products (e.g. "Sale", "-20%").' => '折扣商品上显示的简短标签（例如"特卖"、"-20%"）。',
     'The symbol, such as $, £, €, ...' => '货币符号，例如 $、£、€ 等。',
     'The Twig editor does not support this condition type yet (%name).' => 'Twig 编辑器暂不支持此条件类型（%name）。',
+    'The two email addresses do not match.' => '两个电子邮件地址不匹配。',
     'The two passwords do not match.' => '两次输入的密码不一致。',
     'Thelia' => 'Thelia',
     'Thelia core' => 'Thelia 核心',

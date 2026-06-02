@@ -1,5 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the Thelia package.
+ * http://www.thelia.net
+ *
+ * (c) OpenStudio <info@thelia.net>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 return [
     '%action failed: %error' => 'فشل %action: %error',
     '%count% article' => '%count% مقالة',
@@ -241,6 +253,7 @@ return [
     'Configure this module' => 'تكوين هذه الوحدة',
     'Confirm' => 'تأكيد',
     'Confirm changes' => 'تأكيد التغييرات',
+    'Confirm email address' => 'تأكيد عنوان البريد الإلكتروني',
     'Confirm new password' => 'تأكيد كلمة المرور الجديدة',
     'Confirm password' => 'تأكيد كلمة المرور',
     'Connection timeout (seconds)' => 'مهلة الاتصال (بالثواني)',
@@ -433,7 +446,7 @@ return [
     'Do you really want to delete this administrator?' => 'هل تريد فعلاً حذف هذا المسؤول؟',
     'Do you really want to delete this attribute?' => 'هل تريد فعلاً حذف هذه الخاصية؟',
     'Do you really want to delete this brand?' => 'هل تريد فعلاً حذف هذه العلامة التجارية؟',
-    'Do you really want to delete this category? Subcategories and products are not deleted but become orphaned.' => 'هل تريد فعلاً حذف هذه الفئة؟ لن يتم حذف الفئات الفرعية والمنتجات بل ستصبح بلا فئة رئيسية.',
+    'Do you really want to delete this category? Its subcategories and the products it owns will also be deleted.' => 'هل تريد حقًا حذف هذه الفئة؟ سيتم أيضًا حذف فئاتها الفرعية والمنتجات التابعة لها.',
     'Do you really want to delete this country?' => 'هل تريد فعلاً حذف هذه الدولة؟',
     'Do you really want to delete this coupon ?' => 'هل تريد فعلاً حذف هذا الكوبون؟',
     'Do you really want to delete this currency?' => 'هل تريد فعلاً حذف هذه العملة؟',
@@ -790,6 +803,7 @@ return [
     'Modules checked: the list is up to date.' => 'تم فحص الوحدات: القائمة محدّثة.',
     'Modules management' => 'إدارة الوحدات',
     'More actions' => 'المزيد من الإجراءات',
+    'More results are available. Please refine your search.' => 'تتوفر نتائج أخرى. يرجى تضييق نطاق بحثك.',
     'Move' => 'نقل',
     'Name' => 'الإسم',
     'Namespace of main class' => 'مساحة اسم الفئة الرئيسية',
@@ -981,6 +995,7 @@ return [
     'Phone & Fax' => 'الهاتف والفاكس',
     'Pick one value per attribute to define this combination.' => 'اختر قيمة واحدة لكل خاصية لتعريف هذه التوليفة.',
     'Plain text message body' => 'نص الرسالة بالنص العادي',
+    'Please enter at least %count% characters to search.' => 'يرجى إدخال %count% أحرف على الأقل للبحث.',
     'Please enter the date using the %fmt format' => 'يرجى إدخال التاريخ بتنسيق %fmt',
     'Please select a condition' => 'يرجى اختيار شرط',
     'Please select a coupon type' => 'يرجى اختيار نوع قسيمة الخصم',
@@ -1198,6 +1213,7 @@ return [
     'State name' => 'اسم الولاية',
     'States' => 'الولايات',
     'States / Provinces' => 'الولايات / المقاطعات',
+    'States pagination' => 'ترقيم صفحات الولايات',
     'Status' => 'الحالة',
     'Stock' => 'المخزون',
     'Stock quantity' => 'كمية المخزون',
@@ -1256,6 +1272,7 @@ return [
     'The archive must contain a single root directory matching the module code.' => 'يجب أن يحتوي الأرشيف على مجلد جذر واحد يطابق كود الوحدة.',
     'The default pricing is used when no combination is defined.' => 'يُستخدم السعر الافتراضي عندما لا تكون هناك تركيبة محددة.',
     'The directory local/I18n does not exist or is not writable. Please fix this issue before.' => 'المجلد local/I18n غير موجود أو لا يمكن الكتابة فيه. يرجى إصلاح هذه المشكلة أولاً.',
+    'The end date must be after the start date.' => 'يجب أن يكون تاريخ الانتهاء بعد تاريخ البدء.',
     'The lost admin password recovery feature is disabled.' => 'ميزة استرداد كلمة مرور المسؤول المفقودة معطّلة.',
     'The message has been successfully sent to %recipient.' => 'تم إرسال الرسالة بنجاح إلى %recipient.',
     'The module title is required.' => 'عنوان الوحدة مطلوب.',
@@ -1266,6 +1283,7 @@ return [
     'The short label shown on discounted products (e.g. "Sale", "-20%").' => 'التسمية المختصرة التي تظهر على المنتجات المخفَّضة (مثل: "تخفيض"، "-20%").',
     'The symbol, such as $, £, €, ...' => 'الرمز، مثل $، £، €، ...',
     'The Twig editor does not support this condition type yet (%name).' => 'محرر Twig لا يدعم هذا النوع من الشروط بعد (%name).',
+    'The two email addresses do not match.' => 'عنوانا البريد الإلكتروني غير متطابقين.',
     'The two passwords do not match.' => 'كلمتا المرور غير متطابقتين.',
     'Thelia' => 'Thelia',
     'Thelia core' => 'نواة Thelia',

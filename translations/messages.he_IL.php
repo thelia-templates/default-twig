@@ -1,5 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the Thelia package.
+ * http://www.thelia.net
+ *
+ * (c) OpenStudio <info@thelia.net>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 return [
     '%action failed: %error' => '%action נכשל: %error',
     '%count% article' => 'מאמר %count%',
@@ -241,6 +253,7 @@ return [
     'Configure this module' => 'הגדר מודול זה',
     'Confirm' => 'אשר',
     'Confirm changes' => 'אשר שינויים',
+    'Confirm email address' => 'אישור כתובת הדוא״ל',
     'Confirm new password' => 'אשר סיסמה חדשה',
     'Confirm password' => 'אשר סיסמה',
     'Connection timeout (seconds)' => 'פסק זמן חיבור (שניות)',
@@ -433,7 +446,7 @@ return [
     'Do you really want to delete this administrator?' => 'האם אתה בטוח שברצונך למחוק מנהל זה?',
     'Do you really want to delete this attribute?' => 'האם אתה בטוח שברצונך למחוק מאפיין זה?',
     'Do you really want to delete this brand?' => 'האם אתה בטוח שברצונך למחוק מותג זה?',
-    'Do you really want to delete this category? Subcategories and products are not deleted but become orphaned.' => 'האם אתה בטוח שברצונך למחוק קטגוריה זו? תת-קטגוריות ומוצרים לא יימחקו אך יהפכו ליתומים.',
+    'Do you really want to delete this category? Its subcategories and the products it owns will also be deleted.' => 'האם אתה בטוח שברצונך למחוק קטגוריה זו? תת-הקטגוריות שלה והמוצרים השייכים לה יימחקו גם הם.',
     'Do you really want to delete this country?' => 'האם אתה בטוח שברצונך למחוק מדינה זו?',
     'Do you really want to delete this coupon ?' => 'האם אתה בטוח שברצונך למחוק קופון זה?',
     'Do you really want to delete this currency?' => 'האם אתה בטוח שברצונך למחוק מטבע זה?',
@@ -790,6 +803,7 @@ return [
     'Modules checked: the list is up to date.' => 'המודולים נבדקו: הרשימה מעודכנת.',
     'Modules management' => 'ניהול מודולים',
     'More actions' => 'פעולות נוספות',
+    'More results are available. Please refine your search.' => 'זמינות תוצאות נוספות. אנא צמצם את החיפוש.',
     'Move' => 'העבר',
     'Name' => 'שם',
     'Namespace of main class' => 'מרחב שמות של מחלקה ראשית',
@@ -981,6 +995,7 @@ return [
     'Phone & Fax' => 'טלפון ופקס',
     'Pick one value per attribute to define this combination.' => 'בחר ערך אחד לכל מאפיין כדי להגדיר קומבינציה זו.',
     'Plain text message body' => 'גוף ההודעה בטקסט פשוט',
+    'Please enter at least %count% characters to search.' => 'יש להזין לפחות %count% תווים כדי לחפש.',
     'Please enter the date using the %fmt format' => 'אנא הזן את התאריך בפורמט %fmt',
     'Please select a condition' => 'אנא בחר תנאי',
     'Please select a coupon type' => 'אנא בחר סוג קופון',
@@ -1198,6 +1213,7 @@ return [
     'State name' => 'שם מחוז',
     'States' => 'מחוזות',
     'States / Provinces' => 'מחוזות / פרובינציות',
+    'States pagination' => 'עימוד מדינות',
     'Status' => 'סטטוס',
     'Stock' => 'מלאי',
     'Stock quantity' => 'כמות במלאי',
@@ -1256,6 +1272,7 @@ return [
     'The archive must contain a single root directory matching the module code.' => 'הארכיון חייב להכיל תיקיית שורש אחת התואמת לקוד המודול.',
     'The default pricing is used when no combination is defined.' => 'התמחור ברירת המחדל משמש כאשר לא מוגדרת שילוב.',
     'The directory local/I18n does not exist or is not writable. Please fix this issue before.' => 'הספרייה local/I18n אינה קיימת או שאין לה הרשאת כתיבה. אנא תקן בעיה זו תחילה.',
+    'The end date must be after the start date.' => 'תאריך הסיום חייב להיות מאוחר מתאריך ההתחלה.',
     'The lost admin password recovery feature is disabled.' => 'תכונת שחזור סיסמת הניהול הושבתה.',
     'The message has been successfully sent to %recipient.' => 'ההודעה נשלחה בהצלחה אל %recipient.',
     'The module title is required.' => 'כותרת המודול נדרשת.',
@@ -1266,6 +1283,7 @@ return [
     'The short label shown on discounted products (e.g. "Sale", "-20%").' => 'התווית הקצרה המוצגת על מוצרים מוזלים (לדוגמה: "מבצע", "-20%").',
     'The symbol, such as $, £, €, ...' => 'הסמל, כגון $, £, €, ...',
     'The Twig editor does not support this condition type yet (%name).' => 'עורך Twig אינו תומך עדיין בסוג תנאי זה (%name).',
+    'The two email addresses do not match.' => 'שתי כתובות הדוא״ל אינן תואמות.',
     'The two passwords do not match.' => 'שתי הסיסמאות אינן תואמות.',
     'Thelia' => 'Thelia',
     'Thelia core' => 'ליבת Thelia',

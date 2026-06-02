@@ -1,5 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the Thelia package.
+ * http://www.thelia.net
+ *
+ * (c) OpenStudio <info@thelia.net>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 return [
     '%action failed: %error' => '%action gagal: %error',
     '%count% article' => '%count% artikel',
@@ -241,6 +253,7 @@ return [
     'Configure this module' => 'Konfigurasikan modul ini',
     'Confirm' => 'Konfirmasi',
     'Confirm changes' => 'Konfirmasi perubahan',
+    'Confirm email address' => 'Konfirmasi alamat email',
     'Confirm new password' => 'Konfirmasi kata sandi baru',
     'Confirm password' => 'Konfirmasi kata sandi',
     'Connection timeout (seconds)' => 'Waktu habis koneksi (detik)',
@@ -433,7 +446,7 @@ return [
     'Do you really want to delete this administrator?' => 'Apakah Anda benar-benar ingin menghapus administrator ini?',
     'Do you really want to delete this attribute?' => 'Apakah Anda benar-benar ingin menghapus atribut ini?',
     'Do you really want to delete this brand?' => 'Apakah Anda benar-benar ingin menghapus merek ini?',
-    'Do you really want to delete this category? Subcategories and products are not deleted but become orphaned.' => 'Apakah Anda benar-benar ingin menghapus kategori ini? Subkategori dan produk tidak dihapus tetapi menjadi tidak terkait.',
+    'Do you really want to delete this category? Its subcategories and the products it owns will also be deleted.' => 'Apakah Anda yakin ingin menghapus kategori ini? Subkategori dan produk miliknya juga akan dihapus.',
     'Do you really want to delete this country?' => 'Apakah Anda benar-benar ingin menghapus negara ini?',
     'Do you really want to delete this coupon ?' => 'Apakah Anda benar-benar ingin menghapus kupon ini?',
     'Do you really want to delete this currency?' => 'Apakah Anda benar-benar ingin menghapus mata uang ini?',
@@ -790,6 +803,7 @@ return [
     'Modules checked: the list is up to date.' => 'Modul diperiksa: daftar sudah diperbarui.',
     'Modules management' => 'Manajemen modul',
     'More actions' => 'Tindakan lainnya',
+    'More results are available. Please refine your search.' => 'Hasil lainnya tersedia. Persempit pencarian Anda.',
     'Move' => 'Pindah',
     'Name' => 'Nama',
     'Namespace of main class' => 'Namespace kelas utama',
@@ -981,6 +995,7 @@ return [
     'Phone & Fax' => 'Telepon & Faks',
     'Pick one value per attribute to define this combination.' => 'Pilih satu nilai per atribut untuk mendefinisikan kombinasi ini.',
     'Plain text message body' => 'Isi pesan teks biasa',
+    'Please enter at least %count% characters to search.' => 'Masukkan minimal %count% karakter untuk mencari.',
     'Please enter the date using the %fmt format' => 'Silakan masukkan tanggal dalam format %fmt',
     'Please select a condition' => 'Silakan pilih kondisi',
     'Please select a coupon type' => 'Silakan pilih jenis kupon',
@@ -1198,6 +1213,7 @@ return [
     'State name' => 'Nama provinsi',
     'States' => 'Provinsi',
     'States / Provinces' => 'Provinsi / Wilayah',
+    'States pagination' => 'Penomoran halaman negara bagian',
     'Status' => 'Status',
     'Stock' => 'Stok',
     'Stock quantity' => 'Jumlah stok',
@@ -1256,6 +1272,7 @@ return [
     'The archive must contain a single root directory matching the module code.' => 'Arsip harus memuat satu direktori root yang sesuai dengan kode modul.',
     'The default pricing is used when no combination is defined.' => 'Harga default digunakan saat tidak ada kombinasi yang ditentukan.',
     'The directory local/I18n does not exist or is not writable. Please fix this issue before.' => 'Direktori local/I18n tidak ada atau tidak dapat ditulis. Harap perbaiki masalah ini terlebih dahulu.',
+    'The end date must be after the start date.' => 'Tanggal berakhir harus setelah tanggal mulai.',
     'The lost admin password recovery feature is disabled.' => 'Fitur pemulihan kata sandi admin yang hilang dinonaktifkan.',
     'The message has been successfully sent to %recipient.' => 'Pesan berhasil dikirim ke %recipient.',
     'The module title is required.' => 'Judul modul diperlukan.',
@@ -1266,6 +1283,7 @@ return [
     'The short label shown on discounted products (e.g. "Sale", "-20%").' => 'Label singkat yang ditampilkan pada produk yang didiskon (misalnya "Diskon", "-20%").',
     'The symbol, such as $, £, €, ...' => 'Simbol, seperti $, £, €, ...',
     'The Twig editor does not support this condition type yet (%name).' => 'Editor Twig belum mendukung jenis kondisi ini (%name).',
+    'The two email addresses do not match.' => 'Kedua alamat email tidak cocok.',
     'The two passwords do not match.' => 'Kedua kata sandi tidak cocok.',
     'Thelia' => 'Thelia',
     'Thelia core' => 'Inti Thelia',

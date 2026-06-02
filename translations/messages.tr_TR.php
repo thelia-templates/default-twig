@@ -1,5 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the Thelia package.
+ * http://www.thelia.net
+ *
+ * (c) OpenStudio <info@thelia.net>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 return [
     '%action failed: %error' => '%action başarısız oldu: %error',
     '%count% article' => '%count% makale',
@@ -241,6 +253,7 @@ return [
     'Configure this module' => 'Bu modülü yapılandır',
     'Confirm' => 'Onayla',
     'Confirm changes' => 'Değişiklikleri Onayla',
+    'Confirm email address' => 'E-posta adresini onayla',
     'Confirm new password' => 'Yeni şifreyi onayla',
     'Confirm password' => 'Şifreyi onayla',
     'Connection timeout (seconds)' => 'Bağlantı zaman aşımı (saniye)',
@@ -433,7 +446,7 @@ return [
     'Do you really want to delete this administrator?' => 'Bu yöneticiyi gerçekten silmek istiyor musunuz?',
     'Do you really want to delete this attribute?' => 'Bu özniteliği gerçekten silmek istiyor musunuz?',
     'Do you really want to delete this brand?' => 'Bu markayı gerçekten silmek istiyor musunuz?',
-    'Do you really want to delete this category? Subcategories and products are not deleted but become orphaned.' => 'Bu kategoriyi gerçekten silmek istiyor musunuz? Alt kategoriler ve ürünler silinmez ancak sahipsiz kalır.',
+    'Do you really want to delete this category? Its subcategories and the products it owns will also be deleted.' => 'Bu kategoriyi silmek istediğinizden emin misiniz? Alt kategorileri ve ona ait ürünler de silinecektir.',
     'Do you really want to delete this country?' => 'Bu ülkeyi gerçekten silmek istiyor musunuz?',
     'Do you really want to delete this coupon ?' => 'Bu kuponu silmek istiyor musunuz?',
     'Do you really want to delete this currency?' => 'Bu para birimini gerçekten silmek istiyor musunuz?',
@@ -790,6 +803,7 @@ return [
     'Modules checked: the list is up to date.' => 'Modüller kontrol edildi: liste güncel.',
     'Modules management' => 'Modüller yönetimi',
     'More actions' => 'Daha fazla işlem',
+    'More results are available. Please refine your search.' => 'Daha fazla sonuç mevcut. Lütfen aramanızı daraltın.',
     'Move' => 'Taşı',
     'Name' => 'Ad',
     'Namespace of main class' => 'Ana sınıfın ad alanı',
@@ -981,6 +995,7 @@ return [
     'Phone & Fax' => 'Telefon ve Faks',
     'Pick one value per attribute to define this combination.' => 'Bu kombinasyonu tanımlamak için her öznitelik için bir değer seçin.',
     'Plain text message body' => 'Düz metin mesaj içeriği',
+    'Please enter at least %count% characters to search.' => 'Aramak için en az %count% karakter girin.',
     'Please enter the date using the %fmt format' => 'Bir tarih biçimi belirtmek için teşekkür ederiz %fmt',
     'Please select a condition' => 'Lütfen bir koşul seçin',
     'Please select a coupon type' => 'Lütfen bir kupon türü seçin',
@@ -1199,6 +1214,7 @@ return [
     'State name' => 'Eyalet adı',
     'States' => 'Eyaletler',
     'States / Provinces' => 'Eyaletler / İller',
+    'States pagination' => 'Eyalet sayfalandırması',
     'Status' => 'Durum',
     'Stock' => 'Stok',
     'Stock quantity' => 'Stok miktarı',
@@ -1257,6 +1273,7 @@ return [
     'The archive must contain a single root directory matching the module code.' => 'Arşiv, modül koduyla eşleşen tek bir kök dizin içermelidir.',
     'The default pricing is used when no combination is defined.' => 'Yok kombinasyon tanımlandığında varsayılan fiyatlandırma kullanılır.',
     'The directory local/I18n does not exist or is not writable. Please fix this issue before.' => 'Dizin yerel/I18n yok veya yazılabilir değil. Lütfen önce bu sorunu düzelt.',
+    'The end date must be after the start date.' => 'Bitiş tarihi başlangıç tarihinden sonra olmalıdır.',
     'The lost admin password recovery feature is disabled.' => 'Kayıp yönetici şifresi kurtarma özelliği devre dışı.',
     'The message has been successfully sent to %recipient.' => 'Mesaj başarıyla %recipient adresine gönderildi.',
     'The module title is required.' => 'Modül başlığı zorunludur.',
@@ -1267,6 +1284,7 @@ return [
     'The short label shown on discounted products (e.g. "Sale", "-20%").' => 'İndirimli ürünlerde gösterilen kısa etiket (örn. "İndirim", "-20%").',
     'The symbol, such as $, £, €, ...' => '$, £, €, ... gibi semboller',
     'The Twig editor does not support this condition type yet (%name).' => 'Twig düzenleyicisi henüz bu koşul türünü desteklemiyor (%name).',
+    'The two email addresses do not match.' => 'İki e-posta adresi eşleşmiyor.',
     'The two passwords do not match.' => 'İki şifre eşleşmiyor.',
     'Thelia' => 'Thelia',
     'Thelia core' => 'Thelia çekirdek',

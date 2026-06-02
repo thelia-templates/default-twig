@@ -1,5 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the Thelia package.
+ * http://www.thelia.net
+ *
+ * (c) OpenStudio <info@thelia.net>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 return [
     '%action failed: %error' => '%action selhala: %error',
     '%count% article' => '%count% článek',
@@ -241,6 +253,7 @@ return [
     'Configure this module' => 'Konfigurovat tento modul',
     'Confirm' => 'Potvrdit',
     'Confirm changes' => 'Potvrdit změny',
+    'Confirm email address' => 'Potvrďte e-mailovou adresu',
     'Confirm new password' => 'Potvrdit nové heslo',
     'Confirm password' => 'Potvrdit heslo',
     'Connection timeout (seconds)' => 'Časový limit připojení (sekundy)',
@@ -433,7 +446,7 @@ return [
     'Do you really want to delete this administrator?' => 'Opravdu chcete smazat tohoto administrátora?',
     'Do you really want to delete this attribute?' => 'Opravdu chcete smazat tento atribut?',
     'Do you really want to delete this brand?' => 'Opravdu chcete smazat tuto značku?',
-    'Do you really want to delete this category? Subcategories and products are not deleted but become orphaned.' => 'Opravdu chcete smazat tuto kategorii? Podkategorie a produkty nebudou smazány, ale stanou se osiřelými.',
+    'Do you really want to delete this category? Its subcategories and the products it owns will also be deleted.' => 'Opravdu chcete tuto kategorii smazat? Její podkategorie a produkty, které jí náleží, budou rovněž smazány.',
     'Do you really want to delete this country?' => 'Opravdu chcete smazat tuto zemi?',
     'Do you really want to delete this coupon ?' => 'Opravdu chcete smazat tento kupón?',
     'Do you really want to delete this currency?' => 'Opravdu chcete smazat tuto měnu?',
@@ -790,6 +803,7 @@ return [
     'Modules checked: the list is up to date.' => 'Moduly zkontrolovány: seznam je aktuální.',
     'Modules management' => 'Správa modulů',
     'More actions' => 'Další akce',
+    'More results are available. Please refine your search.' => 'Jsou k dispozici další výsledky. Upřesněte prosím hledání.',
     'Move' => 'Přesunout',
     'Name' => 'Název',
     'Namespace of main class' => 'Jmenný prostor hlavní třídy',
@@ -981,6 +995,7 @@ return [
     'Phone & Fax' => 'Telefon a fax',
     'Pick one value per attribute to define this combination.' => 'Vyberte jednu hodnotu pro každý atribut a definujte tuto kombinaci.',
     'Plain text message body' => 'Tělo zprávy v prostém textu',
+    'Please enter at least %count% characters to search.' => 'Pro vyhledávání zadejte alespoň %count% znaků.',
     'Please enter the date using the %fmt format' => 'Zadejte prosím datum ve formátu %fmt',
     'Please select a condition' => 'Vyberte podmínku',
     'Please select a coupon type' => 'Vyberte typ kupónu',
@@ -1198,6 +1213,7 @@ return [
     'State name' => 'Název státu/kraje',
     'States' => 'Státy/kraje',
     'States / Provinces' => 'Státy / Provincie',
+    'States pagination' => 'Stránkování států',
     'Status' => 'Stav',
     'Stock' => 'Sklad',
     'Stock quantity' => 'Množství na skladě',
@@ -1256,6 +1272,7 @@ return [
     'The archive must contain a single root directory matching the module code.' => 'Archiv musí obsahovat jediný kořenový adresář odpovídající kódu modulu.',
     'The default pricing is used when no combination is defined.' => 'Výchozí cena se použije, pokud není definována žádná kombinace.',
     'The directory local/I18n does not exist or is not writable. Please fix this issue before.' => 'Adresář local/I18n neexistuje nebo není zapisovatelný. Prosím nejdříve opravte tento problém.',
+    'The end date must be after the start date.' => 'Datum konce musí být pozdější než datum začátku.',
     'The lost admin password recovery feature is disabled.' => 'Funkce obnovy zapomenutého hesla administrátora je zakázána.',
     'The message has been successfully sent to %recipient.' => 'Zpráva byla úspěšně odeslána příjemci %recipient.',
     'The module title is required.' => 'Název modulu je povinný.',
@@ -1266,6 +1283,7 @@ return [
     'The short label shown on discounted products (e.g. "Sale", "-20%").' => 'Krátký popisek zobrazený na zlevněných produktech (např. "Výprodej", "-20%").',
     'The symbol, such as $, £, €, ...' => 'Symbol, například $, £, €, ...',
     'The Twig editor does not support this condition type yet (%name).' => 'Editor Twig zatím nepodporuje tento typ podmínky (%name).',
+    'The two email addresses do not match.' => 'Obě e-mailové adresy se neshodují.',
     'The two passwords do not match.' => 'Zadaná hesla se neshodují.',
     'Thelia' => 'Thelia',
     'Thelia core' => 'Thelia core',

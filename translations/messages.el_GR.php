@@ -1,5 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the Thelia package.
+ * http://www.thelia.net
+ *
+ * (c) OpenStudio <info@thelia.net>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 return [
     '%action failed: %error' => '%action απέτυχε: %error',
     '%count% article' => '%count% άρθρο',
@@ -241,6 +253,7 @@ return [
     'Configure this module' => 'Ρύθμιση αυτής της ενότητας',
     'Confirm' => 'Επιβεβαίωση',
     'Confirm changes' => 'Επιβεβαίωση αλλαγών',
+    'Confirm email address' => 'Επιβεβαίωση διεύθυνσης email',
     'Confirm new password' => 'Επιβεβαίωση νέου κωδικού',
     'Confirm password' => 'Επιβεβαίωση κωδικού',
     'Connection timeout (seconds)' => 'Χρονικό όριο σύνδεσης (δευτερόλεπτα)',
@@ -433,7 +446,7 @@ return [
     'Do you really want to delete this administrator?' => 'Θέλετε πραγματικά να διαγράψετε αυτόν τον διαχειριστή;',
     'Do you really want to delete this attribute?' => 'Θέλετε πραγματικά να διαγράψετε αυτό το χαρακτηριστικό;',
     'Do you really want to delete this brand?' => 'Θέλετε πραγματικά να διαγράψετε αυτή τη μάρκα;',
-    'Do you really want to delete this category? Subcategories and products are not deleted but become orphaned.' => 'Θέλετε πραγματικά να διαγράψετε αυτή την κατηγορία; Οι υποκατηγορίες και τα προϊόντα δεν διαγράφονται αλλά γίνονται ορφανά.',
+    'Do you really want to delete this category? Its subcategories and the products it owns will also be deleted.' => 'Θέλετε πραγματικά να διαγράψετε αυτήν την κατηγορία; Οι υποκατηγορίες της και τα προϊόντα που της ανήκουν θα διαγραφούν επίσης.',
     'Do you really want to delete this country?' => 'Θέλετε πραγματικά να διαγράψετε αυτή τη χώρα;',
     'Do you really want to delete this coupon ?' => 'Θέλετε πραγματικά να διαγράψετε αυτό το κουπόνι;',
     'Do you really want to delete this currency?' => 'Θέλετε πραγματικά να διαγράψετε αυτό το νόμισμα;',
@@ -790,6 +803,7 @@ return [
     'Modules checked: the list is up to date.' => 'Οι μονάδες ελέγχθηκαν: η λίστα είναι ενημερωμένη.',
     'Modules management' => 'Διαχείριση μονάδων',
     'More actions' => 'Περισσότερες ενέργειες',
+    'More results are available. Please refine your search.' => 'Υπάρχουν περισσότερα αποτελέσματα. Παρακαλώ περιορίστε την αναζήτησή σας.',
     'Move' => 'Μετακίνηση',
     'Name' => 'Όνομα',
     'Namespace of main class' => 'Namespace κύριας κλάσης',
@@ -981,6 +995,7 @@ return [
     'Phone & Fax' => 'Τηλέφωνο & Φαξ',
     'Pick one value per attribute to define this combination.' => 'Επιλέξτε μία τιμή ανά χαρακτηριστικό για να ορίσετε αυτόν τον συνδυασμό.',
     'Plain text message body' => 'Σώμα μηνύματος απλού κειμένου',
+    'Please enter at least %count% characters to search.' => 'Εισαγάγετε τουλάχιστον %count% χαρακτήρες για αναζήτηση.',
     'Please enter the date using the %fmt format' => 'Παρακαλώ εισάγετε την ημερομηνία με τη μορφή %fmt',
     'Please select a condition' => 'Επιλέξτε μια συνθήκη',
     'Please select a coupon type' => 'Επιλέξτε τύπο κουπονιού',
@@ -1198,6 +1213,7 @@ return [
     'State name' => 'Όνομα περιφέρειας',
     'States' => 'Περιφέρειες',
     'States / Provinces' => 'Περιφέρειες / Επαρχίες',
+    'States pagination' => 'Σελιδοποίηση πολιτειών',
     'Status' => 'Κατάσταση',
     'Stock' => 'Απόθεμα',
     'Stock quantity' => 'Ποσότητα αποθέματος',
@@ -1256,6 +1272,7 @@ return [
     'The archive must contain a single root directory matching the module code.' => 'Το αρχείο πρέπει να περιέχει έναν μόνο ριζικό κατάλογο που να αντιστοιχεί στον κωδικό ενότητας.',
     'The default pricing is used when no combination is defined.' => 'Η προεπιλεγμένη τιμολόγηση χρησιμοποιείται όταν δεν έχει οριστεί συνδυασμός.',
     'The directory local/I18n does not exist or is not writable. Please fix this issue before.' => 'Ο κατάλογος local/I18n δεν υπάρχει ή δεν είναι εγγράψιμος. Παρακαλούμε διορθώστε πρώτα αυτό το πρόβλημα.',
+    'The end date must be after the start date.' => 'Η ημερομηνία λήξης πρέπει να είναι μεταγενέστερη της ημερομηνίας έναρξης.',
     'The lost admin password recovery feature is disabled.' => 'Η λειτουργία ανάκτησης χαμένου κωδικού διαχειριστή είναι απενεργοποιημένη.',
     'The message has been successfully sent to %recipient.' => 'Το μήνυμα εστάλη επιτυχώς στον %recipient.',
     'The module title is required.' => 'Ο τίτλος ενότητας είναι υποχρεωτικός.',
@@ -1266,6 +1283,7 @@ return [
     'The short label shown on discounted products (e.g. "Sale", "-20%").' => 'Η σύντομη ετικέτα που εμφανίζεται σε προϊόντα με έκπτωση (π.χ. «Προσφορά», «-20%»).',
     'The symbol, such as $, £, €, ...' => 'Το σύμβολο, όπως $, £, €, ...',
     'The Twig editor does not support this condition type yet (%name).' => 'Ο επεξεργαστής Twig δεν υποστηρίζει ακόμη αυτόν τον τύπο συνθήκης (%name).',
+    'The two email addresses do not match.' => 'Οι δύο διευθύνσεις email δεν ταιριάζουν.',
     'The two passwords do not match.' => 'Οι δύο κωδικοί δεν ταιριάζουν.',
     'Thelia' => 'Thelia',
     'Thelia core' => 'Thelia core',

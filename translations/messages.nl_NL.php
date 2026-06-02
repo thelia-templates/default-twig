@@ -1,5 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * This file is part of the Thelia package.
+ * http://www.thelia.net
+ *
+ * (c) OpenStudio <info@thelia.net>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 return [
     '%action failed: %error' => '%action mislukt: %error',
     '%count% article' => '%count% artikel',
@@ -241,6 +253,7 @@ return [
     'Configure this module' => 'Deze module configureren',
     'Confirm' => 'Bevestigen',
     'Confirm changes' => 'Wijzigingen bevestigen',
+    'Confirm email address' => 'E-mailadres bevestigen',
     'Confirm new password' => 'Nieuw wachtwoord bevestigen',
     'Confirm password' => 'Wachtwoord bevestigen',
     'Connection timeout (seconds)' => 'Verbindingstime-out (seconden)',
@@ -433,7 +446,7 @@ return [
     'Do you really want to delete this administrator?' => 'Wilt u deze beheerder echt verwijderen?',
     'Do you really want to delete this attribute?' => 'Wilt u dit attribuut echt verwijderen?',
     'Do you really want to delete this brand?' => 'Wilt u dit merk echt verwijderen?',
-    'Do you really want to delete this category? Subcategories and products are not deleted but become orphaned.' => 'Wilt u deze categorie echt verwijderen? Subcategorieën en producten worden niet verwijderd maar komen zonder bovenliggende categorie te staan.',
+    'Do you really want to delete this category? Its subcategories and the products it owns will also be deleted.' => 'Weet u zeker dat u deze categorie wilt verwijderen? De subcategorieën en de bijbehorende producten worden ook verwijderd.',
     'Do you really want to delete this country?' => 'Wilt u dit land echt verwijderen?',
     'Do you really want to delete this coupon ?' => 'Wilt u deze coupon echt verwijderen?',
     'Do you really want to delete this currency?' => 'Wilt u deze valuta echt verwijderen?',
@@ -790,6 +803,7 @@ return [
     'Modules checked: the list is up to date.' => 'Modules gecontroleerd: de lijst is actueel.',
     'Modules management' => 'Modulebeheer',
     'More actions' => 'Meer acties',
+    'More results are available. Please refine your search.' => 'Er zijn meer resultaten beschikbaar. Verfijn uw zoekopdracht.',
     'Move' => 'Verplaatsen',
     'Name' => 'Naam',
     'Namespace of main class' => 'Namespace van de hoofdklasse',
@@ -981,6 +995,7 @@ return [
     'Phone & Fax' => 'Telefoon & Fax',
     'Pick one value per attribute to define this combination.' => 'Kies één waarde per attribuut om deze combinatie te definiëren.',
     'Plain text message body' => 'Berichttekst in platte tekst',
+    'Please enter at least %count% characters to search.' => 'Voer minstens %count% tekens in om te zoeken.',
     'Please enter the date using the %fmt format' => 'Voer de datum in met het formaat %fmt',
     'Please select a condition' => 'Selecteer een voorwaarde',
     'Please select a coupon type' => 'Selecteer een coupontype',
@@ -1198,6 +1213,7 @@ return [
     'State name' => 'Naam provincie',
     'States' => 'Provincies',
     'States / Provinces' => 'Staten / Provincies',
+    'States pagination' => 'Paginering van staten',
     'Status' => 'Status',
     'Stock' => 'Voorraad',
     'Stock quantity' => 'Voorraadhoeveelheid',
@@ -1256,6 +1272,7 @@ return [
     'The archive must contain a single root directory matching the module code.' => 'Het archief moet één hoofdmap bevatten die overeenkomt met de modulecode.',
     'The default pricing is used when no combination is defined.' => 'De standaardprijs wordt gebruikt wanneer er geen combinatie is gedefinieerd.',
     'The directory local/I18n does not exist or is not writable. Please fix this issue before.' => 'De map local/I18n bestaat niet of is niet beschrijfbaar. Los dit probleem eerst op.',
+    'The end date must be after the start date.' => 'De einddatum moet na de begindatum liggen.',
     'The lost admin password recovery feature is disabled.' => 'De functie voor het herstellen van een verloren beheerderswachtwoord is uitgeschakeld.',
     'The message has been successfully sent to %recipient.' => 'Het bericht is succesvol verzonden naar %recipient.',
     'The module title is required.' => 'De moduletitel is verplicht.',
@@ -1266,6 +1283,7 @@ return [
     'The short label shown on discounted products (e.g. "Sale", "-20%").' => 'Het korte label dat wordt weergegeven op afgeprijsde producten (bijv. "Actie", "-20%").',
     'The symbol, such as $, £, €, ...' => 'Het symbool, zoals $, £, €, ...',
     'The Twig editor does not support this condition type yet (%name).' => 'De Twig-editor ondersteunt dit voorwaardetype nog niet (%name).',
+    'The two email addresses do not match.' => 'De twee e-mailadressen komen niet overeen.',
     'The two passwords do not match.' => 'De twee wachtwoorden komen niet overeen.',
     'Thelia' => 'Thelia',
     'Thelia core' => 'Thelia core',
