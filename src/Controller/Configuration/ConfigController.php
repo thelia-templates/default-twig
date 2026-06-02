@@ -35,6 +35,8 @@ use Thelia\Core\Event\Config\ConfigUpdateEvent;
 use Thelia\Core\Event\TheliaEvents;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
+use Thelia\Core\Template\TemplateDefinition;
+use Thelia\Core\Template\TemplateHelperInterface;
 use Thelia\Model\Config;
 use Thelia\Model\ConfigQuery;
 use Thelia\Tools\TokenProvider;
@@ -56,6 +58,7 @@ final class ConfigController
         private readonly UrlGeneratorInterface $urls,
         private readonly TranslatorInterface $translator,
         private readonly EventDispatcherInterface $events,
+        private readonly TemplateHelperInterface $templateHelper,
     ) {
     }
 
@@ -289,14 +292,14 @@ final class ConfigController
             'id' => $id,
             'title' => $config->getTitle(),
             'name' => $config->getName(),
-            'value_html' => $this->renderValueCell($id, $value, $secured, $envOverridden),
+            'value_html' => $this->renderValueCell($id, $value, $secured, $envOverridden, $config->getName()),
             'env_overridden' => $envOverridden,
             'secured' => $secured,
             '_actions' => $actions,
         ];
     }
 
-    private function renderValueCell(int $id, string $value, bool $secured, bool $envOverridden): string
+    private function renderValueCell(int $id, string $value, bool $secured, bool $envOverridden, ?string $name): string
     {
         $escapedValue = htmlspecialchars($value, \ENT_QUOTES | \ENT_HTML5);
 
@@ -315,11 +318,51 @@ final class ConfigController
             return '<code>'.$escapedValue.'</code>';
         }
 
+        $templateType = $this->templateTypeForVariable($name);
+        if ($templateType !== null) {
+            return $this->renderTemplateSelect($id, $value, $templateType);
+        }
+
         return \sprintf(
             '<input type="text" class="form-control form-control-sm" name="variable[%d]" value="%s" data-testid="variable-inline-value-%d">',
             $id,
             $escapedValue,
             $id,
+        );
+    }
+
+    private function templateTypeForVariable(?string $name): ?int
+    {
+        if ($name === null || preg_match('/^active-([a-z]{3,5})-template$/', $name, $matches) !== 1) {
+            return null;
+        }
+
+        return match ($matches[1]) {
+            'front' => TemplateDefinition::FRONT_OFFICE,
+            'admin' => TemplateDefinition::BACK_OFFICE,
+            'pdf' => TemplateDefinition::PDF,
+            'mail', 'email' => TemplateDefinition::EMAIL,
+            default => null,
+        };
+    }
+
+    private function renderTemplateSelect(int $id, string $value, int $templateType): string
+    {
+        $options = '';
+        foreach ($this->templateHelper->getList($templateType) as $template) {
+            $templateName = $template->getName();
+            $options .= \sprintf(
+                '<option value="%1$s"%2$s>%1$s</option>',
+                htmlspecialchars($templateName, \ENT_QUOTES | \ENT_HTML5),
+                $templateName === $value ? ' selected' : '',
+            );
+        }
+
+        return \sprintf(
+            '<select class="form-select form-select-sm" name="variable[%d]" data-testid="variable-inline-value-%d">%s</select>',
+            $id,
+            $id,
+            $options,
         );
     }
 
