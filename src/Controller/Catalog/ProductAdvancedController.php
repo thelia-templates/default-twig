@@ -626,13 +626,39 @@ final class ProductAdvancedController
     }
 
     #[Route('/admin/product/default-price/update', name: 'admin.product.combination.defaut-price.update', methods: ['POST', 'GET'])]
-    public function combinationDefaultPriceUpdate(Request $request): Response
+    public function combinationDefaultPriceUpdate(Request $request, EventDispatcherInterface $events): Response
     {
         if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::UPDATE)) {
             return $denied;
         }
 
-        return new RedirectResponse($this->urls->generate(self::EDIT_ROUTE, ['product_id' => (int) $request->get('product_id', 0), 'current_tab' => 'pse']));
+        $productId = (int) $request->get('product_id', 0);
+        $product = ProductQuery::create()->findPk($productId);
+        if ($product === null) {
+            return new RedirectResponse($this->urls->generate('admin.products.default'));
+        }
+
+        $pseId = (int) $request->get('product_sale_element_id', 0);
+        if ($pseId > 0) {
+            $event = new ProductSaleElementUpdateEvent($product, $pseId);
+            $event
+                ->setReference((string) $request->get('reference', ''))
+                ->setPrice((float) $request->get('price', 0))
+                ->setCurrencyId((int) $request->get('currency', $this->defaultCurrencyId()))
+                ->setWeight((float) $request->get('weight', 0))
+                ->setQuantity((float) $request->get('quantity', 0))
+                ->setSalePrice((float) $request->get('sale_price', 0))
+                ->setOnsale($request->get('onsale') !== null ? 1 : 0)
+                ->setIsnew($request->get('isnew') !== null ? 1 : 0)
+                ->setIsdefault(true)
+                ->setEanCode((string) $request->get('ean_code', ''))
+                ->setTaxRuleId((int) $request->get('tax_rule', (int) $product->getTaxRuleId()))
+                ->setFromDefaultCurrency((int) $request->get('use_exchange_rate', 0));
+
+            $events->dispatch($event, TheliaEvents::PRODUCT_UPDATE_PRODUCT_SALE_ELEMENT);
+        }
+
+        return new RedirectResponse($this->urls->generate(self::EDIT_ROUTE, ['product_id' => $productId, 'current_tab' => 'pse']));
     }
 
     #[Route('/admin/product_sale_elements/{pseId}/{type}/{typeId}', name: 'admin.product_sale_elements.document_image_assoc', methods: ['GET'], requirements: ['pseId' => '\d+', 'typeId' => '\d+', 'type' => 'image|document|virtual'])]
