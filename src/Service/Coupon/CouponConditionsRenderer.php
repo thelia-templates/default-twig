@@ -24,6 +24,7 @@ use Thelia\Condition\Implementation\CartContainsCategories;
 use Thelia\Condition\Implementation\CartContainsProducts;
 use Thelia\Condition\Implementation\ConditionInterface;
 use Thelia\Condition\Implementation\ForSomeCustomers;
+use Thelia\Condition\Implementation\MatchForEveryone;
 use Thelia\Condition\Implementation\MatchForTotalAmount;
 use Thelia\Condition\Implementation\MatchForXArticles;
 use Thelia\Condition\Implementation\StartDate;
@@ -130,6 +131,7 @@ final readonly class CouponConditionsRenderer
     private function resolveTemplate(ConditionInterface $condition): ?string
     {
         return match (true) {
+            $condition instanceof MatchForEveryone => '@BackOfficeDefaultTwig/coupon/condition-fragments/match-for-everyone-condition.html.twig',
             $condition instanceof StartDate => '@BackOfficeDefaultTwig/coupon/condition-fragments/start-date-condition.html.twig',
             $condition instanceof MatchForTotalAmount => '@BackOfficeDefaultTwig/coupon/condition-fragments/cart-total-amount-condition.html.twig',
             $condition instanceof MatchForXArticles => '@BackOfficeDefaultTwig/coupon/condition-fragments/cart-item-count-condition.html.twig',
