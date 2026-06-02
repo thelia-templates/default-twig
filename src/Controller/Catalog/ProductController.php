@@ -129,6 +129,22 @@ final class ProductController
         );
     }
 
+    #[Route('/create-modal', name: 'create-modal', methods: ['GET'])]
+    public function createModalFragment(Request $request, int $default_category = 0): Response
+    {
+        if ($this->access->check(self::RESOURCE, [], AccessManager::CREATE)) {
+            return new Response('');
+        }
+
+        return new Response($this->twig->render('@BackOfficeDefaultTwig/catalog/product/_create_modal.html.twig', [
+            'create_form' => $this->buildCreateForm($request)->createView(),
+            'available_categories' => $this->categoryChoices(),
+            'available_currencies' => $this->currencyChoices(),
+            'available_tax_rules' => $this->taxRuleChoices(),
+            'default_category_id' => $default_category,
+        ]));
+    }
+
     #[Route('/clone', name: 'clone', methods: ['POST'])]
     public function clone(Request $request): Response
     {
