@@ -29,7 +29,10 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
+use Thelia\Action\Image as ImageAction;
+use Thelia\Core\Event\Document\DocumentEvent;
 use Thelia\Core\Event\File\FileCreateOrUpdateEvent;
+use Thelia\Core\Event\Image\ImageEvent;
 use Thelia\Core\Event\TheliaEvents;
 use Thelia\Core\File\FileManager;
 use Thelia\Core\File\FileModelInterface;
@@ -45,6 +48,8 @@ use Twig\Environment;
 
 final class FileController
 {
+    private const LIST_THUMBNAIL_SIZE = 300;
+
     public function __construct(
         private readonly AdminAccessChecker $access,
         private readonly Environment $twig,
@@ -365,7 +370,7 @@ final class FileController
             'file_id' => $fileId,
             'file_name' => $fileName,
             'file_title' => (string) $model->getTitle(),
-            'file_url' => $this->fileUrl($kind, $parentType, $fileName),
+            'file_url' => $this->fileUrl($kind, $parentType, $model),
             'form' => $formView,
             'edit_language_id' => $editLanguageId,
             'previous_url' => $previousUrl,
@@ -585,7 +590,7 @@ final class FileController
                 'file' => $file,
                 'visible' => (bool) (method_exists($record, 'getVisible') ? $record->getVisible() : true),
                 'position' => (int) (method_exists($record, 'getPosition') ? $record->getPosition() : 0),
-                'url' => $this->fileUrl($kind, $parentType, $file),
+                'url' => $this->fileUrl($kind, $parentType, $record),
             ];
         }
 
@@ -618,13 +623,41 @@ final class FileController
             ];
     }
 
-    private function fileUrl(string $kind, string $parentType, string $file): string
+    private function fileUrl(string $kind, string $parentType, object $record): string
     {
+        if (!method_exists($record, 'getUploadDir')) {
+            return '';
+        }
+
+        $file = method_exists($record, 'getFile') ? (string) $record->getFile() : '';
         if ($file === '') {
             return '';
         }
 
-        return '/'.$kind.'/'.$parentType.'/'.$file;
+        $sourcePath = $record->getUploadDir().\DIRECTORY_SEPARATOR.$file;
+
+        try {
+            if ($kind === 'image') {
+                $event = new ImageEvent();
+                $event->setSourceFilepath($sourcePath);
+                $event->setCacheSubdirectory($parentType);
+                $event->setWidth(self::LIST_THUMBNAIL_SIZE);
+                $event->setHeight(self::LIST_THUMBNAIL_SIZE);
+                $event->setResizeMode((string) ImageAction::EXACT_RATIO_WITH_BORDERS);
+                $this->events->dispatch($event, TheliaEvents::IMAGE_PROCESS);
+
+                return (string) $event->getFileUrl();
+            }
+
+            $event = new DocumentEvent();
+            $event->setSourceFilepath($sourcePath);
+            $event->setCacheSubdirectory($parentType);
+            $this->events->dispatch($event, TheliaEvents::DOCUMENT_PROCESS);
+
+            return $event->getDocumentUrl();
+        } catch (\Throwable) {
+            return '';
+        }
     }
 
     private function defaultLocale(): string
