@@ -37,6 +37,7 @@ use Thelia\Core\Event\UpdatePositionEvent;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
 use Thelia\Model\LangQuery;
+use Thelia\Model\OrderQuery;
 use Thelia\Model\OrderStatus;
 use Thelia\Model\OrderStatusQuery;
 use Thelia\Tools\TokenProvider;
@@ -270,14 +271,36 @@ final class OrderStatusController
             );
         }
 
+        $color = (string) $status->getColor();
+        $ordersCount = OrderQuery::create()->filterByStatusId($id)->count();
+        $ordersUrl = $this->urls->generate('admin.order.list', ['status_ids' => [$id]]);
+
         return [
             'id' => $id,
             'title' => (string) $status->getTitle(),
             'code' => (string) $status->getCode(),
-            'color' => (string) $status->getColor(),
+            'color' => $color,
+            'color_html' => $this->renderColorPill($color),
+            'orders_html' => \sprintf(
+                '<a href="%s" class="badge bg-light text-dark text-decoration-none border">%d</a>',
+                htmlspecialchars($ordersUrl, \ENT_QUOTES | \ENT_HTML5),
+                $ordersCount,
+            ),
             'position' => (int) $status->getPosition(),
             '_actions' => $actions,
         ];
+    }
+
+    private function renderColorPill(string $color): string
+    {
+        if (preg_match('/^#[0-9a-fA-F]{3,6}$/', $color) !== 1) {
+            return htmlspecialchars($color, \ENT_QUOTES | \ENT_HTML5);
+        }
+
+        return \sprintf(
+            '<span class="d-inline-block rounded-circle border align-middle me-1" style="width:1rem;height:1rem;background-color:%1$s"></span><code>%1$s</code>',
+            htmlspecialchars($color, \ENT_QUOTES | \ENT_HTML5),
+        );
     }
 
     private function buildUpdateForm(OrderStatus $status, string $locale): FormInterface
