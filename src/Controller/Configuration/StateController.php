@@ -49,6 +49,7 @@ use Twig\Environment;
 final class StateController
 {
     private const RESOURCE = AdminResources::STATE;
+    private const PAGE_SIZE = 20;
     private const LIST_ROUTE = 'admin.configuration.states.default';
     private const EDIT_ROUTE = 'admin.configuration.states.update';
     private const LIST_TEMPLATE = '@BackOfficeDefaultTwig/configuration/state/list.html.twig';
@@ -87,6 +88,11 @@ final class StateController
             $query->filterByCountryId($countryFilter);
         }
 
+        $total = $query->count();
+        $lastPage = max(1, (int) ceil($total / self::PAGE_SIZE));
+        $page = min(max(1, (int) $request->query->get('page', 1)), $lastPage);
+        $query->offset(($page - 1) * self::PAGE_SIZE)->limit(self::PAGE_SIZE);
+
         $rows = [];
         foreach ($query->find() as $state) {
             \assert($state instanceof State);
@@ -108,6 +114,8 @@ final class StateController
             'create_form' => $createForm->createView(),
             'sort_field' => $sort->field,
             'sort_direction' => $sort->direction,
+            'current_page' => $page,
+            'last_page' => $lastPage,
         ]));
     }
 

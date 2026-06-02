@@ -57,6 +57,17 @@
             sortDirection: sort_direction,
             sortKeepParams: { country_id: current_country ?: null },
         }) }}
+
+        {% if last_page > 1 %}
+            {{ component('BoPagination', {
+                route: 'admin.configuration.states.default',
+                currentPage: current_page,
+                lastPage: last_page,
+                routeParams: { country_id: current_country ?: null, order: sort_field, direction: sort_direction },
+                ariaLabel: 'States pagination'|trans,
+                testid: 'states-pagination',
+            }) }}
+        {% endif %}
     </div>
 
     {{ safe_hook('states.bottom') }}

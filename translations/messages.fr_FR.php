@@ -1222,6 +1222,7 @@ return [
     'State name' => 'Nom de la région',
     'States' => 'États',
     'States / Provinces' => 'États / Provinces',
+    'States pagination' => 'Pagination des états',
     'Status' => 'Etat',
     'Stock' => 'Stock',
     'Stock quantity' => 'Quantité en stock',
