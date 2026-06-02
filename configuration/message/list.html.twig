@@ -63,6 +63,10 @@
             </div>
         </div>
     {% endif %}
+
+    {% if is_granted('DELETE', 'admin.configuration.message') %}
+        {% include '@BackOfficeDefaultTwig/configuration/message/_delete_modal.html.twig' %}
+    {% endif %}
 {% endblock %}
 
 {% block scripts_extra %}

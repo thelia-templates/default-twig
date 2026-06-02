@@ -1,0 +1,10 @@
+{{ component('BoConfirmDialog', {
+    id: 'message-delete-modal',
+    title: 'Delete message'|trans,
+    formAction: path('admin.configuration.messages.delete'),
+    message: 'Do you really want to delete this message?'|trans,
+    testid: 'message-delete',
+    hook: 'message.delete-form',
+    prefillTrigger: 'data-message-id',
+    prefillInput: 'message_id',
+}) }}
