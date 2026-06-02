@@ -114,7 +114,10 @@ readonly class AdminFormAction
         }
 
         try {
-            $this->tokens->checkToken((string) $request->query->get('_token'));
+            // Accept the CSRF token from either the request body (POST forms posting a hidden
+            // _token field) or the query string (toggle/delete/position links, sortable fetch).
+            $token = (string) ($request->request->get('_token') ?? $request->query->get('_token') ?? '');
+            $this->tokens->checkToken($token);
             $this->events->dispatch($event, $eventName);
 
             $this->logSuccess($resource, $access, $event, $describeForLog);
