@@ -139,6 +139,6 @@
 {% endblock %}
 
 {% block scripts_extra %}
-    {{ safe_hook('image.edit-js', { location: 'image-edit-js', type: parent_type, image_id: file_id }) }}
+    {{ safe_hook('image.edit-js', { location: 'image-edit-js', source: parent_type, type: parent_type, image_id: file_id }) }}
     {{ safe_hook('wysiwyg.js', { location: 'wysiwyg-image-edit-js' }) }}
 {% endblock %}
