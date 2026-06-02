@@ -6,7 +6,12 @@
     <div class="col-md-5">{{ form_row(form.lastname) }}</div>
 
     <div class="col-md-6">{{ form_row(form.email) }}</div>
-    <div class="col-md-6">{{ form_row(form.company) }}</div>
+    {% if form.email_confirm is defined %}
+        <div class="col-md-6">{{ form_row(form.email_confirm) }}</div>
+        <div class="col-md-6">{{ form_row(form.company) }}</div>
+    {% else %}
+        <div class="col-md-6">{{ form_row(form.company) }}</div>
+    {% endif %}
 
     {% if form.password is defined %}
         <div class="col-md-6">{{ form_row(form.password) }}</div>

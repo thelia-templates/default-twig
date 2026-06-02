@@ -42,6 +42,7 @@ use Thelia\Core\Event\TheliaEvents;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
 use Thelia\Domain\Customer\Service\CustomerTitleService;
+use Thelia\Model\ConfigQuery;
 use Thelia\Model\CountryQuery;
 use Thelia\Model\Customer;
 use Thelia\Model\CustomerQuery;
@@ -335,6 +336,7 @@ final class CustomerController
         return $this->formFactory->createNamed(self::CREATE_FORM_NAME, CustomerType::class, [
             'discount' => 0,
         ], array_merge($this->formOptions($locale), [
+            'require_email_confirm' => (bool) ConfigQuery::read('customer_confirm_email', false),
         ]));
     }
 

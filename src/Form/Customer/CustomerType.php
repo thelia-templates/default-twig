@@ -23,6 +23,9 @@ use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Form\FormError;
+use Symfony\Component\Form\FormEvent;
+use Symfony\Component\Form\FormEvents;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\Email;
 use Symfony\Component\Validator\Constraints\NotBlank;
@@ -150,6 +153,20 @@ final class CustomerType extends AbstractType
                     'label' => $tr->trans('Confirm password'),
                 ]);
         }
+
+        if ($options['require_email_confirm']) {
+            $builder->add('email_confirm', EmailType::class, [
+                'constraints' => [new NotBlank(), new Email()],
+                'label' => $tr->trans('Confirm email address'),
+            ]);
+
+            $builder->addEventListener(FormEvents::POST_SUBMIT, static function (FormEvent $event) use ($tr): void {
+                $form = $event->getForm();
+                if ($form->get('email')->getData() !== $form->get('email_confirm')->getData()) {
+                    $form->get('email_confirm')->addError(new FormError($tr->trans('The two email addresses do not match.')));
+                }
+            });
+        }
     }
 
     public function configureOptions(OptionsResolver $resolver): void
@@ -159,6 +176,7 @@ final class CustomerType extends AbstractType
                 'include_id' => false,
                 'include_password' => false,
                 'password_required' => false,
+                'require_email_confirm' => false,
                 'csrf_token_id' => 'admin.customer',
                 'states' => [],
             ])
@@ -166,6 +184,7 @@ final class CustomerType extends AbstractType
             ->setAllowedTypes('include_id', 'bool')
             ->setAllowedTypes('include_password', 'bool')
             ->setAllowedTypes('password_required', 'bool')
+            ->setAllowedTypes('require_email_confirm', 'bool')
             ->setAllowedTypes('title_choices', 'array')
             ->setAllowedTypes('country_choices', 'array')
             ->setAllowedTypes('lang_choices', 'array')
