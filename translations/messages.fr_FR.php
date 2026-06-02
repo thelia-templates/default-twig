@@ -1479,4 +1479,5 @@ return [
     'Please set an email address for your account to continue.' => 'Veuillez renseigner une adresse e-mail pour votre compte afin de continuer.',
     'This coupon applies to every cart, no condition is required.' => 'Ce code promo s\'applique à tous les paniers, aucune condition n\'est requise.',
     'This will make the coupon available to everyone. Continue?' => 'Cela rendra le code promo accessible à tout le monde. Continuer ?',
+    '%count% visible countries are not attached to any shipping zone and cannot be delivered to.' => '%count% pays visibles ne sont rattachés à aucune zone de livraison et ne peuvent pas être livrés.',
 ];

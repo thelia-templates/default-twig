@@ -38,7 +38,9 @@ use Thelia\Core\Event\Country\CountryUpdateEvent;
 use Thelia\Core\Event\TheliaEvents;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
+use Thelia\Model\AreaQuery;
 use Thelia\Model\Country;
+use Thelia\Model\CountryAreaQuery;
 use Thelia\Model\CountryQuery;
 use Thelia\Model\LangQuery;
 use Thelia\Model\Map\CountryI18nTableMap;
@@ -86,11 +88,17 @@ final class CountryController
             default => $query->orderBy(CountryI18nTableMap::COL_TITLE, $criteria),
         };
         $countries = $query->find();
+        $zonesByCountry = $this->shippingZonesByCountry();
         $rows = [];
+        $countriesWithoutZone = 0;
         foreach ($countries as $country) {
             \assert($country instanceof Country);
             $country->setLocale($locale);
-            $rows[] = $this->countryToRow($country);
+            $zones = $zonesByCountry[(int) $country->getId()] ?? [];
+            if ($zones === [] && $country->getVisible()) {
+                ++$countriesWithoutZone;
+            }
+            $rows[] = $this->countryToRow($country, $zones);
         }
 
         $createForm = $this->formFactory->createNamed('thelia_country_create', CountryType::class, [
@@ -100,6 +108,7 @@ final class CountryController
 
         return new Response($this->twig->render(self::LIST_TEMPLATE, [
             'rows' => $rows,
+            'countries_without_zone' => $countriesWithoutZone,
             'create_form' => $createForm->createView(),
             'sort_field' => $sort->field,
             'sort_direction' => $sort->direction,
@@ -333,7 +342,46 @@ final class CountryController
     }
 
     /** @return array<string, mixed> */
-    private function countryToRow(Country $country): array
+    /**
+     * @return array<int, list<array{id: int, name: string}>>
+     */
+    private function shippingZonesByCountry(): array
+    {
+        $areaNames = [];
+        foreach (AreaQuery::create()->find() as $area) {
+            $areaNames[(int) $area->getId()] = (string) $area->getName();
+        }
+
+        $map = [];
+        foreach (CountryAreaQuery::create()->find() as $countryArea) {
+            $areaId = (int) $countryArea->getAreaId();
+            $map[(int) $countryArea->getCountryId()][] = ['id' => $areaId, 'name' => $areaNames[$areaId] ?? ''];
+        }
+
+        return $map;
+    }
+
+    /**
+     * @param list<array{id: int, name: string}> $zones
+     */
+    private function renderShippingZones(array $zones): string
+    {
+        if ($zones === []) {
+            return '<span class="text-muted small">'.htmlspecialchars($this->translator->trans('None'), \ENT_QUOTES | \ENT_HTML5).'</span>';
+        }
+
+        $badges = '';
+        foreach ($zones as $zone) {
+            $badges .= '<span class="badge bg-light text-dark border me-1">'.htmlspecialchars($zone['name'], \ENT_QUOTES | \ENT_HTML5).'</span>';
+        }
+
+        return $badges;
+    }
+
+    /**
+     * @param list<array{id: int, name: string}> $zones
+     */
+    private function countryToRow(Country $country, array $zones = []): array
     {
         $id = (int) $country->getId();
         $actions = [
@@ -349,6 +397,7 @@ final class CountryController
             'isocode' => (string) $country->getIsocode(),
             'visible' => (bool) $country->getVisible(),
             'default' => (bool) $country->getByDefault(),
+            'shipping_zones_html' => $this->renderShippingZones($zones),
             'toggle_visible_url' => $this->tokenizedUrl('admin.configuration.countries.toggle-visibility', ['country_id' => $id]),
             'toggle_default_url' => $this->tokenizedUrl('admin.configuration.countries.toggle-default', ['country_id' => $id]),
             '_actions' => $actions,
