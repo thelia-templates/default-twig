@@ -230,6 +230,10 @@
 {% endblock %}
 
 {% block scripts_extra %}
-    {{ safe_hook('coupon.create-js', { location: 'coupon-create-js' }) }}
+    {% if is_update %}
+        {{ safe_hook('coupon.update-js', { coupon_id: coupon_id, location: 'coupon-update-js' }) }}
+    {% else %}
+        {{ safe_hook('coupon.create-js', { location: 'coupon-create-js' }) }}
+    {% endif %}
     {{ safe_hook('wysiwyg.js', { location: 'coupon-edit-js' }) }}
 {% endblock %}
