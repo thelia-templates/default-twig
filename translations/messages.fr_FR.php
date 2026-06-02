@@ -1285,6 +1285,7 @@ return [
     'The archive must contain a single root directory matching the module code.' => 'L\'archive doit contenir un unique répertoire racine correspondant au code du module.',
     'The default pricing is used when no combination is defined.' => 'Le prix par défaut est utilisé lorsqu\'aucune combinaison n\'est utilisée.',
     'The directory local/I18n does not exist or is not writable. Please fix this issue before.' => 'Le dossier local/I18n n\'existe pas ou n\'est pas accessible en écriture. Veuillez corriger le problème.',
+    'The end date must be after the start date.' => 'La date de fin doit être postérieure à la date de début.',
     'The lost admin password recovery feature is disabled.' => 'La fonctionnalité de récupération du mot de passe administrateur est désactivée.',
     'The message has been successfully sent to %recipient.' => 'Le message a bien été envoyé à %recipient.',
     'The module title is required.' => 'Le titre du module est requis.',

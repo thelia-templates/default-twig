@@ -146,13 +146,16 @@
                                 {{ form_widget(form.display_initial_price, { attr: { class: 'form-check-input' } }) }}
                                 {{ form_label(form.display_initial_price, null, { label_attr: { class: 'form-check-label' } }) }}
                             </div>
-                            <div class="mb-3">
-                                {{ form_label(form.start_date) }}
-                                {{ form_widget(form.start_date, { attr: { class: 'form-control', placeholder: 'YYYY-MM-DD HH:mm:ss' } }) }}
-                            </div>
-                            <div class="mb-0">
-                                {{ form_label(form.end_date) }}
-                                {{ form_widget(form.end_date, { attr: { class: 'form-control', placeholder: 'YYYY-MM-DD HH:mm:ss' } }) }}
+                            <div data-controller="bo-date-range" data-bo-date-range-format-value="Y-m-d H:i:s">
+                                <div class="mb-3">
+                                    {{ form_label(form.start_date) }}
+                                    {{ form_widget(form.start_date, { attr: { class: 'form-control', placeholder: 'YYYY-MM-DD HH:mm:ss', 'data-bo-date-range-target': 'start', 'data-action': 'input->bo-date-range#validate' } }) }}
+                                </div>
+                                <div class="mb-0">
+                                    {{ form_label(form.end_date) }}
+                                    {{ form_widget(form.end_date, { attr: { class: 'form-control', placeholder: 'YYYY-MM-DD HH:mm:ss', 'data-bo-date-range-target': 'end', 'data-action': 'input->bo-date-range#validate' } }) }}
+                                    <div class="invalid-feedback" data-bo-date-range-target="message" hidden>{{ 'The end date must be after the start date.'|trans }}</div>
+                                </div>
                             </div>
                         </div>
                     </div>

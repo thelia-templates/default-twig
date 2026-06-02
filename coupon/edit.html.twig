@@ -101,14 +101,17 @@
                                 <label class="form-check-label" for="is-cumulative">{{ 'Combinable with other promotions'|trans }}</label>
                             </div>
 
-                            <div class="mb-3">
-                                <label class="form-label" for="start-date">{{ 'Start Date'|trans }}</label>
-                                <input id="start-date" type="text" name="startDate" class="form-control" value="{{ data.startDate }}" placeholder="{{ 'Format: %fmt'|trans({'%fmt': date_format}) }}">
-                            </div>
+                            <div data-controller="bo-date-range" data-bo-date-range-format-value="{{ date_format }}">
+                                <div class="mb-3">
+                                    <label class="form-label" for="start-date">{{ 'Start Date'|trans }}</label>
+                                    <input id="start-date" type="text" name="startDate" class="form-control" value="{{ data.startDate }}" placeholder="{{ 'Format: %fmt'|trans({'%fmt': date_format}) }}" data-bo-date-range-target="start" data-action="input->bo-date-range#validate">
+                                </div>
 
-                            <div class="mb-3">
-                                <label class="form-label" for="expiration-date">{{ 'Expiration date'|trans }} *</label>
-                                <input id="expiration-date" required type="text" name="expirationDate" class="form-control" value="{{ data.expirationDate }}" placeholder="{{ 'Format: %fmt'|trans({'%fmt': date_format}) }}">
+                                <div class="mb-3">
+                                    <label class="form-label" for="expiration-date">{{ 'Expiration date'|trans }} *</label>
+                                    <input id="expiration-date" required type="text" name="expirationDate" class="form-control" value="{{ data.expirationDate }}" placeholder="{{ 'Format: %fmt'|trans({'%fmt': date_format}) }}" data-bo-date-range-target="end" data-action="input->bo-date-range#validate">
+                                    <div class="invalid-feedback" data-bo-date-range-target="message" hidden>{{ 'The end date must be after the start date.'|trans }}</div>
+                                </div>
                             </div>
 
                             <div class="mb-3 form-check">
