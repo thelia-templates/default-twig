@@ -359,6 +359,22 @@ final class AttributeController
                     'attribute-label' => (string) $attribute->getTitle(),
                 ],
             ),
+            new RowAction(
+                kind: 'custom',
+                label: $this->translator->trans('Add to all templates'),
+                href: $this->tokenizedUrl('admin.configuration.attributes.add-to-all', ['attribute_id' => $id]),
+                grantedAttribute: AccessManager::UPDATE,
+                grantedSubject: self::RESOURCE,
+                inMenu: true,
+            ),
+            new RowAction(
+                kind: 'custom',
+                label: $this->translator->trans('Remove from all templates'),
+                href: $this->tokenizedUrl('admin.configuration.attributes.rem-from-all', ['attribute_id' => $id]),
+                grantedAttribute: AccessManager::UPDATE,
+                grantedSubject: self::RESOURCE,
+                inMenu: true,
+            ),
         ];
 
         return [

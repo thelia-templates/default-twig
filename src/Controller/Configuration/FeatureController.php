@@ -359,6 +359,22 @@ final class FeatureController
                     'feature-label' => (string) $feature->getTitle(),
                 ],
             ),
+            new RowAction(
+                kind: 'custom',
+                label: $this->translator->trans('Add to all templates'),
+                href: $this->tokenizedUrl('admin.configuration.features.add-to-all', ['feature_id' => $id]),
+                grantedAttribute: AccessManager::UPDATE,
+                grantedSubject: self::RESOURCE,
+                inMenu: true,
+            ),
+            new RowAction(
+                kind: 'custom',
+                label: $this->translator->trans('Remove from all templates'),
+                href: $this->tokenizedUrl('admin.configuration.features.rem-from-all', ['feature_id' => $id]),
+                grantedAttribute: AccessManager::UPDATE,
+                grantedSubject: self::RESOURCE,
+                inMenu: true,
+            ),
         ];
 
         return [
