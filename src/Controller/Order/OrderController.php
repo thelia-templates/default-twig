@@ -466,10 +466,12 @@ final class OrderController
     private function countryChoices(string $locale): array
     {
         $items = [];
-        foreach (CountryQuery::create()->filterByVisible(1)->orderById()->find() as $country) {
+        foreach (CountryQuery::create()->filterByVisible(1)->find() as $country) {
             $country->setLocale($locale);
             $items[] = ['id' => (int) $country->getId(), 'title' => (string) $country->getTitle()];
         }
+
+        usort($items, static fn (array $a, array $b): int => strcoll($a['title'], $b['title']));
 
         return $items;
     }
