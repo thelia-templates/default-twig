@@ -33,7 +33,10 @@ use Thelia\Model\ProductQuery;
 
 final readonly class SearchRepository
 {
-    private const SEARCH_LIMIT = 10;
+    public const DISPLAY_LIMIT = 25;
+
+    /** Fetch one extra row so the presenter can flag truncated result sets. */
+    private const SEARCH_LIMIT = self::DISPLAY_LIMIT + 1;
 
     /** @return ObjectCollection<int, Product> */
     public function findProducts(string $term): ObjectCollection

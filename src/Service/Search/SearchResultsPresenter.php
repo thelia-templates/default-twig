@@ -18,18 +18,23 @@ use BackOfficeDefaultTwigBundle\Repository\SearchRepository;
 
 final readonly class SearchResultsPresenter
 {
+    public const MIN_TERM_LENGTH = 2;
+
     public function __construct(
         private SearchRepository $search,
     ) {
     }
 
     /**
-     * @return array{term: string, products: list<array<string, mixed>>, categories: list<array<string, mixed>>, folders: list<array<string, mixed>>, contents: list<array<string, mixed>>, brands: list<array<string, mixed>>, customers: list<array<string, mixed>>, orders: list<array<string, mixed>>}
+     * @return array{term: string, too_short: bool, min_length: int, truncated: array<string, bool>, products: list<array<string, mixed>>, categories: list<array<string, mixed>>, folders: list<array<string, mixed>>, contents: list<array<string, mixed>>, brands: list<array<string, mixed>>, customers: list<array<string, mixed>>, orders: list<array<string, mixed>>}
      */
     public function buildResults(string $term, string $locale): array
     {
         $results = [
             'term' => $term,
+            'too_short' => false,
+            'min_length' => self::MIN_TERM_LENGTH,
+            'truncated' => [],
             'products' => [],
             'categories' => [],
             'folders' => [],
@@ -40,6 +45,12 @@ final readonly class SearchResultsPresenter
         ];
 
         if ($term === '') {
+            return $results;
+        }
+
+        if (mb_strlen($term) < self::MIN_TERM_LENGTH) {
+            $results['too_short'] = true;
+
             return $results;
         }
 
@@ -99,6 +110,13 @@ final readonly class SearchResultsPresenter
                 'id' => (int) $order->getId(),
                 'ref' => (string) $order->getRef(),
             ];
+        }
+
+        foreach (['products', 'categories', 'folders', 'contents', 'brands', 'customers', 'orders'] as $section) {
+            if (\count($results[$section]) > SearchRepository::DISPLAY_LIMIT) {
+                $results[$section] = \array_slice($results[$section], 0, SearchRepository::DISPLAY_LIMIT);
+                $results['truncated'][$section] = true;
+            }
         }
 
         return $results;

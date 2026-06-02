@@ -18,6 +18,8 @@
 
         {% if term is empty %}
             <p class="text-muted">{{ 'Type a search term in the top bar.'|trans }}</p>
+        {% elseif too_short %}
+            <div class="alert alert-info" data-testid="search-too-short">{{ 'Please enter at least %count% characters to search.'|trans({ '%count%': min_length }) }}</div>
         {% else %}
             <div class="row g-4">
                 <div class="col-md-6">
@@ -29,6 +31,7 @@
                             {% else %}
                                 <li class="list-group-item text-muted small">{{ 'No product match.'|trans }}</li>
                             {% endfor %}
+                            {% if truncated.products is defined %}<li class="list-group-item text-info small">{{ 'More results are available. Please refine your search.'|trans }}</li>{% endif %}
                         </ul>
                     </div>
                 </div>
@@ -42,6 +45,7 @@
                             {% else %}
                                 <li class="list-group-item text-muted small">{{ 'No category match.'|trans }}</li>
                             {% endfor %}
+                            {% if truncated.categories is defined %}<li class="list-group-item text-info small">{{ 'More results are available. Please refine your search.'|trans }}</li>{% endif %}
                         </ul>
                     </div>
                 </div>
@@ -55,6 +59,7 @@
                             {% else %}
                                 <li class="list-group-item text-muted small">{{ 'No folder match.'|trans }}</li>
                             {% endfor %}
+                            {% if truncated.folders is defined %}<li class="list-group-item text-info small">{{ 'More results are available. Please refine your search.'|trans }}</li>{% endif %}
                         </ul>
                     </div>
                 </div>
@@ -68,6 +73,7 @@
                             {% else %}
                                 <li class="list-group-item text-muted small">{{ 'No content match.'|trans }}</li>
                             {% endfor %}
+                            {% if truncated.contents is defined %}<li class="list-group-item text-info small">{{ 'More results are available. Please refine your search.'|trans }}</li>{% endif %}
                         </ul>
                     </div>
                 </div>
@@ -81,6 +87,7 @@
                             {% else %}
                                 <li class="list-group-item text-muted small">{{ 'No brand match.'|trans }}</li>
                             {% endfor %}
+                            {% if truncated.brands is defined %}<li class="list-group-item text-info small">{{ 'More results are available. Please refine your search.'|trans }}</li>{% endif %}
                         </ul>
                     </div>
                 </div>
@@ -97,6 +104,7 @@
                             {% else %}
                                 <li class="list-group-item text-muted small">{{ 'No customer match.'|trans }}</li>
                             {% endfor %}
+                            {% if truncated.customers is defined %}<li class="list-group-item text-info small">{{ 'More results are available. Please refine your search.'|trans }}</li>{% endif %}
                         </ul>
                     </div>
                 </div>
@@ -110,6 +118,7 @@
                             {% else %}
                                 <li class="list-group-item text-muted small">{{ 'No order match.'|trans }}</li>
                             {% endfor %}
+                            {% if truncated.orders is defined %}<li class="list-group-item text-info small">{{ 'More results are available. Please refine your search.'|trans }}</li>{% endif %}
                         </ul>
                     </div>
                 </div>
