@@ -16,6 +16,7 @@ namespace BackOfficeDefaultTwigBundle\Controller;
 
 use BackOfficeDefaultTwigBundle\Repository\DataTransferRepository;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
+use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -43,6 +44,7 @@ final class ExportImportController
 {
     public function __construct(
         private readonly AdminAccessChecker $access,
+        private readonly AdminFormAction $action,
         private readonly Environment $twig,
         private readonly ExportHandler $exportHandler,
         private readonly ImportHandler $importHandler,
@@ -72,6 +74,8 @@ final class ExportImportController
 
         return new Response($this->twig->render('@BackOfficeDefaultTwig/export/list.html.twig', [
             'categories' => $this->dataTransferRepository->findExportCatalogue($this->defaultLocale()),
+            'position_url' => $this->urls->generate('export.position'),
+            'position_token' => $this->tokens->assignToken(),
         ]));
     }
 
@@ -84,83 +88,81 @@ final class ExportImportController
 
         return new Response($this->twig->render('@BackOfficeDefaultTwig/import/list.html.twig', [
             'categories' => $this->dataTransferRepository->findImportCatalogue($this->defaultLocale()),
+            'position_url' => $this->urls->generate('import.position'),
+            'position_token' => $this->tokens->assignToken(),
         ]));
     }
 
-    #[Route('/admin/export/position', name: 'export.position', methods: ['GET'])]
+    #[Route('/admin/export/position', name: 'export.position', methods: ['GET', 'POST'])]
     public function exportPosition(Request $request): Response
     {
-        if ($denied = $this->access->check(AdminResources::EXPORT, [], AccessManager::UPDATE)) {
-            return $denied;
-        }
-
-        $this->events->dispatch(
-            new UpdatePositionEvent(
-                (int) $request->query->get('id', 0),
-                $this->matchPositionMode($request->query->get('mode')),
-                (int) $request->query->get('value', 0),
+        return $this->action->tokenAction(
+            resource: AdminResources::EXPORT,
+            access: AccessManager::UPDATE,
+            request: $request,
+            event: new UpdatePositionEvent(
+                (int) $request->get('export_id', 0),
+                (int) $request->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE),
+                (int) $request->get('position', 0),
             ),
-            TheliaEvents::EXPORT_CHANGE_POSITION,
+            eventName: TheliaEvents::EXPORT_CHANGE_POSITION,
+            actionLabel: 'Export reorder',
+            successRoute: 'export.list',
         );
-
-        return new RedirectResponse($this->urls->generate('export.list'));
     }
 
-    #[Route('/admin/export/position/category', name: 'export.category.position', methods: ['GET'])]
+    #[Route('/admin/export/position/category', name: 'export.category.position', methods: ['GET', 'POST'])]
     public function exportCategoryPosition(Request $request): Response
     {
-        if ($denied = $this->access->check(AdminResources::EXPORT, [], AccessManager::UPDATE)) {
-            return $denied;
-        }
-
-        $this->events->dispatch(
-            new UpdatePositionEvent(
-                (int) $request->query->get('id', 0),
-                $this->matchPositionMode($request->query->get('mode')),
-                (int) $request->query->get('value', 0),
+        return $this->action->tokenAction(
+            resource: AdminResources::EXPORT,
+            access: AccessManager::UPDATE,
+            request: $request,
+            event: new UpdatePositionEvent(
+                (int) $request->get('export_category_id', 0),
+                (int) $request->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE),
+                (int) $request->get('position', 0),
             ),
-            TheliaEvents::EXPORT_CATEGORY_CHANGE_POSITION,
+            eventName: TheliaEvents::EXPORT_CATEGORY_CHANGE_POSITION,
+            actionLabel: 'Export category reorder',
+            successRoute: 'export.list',
         );
-
-        return new RedirectResponse($this->urls->generate('export.list'));
     }
 
-    #[Route('/admin/import/position', name: 'import.position', methods: ['GET'])]
+    #[Route('/admin/import/position', name: 'import.position', methods: ['GET', 'POST'])]
     public function importPosition(Request $request): Response
     {
-        if ($denied = $this->access->check(AdminResources::IMPORT, [], AccessManager::UPDATE)) {
-            return $denied;
-        }
-
-        $this->events->dispatch(
-            new UpdatePositionEvent(
-                (int) $request->query->get('id', 0),
-                $this->matchPositionMode($request->query->get('mode')),
-                (int) $request->query->get('value', 0),
+        return $this->action->tokenAction(
+            resource: AdminResources::IMPORT,
+            access: AccessManager::UPDATE,
+            request: $request,
+            event: new UpdatePositionEvent(
+                (int) $request->get('import_id', 0),
+                (int) $request->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE),
+                (int) $request->get('position', 0),
             ),
-            TheliaEvents::IMPORT_CHANGE_POSITION,
+            eventName: TheliaEvents::IMPORT_CHANGE_POSITION,
+            actionLabel: 'Import reorder',
+            successRoute: 'import.list',
         );
-
-        return new RedirectResponse($this->urls->generate('import.list'));
     }
 
-    #[Route('/admin/import/position/category', name: 'import.category.position', methods: ['GET'])]
+    #[Route('/admin/import/position/category', name: 'import.category.position', methods: ['GET', 'POST'])]
     public function importCategoryPosition(Request $request): Response
     {
-        if ($denied = $this->access->check(AdminResources::IMPORT, [], AccessManager::UPDATE)) {
-            return $denied;
-        }
-
-        $this->events->dispatch(
-            new UpdatePositionEvent(
-                (int) $request->query->get('id', 0),
-                $this->matchPositionMode($request->query->get('mode')),
-                (int) $request->query->get('value', 0),
+        return $this->action->tokenAction(
+            resource: AdminResources::IMPORT,
+            access: AccessManager::UPDATE,
+            request: $request,
+            event: new UpdatePositionEvent(
+                (int) $request->get('import_category_id', 0),
+                (int) $request->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE),
+                (int) $request->get('position', 0),
             ),
-            TheliaEvents::IMPORT_CATEGORY_CHANGE_POSITION,
+            eventName: TheliaEvents::IMPORT_CATEGORY_CHANGE_POSITION,
+            actionLabel: 'Import category reorder',
+            successRoute: 'import.list',
         );
-
-        return new RedirectResponse($this->urls->generate('import.list'));
     }
 
     #[Route('/admin/export/{id}', name: 'export.view', methods: ['GET'], requirements: ['id' => '\d+'])]
@@ -419,15 +421,6 @@ final class ExportImportController
         $instance = new $handleClass();
 
         return method_exists($instance, 'useRangeDate') && $instance->useRangeDate();
-    }
-
-    private function matchPositionMode(?string $mode): int
-    {
-        return match ($mode) {
-            'up' => UpdatePositionEvent::POSITION_UP,
-            'down' => UpdatePositionEvent::POSITION_DOWN,
-            default => UpdatePositionEvent::POSITION_ABSOLUTE,
-        };
     }
 
     private function addFlash(string $type, string $message): void
