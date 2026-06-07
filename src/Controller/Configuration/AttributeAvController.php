@@ -63,7 +63,7 @@ final class AttributeAvController
         $form = $this->formFactory->createNamed('thelia_attributeav_creation', AttributeAvType::class, null, [
         ]);
 
-        $attributeId = (int) $request->request->get('attribute_id', 0);
+        $attributeId = (int) ($request->request->all('thelia_attributeav_creation')['attribute_id'] ?? 0);
 
         return $this->action->submit(
             resource: self::RESOURCE,
@@ -93,7 +93,7 @@ final class AttributeAvController
             'include_id' => true,
         ]);
 
-        $attributeId = (int) $request->request->get('attribute_id', 0);
+        $attributeId = (int) ($request->request->all('thelia_attributeav_modification')['attribute_id'] ?? 0);
 
         return $this->action->submit(
             resource: self::RESOURCE,

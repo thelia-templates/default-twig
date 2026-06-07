@@ -52,7 +52,7 @@ final class FeatureAvController
         $form = $this->formFactory->createNamed('thelia_featureav_creation', FeatureAvType::class, null, [
         ]);
 
-        $featureId = (int) $request->request->get('feature_id', 0);
+        $featureId = (int) ($request->request->all('thelia_featureav_creation')['feature_id'] ?? 0);
 
         return $this->action->submit(
             resource: self::RESOURCE,
@@ -82,7 +82,7 @@ final class FeatureAvController
             'include_id' => true,
         ]);
 
-        $featureId = (int) $request->request->get('feature_id', 0);
+        $featureId = (int) ($request->request->all('thelia_featureav_modification')['feature_id'] ?? 0);
 
         return $this->action->submit(
             resource: self::RESOURCE,
