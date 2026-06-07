@@ -31,6 +31,7 @@ use Thelia\Core\Event\TheliaEvents;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Model\Newsletter;
 use Thelia\Model\NewsletterQuery;
+use Thelia\Tools\TokenProvider;
 use Twig\Environment;
 
 #[Route('/admin/newsletter', name: 'admin.newsletter.')]
@@ -46,6 +47,7 @@ final class NewsletterController
         private readonly Environment $twig,
         private readonly UrlGeneratorInterface $urls,
         private readonly TranslatorInterface $translator,
+        private readonly TokenProvider $tokens,
     ) {
     }
 
@@ -144,7 +146,7 @@ final class NewsletterController
     {
         $id = (int) $subscriber->getId();
         $actions = [
-            new RowAction(kind: 'delete', label: $this->translator->trans('Unsubscribe'), href: $this->urls->generate('admin.newsletter.delete', ['newsletter_id' => $id]), grantedAttribute: AccessManager::DELETE, grantedSubject: self::RESOURCE),
+            new RowAction(kind: 'delete', label: $this->translator->trans('Unsubscribe'), href: $this->tokenizedUrl('admin.newsletter.delete', ['newsletter_id' => $id]), grantedAttribute: AccessManager::DELETE, grantedSubject: self::RESOURCE),
         ];
 
         return [
@@ -156,5 +158,16 @@ final class NewsletterController
             'created_at' => $subscriber->getCreatedAt() instanceof \DateTimeInterface ? $subscriber->getCreatedAt()->format('Y-m-d H:i') : '',
             '_actions' => $actions,
         ];
+    }
+
+    /**
+     * @param array<string, scalar> $parameters
+     */
+    private function tokenizedUrl(string $route, array $parameters): string
+    {
+        $url = $this->urls->generate($route, $parameters);
+        $separator = str_contains($url, '?') ? '&' : '?';
+
+        return $url.$separator.'_token='.$this->tokens->assignToken();
     }
 }
