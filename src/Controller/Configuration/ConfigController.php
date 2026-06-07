@@ -130,11 +130,18 @@ final class ConfigController
     }
 
     #[Route('/save', name: 'save', methods: ['POST'])]
-    public function processUpdate(): Response
+    public function processUpdate(Request $request): Response
     {
-        $form = $this->formFactory->createNamed('thelia_config_update', ConfigType::class, null, [
-            'include_id' => true,
-        ]);
+        // Each row's edit form is registered as 'thelia_config_update_<id>' (see createEditForm),
+        // so the posted fields are namespaced by id. This route carries no id, so recover it from
+        // the posted form-name prefix and rebuild the form under the matching name — otherwise
+        // handleRequest() never sees the submission and the update silently fails.
+        $form = $this->formFactory->createNamed(
+            $this->submittedUpdateFormName($request),
+            ConfigType::class,
+            null,
+            ['include_id' => true],
+        );
 
         return $this->action->submit(
             resource: self::RESOURCE,
@@ -377,6 +384,21 @@ final class ConfigController
             $id,
             $options,
         );
+    }
+
+    /**
+     * Recover the per-id edit form name ('thelia_config_update_<id>') from the posted body.
+     * Falls back to the bare name so an empty/unexpected body fails validation cleanly.
+     */
+    private function submittedUpdateFormName(Request $request): string
+    {
+        foreach (array_keys($request->request->all()) as $key) {
+            if (preg_match('/^thelia_config_update_\d+$/', (string) $key) === 1) {
+                return (string) $key;
+            }
+        }
+
+        return 'thelia_config_update';
     }
 
     private function createEditForm(Config $config, string $defaultLocale): FormInterface
