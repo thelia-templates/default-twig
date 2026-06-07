@@ -198,10 +198,10 @@ final class ModuleController
         );
     }
 
-    #[Route('/module/delete', name: 'module.delete', methods: ['POST', 'GET'])]
+    #[Route('/module/delete', name: 'module.delete', methods: ['POST'])]
     public function delete(Request $request): Response
     {
-        $moduleId = (int) $request->get('module_id', 0);
+        $moduleId = (int) ($request->request->get('module_id') ?? 0);
         if (ModuleQuery::create()->findPk($moduleId) === null) {
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }
@@ -220,7 +220,7 @@ final class ModuleController
         );
     }
 
-    #[Route('/module/update-position', name: 'module.update-position', methods: ['GET', 'POST'])]
+    #[Route('/module/update-position', name: 'module.update-position', methods: ['POST'])]
     public function updatePosition(Request $request): Response
     {
         $event = new UpdatePositionEvent(

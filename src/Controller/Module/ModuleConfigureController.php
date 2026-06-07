@@ -16,6 +16,7 @@ namespace BackOfficeDefaultTwigBundle\Controller\Module;
 
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Model\LangQuery;
@@ -37,7 +38,7 @@ final class ModuleConfigureController
     {
         $module = ModuleQuery::create()->findOneByCode($module_code);
         if ($module === null) {
-            throw new \InvalidArgumentException(\sprintf('Module `%s` does not exists', $module_code));
+            throw new NotFoundHttpException(\sprintf('Module `%s` does not exist', $module_code));
         }
 
         if ($denied = $this->access->check([], $module_code, AccessManager::VIEW)) {
