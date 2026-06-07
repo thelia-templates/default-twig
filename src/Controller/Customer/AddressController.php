@@ -96,7 +96,7 @@ final class AddressController
         }
 
         $form = $this->buildCreateForm();
-        $customerId = (int) $request->request->get('customer_id', 0);
+        $customerId = (int) ($request->request->all(self::CREATE_FORM_NAME)['customer_id'] ?? 0);
 
         try {
             $validated = $this->validator->validate($form);
