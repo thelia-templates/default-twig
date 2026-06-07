@@ -81,7 +81,7 @@ final class TranslationsCustomerTitleController
             return $denied;
         }
 
-        $this->tokens->checkToken((string) $request->get('_token'));
+        $this->tokens->checkToken((string) $request->request->get('_token'));
 
         $locale = (string) ($request->request->get('locale') ?? $this->editionLocale($request));
         $titles = CustomerTitleQuery::create()->find();
@@ -155,9 +155,21 @@ final class TranslationsCustomerTitleController
         return $options;
     }
 
+    /**
+     * The edition language id travels as a query param on GET navigation (BoLanguageSwitcher links)
+     * and as a hidden body field on the update POST. Read both explicitly rather than via the
+     * ambiguous $request->get().
+     */
+    private function editionIdParam(Request $request): ?string
+    {
+        $value = $request->query->get('edit_language_id') ?? $request->request->get('edit_language_id');
+
+        return $value === null ? null : (string) $value;
+    }
+
     private function editionLocale(Request $request): string
     {
-        $editionId = $request->get('edit_language_id');
+        $editionId = $this->editionIdParam($request);
         if ($editionId !== null && (int) $editionId > 0) {
             $lang = LangQuery::create()->findPk((int) $editionId);
             if ($lang !== null) {
@@ -177,7 +189,7 @@ final class TranslationsCustomerTitleController
 
     private function editionLanguageId(Request $request): int
     {
-        $editionId = $request->get('edit_language_id');
+        $editionId = $this->editionIdParam($request);
         if ($editionId !== null && (int) $editionId > 0) {
             return (int) $editionId;
         }
