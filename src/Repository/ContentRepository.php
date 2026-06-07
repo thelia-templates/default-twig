@@ -17,9 +17,16 @@ namespace BackOfficeDefaultTwigBundle\Repository;
 use Propel\Runtime\Collection\ObjectCollection;
 use Thelia\Model\Content;
 use Thelia\Model\ContentQuery;
+use Thelia\Model\Map\ContentFolderTableMap;
 
 final readonly class ContentRepository
 {
+    /**
+     * Position is stored per-folder in the content_folder pivot, not on the content row.
+     * Expose it as a virtual column so the listing reflects the folder-scoped order.
+     */
+    public const FOLDER_POSITION_COLUMN = 'folder_position';
+
     /**
      * @return ObjectCollection<int, Content>
      */
@@ -31,6 +38,7 @@ final readonly class ContentRepository
                 ->filterByFolderId($folderId)
                 ->orderByPosition()
             ->endUse()
+            ->withColumn(ContentFolderTableMap::COL_POSITION, self::FOLDER_POSITION_COLUMN)
             ->offset($offset)
             ->limit($limit)
             ->find();

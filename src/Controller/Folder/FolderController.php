@@ -289,7 +289,7 @@ final class FolderController
             'parent_id' => $parentId,
             'create_form' => $createForm->createView(),
             'content_create_form' => $contentCreateForm->createView(),
-            'content_update_position_url' => $this->urls->generate('admin.content.update-position'),
+            'content_update_position_url' => $this->urls->generate('admin.content.update-position', ['folder_id' => $parentId]),
             'content_update_position_token' => $this->tokens->assignToken(),
             'update_position_url' => $this->urls->generate('admin.folders.update-position'),
             'update_position_token' => $this->tokens->assignToken(),
@@ -337,7 +337,9 @@ final class FolderController
                 htmlspecialchars($title, \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8'),
             ),
             'visible' => (bool) $content->getVisible(),
-            'position' => (int) $content->getPosition(),
+            'position' => $content->hasVirtualColumn(ContentRepository::FOLDER_POSITION_COLUMN)
+                ? (int) $content->getVirtualColumn(ContentRepository::FOLDER_POSITION_COLUMN)
+                : (int) $content->getPosition(),
             'toggle_visible_url' => $this->tokenizedUrl('admin.content.toggle-online', ['content_id' => $id]),
             '_actions' => [
                 new RowAction(kind: 'edit', label: $this->translator->trans('Edit'), href: $editUrl, grantedAttribute: AccessManager::UPDATE, grantedSubject: AdminResources::CONTENT),

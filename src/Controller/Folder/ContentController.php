@@ -188,9 +188,10 @@ final class ContentController
     public function updatePosition(Request $request): Response
     {
         $event = new UpdatePositionEvent(
-            (int) $request->get('content_id', 0),
-            (int) $request->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE),
-            (int) $request->get('position', 0),
+            (int) ($request->query->get('content_id') ?? $request->request->get('content_id', 0)),
+            (int) ($request->query->get('mode') ?? $request->request->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE)),
+            (int) ($request->query->get('position') ?? $request->request->get('position', 0)),
+            (int) ($request->query->get('folder_id') ?? $request->request->get('folder_id', 0)),
         );
 
         return $this->action->tokenAction(
