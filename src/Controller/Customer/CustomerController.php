@@ -245,6 +245,7 @@ final class CustomerController
             successRoute: self::EDIT_ROUTE,
             renderError: fn (): RedirectResponse => new RedirectResponse($this->urls->generate(self::LIST_ROUTE)),
             describeForLog: $this->describeCreated(...),
+            successParametersResolver: $this->createdCustomerParameters(...),
         );
     }
 
@@ -405,6 +406,14 @@ final class CustomerController
             ref: null,
             state: isset($data['state']) && $data['state'] !== '' ? (int) $data['state'] : null,
         );
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    private function createdCustomerParameters(CustomerCreateOrUpdateEvent $event): array
+    {
+        return ['customer_id' => (int) ($event->getCustomer()?->getId() ?? 0)];
     }
 
     /**
