@@ -19,6 +19,7 @@ use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\ListSort;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
 use Propel\Runtime\ActiveQuery\Criteria;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -57,7 +58,7 @@ final class NewsletterController
 
         $sort = ListSort::fromRequest($request, ['id', 'email', 'firstname', 'lastname', 'created_at'], 'created_at', 'desc');
         $criteria = strtoupper($sort->direction) === 'DESC' ? Criteria::DESC : Criteria::ASC;
-        $query = NewsletterQuery::create();
+        $query = NewsletterQuery::create()->filterByUnsubscribed(0);
         match ($sort->field) {
             'id' => $query->orderById($criteria),
             'email' => $query->orderByEmail($criteria),
@@ -83,13 +84,14 @@ final class NewsletterController
     #[Route('/delete', name: 'delete', methods: ['POST', 'GET'])]
     public function delete(Request $request): Response
     {
-        $subscriber = NewsletterQuery::create()->findPk((int) $request->get('newsletter_id', 0));
+        $subscriber = NewsletterQuery::create()->findPk((int) $request->query->get('newsletter_id', 0));
         if ($subscriber === null) {
-            return new \Symfony\Component\HttpFoundation\RedirectResponse($this->urls->generate(self::LIST_ROUTE));
+            return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }
 
         $event = new NewsletterEvent($subscriber->getEmail(), (string) $subscriber->getLocale());
         $event->setNewsletter($subscriber);
+        $event->setId((string) $subscriber->getId());
 
         return $this->action->tokenAction(
             resource: self::RESOURCE,
