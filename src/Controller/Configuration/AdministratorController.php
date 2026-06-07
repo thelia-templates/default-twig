@@ -105,12 +105,21 @@ final class AdministratorController
     }
 
     #[Route('/save', name: 'save', methods: ['POST'])]
-    public function save(): Response
+    public function save(Request $request): Response
     {
-        $form = $this->formFactory->createNamed('thelia_administrator_update', AdministratorType::class, null, [
-            'include_id' => true,
-            'profile_choices' => $this->profileChoices(),
-        ]);
+        // Each row's edit form is registered as 'thelia_administrator_update_<id>' (see
+        // createEditForm), so the posted fields are namespaced by id. This route carries no id, so
+        // recover it from the posted form-name prefix and rebuild the form under the matching name —
+        // otherwise handleRequest() never sees the submission and the update silently fails.
+        $form = $this->formFactory->createNamed(
+            $this->submittedUpdateFormName($request),
+            AdministratorType::class,
+            null,
+            [
+                'include_id' => true,
+                'profile_choices' => $this->profileChoices(),
+            ],
+        );
 
         return $this->action->submit(
             resource: self::RESOURCE,
@@ -273,6 +282,21 @@ final class AdministratorController
             'profile' => $admin->getProfile()?->getTitle() ?? $this->translator->trans('(No profile)'),
             '_actions' => $actions,
         ];
+    }
+
+    /**
+     * Recover the per-id edit form name ('thelia_administrator_update_<id>') from the posted body.
+     * Falls back to the bare name so an empty/unexpected body fails validation cleanly.
+     */
+    private function submittedUpdateFormName(Request $request): string
+    {
+        foreach (array_keys($request->request->all()) as $key) {
+            if (preg_match('/^thelia_administrator_update_\d+$/', (string) $key) === 1) {
+                return (string) $key;
+            }
+        }
+
+        return 'thelia_administrator_update';
     }
 
     /**
