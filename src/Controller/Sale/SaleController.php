@@ -99,8 +99,9 @@ final class SaleController
             eventName: TheliaEvents::SALE_CREATE,
             eventFactory: fn (FormInterface $validated): SaleCreateEvent => $this->eventFactory->createEvent((array) $validated->getData(), $locale),
             actionLabel: 'Sale creation',
-            successRoute: self::LIST_ROUTE,
+            successRoute: self::EDIT_ROUTE,
             renderError: fn (): RedirectResponse => new RedirectResponse($this->urls->generate(self::LIST_ROUTE)),
+            successParametersResolver: static fn (SaleCreateEvent $event): array => ['sale_id' => (int) $event->getSale()?->getId()],
             describeForLog: static fn (SaleCreateEvent $event): array => ['Sale created', $event->hasSale() ? (int) $event->getSale()?->getId() : null],
         );
     }
