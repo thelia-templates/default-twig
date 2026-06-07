@@ -233,7 +233,7 @@ final class HookController
     #[Route('/admin/hooks/delete', name: 'admin.hook.delete', methods: ['POST', 'GET'])]
     public function delete(Request $request): Response
     {
-        $hookId = (int) $request->get('hook_id', 0);
+        $hookId = (int) $request->request->get('hook_id', 0);
 
         return $this->action->tokenAction(
             resource: self::RESOURCE,
@@ -253,11 +253,11 @@ final class HookController
             resource: self::RESOURCE,
             access: AccessManager::UPDATE,
             request: $request,
-            event: new HookToggleActivationEvent((int) $request->get('hook_id', 0)),
+            event: new HookToggleActivationEvent((int) $request->query->get('hook_id', 0)),
             eventName: TheliaEvents::HOOK_TOGGLE_ACTIVATION,
             actionLabel: 'Hook activation toggle',
             successRoute: self::LIST_ROUTE,
-            successParameters: ['type' => (int) $request->get('type', TemplateDefinition::FRONT_OFFICE)],
+            successParameters: ['type' => (int) $request->query->get('type', TemplateDefinition::FRONT_OFFICE)],
         );
     }
 
@@ -268,11 +268,11 @@ final class HookController
             resource: self::RESOURCE,
             access: AccessManager::UPDATE,
             request: $request,
-            event: new HookToggleNativeEvent((int) $request->get('hook_id', 0)),
+            event: new HookToggleNativeEvent((int) $request->query->get('hook_id', 0)),
             eventName: TheliaEvents::HOOK_TOGGLE_NATIVE,
             actionLabel: 'Hook native toggle',
             successRoute: self::LIST_ROUTE,
-            successParameters: ['type' => (int) $request->get('type', TemplateDefinition::FRONT_OFFICE)],
+            successParameters: ['type' => (int) $request->query->get('type', TemplateDefinition::FRONT_OFFICE)],
         );
     }
 
