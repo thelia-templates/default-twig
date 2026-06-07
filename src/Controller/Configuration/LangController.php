@@ -82,9 +82,12 @@ final class LangController
     }
 
     #[Route('/save/{lang_id}', name: 'update.process', requirements: ['lang_id' => '\d+'], methods: ['POST'])]
-    public function processUpdate(): Response
+    public function processUpdate(int $lang_id): Response
     {
-        $form = $this->formFactory->createNamed('thelia_lang_update', LangType::class, null, [
+        // Each row's edit form is registered as 'thelia_lang_update_<id>' (see createEditForm),
+        // so the posted fields are namespaced by id. Rebuild the form under the same name here,
+        // otherwise handleRequest() never sees the submission and the update silently fails.
+        $form = $this->formFactory->createNamed('thelia_lang_update_'.$lang_id, LangType::class, null, [
             'include_id' => true,
         ]);
 
