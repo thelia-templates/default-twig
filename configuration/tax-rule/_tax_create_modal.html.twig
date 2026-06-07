@@ -16,7 +16,7 @@
         <div class="row g-3 mt-2" data-testid="tax-create-requirements">
             {% for child in create_tax_form %}
                 {% set field_name = child.vars.name %}
-                {% if field_name not in ['locale', 'title', 'description', 'type'] %}
+                {% if field_name not in ['locale', 'title', 'description', 'type', '_token', 'id'] %}
                     {% set tax_type = child.vars.attr['data-tax-type'] ?? '' %}
                     <div class="col-md-6 tax-requirement" data-tax-type="{{ tax_type }}">
                         {{ form_row(child) }}
