@@ -100,7 +100,7 @@ final class FeatureAvController
     #[Route('/delete', name: 'delete', methods: ['GET', 'POST'])]
     public function delete(Request $request): Response
     {
-        $featureAvId = (int) $request->get('featureav_id', 0);
+        $featureAvId = (int) $request->query->get('featureav_id', 0);
         $featureAv = FeatureAvQuery::create()->findPk($featureAvId);
         $featureId = $featureAv?->getFeatureId() ?? 0;
 
@@ -119,14 +119,14 @@ final class FeatureAvController
     #[Route('/update-position', name: 'update-position', methods: ['GET', 'POST'])]
     public function updatePosition(Request $request): Response
     {
-        $featureAvId = (int) $request->get('featureav_id', 0);
+        $featureAvId = (int) $request->query->get('featureav_id', 0);
         $featureAv = FeatureAvQuery::create()->findPk($featureAvId);
         $featureId = $featureAv?->getFeatureId() ?? 0;
 
         $event = new UpdatePositionEvent(
             $featureAvId,
-            (int) $request->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE),
-            (int) $request->get('position', 0),
+            (int) $request->query->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE),
+            (int) $request->query->get('position', 0),
         );
 
         return $this->action->tokenAction(

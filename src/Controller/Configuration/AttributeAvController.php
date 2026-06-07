@@ -111,7 +111,7 @@ final class AttributeAvController
     #[Route('/delete', name: 'delete', methods: ['GET', 'POST'])]
     public function delete(Request $request): Response
     {
-        $attributeAvId = (int) $request->get('attributeav_id', 0);
+        $attributeAvId = (int) $request->query->get('attributeav_id', 0);
         $attributeAv = AttributeAvQuery::create()->findPk($attributeAvId);
         $attributeId = $attributeAv?->getAttributeId() ?? 0;
 
@@ -163,14 +163,14 @@ final class AttributeAvController
     #[Route('/update-position', name: 'update-position', methods: ['GET', 'POST'])]
     public function updatePosition(Request $request): Response
     {
-        $attributeAvId = (int) $request->get('attributeav_id', 0);
+        $attributeAvId = (int) $request->query->get('attributeav_id', 0);
         $attributeAv = AttributeAvQuery::create()->findPk($attributeAvId);
         $attributeId = $attributeAv?->getAttributeId() ?? 0;
 
         $event = new UpdatePositionEvent(
             $attributeAvId,
-            (int) $request->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE),
-            (int) $request->get('position', 0),
+            (int) $request->query->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE),
+            (int) $request->query->get('position', 0),
         );
 
         return $this->action->tokenAction(
