@@ -126,6 +126,7 @@ final class ProductController
             successRoute: self::EDIT_ROUTE,
             renderError: fn (): RedirectResponse => new RedirectResponse($this->urls->generate(self::LIST_ROUTE)),
             describeForLog: $this->describeCreated(...),
+            successParametersResolver: static fn (ProductCreateEvent $event): array => ['product_id' => (int) $event->getProduct()->getId()],
         );
     }
 

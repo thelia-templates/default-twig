@@ -51,10 +51,11 @@ readonly class AdminFormAction
     }
 
     /**
-     * @param callable(FormInterface): object                      $eventFactory      build the event from the validated form
-     * @param callable(\Throwable): Response                       $renderError       build the error response (typically a re-render with errors)
-     * @param callable(object): array{0: string, 1: int|null}|null $describeForLog    Optional. Build [message, resourceId] from the dispatched event.
-     * @param array<string, scalar>                                $successParameters
+     * @param callable(FormInterface): object                       $eventFactory             build the event from the validated form
+     * @param callable(\Throwable): Response                        $renderError              build the error response (typically a re-render with errors)
+     * @param callable(object): array{0: string, 1: int|null}|null  $describeForLog           Optional. Build [message, resourceId] from the dispatched event.
+     * @param array<string, scalar>                                 $successParameters
+     * @param callable(object): array<string, scalar>|null          $successParametersResolver Optional. Resolve the redirect parameters from the dispatched event (e.g. a freshly created entity id). Overrides $successParameters when provided.
      */
     public function submit(
         string $resource,
@@ -67,6 +68,7 @@ readonly class AdminFormAction
         callable $renderError,
         array $successParameters = [],
         ?callable $describeForLog = null,
+        ?callable $successParametersResolver = null,
     ): Response {
         if ($denied = $this->access->check($resource, [], $access)) {
             return $denied;
@@ -78,6 +80,10 @@ readonly class AdminFormAction
             $this->events->dispatch($event, $eventName);
 
             $this->logSuccess($resource, $access, $event, $describeForLog);
+
+            if ($successParametersResolver !== null) {
+                $successParameters = $successParametersResolver($event);
+            }
 
             return new RedirectResponse($this->urls->generate($successRoute, $successParameters));
         } catch (\Throwable $exception) {
