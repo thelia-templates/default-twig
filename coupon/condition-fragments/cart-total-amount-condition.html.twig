@@ -1,21 +1,24 @@
-{% set field_name = condition.serviceId %}
+{% set amount_field = constant('Thelia\\Condition\\Implementation\\MatchForTotalAmount::CART_TOTAL') %}
+{% set currency_field = constant('Thelia\\Condition\\Implementation\\MatchForTotalAmount::CART_CURRENCY') %}
 <div class="mb-3">
     <label class="form-label">{{ name }}</label>
     <div class="row g-2">
         <div class="col-md-5">
-            <select class="form-select" name="{{ field_name }}[operator]">
+            <select class="form-select" name="{{ amount_field }}[operator]">
                 {% for op in available_operators['price'] ?? [] %}
                     <option value="{{ op.value }}">{{ op.label }}</option>
                 {% endfor %}
             </select>
         </div>
         <div class="col-md-4">
-            <input type="text" inputmode="decimal" class="form-control" name="{{ field_name }}[value]" value="{{ validators.values.price|default('') }}" placeholder="{{ 'Amount'|trans }}">
+            <input type="text" inputmode="decimal" class="form-control" name="{{ amount_field }}[value]" value="{{ validators.setValues.price|default('') }}" placeholder="{{ 'Amount'|trans }}">
         </div>
         <div class="col-md-3">
-            <input type="hidden" name="{{ field_name }}_currency[operator]" value="==">
-            <select class="form-select" name="{{ field_name }}_currency[value]">
-                <option value="{{ currency_symbol }}">{{ currency_symbol }}</option>
+            <input type="hidden" name="{{ currency_field }}[operator]" value="==">
+            <select class="form-select" name="{{ currency_field }}[value]">
+                {% for currency in currencies ?? [] %}
+                    <option value="{{ currency.code }}"{{ currency.code == (selected_currency ?? '') ? ' selected' : '' }}>{{ currency.symbol }}</option>
+                {% endfor %}
             </select>
         </div>
     </div>

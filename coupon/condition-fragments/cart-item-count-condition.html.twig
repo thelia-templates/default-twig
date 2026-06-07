@@ -1,4 +1,4 @@
-{% set field_name = condition.serviceId %}
+{% set field_name = constant('Thelia\\Condition\\Implementation\\MatchForXArticles::CART_QUANTITY') %}
 <div class="mb-3">
     <label class="form-label">{{ name }}</label>
     <div class="row g-2">
@@ -10,7 +10,7 @@
             </select>
         </div>
         <div class="col-md-6">
-            <input type="number" min="0" step="1" class="form-control" name="{{ field_name }}[value]" value="{{ validators.values.quantity|default(1) }}">
+            <input type="number" min="0" step="1" class="form-control" name="{{ field_name }}[value]" value="{{ validators.setValues.quantity|default(1) }}">
         </div>
     </div>
 </div>

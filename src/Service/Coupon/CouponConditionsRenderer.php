@@ -163,6 +163,13 @@ final readonly class CouponConditionsRenderer
         ];
 
         return match (true) {
+            $condition instanceof MatchForTotalAmount => array_merge($params, [
+                'currencies' => $this->currencyChoices(),
+                'selected_currency' => (string) ($setValues[MatchForTotalAmount::CART_CURRENCY] ?? $this->defaultCurrencyCode()),
+            ]),
+            $condition instanceof StartDate => array_merge($params, [
+                'start_date_value' => $this->formatStartDate($setValues[StartDate::START_DATE] ?? null, $dateFormat),
+            ]),
             $condition instanceof CartContainsProducts => array_merge($params, [
                 'field_name' => CartContainsProducts::PRODUCTS_LIST,
                 'selected_values' => $this->normalizeIdList($setValues[CartContainsProducts::PRODUCTS_LIST] ?? []),
@@ -358,5 +365,36 @@ final readonly class CouponConditionsRenderer
         $currency = CurrencyQuery::create()->findOneByByDefault(1);
 
         return $currency === null ? '$' : (string) $currency->getSymbol();
+    }
+
+    private function formatStartDate(mixed $value, string $dateFormat): string
+    {
+        if ($value === null || $value === '') {
+            return '';
+        }
+
+        if (\is_int($value) || ctype_digit((string) $value)) {
+            return (new \DateTime())->setTimestamp((int) $value)->format($dateFormat);
+        }
+
+        return (string) $value;
+    }
+
+    private function defaultCurrencyCode(): string
+    {
+        $currency = CurrencyQuery::create()->findOneByByDefault(1);
+
+        return $currency === null ? 'USD' : (string) $currency->getCode();
+    }
+
+    /** @return list<array{code: string, symbol: string}> */
+    private function currencyChoices(): array
+    {
+        $choices = [];
+        foreach (CurrencyQuery::create()->find() as $currency) {
+            $choices[] = ['code' => (string) $currency->getCode(), 'symbol' => (string) $currency->getSymbol()];
+        }
+
+        return $choices;
     }
 }
