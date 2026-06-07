@@ -109,7 +109,12 @@ final class AreaController
             eventFactory: $this->createEvent(...),
             actionLabel: 'Shipping zone creation',
             successRoute: self::EDIT_ROUTE,
-            successParameters: [],
+            successParametersResolver: static function (AreaEvent $event): array {
+                $area = $event->getModel();
+                \assert($area instanceof Area);
+
+                return ['area_id' => (int) $area->getId()];
+            },
             renderError: fn (): RedirectResponse => new RedirectResponse($this->urls->generate(self::LIST_ROUTE)),
             describeForLog: static function (AreaEvent $event): array {
                 $area = $event->getModel();

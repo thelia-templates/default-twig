@@ -172,7 +172,7 @@ final class TaxRuleController
             actionLabel: 'Tax rule creation',
             successRoute: self::UPDATE_ROUTE,
             renderError: fn (): RedirectResponse => new RedirectResponse($this->urls->generate(self::LIST_ROUTE)),
-            successParameters: [],
+            successParametersResolver: $this->resolveCreatedTaxRuleId(...),
             describeForLog: $this->describeCreated(...),
         );
     }
@@ -347,6 +347,19 @@ final class TaxRuleController
         $event->setDescription((string) ($data['description'] ?? ''));
 
         return $event;
+    }
+
+    /**
+     * @return array<string, scalar>
+     */
+    private function resolveCreatedTaxRuleId(TaxRuleEvent $event): array
+    {
+        $taxRule = $event->getTaxRule();
+        if ($taxRule === null) {
+            throw new \LogicException($this->translator->trans('No tax rule was created.'));
+        }
+
+        return ['tax_rule_id' => (int) $taxRule->getId()];
     }
 
     /**
