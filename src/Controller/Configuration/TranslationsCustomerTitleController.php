@@ -18,8 +18,11 @@ use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Session\Flash\FlashBagInterface;
+use Symfony\Component\HttpFoundation\Session\FlashBagAwareSessionInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Thelia\Core\HttpFoundation\Session\Session as TheliaSession;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
@@ -33,12 +36,15 @@ final class TranslationsCustomerTitleController
     private const RESOURCE = AdminResources::CONFIG;
     private const ROUTE = 'admin.configuration.translations-customers-title';
     private const TEMPLATE = '@BackOfficeDefaultTwig/configuration/translations/customer-title.html.twig';
+    private const SHORT_MAX_LENGTH = 10;
+    private const LONG_MAX_LENGTH = 45;
 
     public function __construct(
         private readonly AdminAccessChecker $access,
         private readonly Environment $twig,
         private readonly UrlGeneratorInterface $urls,
         private readonly TokenProvider $tokens,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -78,11 +84,25 @@ final class TranslationsCustomerTitleController
         $this->tokens->checkToken((string) $request->get('_token'));
 
         $locale = (string) ($request->request->get('locale') ?? $this->editionLocale($request));
-        foreach (CustomerTitleQuery::create()->find() as $title) {
-            $shortKey = 'short_title_'.(int) $title->getId();
-            $longKey = 'long_title_'.(int) $title->getId();
-            $shortValue = $request->request->get($shortKey);
-            $longValue = $request->request->get($longKey);
+        $titles = CustomerTitleQuery::create()->find();
+
+        // customer_title_i18n.short is VARCHAR(10) and .long is VARCHAR(45). Validate the lengths up
+        // front so an over-long value surfaces a friendly error instead of bubbling up as a Propel
+        // SQLSTATE[22001] / HTTP 500. Mirrors the Length constraints of the core CustomerTitleI18nType.
+        foreach ($titles as $title) {
+            $shortValue = $request->request->get('short_title_'.(int) $title->getId());
+            $longValue = $request->request->get('long_title_'.(int) $title->getId());
+            if ($shortValue !== null && mb_strlen((string) $shortValue) > self::SHORT_MAX_LENGTH) {
+                return $this->redirectWithError($request, self::SHORT_MAX_LENGTH, 'short');
+            }
+            if ($longValue !== null && mb_strlen((string) $longValue) > self::LONG_MAX_LENGTH) {
+                return $this->redirectWithError($request, self::LONG_MAX_LENGTH, 'long');
+            }
+        }
+
+        foreach ($titles as $title) {
+            $shortValue = $request->request->get('short_title_'.(int) $title->getId());
+            $longValue = $request->request->get('long_title_'.(int) $title->getId());
             if ($shortValue === null && $longValue === null) {
                 continue;
             }
@@ -97,6 +117,27 @@ final class TranslationsCustomerTitleController
         }
 
         return new RedirectResponse($this->urls->generate(self::ROUTE));
+    }
+
+    private function redirectWithError(Request $request, int $maxLength, string $field): RedirectResponse
+    {
+        $this->flashBag($request)?->add('danger', $this->translator->trans(
+            'The %field title must not exceed %max characters.',
+            ['%field' => $field, '%max' => $maxLength],
+        ));
+
+        $languageId = $this->editionLanguageId($request);
+
+        return new RedirectResponse(
+            $this->urls->generate(self::ROUTE, $languageId > 0 ? ['edit_language_id' => $languageId] : []),
+        );
+    }
+
+    private function flashBag(Request $request): ?FlashBagInterface
+    {
+        $session = $request->hasSession() ? $request->getSession() : null;
+
+        return $session instanceof FlashBagAwareSessionInterface ? $session->getFlashBag() : null;
     }
 
     /** @return list<array{id: int, title: string, locale: string}> */
