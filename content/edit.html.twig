@@ -197,7 +197,7 @@
                                         </td>
                                         <td class="text-end">
                                             {% if not folder.is_default %}
-                                                <a href="{{ folder.delete_url }}?_token={{ additional_folder_delete_token }}" class="btn btn-sm btn-outline-danger" data-testid="content-additional-folder-delete-{{ folder.id }}" data-method="post">
+                                                <a href="{{ folder.delete_url }}&_token={{ additional_folder_delete_token }}" class="btn btn-sm btn-outline-danger" data-testid="content-additional-folder-delete-{{ folder.id }}">
                                                     <i class="bi bi-trash" aria-hidden="true"></i>
                                                 </a>
                                             {% endif %}
