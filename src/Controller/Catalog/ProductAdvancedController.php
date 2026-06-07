@@ -1086,7 +1086,7 @@ final class ProductAdvancedController
         }
 
         $updated = [];
-        $featureValues = (array) $request->request->all()['feature_value'];
+        $featureValues = $request->request->all('feature_value');
         foreach ($featureValues as $featureId => $values) {
             $featureId = (int) $featureId;
             $events->dispatch(new FeatureProductDeleteEvent($productId, $featureId), TheliaEvents::PRODUCT_FEATURE_DELETE_VALUE);
@@ -1100,7 +1100,7 @@ final class ProductAdvancedController
             $updated[] = $featureId;
         }
 
-        $featureTextValues = (array) $request->request->all()['feature_text_value'];
+        $featureTextValues = $request->request->all('feature_text_value');
         foreach ($featureTextValues as $featureId => $value) {
             $featureId = (int) $featureId;
             $value = (string) $value;
