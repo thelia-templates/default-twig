@@ -297,9 +297,13 @@ final class CustomerController
     #[Route('/customer/delete', name: 'customer.delete', methods: ['POST', 'GET'])]
     public function delete(Request $request): Response
     {
-        $customer = CustomerQuery::create()->findPk((int) $request->get('customer_id', 0));
+        $customerId = (int) ($request->request->get('customer_id') ?? $request->query->get('customer_id') ?? 0);
+        $customer = CustomerQuery::create()->findPk($customerId);
+        if ($customer === null) {
+            return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
+        }
 
-        if ($customer !== null && OrderQuery::create()->filterByCustomerId((int) $customer->getId())->count() > 0) {
+        if (OrderQuery::create()->filterByCustomerId((int) $customer->getId())->count() > 0) {
             $this->flashError($request, $this->translator->trans(
                 'This customer has existing orders and cannot be deleted.',
             ));
