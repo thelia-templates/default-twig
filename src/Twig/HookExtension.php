@@ -16,6 +16,7 @@ namespace BackOfficeDefaultTwigBundle\Twig;
 
 use BackOfficeDefaultTwigBundle\Service\Hook\LegacyHookAliases;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Thelia\Core\Event\Hook\HookRenderBlockEvent;
 use Thelia\Core\Event\Hook\HookRenderEvent;
@@ -47,6 +48,8 @@ final class HookExtension extends AbstractExtension
         private readonly EventDispatcherInterface $dispatcher,
         private readonly LoggerInterface $logger,
         private readonly LegacyHookAliases $legacyAliases,
+        #[Autowire(param: 'kernel.debug')]
+        private readonly bool $debug = false,
     ) {
     }
 
@@ -104,10 +107,7 @@ final class HookExtension extends AbstractExtension
 
             return $event->dump();
         } catch (\Throwable $exception) {
-            $this->logger->warning(
-                \sprintf('hook(%s) caught a listener error: %s', $name, $exception->getMessage()),
-                ['exception' => $exception],
-            );
+            $this->logSwallowed('hook', $name, $exception);
 
             return '';
         }
@@ -118,10 +118,7 @@ final class HookExtension extends AbstractExtension
         try {
             return $this->dispatchHookBlock($name, $parameters, $type)->get();
         } catch (\Throwable $exception) {
-            $this->logger->warning(
-                \sprintf('hook_block(%s) caught a listener error: %s', $name, $exception->getMessage()),
-                ['exception' => $exception],
-            );
+            $this->logSwallowed('hook_block', $name, $exception);
 
             return new FragmentBag();
         }
@@ -147,6 +144,16 @@ final class HookExtension extends AbstractExtension
     private function hookNamesFor(string $name): array
     {
         return [$name, ...$this->legacyAliases->legacyNamesFor($name)];
+    }
+
+    private function logSwallowed(string $kind, string $name, \Throwable $exception): void
+    {
+        $message = \sprintf('%s(%s) caught a listener error: %s', $kind, $name, $exception->getMessage());
+        $context = ['exception' => $exception];
+
+        $this->debug
+            ? $this->logger->error($message, $context)
+            : $this->logger->warning($message, $context);
     }
 
     private function moduleSuffix(array $parameters): string
