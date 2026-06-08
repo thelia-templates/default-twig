@@ -323,7 +323,10 @@ final class HookController
                 'missing' => array_values($byCode),
             ]);
         } catch (\Throwable $exception) {
-            return new JsonResponse(['success' => false, 'message' => $exception->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+            // A missing or unconfigured template parser is a recoverable configuration
+            // issue, not a server failure: surface it as 422 so a crawler or the UI can
+            // tell it apart from a genuine 500.
+            return new JsonResponse(['success' => false, 'message' => $exception->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
     }
 

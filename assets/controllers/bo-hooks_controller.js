@@ -35,7 +35,7 @@ export default class extends Controller {
         this.discoverContentTarget.innerHTML = `<div class="text-muted">${this.t('Parsing template...')}</div>`;
 
         fetch(url.toString(), { credentials: 'same-origin', headers: { Accept: 'application/json' } })
-            .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
+            .then((r) => (r.ok ? r.json() : r.json().then((d) => Promise.reject(new Error(d.message || `HTTP ${r.status}`)), () => Promise.reject(new Error(`HTTP ${r.status}`)))))
             .then((data) => {
                 if (!data.success) {
                     this.discoverContentTarget.innerHTML = `<div class="alert alert-danger">${this.escape(data.message || '')}</div>`;
