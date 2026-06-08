@@ -21,6 +21,7 @@ use Thelia\Core\Event\Hook\HookRenderBlockEvent;
 use Thelia\Core\Event\Hook\HookRenderEvent;
 use Thelia\Core\Hook\FragmentBag;
 use Thelia\Core\Template\TemplateDefinition;
+use Thelia\Model\ModuleQuery;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
 
@@ -96,8 +97,9 @@ final class HookExtension extends AbstractExtension
         $event = new HookRenderEvent($name, $parameters);
 
         try {
+            $suffix = $this->moduleSuffix($parameters);
             foreach ($this->hookNamesFor($name) as $hookName) {
-                $this->dispatcher->dispatch($event, \sprintf('hook.%s.%s', $type, $hookName));
+                $this->dispatcher->dispatch($event, \sprintf('hook.%s.%s', $type, $hookName).$suffix);
             }
 
             return $event->dump();
@@ -129,8 +131,9 @@ final class HookExtension extends AbstractExtension
     {
         $event = new HookRenderBlockEvent($name, $parameters);
 
+        $suffix = $this->moduleSuffix($parameters);
         foreach ($this->hookNamesFor($name) as $hookName) {
-            $this->dispatcher->dispatch($event, \sprintf('hook.%s.%s', $type, $hookName));
+            $this->dispatcher->dispatch($event, \sprintf('hook.%s.%s', $type, $hookName).$suffix);
         }
 
         return $event;
@@ -144,5 +147,18 @@ final class HookExtension extends AbstractExtension
     private function hookNamesFor(string $name): array
     {
         return [$name, ...$this->legacyAliases->legacyNamesFor($name)];
+    }
+
+    private function moduleSuffix(array $parameters): string
+    {
+        $moduleId = (int) ($parameters['module'] ?? 0);
+        $moduleCode = (string) ($parameters['modulecode'] ?? '');
+
+        if (0 === $moduleId && '' !== $moduleCode
+            && null !== $module = ModuleQuery::create()->findOneByCode($moduleCode)) {
+            $moduleId = $module->getId();
+        }
+
+        return 0 !== $moduleId ? '.'.$moduleId : '';
     }
 }
