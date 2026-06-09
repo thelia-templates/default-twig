@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="{{ app.request.locale|default('en') }}" data-bs-theme="light">
+{# lang must be a valid BCP 47 tag: Thelia locales use underscores (en_US), browsers and Intl APIs require dashes (en-US) #}
+<html lang="{{ app.request.locale|default('en')|replace({'_': '-'}) }}" data-bs-theme="light">
     {% block head %}
         <head>
             <meta charset="UTF-8">
