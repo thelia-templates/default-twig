@@ -197,6 +197,7 @@
                                                 {% if is_granted('DELETE', 'admin.address') %}
                                                     <form method="post" action="{{ path('admin.address.delete') }}?_token={{ assignToken() }}" class="d-inline" onsubmit="return confirm('{{ 'Delete this address?'|trans|e('js') }}');">
                                                         <input type="hidden" name="address_id" value="{{ addr.id }}">
+                                                        {{ safe_hook('customer.address-delete-form', { customer_id: customer.id, location: 'customer_address_delete_form' }) }}
                                                         <button type="submit" class="btn btn-outline-danger" title="{{ 'Delete'|trans }}" data-testid="customer-address-delete">
                                                             <i class="bi bi-trash"></i>
                                                         </button>
@@ -231,6 +232,7 @@
                                     <th>{{ 'Status'|trans }}</th>
                                     <th class="text-end">{{ 'Total'|trans }}</th>
                                     <th class="text-end">{{ 'Actions'|trans }}</th>
+                                    {{ safe_hook('customer.orders-table-header', { customer_id: customer.id, location: 'orders_table_header' }) }}
                                 </tr>
                             </thead>
                             <tbody>
@@ -245,6 +247,7 @@
                                                 <i class="bi bi-eye"></i>
                                             </a>
                                         </td>
+                                        {{ safe_hook('customer.orders-table-row', { customer_id: customer.id, order_id: order.id, location: 'orders_table_row' }) }}
                                     </tr>
                                 {% endfor %}
                             </tbody>

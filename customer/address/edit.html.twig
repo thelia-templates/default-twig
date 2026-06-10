@@ -47,6 +47,7 @@
                         <div class="col-md-6">{{ form_row(form.phone) }}</div>
                         <div class="col-md-6">{{ form_row(form.cellphone) }}</div>
                     </div>
+                    {{ safe_hook('customer.address-update-form', { customer_id: address.customerId, location: 'customer_address_update_form' }) }}
                     <div class="d-flex justify-content-end gap-2 mt-3">
                         <a href="{{ path('admin.customer.update.view', { customer_id: address.customerId }) }}" class="btn btn-outline-secondary" data-testid="address-edit-cancel">
                             {{ 'Cancel'|trans }}

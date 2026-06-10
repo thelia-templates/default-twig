@@ -5,6 +5,8 @@
     formAction: path('admin.address.create'),
     submitLabel: 'Add address',
     testid: 'customer-address-create',
+    hook: 'customer.address-create-form',
+    hookContext: { customer_id: customer.id, location: 'customer_address_create_form' },
 } %}
     {% block fields %}
         <div class="row g-3">

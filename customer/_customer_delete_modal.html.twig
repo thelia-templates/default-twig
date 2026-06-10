@@ -4,6 +4,8 @@
     formAction: path('admin.customer.delete'),
     message: 'Do you really want to delete this customer? This action cannot be undone.',
     testid: 'customer-delete',
+    hook: 'customer.delete-form',
+    hookContext: { location: 'customer_delete_form' },
     prefillTrigger: 'data-customer-id',
     prefillInput: 'customer_id',
 }) }}

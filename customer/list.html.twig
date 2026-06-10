@@ -299,6 +299,7 @@
         {% endif %}
 
         <div class="mt-3">
+            {{ safe_hook('customers.caption', { location: 'customer_list_caption' }) }}
             {{ component('BoDataTable', {
                 id: 'customers',
                 columns: [
@@ -315,6 +316,11 @@
                 ],
                 rows: rows,
                 emptyMessage: 'No customer matches the current filters.'|trans,
+                extraColumnsHeaderHook: 'customers.header',
+                extraColumnsHook: 'customers.row',
+                headerHookContext: { location: 'customer_list_header' },
+                rowHookContext: { location: 'customer_list_row' },
+                rowHookArgs: { customer_id: 'id' },
                 sortField: filters.sort_field,
                 sortDirection: filters.sort_direction,
                 sortParam: 'order',
