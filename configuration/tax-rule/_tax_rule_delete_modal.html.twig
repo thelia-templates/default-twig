@@ -4,6 +4,8 @@
     formAction: path('admin.configuration.taxes-rules.delete'),
     message: 'Do you really want to delete this tax rule?',
     testid: 'tax-rule-delete',
+    hook: 'tax-rule.delete-form',
+    hookContext: { location: 'tax_rule_delete_form' },
     prefillTrigger: 'data-tax-rule-id',
     prefillInput: 'tax_rule_id',
 }) }}

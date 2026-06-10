@@ -7,8 +7,10 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'Close'|trans }}"></button>
                 </div>
                 <div class="modal-body">
+                    {{ safe_hook('currency-edit.top', { currency_id: currency_id }) }}
                     {% include '@BackOfficeDefaultTwig/configuration/currency/_form_fields.html.twig' with { form: form } only %}
                     {{ safe_hook('currency.edit-form', { currency_id: currency_id }) }}
+                    {{ safe_hook('currency-edit.bottom', { currency_id: currency_id }) }}
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'Cancel'|trans }}</button>

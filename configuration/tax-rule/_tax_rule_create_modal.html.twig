@@ -5,6 +5,8 @@
     formAction: path('admin.configuration.taxes-rules.add'),
     submitLabel: 'Create this tax rule',
     testid: 'tax-rule-create',
+    hook: 'tax-rule.create-form',
+    hookContext: { location: 'tax_rule_create_form' },
     size: '',
 } %}
     {% block fields %}

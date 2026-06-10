@@ -73,6 +73,7 @@
                     <div class="card-body">
                         <form method="POST" action="{{ path('admin.configuration.shipping-configuration.countries.remove') }}" data-testid="shipping-configuration-remove-countries-form">
                             <input type="hidden" name="area_id" value="{{ area_id }}">
+                            {{ safe_hook('shipping-configuration.country-delete-form', { location: 'shipping_configuration_country_delete_form' }) }}
 
                             <div class="table-responsive">
                                 <table class="table table-striped table-sm align-middle">

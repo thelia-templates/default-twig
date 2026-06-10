@@ -48,6 +48,11 @@
             ],
             rows: rows,
             emptyMessage: 'No administrator yet.'|trans,
+            extraColumnsHeaderHook: 'administrators.header',
+            extraColumnsHook: 'administrators.row',
+            headerHookContext: { location: 'administrator_list_header' },
+            rowHookContext: { location: 'administrator_list_row' },
+            rowHookArgs: { admin_id: 'id' },
             sortField: sort_field,
             sortDirection: sort_direction,
         }) }}

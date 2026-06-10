@@ -50,6 +50,8 @@
         formAction: path('admin.configuration.templates.create'),
         submitLabel: 'Create',
         testid: 'template-create',
+        hook: 'template.create-form',
+        hookContext: { location: 'template_create_form' },
         size: '',
     } %}
         {% block fields %}
@@ -89,6 +91,8 @@
         formAction: path('admin.configuration.templates.delete'),
         message: 'Do you really want to delete this template?',
         testid: 'template-delete',
+        hook: 'template.delete-form',
+        hookContext: { location: 'template_delete_form' },
         prefillTrigger: 'data-template-id',
         prefillInput: 'template_id',
     }) }}

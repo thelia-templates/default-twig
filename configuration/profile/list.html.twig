@@ -37,6 +37,9 @@
             ],
             rows: rows,
             emptyMessage: 'No profile defined yet.'|trans,
+            extraColumnsHeaderHook: 'profile.table-header',
+            extraColumnsHook: 'profile.table-row',
+            rowHookArgs: { profile_id: 'id' },
             sortField: sort_field,
             sortDirection: sort_direction,
         }) }}

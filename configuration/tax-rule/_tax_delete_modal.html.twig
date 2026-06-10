@@ -4,6 +4,8 @@
     formAction: path('admin.configuration.taxes.delete'),
     message: 'Do you really want to delete this tax?',
     testid: 'tax-delete',
+    hook: 'tax.delete-form',
+    hookContext: { location: 'tax_delete_form' },
     prefillTrigger: 'data-tax-id',
     prefillInput: 'tax_id',
 }) }}

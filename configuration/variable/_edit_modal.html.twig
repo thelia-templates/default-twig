@@ -7,8 +7,10 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'Close'|trans }}"></button>
                 </div>
                 <div class="modal-body">
+                    {{ safe_hook('variables-edit.top', { variable_id: variable_id }) }}
                     {% include '@BackOfficeDefaultTwig/configuration/variable/_form_fields.html.twig' with { form: form } only %}
                     {{ safe_hook('variable.edit-form', { variable_id: variable_id }) }}
+                    {{ safe_hook('variables-edit.bottom', { variable_id: variable_id }) }}
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'Cancel'|trans }}</button>

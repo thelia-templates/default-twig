@@ -38,6 +38,7 @@
                                 <th>{{ 'Delivery module'|trans }}</th>
                                 <th>{{ 'Shipping zones for this module'|trans }}</th>
                                 <th class="text-center">{{ 'Actions'|trans }}</th>
+                                {{ safe_hook('shipping-zones.table-header', { location: 'shipping_zones_table_header' }) }}
                             </tr>
                         </thead>
                         <tbody>
@@ -67,6 +68,7 @@
                                             </a>
                                         {% endif %}
                                     </td>
+                                    {{ safe_hook('shipping-zones.table-row', { module_id: row.id, location: 'shipping_zones_table_row' }) }}
                                 </tr>
                             {% endfor %}
                         </tbody>

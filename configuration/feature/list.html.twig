@@ -80,6 +80,8 @@
         formAction: path('admin.configuration.features.delete'),
         message: 'Do you really want to delete this feature?',
         testid: 'feature-delete',
+        hook: 'feature.delete-form',
+        hookContext: { location: 'feature_delete_form' },
         prefillTrigger: 'data-feature-id',
         prefillInput: 'feature_id',
     }) }}

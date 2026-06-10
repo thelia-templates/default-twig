@@ -14,6 +14,8 @@
 {% endblock %}
 
 {% block content %}
+    {{ safe_hook('messages.top', { location: 'messages_top' }) }}
+
     <div class="container-fluid" data-testid="messages-page">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h1 class="h3 mb-0">{{ 'Mail messages'|trans }}</h1>
@@ -35,10 +37,15 @@
             ],
             rows: rows,
             emptyMessage: 'No mailing template has been created yet. Click the + button to create one.'|trans,
+            headerHookContext: { location: 'messages_table_header' },
+            rowHookContext: { location: 'messages_table_row' },
+            rowHookArgs: { message_id: 'id' },
             sortField: sort_field,
             sortDirection: sort_direction,
         }) }}
     </div>
+
+    {{ safe_hook('messages.bottom', { location: 'messages_bottom' }) }}
 
     {% if is_granted('CREATE', 'admin.configuration.message') %}
         <div class="modal fade" id="message-create-modal" tabindex="-1" aria-hidden="true">
@@ -52,6 +59,7 @@
                     <div class="modal-body">
                         {{ form_row(create_form.message_name) }}
                         {{ form_row(create_form.title) }}
+                        {{ safe_hook('message.create-form', { location: 'message_create_form' }) }}
                     </div>
                     <div class="modal-footer">
                         {{ form_widget(create_form.locale) }}

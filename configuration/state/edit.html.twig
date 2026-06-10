@@ -15,6 +15,8 @@
 {% endblock %}
 
 {% block content %}
+    {{ safe_hook('state-edit.top', { state_id: state.id }) }}
+
     <div class="container-fluid" data-testid="state-edit-page">
         <h1 class="h3 mb-2">{{ 'State'|trans }} <small class="text-muted">{{ state.isocode }} - #{{ state.id }}</small></h1>
 
@@ -47,6 +49,8 @@
             </div>
         </div>
     </div>
+
+    {{ safe_hook('state-edit.bottom', { state_id: state.id }) }}
 {% endblock %}
 
 {% block scripts_extra %}

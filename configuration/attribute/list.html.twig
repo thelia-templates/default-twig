@@ -80,6 +80,8 @@
         formAction: path('admin.configuration.attributes.delete'),
         message: 'Do you really want to delete this attribute?',
         testid: 'attribute-delete',
+        hook: 'attribute.delete-form',
+        hookContext: { location: 'attribute_delete_form' },
         prefillTrigger: 'data-attribute-id',
         prefillInput: 'attribute_id',
     }) }}

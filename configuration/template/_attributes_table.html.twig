@@ -4,6 +4,7 @@
             <th>{{ 'Attribute'|trans }}</th>
             <th class="text-center">{{ 'Position'|trans }}</th>
             <th class="text-end">{{ 'Actions'|trans }}</th>
+            {{ safe_hook('template.attributes-table-header', { location: 'template_attributes_table_header' }) }}
         </tr>
     </thead>
     <tbody data-controller="bo-sortable"
@@ -20,6 +21,7 @@
                         <i class="bi bi-trash" aria-hidden="true"></i>
                     </a>
                 </td>
+                {{ safe_hook('template.attributes-table-row', { location: 'template_attributes_table_row' }) }}
             </tr>
         {% else %}
             <tr><td colspan="3" class="text-muted text-center">{{ 'No attribute attached.'|trans }}</td></tr>

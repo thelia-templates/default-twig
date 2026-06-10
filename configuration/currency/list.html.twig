@@ -82,4 +82,5 @@
 
 {% block scripts_extra %}
     {{ safe_hook('currencies.js') }}
+    {{ safe_hook('currency.edit-js', { location: 'currency-edit-js' }) }}
 {% endblock %}

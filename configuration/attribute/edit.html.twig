@@ -88,6 +88,7 @@
                                 <th>{{ 'Title'|trans }}</th>
                                 <th class="text-center">{{ 'Position'|trans }}</th>
                                 <th class="text-end">{{ 'Actions'|trans }}</th>
+                                {{ safe_hook('attributes-value.table-header', { attribute_id: attribute.id, location: 'attributes_value_table_header' }) }}
                             </tr>
                         </thead>
                         <tbody data-controller="bo-sortable"
@@ -114,6 +115,7 @@
                                             <i class="bi bi-trash" aria-hidden="true"></i>
                                         </a>
                                     </td>
+                                    {{ safe_hook('attributes-value.table-row', { attribute_id: attribute.id, attribute_av_id: av.id, location: 'attributes_value_table_row' }) }}
                                 </tr>
                             {% else %}
                                 <tr><td colspan="3" class="text-muted text-center">{{ 'No value yet.'|trans }}</td></tr>
@@ -143,6 +145,7 @@
                         </div>
                         {{ form_widget(av_create_form.locale) }}
                         {{ form_widget(av_create_form.attribute_id) }}
+                        {{ safe_hook('attribute-value.create-form', { location: 'attribute_value_create_form' }) }}
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'Cancel'|trans }}</button>

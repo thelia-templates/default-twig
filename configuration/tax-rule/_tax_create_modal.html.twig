@@ -5,6 +5,8 @@
     formAction: path('admin.configuration.taxes.add'),
     submitLabel: 'Create this tax',
     testid: 'tax-create',
+    hook: 'tax.create-form',
+    hookContext: { location: 'tax_create_form' },
 } %}
     {% block fields %}
         {{ form_widget(create_tax_form.locale) }}

@@ -65,4 +65,5 @@
 
 {% block scripts_extra %}
     {{ safe_hook('variables.js') }}
+    {{ safe_hook('variable.edit-js', { location: 'variable-edit-js' }) }}
 {% endblock %}
