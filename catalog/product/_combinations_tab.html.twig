@@ -121,7 +121,7 @@
                                         </button>
                                     </div>
                                 </td>
-                                {{ safe_hook('product.combinations-row', { pse_id: row.id, pse: row.id, idx: loop.index0, product: product.id }) }}
+                                {{ safe_hook('product.combinations-row', { pse_id: row.id, pse: row.id, idx: loop.index0, product: product.id, product_id: product.id }) }}
                             </tr>
                         {% endfor %}
                     </tbody>
