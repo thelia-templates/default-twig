@@ -95,6 +95,7 @@
                                     {{ form_row(form.postscriptum) }}
                                 </div>
                                 <div class="col-md-4">
+                                    {{ safe_hook('content.modification.form-right.top', { content_id: content.id }) }}
                                     <div class="form-check mb-3">
                                         {{ form_widget(form.visible, { attr: { class: 'form-check-input' } }) }}
                                         {{ form_label(form.visible, null, { label_attr: { class: 'form-check-label' } }) }}
@@ -108,6 +109,7 @@
                                         </select>
                                         {% do form.default_folder.setRendered %}
                                     </div>
+                                    {{ safe_hook('content.modification.form-right.bottom', { content_id: content.id }) }}
                                 </div>
                             </div>
                             {{ form_widget(form.id) }}
@@ -132,6 +134,7 @@
             </div>
 
             <div class="tab-pane fade {% if current_tab|default('') == 'seo' %}show active{% endif %}" id="tab-seo" role="tabpanel">
+                {{ safe_hook('tab-seo.top', { id: content.id, type: 'content' }) }}
                 <div class="card">
                     <div class="card-body">
                         {{ safe_hook('content.seo.update-form', { content_id: content.id, id: content.id }) }}
@@ -186,6 +189,7 @@
                                 <tr>
                                     <th>{{ 'Folder'|trans }}</th>
                                     <th class="text-end">{{ 'Actions'|trans }}</th>
+                                    {{ safe_hook('product.folders-table-header', { location: 'product_folders_table_header' }) }}
                                 </tr>
                             </thead>
                             <tbody>
@@ -202,6 +206,7 @@
                                                 </a>
                                             {% endif %}
                                         </td>
+                                        {{ safe_hook('product.folders-table-row', { location: 'product_folders_table_row' }) }}
                                     </tr>
                                 {% else %}
                                     <tr><td colspan="2" class="text-muted text-center">{{ 'No additional folder linked.'|trans }}</td></tr>

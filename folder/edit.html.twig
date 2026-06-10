@@ -105,6 +105,7 @@
                             </div>
                         </div>
                         <div class="col-md-4">
+                            {{ safe_hook('folder.modification.form-right.top', { folder_id: folder.id }) }}
                             <div class="form-check mb-3">
                                 {{ form_widget(form.visible, { attr: { class: 'form-check-input' } }) }}
                                 {{ form_label(form.visible, null, { label_attr: { class: 'form-check-label' } }) }}
@@ -113,6 +114,7 @@
                                 {{ form_label(form.parent) }}
                                 {{ form_widget(form.parent, { attr: { class: 'form-control' } }) }}
                             </div>
+                            {{ safe_hook('folder.modification.form-right.bottom', { folder_id: folder.id }) }}
                         </div>
                     </div>
                     {{ form_widget(form.id) }}
@@ -165,6 +167,7 @@
             </div>
 
             <div class="tab-pane fade {% if current_tab == 'seo' %}show active{% endif %}" id="tab-seo" role="tabpanel">
+                {{ safe_hook('tab-seo.top', { id: folder.id, type: 'folder' }) }}
                 {{ safe_hook('folder.seo.update-form', { folder_id: folder.id, id: folder.id }) }}
                 {{ safe_hook('tab-seo.update-form', { folder_id: folder.id, id: folder.id }) }}
                 {{ safe_hook('tab-seo.bottom', { folder_id: folder.id, id: folder.id }) }}

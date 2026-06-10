@@ -1,5 +1,8 @@
 {{ safe_hook(kind == 'image' ? 'tab-image.top' : 'tab-document.top', { id: parent_id, type: parent_type }) }}
 
+{% if kind == 'image' and has_hook('item.edition.images') %}
+{{ safe_hook('item.edition.images', { itemType: parent_type, itemId: parent_id, resource: 'admin.' ~ parent_type }) }}
+{% else %}
 <div class="bo-file-upload card mb-3" data-controller="bo-file-upload"
      data-bo-file-upload-save-url-value="{{ path(urls.save, { parentType: parent_type, parentId: parent_id }) }}"
      data-bo-file-upload-list-url-value="{{ path(urls.list, { parentType: parent_type, parentId: parent_id }) }}"
@@ -31,5 +34,6 @@
     } only %}
     </div>
 </div>
+{% endif %}
 
 {{ safe_hook(kind == 'image' ? 'tab-image.bottom' : 'tab-document.bottom', { id: parent_id, type: parent_type }) }}
