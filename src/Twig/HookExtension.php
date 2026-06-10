@@ -17,7 +17,7 @@ namespace BackOfficeDefaultTwigBundle\Twig;
 use BackOfficeDefaultTwigBundle\Service\Hook\LegacyHookAliases;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Thelia\Core\Event\Hook\HookRenderBlockEvent;
 use Thelia\Core\Event\Hook\HookRenderEvent;
 use Thelia\Core\Hook\FragmentBag;
@@ -87,12 +87,24 @@ final class HookExtension extends AbstractExtension
 
     public function hasActiveHook(string $name, array $parameters = []): bool
     {
-        return !$this->renderHookBlock($name, $parameters)->isEmpty();
+        return $this->hasListeners($name, $parameters, self::HOOK_TYPE);
     }
 
     public function hasActivePdfHook(string $name, array $parameters = []): bool
     {
-        return !$this->renderPdfHookBlock($name, $parameters)->isEmpty();
+        return $this->hasListeners($name, $parameters, self::HOOK_TYPE_PDF);
+    }
+
+    private function hasListeners(string $name, array $parameters, int $type): bool
+    {
+        $suffix = $this->moduleSuffix($parameters);
+        foreach ($this->hookNamesFor($name) as $hookName) {
+            if ($this->dispatcher->hasListeners(\sprintf('hook.%s.%s', $type, $hookName).$suffix)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function dispatchHookRender(string $name, array $parameters, int $type): string
