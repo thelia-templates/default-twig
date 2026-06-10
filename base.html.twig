@@ -44,6 +44,7 @@
 
                         {{ safe_hook('main.before-content') }}
                         {% block content %}{% endblock %}
+                        {{ safe_hook('main.after-content', { location: 'after_content' }) }}
                     </main>
 
                     {% block footer %}{% include '@BackOfficeDefaultTwig/_footer.html.twig' %}{% endblock %}

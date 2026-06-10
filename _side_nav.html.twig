@@ -226,6 +226,7 @@
             {% endif %}
 
             {{ safe_hook('main.in-top-menu-items', { admin_current_location: current_route }) }}
+            {{ safe_hook('main.inside-topbar', { location: 'inside_topbar' }) }}
         </ul>
     </nav>
 
