@@ -46,6 +46,7 @@
                             <th class="text-center">{{ 'Products'|trans }}</th>
                             <th class="text-center">{% include '@BackOfficeDefaultTwig/_sort_header.html.twig' with { label: 'Status'|trans, field: 'active', current: sort_field, direction: sort_direction } only %}</th>
                             <th class="text-end">{{ 'Actions'|trans }}</th>
+                            {{ safe_hook('sales.table-header', { location: 'sales_table_header' }) }}
                         </tr>
                     </thead>
                     <tbody>
@@ -77,6 +78,7 @@
                                         <i class="bi bi-trash" aria-hidden="true"></i>
                                     </button>
                                 </td>
+                                {{ safe_hook('sales.table-row', { sale_id: row.id, location: 'sales_table_row' }) }}
                             </tr>
                         {% else %}
                             <tr><td colspan="8" class="text-body-secondary text-center py-4">{{ 'No sale yet. Create your first promotion.'|trans }}</td></tr>
@@ -106,6 +108,7 @@
                             {{ form_widget(create_form.label, { attr: { class: 'form-control' } }) }}
                             <div class="form-text">{{ 'The short label shown on discounted products (e.g. "Sale", "-20%").'|trans }}</div>
                         </div>
+                        {{ safe_hook('sale.create-form', { location: 'sale_create_form' }) }}
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'Cancel'|trans }}</button>
@@ -123,6 +126,8 @@
         token: false,
         message: 'Do you really want to delete this sale?',
         testid: 'sale-delete',
+        hook: 'sale.delete-form',
+        hookContext: { location: 'sale_delete_form' },
         prefillTrigger: 'data-sale-id',
         prefillInput: 'sale_id',
     }) }}

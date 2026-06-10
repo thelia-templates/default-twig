@@ -13,6 +13,8 @@
 {% endblock %}
 
 {% block content %}
+    {{ safe_hook('search.top', { location: 'search_top' }) }}
+
     <div class="container-fluid" data-testid="search-page">
         <h1 class="h3 mb-3">{{ 'Search results'|trans }} <small class="text-muted">"{{ term }}"</small></h1>
 
@@ -125,6 +127,8 @@
             </div>
         {% endif %}
     </div>
+
+    {{ safe_hook('search.bottom', { location: 'search_bottom' }) }}
 {% endblock %}
 
 {% block scripts_extra %}

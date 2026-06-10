@@ -45,6 +45,11 @@
             ],
             rows: rows,
             emptyMessage: 'No coupon is currently defined. Use the (+) button above to create your first coupon.'|trans,
+            extraColumnsHeaderHook: 'coupon.table-header',
+            extraColumnsHook: 'coupon.table-row',
+            headerHookContext: { location: 'coupon_table_header' },
+            rowHookContext: { location: 'coupon_table_row' },
+            rowHookArgs: { coupon_id: 'id' },
             sortField: sort_field,
             sortDirection: sort_direction,
             sortKeepParams: { page: current_page > 1 ? current_page : null },
@@ -73,4 +78,8 @@
         prefillTrigger: 'data-coupon-id',
         prefillInput: 'coupon_id',
     }) }}
+{% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('coupon.list-js', { location: 'coupon-list-js' }) }}
 {% endblock %}

@@ -116,6 +116,11 @@
                     ],
                     rows: group.rows,
                     emptyMessage: 'No module of this type installed.'|trans,
+                    extraColumnsHeaderHook: 'modules.table-header',
+                    extraColumnsHook: 'modules.table-row',
+                    headerHookContext: { location: 'modules_table_header' },
+                    rowHookContext: { location: 'modules_table_row' },
+                    rowHookArgs: { module_code: 'code' },
                     tbodyAttributes: {
                         'data-controller': 'bo-sortable',
                         'data-bo-sortable-url-value': update_position_url,
