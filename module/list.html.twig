@@ -15,9 +15,18 @@
 {% block content %}
     {{ safe_hook('modules.top', { location: 'modules_top' }) }}
 
-    <div class="container-fluid" data-testid="modules-page">
-        {% embed '@BackOfficeDefaultTwig/_page_header.html.twig' with { title: 'Modules management'|trans } only %}
+    <div class="container-fluid" data-testid="modules-page" data-controller="bo-list-filter">
+        {% embed '@BackOfficeDefaultTwig/_page_header.html.twig' with {
+            title: 'Modules management'|trans,
+            allow_module_zip_install: allow_module_zip_install|default(false),
+        } only %}
             {% block actions %}
+                <a href="{{ path('admin.hook') }}" class="btn btn-outline-secondary" data-testid="modules-manage-hooks">
+                    <i class="bi bi-plug" aria-hidden="true"></i> {{ 'Manage hooks'|trans }}
+                </a>
+                <a href="{{ path('admin.module-hook') }}" class="btn btn-outline-secondary" data-testid="modules-manage-modules-hooks">
+                    <i class="bi bi-diagram-3" aria-hidden="true"></i> {{ 'Manage modules attachements'|trans }}
+                </a>
                 {% if is_granted('UPDATE', 'admin.module') %}
                     <form method="post" action="{{ path('admin.module.refresh') }}?_token={{ assignToken() }}" class="d-inline">
                         <button type="submit" class="btn btn-outline-secondary" data-testid="modules-refresh">
@@ -25,21 +34,84 @@
                         </button>
                     </form>
                 {% endif %}
+                {% if allow_module_zip_install|default(false) %}
+                    <button type="button"
+                            class="btn btn-primary"
+                            data-bs-toggle="modal"
+                            data-bs-target="#module-install-modal"
+                            data-testid="module-install-open">
+                        <i class="bi bi-cloud-upload" aria-hidden="true"></i> {{ 'Install a module'|trans }}
+                    </button>
+                {% endif %}
             {% endblock %}
         {% endembed %}
 
+        <div class="card mb-4" data-testid="modules-filter-bar">
+            <div class="card-body py-3">
+                <div class="row g-2 align-items-center">
+                    <div class="col-md">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-search" aria-hidden="true"></i></span>
+                            <input type="search"
+                                   class="form-control"
+                                   placeholder="{{ 'Search a module by code, title or version…'|trans }}"
+                                   aria-label="{{ 'Search a module'|trans }}"
+                                   data-bo-list-filter-target="search"
+                                   data-action="input->bo-list-filter#apply"
+                                   data-testid="modules-filter-search">
+                        </div>
+                    </div>
+                    <div class="col-md-auto">
+                        <select class="form-select"
+                                aria-label="{{ 'Filter by type'|trans }}"
+                                data-bo-list-filter-target="group"
+                                data-action="bo-list-filter#apply"
+                                data-testid="modules-filter-type">
+                            <option value="">{{ 'All types'|trans }}</option>
+                            {% for type, group in groups %}
+                                <option value="{{ group.slug }}">{{ group.label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-auto">
+                        <div class="btn-group" role="group" aria-label="{{ 'Filter by status'|trans }}">
+                            {% for value, label in { '': 'All'|trans, '1': 'Active'|trans, '0': 'Inactive'|trans } %}
+                                <input type="radio"
+                                       class="btn-check"
+                                       name="modules-filter-state"
+                                       id="modules-filter-state-{{ value == '' ? 'all' : value }}"
+                                       value="{{ value }}"
+                                       autocomplete="off"
+                                       {{ value == '' ? 'checked' }}
+                                       data-bo-list-filter-target="state"
+                                       data-action="bo-list-filter#apply"
+                                       data-testid="modules-filter-state-{{ value == '' ? 'all' : value }}">
+                                <label class="btn btn-outline-secondary" for="modules-filter-state-{{ value == '' ? 'all' : value }}">{{ label }}</label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         {% for type, group in groups %}
-            <section class="mb-4" data-testid="modules-block-{{ group.slug }}">
-                <h2 class="h5 mb-2">{{ group.label }}</h2>
+            <section class="mb-4"
+                     data-testid="modules-block-{{ group.slug }}"
+                     data-bo-list-filter-target="section"
+                     data-group="{{ group.slug }}">
+                <h2 class="h5 mb-2 d-flex align-items-center gap-2">
+                    {{ group.label }}
+                    <span class="badge text-bg-secondary fw-normal" data-testid="modules-count-{{ group.slug }}">
+                        {{ '%active% / %total% active'|trans({ '%active%': group.active_count, '%total%': group.total_count }) }}
+                    </span>
+                </h2>
                 {{ component('BoDataTable', {
                     id: 'modules-' ~ group.slug,
                     columns: [
-                        column('id', 'ID'|trans),
-                        column('code', 'Code'|trans),
-                        column('title', 'Title'|trans),
-                        column('version', 'Version'|trans),
-                        column_toggle('activated', 'Active'|trans, 'toggle_url'),
-                        column('position', 'Position'|trans, 'center'),
+                        column_html('drag_html', ''),
+                        column_html('module_html', 'Module'|trans),
+                        column_html('version_html', 'Version'|trans, 'center'),
+                        column_toggle('activated', 'Active'|trans, 'toggle_url', 'center', 'bi-toggle-on text-success fs-4', 'bi-toggle-off text-body-tertiary fs-4'),
                         column_actions('_actions', 'Actions'|trans),
                     ],
                     rows: group.rows,
@@ -54,35 +126,39 @@
             </section>
         {% endfor %}
 
-        <div class="d-flex justify-content-end gap-2 mb-4">
-            <a href="{{ path('admin.hook') }}" class="btn btn-outline-primary" data-testid="modules-manage-hooks">
-                {{ 'Manage hooks'|trans }} <i class="bi bi-chevron-right" aria-hidden="true"></i>
-            </a>
-            <a href="{{ path('admin.module-hook') }}" class="btn btn-outline-primary" data-testid="modules-manage-modules-hooks">
-                {{ 'Manage modules attachements'|trans }} <i class="bi bi-chevron-right" aria-hidden="true"></i>
-            </a>
+        <div class="text-center text-muted py-5 d-none"
+             data-bo-list-filter-target="empty"
+             data-testid="modules-filter-empty">
+            <i class="bi bi-puzzle fs-2 d-block mb-2" aria-hidden="true"></i>
+            {{ 'No module matches your filters.'|trans }}
         </div>
-
-        {% if allow_module_zip_install|default(false) %}
-            <form action="{{ path('admin.module.install') }}" method="post" enctype="multipart/form-data" class="mt-4" data-testid="module-install-form">
-                <input type="hidden" name="_token" value="{{ assignToken() }}">
-                <div class="row g-2 align-items-center">
-                    <div class="col-md-8">
-                        <label class="form-label">{{ 'Install a new module from a .zip file'|trans }}</label>
-                        <input type="file" name="module" class="form-control" data-testid="module-install-file" accept=".zip" required>
-                        <div class="form-text small">{{ 'The archive must contain a single root directory matching the module code.'|trans }}</div>
-                    </div>
-                    <div class="col-md-4 d-flex align-items-end">
-                        <button type="submit" class="btn btn-primary w-100" data-testid="module-install-submit">
-                            <i class="bi bi-cloud-upload" aria-hidden="true"></i> {{ 'Install'|trans }}
-                        </button>
-                    </div>
-                </div>
-            </form>
-        {% endif %}
     </div>
 
     {{ safe_hook('modules.bottom', { location: 'modules_bottom' }) }}
+
+    {% if allow_module_zip_install|default(false) %}
+        <div class="modal fade" id="module-install-modal" tabindex="-1" aria-hidden="true" data-testid="module-install-modal">
+            <div class="modal-dialog">
+                <form action="{{ path('admin.module.install') }}" method="post" enctype="multipart/form-data" class="modal-content" data-testid="module-install-form">
+                    <input type="hidden" name="_token" value="{{ assignToken() }}">
+                    <div class="modal-header">
+                        <h5 class="modal-title">{{ 'Install a new module from a .zip file'|trans }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'Close'|trans }}"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="file" name="module" class="form-control" data-testid="module-install-file" accept=".zip" required>
+                        <div class="form-text">{{ 'The archive must contain a single root directory matching the module code.'|trans }}</div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ 'Cancel'|trans }}</button>
+                        <button type="submit" class="btn btn-primary" data-testid="module-install-submit">
+                            <i class="bi bi-cloud-upload" aria-hidden="true"></i> {{ 'Install'|trans }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    {% endif %}
 
     {% component 'BoConfirmDialog' with {
         id: 'module-delete-modal',

@@ -691,6 +691,26 @@ input[type="color"].form-control {
     box-shadow: inset 0 2px 0 0 var(--bs-primary, #0d6efd);
 }
 
+.bo-drag-handle {
+    cursor: grab;
+}
+
+// Module list: inactive rows are dimmed (actions column stays at full strength),
+// drag affordance vanishes while a client-side filter hides part of the list.
+.bo-module-row--inactive td:not(:last-child) {
+    opacity: .55;
+}
+
+.bo-list-filter--filtering {
+    .bo-drag-handle {
+        visibility: hidden;
+    }
+
+    .bo-sortable-row {
+        cursor: default;
+    }
+}
+
 // Tax rule matrix UI (drag&drop taxes between groups)
 .bo-tax-panel {
     min-height: 220px;

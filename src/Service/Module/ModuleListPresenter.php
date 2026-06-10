@@ -51,6 +51,12 @@ final readonly class ModuleListPresenter
             $groups[$type]['rows'][] = $this->moduleToRow($module);
         }
 
+        foreach ($groups as &$group) {
+            $group['total_count'] = \count($group['rows']);
+            $group['active_count'] = \count(array_filter($group['rows'], static fn (array $row): bool => $row['activated']));
+        }
+        unset($group);
+
         return [
             'groups' => $groups,
             'allow_module_zip_install' => (bool) (int) ConfigQuery::read('allow_module_zip_install', 0),
@@ -78,6 +84,8 @@ final readonly class ModuleListPresenter
     {
         $id = (int) $module->getId();
         $code = (string) $module->getCode();
+        $title = (string) $module->getTitle();
+        $version = (string) $module->getVersion();
         $activated = (bool) $module->getActivate();
         $type = (int) $module->getType();
         $mandatory = ((int) $module->getMandatory()) === 1;
@@ -85,15 +93,34 @@ final readonly class ModuleListPresenter
         return [
             'id' => $id,
             'code' => $code,
-            'title' => (string) $module->getTitle(),
+            'title' => $title,
             'type' => $type,
-            'version' => (string) $module->getVersion(),
+            'version' => $version,
+            'drag_html' => '<span class="bo-drag-handle text-muted" aria-hidden="true"><i class="bi bi-grip-vertical"></i></span>',
+            'module_html' => $this->renderModule($code, $title),
+            'version_html' => $version === '' ? '' : '<span class="badge text-bg-light border">'.htmlspecialchars($version).'</span>',
             'activated' => $activated,
             'mandatory' => $mandatory,
             'position' => (int) $module->getPosition(),
             'toggle_url' => $this->toggleActivationUrl($id, $mandatory, $activated),
+            '_row_class' => $activated ? '' : 'bo-module-row--inactive',
+            '_attrs' => [
+                'data-search' => mb_strtolower($id.' '.$code.' '.$title.' '.$version),
+                'data-active' => $activated ? '1' : '0',
+            ],
             '_actions' => $this->buildRowActions($module, $id, $code, $type, $activated, $mandatory),
         ];
+    }
+
+    private function renderModule(string $code, string $title): string
+    {
+        $html = '<span class="fw-semibold">'.htmlspecialchars($code).'</span>';
+
+        if ($title !== '' && $title !== $code) {
+            $html .= '<small class="d-block text-muted bo-module-title">'.htmlspecialchars($title).'</small>';
+        }
+
+        return $html;
     }
 
     private function toggleActivationUrl(int $id, bool $mandatory, bool $activated): ?string
@@ -113,33 +140,7 @@ final readonly class ModuleListPresenter
      */
     private function buildRowActions(Module $module, int $id, string $code, int $type, bool $activated, bool $mandatory): array
     {
-        $actions = [
-            new RowAction(
-                kind: 'edit',
-                label: $this->translator->trans('Edit module info'),
-                href: $this->urls->generate('admin.module.update', ['module_id' => $id]),
-                grantedAttribute: AccessManager::UPDATE,
-                grantedSubject: AdminResources::MODULE,
-            ),
-            new RowAction(
-                kind: 'info',
-                label: $this->translator->trans('Module information'),
-                modalTarget: '#module-information-modal',
-                grantedAttribute: AccessManager::VIEW,
-                grantedSubject: AdminResources::MODULE,
-                dataAttributes: ['fetch-url' => $this->urls->generate('admin.module.information', ['module_id' => $id])],
-                inMenu: true,
-            ),
-            new RowAction(
-                kind: 'doc',
-                label: $this->translator->trans('Module documentation'),
-                modalTarget: '#module-documentation-modal',
-                grantedAttribute: AccessManager::VIEW,
-                grantedSubject: AdminResources::MODULE,
-                dataAttributes: ['fetch-url' => $this->urls->generate('admin.module.documentation', ['module_id' => $id])],
-                inMenu: true,
-            ),
-        ];
+        $actions = [];
 
         if ($activated && $this->capabilities->isConfigurable($module)) {
             $actions[] = new RowAction(
@@ -148,9 +149,36 @@ final readonly class ModuleListPresenter
                 href: $this->urls->generate('admin.module.configure', ['module_code' => $code]),
                 grantedAttribute: AccessManager::UPDATE,
                 grantedSubject: $code,
-                inMenu: true,
             );
         }
+
+        $actions[] = new RowAction(
+            kind: 'edit',
+            label: $this->translator->trans('Edit module info'),
+            href: $this->urls->generate('admin.module.update', ['module_id' => $id]),
+            grantedAttribute: AccessManager::UPDATE,
+            grantedSubject: AdminResources::MODULE,
+        );
+
+        $actions[] = new RowAction(
+            kind: 'info',
+            label: $this->translator->trans('Module information'),
+            modalTarget: '#module-information-modal',
+            grantedAttribute: AccessManager::VIEW,
+            grantedSubject: AdminResources::MODULE,
+            dataAttributes: ['fetch-url' => $this->urls->generate('admin.module.information', ['module_id' => $id])],
+            inMenu: true,
+        );
+
+        $actions[] = new RowAction(
+            kind: 'doc',
+            label: $this->translator->trans('Module documentation'),
+            modalTarget: '#module-documentation-modal',
+            grantedAttribute: AccessManager::VIEW,
+            grantedSubject: AdminResources::MODULE,
+            dataAttributes: ['fetch-url' => $this->urls->generate('admin.module.documentation', ['module_id' => $id])],
+            inMenu: true,
+        );
 
         if ($activated && $this->capabilities->isHookable($module)) {
             $actions[] = new RowAction(
