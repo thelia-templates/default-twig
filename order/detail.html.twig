@@ -101,12 +101,14 @@
                 <div class="tab-content">
 
                 <div class="tab-pane fade show active" id="tab-cart" role="tabpanel" aria-labelledby="tab-cart-toggle">
+                {{ safe_hook('order-edit.cart-top', { order_id: order.id, location: 'order-edit-cart-top' }) }}
                 <div class="card mb-3">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <span>{{ 'Order items'|trans }}</span>
                         <small class="text-muted">{{ 'Prices in %currency'|trans({'%currency': currency.symbol}) }}</small>
                     </div>
                     <div class="table-responsive">
+                        {{ safe_hook('order-edit.before-order-product-list', { order_id: order.id, location: 'before-order-product-list' }) }}
                         <table class="table mb-0 align-middle" data-testid="order-items-table">
                             <thead>
                                 <tr>
@@ -118,10 +120,12 @@
                                     <th class="text-end">{{ 'Line total (excl. tax)'|trans }}</th>
                                     <th class="text-end">{{ 'Line tax'|trans }}</th>
                                     <th class="text-end">{{ 'Line total (incl. tax)'|trans }}</th>
+                                    {{ safe_hook('order-edit.order-product-table-header', { location: 'order_edit_table_header' }) }}
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for item in order_items %}
+                                    {{ safe_hook('order-edit.before-order-product-row', { order_id: order.id, order_product_id: item.id, location: 'before-order-product-row' }) }}
                                     <tr data-testid="order-item-row" data-order-product-id="{{ item.id }}">
                                         <td>
                                             <div><code>{{ item.ref }}</code> &mdash; <strong>{{ item.title }}</strong>
@@ -140,6 +144,7 @@
                                                     {% endfor %}
                                                 </dl>
                                             {% endif %}
+                                            {{ safe_hook('order-edit.product-list', { order_id: order.id, order_product_id: item.id, location: 'order-product-list' }) }}
                                         </td>
                                         <td class="text-end">{{ item.price|number_format(2, '.', ' ') }} {{ currency.symbol }}</td>
                                         <td class="text-end">{{ item.tax|number_format(2, '.', ' ') }} {{ currency.symbol }}</td>
@@ -148,7 +153,9 @@
                                         <td class="text-end">{{ item.line_ht|number_format(2, '.', ' ') }} {{ currency.symbol }}</td>
                                         <td class="text-end">{{ item.line_tax|number_format(2, '.', ' ') }} {{ currency.symbol }}</td>
                                         <td class="text-end fw-semibold">{{ item.line_ttc|number_format(2, '.', ' ') }} {{ currency.symbol }}</td>
+                                        {{ safe_hook('order-edit.order-product-table-row', { order_product_id: item.id, location: 'order_edit_table_row' }) }}
                                     </tr>
+                                    {{ safe_hook('order-edit.after-order-product-row', { order_id: order.id, order_product_id: item.id, location: 'after-order-product-row' }) }}
                                 {% else %}
                                     <tr><td colspan="8" class="text-muted text-center">{{ 'No item.'|trans }}</td></tr>
                                 {% endfor %}
@@ -162,6 +169,7 @@
                                 </tfoot>
                             {% endif %}
                         </table>
+                        {{ safe_hook('order-edit.after-order-product-list', { order_id: order.id, location: 'after-order-product-list' }) }}
                     </div>
                     {% if items_last_page|default(1) > 1 %}
                         <div class="card-footer">
@@ -225,9 +233,11 @@
                         </div>
                     </div>
                 </div>
+                {{ safe_hook('order-edit.cart-bottom', { order_id: order.id, location: 'order-edit-cart-bottom' }) }}
                 </div>{# /tab-cart #}
 
                 <div class="tab-pane fade" id="tab-bill" role="tabpanel" aria-labelledby="tab-bill-toggle">
+                {{ safe_hook('order-edit.bill-top', { order_id: order.id, location: 'order-edit-bill-top' }) }}
                 <div class="card mb-3">
                     <div class="card-header">{{ 'Order management'|trans }}</div>
                     <div class="card-body">
@@ -276,6 +286,7 @@
                         } only %}
                     </div>
                 </div>
+                {{ safe_hook('order-edit.bill-bottom', { order_id: order.id, location: 'order-edit-bill-bottom' }) }}
                 </div>{# /tab-bill #}
 
                 {% for block in extra_tabs %}
@@ -361,6 +372,7 @@
                             {% if customer.email %}
                                 <p class="mb-0"><a href="mailto:{{ customer.email }}" data-testid="order-customer-email">{{ customer.email }}</a></p>
                             {% endif %}
+                            {{ safe_hook('order-edit.customer-information-bottom', { order_id: order.id, customer_id: customer.id }) }}
                         </div>
                     </div>
                 {% endif %}
