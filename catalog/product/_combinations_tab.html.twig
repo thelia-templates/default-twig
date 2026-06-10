@@ -46,6 +46,9 @@
                 <input type="hidden" name="use_exchange_rate" value="0">
             {% endif %}
 
+            {{ safe_hook('product.before-combinations', { location: 'product_before_combinations' }) }}
+            {{ safe_hook('product.combinations-list-caption', { location: 'product_combinations_list_caption' }) }}
+
             <div class="table-responsive">
                 <table class="table table-sm align-middle" data-testid="combinations-table">
                     <thead class="table-light">
@@ -118,12 +121,14 @@
                                         </button>
                                     </div>
                                 </td>
-                                {{ safe_hook('product.combinations-row', { pse_id: row.id, product: product.id }) }}
+                                {{ safe_hook('product.combinations-row', { pse_id: row.id, pse: row.id, idx: loop.index0, product: product.id }) }}
                             </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
+
+            {{ safe_hook('product.after-combinations', { location: 'product_after_combinations' }) }}
 
             <button type="submit" class="btn btn-primary" data-testid="combinations-submit">
                 <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save all combinations'|trans }}
@@ -290,6 +295,7 @@
             <input type="hidden" name="product_id" value="{{ product.id }}">
             <input type="hidden" name="product_sale_element_id" data-bo-prefill-modal-target="input">
             <p class="mb-0">{{ 'Are you sure you want to delete this combination?'|trans }}</p>
+            {{ safe_hook('product.combination-delete-form', { location: 'product_combination_delete_form' }) }}
         {% endblock %}
     {% endcomponent %}
 

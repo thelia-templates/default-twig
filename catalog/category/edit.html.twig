@@ -118,6 +118,7 @@
                             </div>
                         </div>
                         <div class="col-md-4">
+                            {{ safe_hook('category.modification.form-right.top', { category_id: category.id }) }}
                             <div class="form-check mb-3">
                                 {{ form_widget(form.visible, { attr: { class: 'form-check-input' } }) }}
                                 {{ form_label(form.visible, null, { label_attr: { class: 'form-check-label' } }) }}
@@ -141,6 +142,7 @@
                                 </select>
                                 {% do form.default_template_id.setRendered %}
                             </div>
+                            {{ safe_hook('category.modification.form-right.bottom', { category_id: category.id }) }}
                         </div>
                     </div>
                     {{ form_widget(form.id) }}
@@ -296,6 +298,7 @@
             </div>
 
             <div class="tab-pane fade {% if current_tab == 'seo' %}show active{% endif %}" id="tab-seo" role="tabpanel">
+                {{ safe_hook('tab-seo.top', { id: category.id, type: 'category' }) }}
                 {{ form_start(seo_form, { action: path('admin.categories.seo.save'), method: 'post', attr: { 'data-testid': 'category-seo-form' } }) }}
                     <div class="mb-3">
                         {{ form_label(seo_form.url) }}

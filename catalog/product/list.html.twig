@@ -45,6 +45,8 @@
             </div>
         </form>
 
+        {{ safe_hook('products.caption', { location: 'product_list_caption' }) }}
+
         {{ component('BoDataTable', {
             id: 'products',
             columns: [
@@ -57,6 +59,11 @@
             ],
             rows: rows,
             emptyMessage: 'No product matches the current filters.'|trans,
+            extraColumnsHeaderHook: 'products.header',
+            extraColumnsHook: 'products.row',
+            headerHookContext: { location: 'product_list_header' },
+            rowHookContext: { location: 'product_list_row' },
+            rowHookArgs: { product_id: 'id' },
             tbodyAttributes: {
                 'data-controller': 'bo-sortable',
                 'data-bo-sortable-url-value': update_position_url,
@@ -85,6 +92,8 @@
         formAction: path('admin.products.delete'),
         message: 'Do you really want to delete this product?',
         testid: 'product-delete',
+        hook: 'product.delete-form',
+        hookContext: { location: 'product_delete_form' },
         prefillTrigger: 'data-product-id',
         prefillInput: 'product_id',
     }) }}
