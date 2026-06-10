@@ -38,7 +38,7 @@
             </thead>
             <tbody{% for attr, value in tbodyAttributes %} {{ attr }}="{{ value }}"{% endfor %}>
                 {% for row in rows %}
-                    <tr data-testid="datatable-{{ id }}-row" data-row-id="{{ row.id|default('') }}"{% if row._row_class is defined and row._row_class %} class="{{ row._row_class }}"{% endif %}>
+                    <tr data-testid="datatable-{{ id }}-row" data-row-id="{{ row.id|default('') }}"{% if row._row_class is defined and row._row_class %} class="{{ row._row_class }}"{% endif %}{% for attrName, attrValue in row._attrs|default({}) %} {{ attrName }}="{{ attrValue }}"{% endfor %}>
                         {% for column in columns %}
                             <td class="text-{{ column.cellAlign }}" data-testid="datatable-{{ id }}-cell-{{ column.key }}">
                                 {% include '@BackOfficeDefaultTwig/components/DataTable/cells/' ~ column.kind.value ~ '.html.twig' with {
