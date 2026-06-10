@@ -73,4 +73,26 @@ final class DataTable
      * Defaults to {@see $id}; set it when the table id differs from the legacy hook name.
      */
     public string $hook = '';
+
+    /**
+     * Extra arguments merged into the row hook context, mapping argument name to row key
+     * (e.g. `{ coupon_id: 'id' }` adds `coupon_id` with the row `id` value — Smarty parity).
+     *
+     * @var array<string, string>
+     */
+    public array $rowHookArgs = [];
+
+    /**
+     * Static arguments merged into the header hook context (e.g. a legacy `location`).
+     *
+     * @var array<string, mixed>
+     */
+    public array $headerHookContext = [];
+
+    /**
+     * Static arguments merged into the row hook context (e.g. a legacy `location`).
+     *
+     * @var array<string, mixed>
+     */
+    public array $rowHookContext = [];
 }

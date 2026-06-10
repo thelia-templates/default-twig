@@ -33,7 +33,7 @@
                             {%- endif -%}
                         </th>
                     {% endfor %}
-                    {{ safe_hook(extraColumnsHeaderHook ?? ((hook ?: id) ~ '.table-header'), { table_id: id }) }}
+                    {{ safe_hook(extraColumnsHeaderHook ?? ((hook ?: id) ~ '.table-header'), { table_id: id }|merge(headerHookContext)) }}
                 </tr>
             </thead>
             <tbody{% for attr, value in tbodyAttributes %} {{ attr }}="{{ value }}"{% endfor %}>
@@ -48,7 +48,11 @@
                                 } only %}
                             </td>
                         {% endfor %}
-                        {{ safe_hook(extraColumnsHook ?? ((hook ?: id) ~ '.table-row'), { table_id: id, row: row, row_id: row.id|default(null) }) }}
+                        {% set row_hook_context = { table_id: id, row: row, row_id: row.id|default(null) }|merge(rowHookContext) %}
+                        {% for argName, rowKey in rowHookArgs %}
+                            {% set row_hook_context = row_hook_context|merge({ (argName): row[rowKey]|default(null) }) %}
+                        {% endfor %}
+                        {{ safe_hook(extraColumnsHook ?? ((hook ?: id) ~ '.table-row'), row_hook_context) }}
                     </tr>
                 {% else %}
                     <tr>
