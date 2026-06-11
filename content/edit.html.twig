@@ -120,7 +120,9 @@
                                     <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save'|trans }}
                                 </button>
                             </div>
-                        {{ form_end(form) }}
+                        {{ form_widget(form._token) }}
+                        {# module fields added through the legacy form bridge are rendered by the module hooks, not auto-dumped #}
+                        {{ form_end(form, {render_rest: false}) }}
                     </div>
                 </div>
             </div>
@@ -162,7 +164,9 @@
                             <button type="submit" class="btn btn-primary" data-testid="content-seo-submit">
                                 <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save'|trans }}
                             </button>
-                        {{ form_end(seo_form) }}
+                        {{ form_widget(seo_form._token) }}
+                        {# module fields added through the legacy form bridge are rendered by the module hooks, not auto-dumped #}
+                        {{ form_end(seo_form, {render_rest: false}) }}
                     </div>
                 </div>
             </div>

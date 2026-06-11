@@ -181,7 +181,9 @@
                     <button type="submit" class="btn btn-primary" data-testid="product-edit-submit">
                         <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save'|trans }}
                     </button>
-                {{ form_end(form) }}
+                {{ form_widget(form._token) }}
+                {# module fields added through the legacy form bridge are rendered by the module hooks, not auto-dumped #}
+                {{ form_end(form, {render_rest: false}) }}
             </div>
 
             <div class="tab-pane fade {% if current_tab == 'attributes' %}show active{% endif %}" id="tab-attributes" role="tabpanel">
@@ -231,7 +233,9 @@
                     <button type="submit" class="btn btn-primary" data-testid="product-seo-submit">
                         <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save SEO'|trans }}
                     </button>
-                {{ form_end(seo_form) }}
+                {{ form_widget(seo_form._token) }}
+                {# module fields added through the legacy form bridge are rendered by the module hooks, not auto-dumped #}
+                {{ form_end(seo_form, {render_rest: false}) }}
             </div>
 
             {% for block in extra_tabs %}

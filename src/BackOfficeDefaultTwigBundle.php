@@ -79,6 +79,7 @@ final class BackOfficeDefaultTwigBundle extends AbstractBundle
                 $resourcePath.'/DTO/',
                 $resourcePath.'/Hook/Attribute/',
                 $resourcePath.'/DependencyInjection/',
+                $resourcePath.'/Form/Legacy/MirroredLegacyForm.php',
             ])
             ->autowire()
             ->autoconfigure();

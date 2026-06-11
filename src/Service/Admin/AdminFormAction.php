@@ -18,9 +18,11 @@ use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use BackOfficeDefaultTwigBundle\Form\Legacy\LegacyFormEventBridge;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
+use Thelia\Core\Event\ActionEvent;
 use Thelia\Tools\TokenProvider;
 
 /**
@@ -47,6 +49,7 @@ readonly class AdminFormAction
         private UrlGeneratorInterface $urls,
         private TranslatorInterface $translator,
         private TokenProvider $tokens,
+        private LegacyFormEventBridge $legacyFormBridge,
     ) {
     }
 
@@ -77,6 +80,11 @@ readonly class AdminFormAction
         try {
             $validated = $this->validator->validate($form);
             $event = $eventFactory($validated);
+
+            if ($event instanceof ActionEvent) {
+                $this->legacyFormBridge->bindUnmappedFields($event, $validated);
+            }
+
             $this->events->dispatch($event, $eventName);
 
             $this->logSuccess($resource, $access, $event, $describeForLog);
