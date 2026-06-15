@@ -23,6 +23,8 @@ final readonly class BackOfficeTwigOnlyCompilerPass implements CompilerPassInter
 
     public const ADMIN_ROUTER_SERVICE = 'router.admin';
 
+    public const MAIN_ROUTER_SERVICE = 'router';
+
     public const PARSER_TAG = 'thelia.parser.template';
 
     public const TWIG_PARSER_CLASS = 'TwigEngine\\Template\\TwigParser';
@@ -46,6 +48,22 @@ final readonly class BackOfficeTwigOnlyCompilerPass implements CompilerPassInter
         if ($this->strictRoutingOverride && $container->hasDefinition(self::ADMIN_ROUTER_SERVICE)) {
             $container->removeDefinition(self::ADMIN_ROUTER_SERVICE);
         }
+
+        $this->ensureAdminRouter($container);
+    }
+
+    private function ensureAdminRouter(ContainerBuilder $container): void
+    {
+        // Core and modules resolve admin URLs through `router.admin` (BaseAdminController,
+        // ContainerAwareCommand, getRouteFromRouter('router.admin', ...)). The legacy Smarty
+        // BackOfficeDefaultBundle provides it as a dedicated Router over admin.xml; take it over
+        // when that bundle is gone so a Twig-only install keeps working. The main router already
+        // owns every admin route, a strict superset of the legacy admin.xml collection.
+        if ($container->hasDefinition(self::ADMIN_ROUTER_SERVICE) || $container->hasAlias(self::ADMIN_ROUTER_SERVICE)) {
+            return;
+        }
+
+        $container->setAlias(self::ADMIN_ROUTER_SERVICE, self::MAIN_ROUTER_SERVICE)->setPublic(true);
     }
 
     private function isActive(ContainerBuilder $container): bool
