@@ -17,7 +17,13 @@
         "symfony/ux-twig-component": "^2.19",
         "symfony/ux-icons": "^2.21",
         "thelia/twig-engine-module": "dev-twig",
-        "thelia/tiptap-module": "dev-main"
+        "thelia/tiptap-module": "dev-main",
+        "thelia/hook-admin-home-module": "dev-twig",
+        "thelia/virtual-product-control-module": "dev-main",
+        "thelia/virtual-product-delivery-module": "dev-twig",
+        "thelia/custom-delivery-module": "dev-twig",
+        "thelia/cheque-module": "dev-twig",
+        "thelia/free-order-module": "dev-twig"
     },
     "autoload": {
         "psr-4": {
