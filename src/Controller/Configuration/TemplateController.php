@@ -439,7 +439,7 @@ final class TemplateController
                 grantedSubject: self::RESOURCE,
             ),
             new RowAction(
-                kind: 'edit',
+                kind: 'duplicate',
                 label: $this->translator->trans('Duplicate'),
                 modalTarget: '#template-duplicate-modal',
                 grantedAttribute: AccessManager::CREATE,
