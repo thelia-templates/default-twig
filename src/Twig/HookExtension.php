@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace BackOfficeDefaultTwigBundle\Twig;
 
 use BackOfficeDefaultTwigBundle\Service\Hook\LegacyHookAliases;
+use Psr\EventDispatcher\StoppableEventInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -110,42 +111,49 @@ final class HookExtension extends AbstractExtension
     private function dispatchHookRender(string $name, array $parameters, int $type): string
     {
         $event = new HookRenderEvent($name, $parameters);
+        $this->dispatchToListeners($event, $name, $parameters, $type, 'hook');
 
-        try {
-            $suffix = $this->moduleSuffix($parameters);
-            foreach ($this->hookNamesFor($name) as $hookName) {
-                $this->dispatcher->dispatch($event, \sprintf('hook.%s.%s', $type, $hookName).$suffix);
-            }
-
-            return $event->dump();
-        } catch (\Throwable $exception) {
-            $this->logSwallowed('hook', $name, $exception);
-
-            return '';
-        }
+        return $event->dump();
     }
 
     private function safelyRenderHookBlock(string $name, array $parameters, int $type): FragmentBag
     {
-        try {
-            return $this->dispatchHookBlock($name, $parameters, $type)->get();
-        } catch (\Throwable $exception) {
-            $this->logSwallowed('hook_block', $name, $exception);
-
-            return new FragmentBag();
-        }
+        return $this->dispatchHookBlock($name, $parameters, $type)->get();
     }
 
     private function dispatchHookBlock(string $name, array $parameters, int $type): HookRenderBlockEvent
     {
         $event = new HookRenderBlockEvent($name, $parameters);
-
-        $suffix = $this->moduleSuffix($parameters);
-        foreach ($this->hookNamesFor($name) as $hookName) {
-            $this->dispatcher->dispatch($event, \sprintf('hook.%s.%s', $type, $hookName).$suffix);
-        }
+        $this->dispatchToListeners($event, $name, $parameters, $type, 'hook_block');
 
         return $event;
+    }
+
+    /**
+     * Dispatch the hook event to each listener in isolation: a single faulty
+     * module (for instance one whose Propel models were never generated) only
+     * loses its own fragment instead of wiping out the output already produced
+     * by the other modules sharing the hook.
+     */
+    private function dispatchToListeners(object $event, string $name, array $parameters, int $type, string $kind): void
+    {
+        $suffix = $this->moduleSuffix($parameters);
+
+        foreach ($this->hookNamesFor($name) as $hookName) {
+            $eventName = \sprintf('hook.%s.%s', $type, $hookName).$suffix;
+
+            foreach ($this->dispatcher->getListeners($eventName) as $listener) {
+                if ($event instanceof StoppableEventInterface && $event->isPropagationStopped()) {
+                    return;
+                }
+
+                try {
+                    $listener($event, $eventName, $this->dispatcher);
+                } catch (\Throwable $exception) {
+                    $this->logSwallowed($kind, $name, $exception);
+                }
+            }
+        }
     }
 
     /**
