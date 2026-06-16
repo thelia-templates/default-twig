@@ -2,7 +2,7 @@
     "name": "thelia/backoffice-default-twig-template",
     "type": "thelia-backoffice-template",
     "description": "Thelia 3 back-office template based on Twig, Symfony UX and Bootstrap 5.",
-    "license": "LGPL-3.0+",
+    "license": "GPL-3.0-or-later",
     "keywords": [
         "thelia-backoffice-template",
         "thelia-twig",
