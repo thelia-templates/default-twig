@@ -182,14 +182,14 @@
                                         <td>{{ addr.firstname }} {{ addr.lastname }}</td>
                                         <td class="text-muted small">{{ addr.address }}</td>
                                         <td class="text-end">
-                                            <div class="btn-group btn-group-sm">
-                                                <a href="{{ path('admin.address.update.view', { address_id: addr.id }) }}" class="btn btn-outline-primary" data-testid="customer-address-edit">
+                                            <div class="d-inline-flex gap-1 justify-content-end">
+                                                <a href="{{ path('admin.address.update.view', { address_id: addr.id }) }}" class="btn btn-sm btn-outline-secondary" title="{{ 'Edit'|trans }}" data-testid="customer-address-edit">
                                                     <i class="bi bi-pencil"></i>
                                                 </a>
                                                 {% if not addr.is_default and is_granted('UPDATE', 'admin.address') %}
                                                     <form method="post" action="{{ path('admin.address.makeItDefault') }}?_token={{ assignToken() }}" class="d-inline">
                                                         <input type="hidden" name="address_id" value="{{ addr.id }}">
-                                                        <button type="submit" class="btn btn-outline-success" title="{{ 'Set as default'|trans }}" data-testid="customer-address-default">
+                                                        <button type="submit" class="btn btn-sm btn-outline-secondary" title="{{ 'Set as default'|trans }}" data-testid="customer-address-default">
                                                             <i class="bi bi-star"></i>
                                                         </button>
                                                     </form>
@@ -198,7 +198,7 @@
                                                     <form method="post" action="{{ path('admin.address.delete') }}?_token={{ assignToken() }}" class="d-inline" onsubmit="return confirm('{{ 'Delete this address?'|trans|e('js') }}');">
                                                         <input type="hidden" name="address_id" value="{{ addr.id }}">
                                                         {{ safe_hook('customer.address-delete-form', { customer_id: customer.id, location: 'customer_address_delete_form' }) }}
-                                                        <button type="submit" class="btn btn-outline-danger" title="{{ 'Delete'|trans }}" data-testid="customer-address-delete">
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ 'Delete'|trans }}" data-testid="customer-address-delete">
                                                             <i class="bi bi-trash"></i>
                                                         </button>
                                                     </form>
