@@ -1496,4 +1496,11 @@ return [
     'This will make the coupon available to everyone. Continue?' => 'Cela rendra le code promo accessible à tout le monde. Continuer ?',
     '%count% visible countries are not attached to any shipping zone and cannot be delivered to.' => '%count% pays visibles ne sont rattachés à aucune zone de livraison et ne peuvent pas être livrés.',
     'The %field title must not exceed %max characters.' => 'Le titre %field ne doit pas dépasser %max caractères.',
+    'Welcome back' => 'Bon retour',
+    'Your store, your rules.' => 'Votre boutique, vos règles.',
+    'Thelia is genuinely open source e-commerce. You run it on your own servers, and your data stays yours.' => 'Thelia, c\'est de l\'e-commerce open source pour de vrai. Vous l\'hébergez sur vos propres serveurs, et vos données restent les vôtres.',
+    'Genuinely open source, GPL licensed' => 'Vraiment open source, sous licence GPL',
+    'Self-hosted, your data stays yours' => 'Auto-hébergé, vos données restent chez vous',
+    'No vendor lock-in' => 'Aucune dépendance à un éditeur',
+    'Open source, made in France' => 'Open source, conçu en France',
 ];

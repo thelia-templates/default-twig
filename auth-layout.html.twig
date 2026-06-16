@@ -3,18 +3,53 @@
 {% block body_testid %}bo-auth-page{% endblock %}
 
 {% block body %}
-    <main class="bo-auth d-flex align-items-center justify-content-center min-vh-100 bg-body-tertiary">
-        <div class="bo-auth-card card shadow-sm" style="max-width: 420px; width: 100%;">
-            <div class="card-body p-4 p-md-5">
-                <div class="text-center mb-4">
-                    <h1 class="h4 mb-1" data-testid="bo-auth-title">{% block auth_title %}{{ 'Thelia'|trans }}{% endblock %}</h1>
-                    <p class="text-body-secondary small mb-0">{% block auth_subtitle %}{{ 'Back-office'|trans }}{% endblock %}</p>
+    <main class="bo-auth">
+        <div class="bo-auth__split">
+            {# Branded hero - decorative, hidden on small screens #}
+            <aside class="bo-auth__brand d-none d-lg-flex" aria-hidden="true">
+                <i class="bi bi-bag-heart-fill bo-auth__glyph"></i>
+
+                <div class="bo-auth__brand-inner">
+                    <span class="bo-auth__wordmark">
+                        <span class="bo-auth__wordmark-badge"><i class="bi bi-bag-heart-fill"></i></span>
+                        Thelia
+                    </span>
                 </div>
 
-                {% block flash %}{{ parent() }}{% endblock %}
+                <div class="bo-auth__brand-inner">
+                    <h2 class="bo-auth__headline">{% block brand_headline %}{{ 'Your store, your rules.'|trans }}{% endblock %}</h2>
+                    <p class="bo-auth__lead">{% block brand_lead %}{{ 'Thelia is genuinely open source e-commerce. You run it on your own servers, and your data stays yours.'|trans }}{% endblock %}</p>
 
-                {% block auth_content %}{% endblock %}
-            </div>
+                    <ul class="bo-auth__features">
+                        <li><i class="bi bi-unlock-fill"></i>{{ 'Genuinely open source, GPL licensed'|trans }}</li>
+                        <li><i class="bi bi-hdd-network-fill"></i>{{ 'Self-hosted, your data stays yours'|trans }}</li>
+                        <li><i class="bi bi-shield-lock-fill"></i>{{ 'No vendor lock-in'|trans }}</li>
+                    </ul>
+                </div>
+
+                <div class="bo-auth__brand-footer">
+                    &copy; {{ 'now'|date('Y') }} Thelia &middot; {{ 'Open source, made in France'|trans }}
+                </div>
+            </aside>
+
+            {# Form panel #}
+            <section class="bo-auth__panel">
+                <div class="bo-auth-card">
+                    <div class="bo-auth__logo-mobile d-lg-none">
+                        <span class="bo-auth__wordmark-badge"><i class="bi bi-bag-heart-fill"></i></span>
+                        Thelia
+                    </div>
+
+                    <div class="mb-4">
+                        <h1 class="bo-auth__title" data-testid="bo-auth-title">{% block auth_title %}{{ 'Thelia'|trans }}{% endblock %}</h1>
+                        <p class="bo-auth__subtitle">{% block auth_subtitle %}{{ 'Back-office'|trans }}{% endblock %}</p>
+                    </div>
+
+                    {% block flash %}{{ parent() }}{% endblock %}
+
+                    {% block auth_content %}{% endblock %}
+                </div>
+            </section>
         </div>
     </main>
 {% endblock %}
