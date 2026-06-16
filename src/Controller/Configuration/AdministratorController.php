@@ -219,7 +219,7 @@ final class AdministratorController
         $currentAdminId = $this->currentAdminId();
 
         foreach ($admins as $admin) {
-            $rows[] = $this->administratorToRow($admin, $currentAdminId);
+            $rows[] = $this->administratorToRow($admin, $currentAdminId, $defaultLocale);
             $editForms[$admin->getId()] = $this->createEditForm($admin, $defaultLocale, $profileChoices)->createView();
         }
 
@@ -248,7 +248,7 @@ final class AdministratorController
     /**
      * @return array<string, mixed>
      */
-    private function administratorToRow(Admin $admin, ?int $currentAdminId): array
+    private function administratorToRow(Admin $admin, ?int $currentAdminId, string $defaultLocale): array
     {
         $id = $admin->getId();
 
@@ -274,12 +274,17 @@ final class AdministratorController
             );
         }
 
+        $profile = $admin->getProfile();
+        $profileLabel = $profile !== null
+            ? ($profile->setLocale($defaultLocale)->getTitle() ?: $profile->getCode())
+            : $this->translator->trans('Superadministrator');
+
         return [
             'id' => $id,
             'login' => $admin->getLogin(),
             'name' => trim($admin->getFirstname().' '.$admin->getLastname()),
             'email' => $admin->getEmail(),
-            'profile' => $admin->getProfile()?->getTitle() ?? $this->translator->trans('(No profile)'),
+            'profile' => $profileLabel,
             '_actions' => $actions,
         ];
     }
@@ -323,9 +328,15 @@ final class AdministratorController
      */
     private function profileChoices(): array
     {
+        $locale = $this->resolveDefaultLocale();
         $choices = [];
         foreach (ProfileQuery::create()->orderByCode()->find() as $profile) {
-            $choices[(string) $profile->getTitle()] = (int) $profile->getId();
+            $profile->setLocale($locale);
+            $label = $profile->getTitle();
+            if ($label === null || $label === '') {
+                $label = $profile->getCode();
+            }
+            $choices[(string) $label] = (int) $profile->getId();
         }
 
         return $choices;

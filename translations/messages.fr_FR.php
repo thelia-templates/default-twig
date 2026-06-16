@@ -31,6 +31,7 @@ return [
     '(according to a country the taxes applied could be different)' => '(selon un pays, les taxes appliquées peuvent être différentes)',
     '(default)' => '(défaut)',
     '(No profile)' => '(Aucun profil)',
+    'Superadministrator' => 'Superadministrateur',
     '- All categories -' => '- Toutes les rubriques -',
     '- All statuses -' => '- Tous les statuts -',
     '- Inherit from parent -' => '- Hériter du parent -',

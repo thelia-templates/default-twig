@@ -65,7 +65,7 @@ final class AdministratorType extends AbstractType
             ])
             ->add('profile', ChoiceType::class, [
                 'required' => false,
-                'placeholder' => $this->translator->trans('(No profile)'),
+                'placeholder' => $this->translator->trans('Superadministrator'),
                 'choices' => $options['profile_choices'],
                 'label' => $this->translator->trans('Profile'),
             ])
