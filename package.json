@@ -2,7 +2,7 @@
     "name": "thelia-backoffice-default-twig",
     "version": "0.1.0",
     "description": "Thelia 3 back-office Twig template — Bootstrap 5 + Stimulus + HTMX",
-    "license": "LGPL-3.0+",
+    "license": "GPL-3.0-or-later",
     "private": true,
     "scripts": {
         "dev": "encore dev",
