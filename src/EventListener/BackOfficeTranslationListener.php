@@ -16,6 +16,8 @@ namespace BackOfficeDefaultTwigBundle\EventListener;
 
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
+use Thelia\Core\EventListener\SessionGuardTrait;
+use Thelia\Core\HttpFoundation\Session\Session;
 use Thelia\Core\Translation\Translator;
 
 /**
@@ -25,9 +27,17 @@ use Thelia\Core\Translation\Translator;
  * Thelia translator (domain 'core'). This listener feeds the same catalogues to
  * the Thelia translator so both paths share one source of strings — for every
  * shipped locale, not just the default ones.
+ *
+ * It also aligns the request locale with the resolved back-office language so
+ * the Twig `|trans` filter follows the admin (or, when logged out, the store
+ * default) language. Without this, the request locale stays at Symfony's hard
+ * 'en' default and the Twig chrome never localizes, even though the PHP side
+ * already does.
  */
 final class BackOfficeTranslationListener
 {
+    use SessionGuardTrait;
+
     #[AsEventListener(event: 'kernel.request', priority: 40)]
     public function onKernelRequest(RequestEvent $event): void
     {
@@ -35,7 +45,9 @@ final class BackOfficeTranslationListener
             return;
         }
 
-        if (!str_starts_with($event->getRequest()->getPathInfo(), '/admin')) {
+        $request = $event->getRequest();
+
+        if (!str_starts_with($request->getPathInfo(), '/admin')) {
             return;
         }
 
@@ -45,6 +57,16 @@ final class BackOfficeTranslationListener
         foreach (glob($dir.'/messages.*.php') ?: [] as $file) {
             if (preg_match('#/messages\.([a-z]{2}_[A-Z]{2})\.php$#', $file, $m)) {
                 $translator->addResource('php', $file, $m[1], 'core');
+            }
+        }
+
+        // Run before Symfony's TranslatorListener (priority 10), which copies the
+        // request locale onto the translator used by the Twig |trans filter.
+        if ($this->isSessionUsable($request)) {
+            $session = $request->getSession();
+
+            if ($session instanceof Session && null !== $lang = $session->getLang()) {
+                $request->setLocale($lang->getLocale());
             }
         }
     }
