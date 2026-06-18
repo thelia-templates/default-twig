@@ -67,7 +67,11 @@ final readonly class OrderListRowPresenter
         return [
             'id' => $orderId,
             'ref' => (string) $order->getRef(),
-            'ref_html' => $this->renderRef((string) $order->getRef(), $isUrgent),
+            'ref_html' => $this->renderRef(
+                (string) $order->getRef(),
+                $isUrgent,
+                $this->urls->generate(self::DETAIL_ROUTE, ['order_id' => $orderId]),
+            ),
             'status' => (string) ($status?->getTitle() ?? '-'),
             'status_code' => (string) ($status?->getCode() ?? ''),
             'status_color' => (string) ($status?->getColor() ?: self::FALLBACK_STATUS_COLOR),
@@ -83,10 +87,16 @@ final readonly class OrderListRowPresenter
         ];
     }
 
-    private function renderRef(string $ref, bool $isUrgent): string
+    private function renderRef(string $ref, bool $isUrgent, string $href): string
     {
+        $link = \sprintf(
+            '<a href="%s" class="fw-semibold text-decoration-none" data-testid="bo-order-ref-link">%s</a>',
+            htmlspecialchars($href),
+            htmlspecialchars($ref),
+        );
+
         if (!$isUrgent) {
-            return htmlspecialchars($ref);
+            return $link;
         }
 
         $tooltip = $this->translator->trans('Unpaid for more than 48 hours - follow up needed');
@@ -94,7 +104,7 @@ final readonly class OrderListRowPresenter
         return \sprintf(
             '<span class="bo-order-urgent" data-bs-toggle="tooltip" data-bs-placement="right" title="%s"><i class="bi bi-exclamation-triangle-fill text-danger me-1" aria-hidden="true"></i>%s</span>',
             htmlspecialchars($tooltip),
-            htmlspecialchars($ref),
+            $link,
         );
     }
 
