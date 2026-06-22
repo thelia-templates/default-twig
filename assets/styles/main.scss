@@ -889,19 +889,343 @@ button.btn {
     cursor: grab;
 }
 
-// Module list: inactive rows are dimmed (actions column stays at full strength),
-// drag affordance vanishes while a client-side filter hides part of the list.
-.bo-module-row--inactive td:not(:last-child) {
-    opacity: .55;
-}
+// ---------- Modules: single dense list (scoped to .bo-modules) ----------
+.bo-modules {
+    --bo-ctrl-h: 42px;
 
-.bo-list-filter--filtering {
-    .bo-drag-handle {
-        visibility: hidden;
+    // Sticky toolbar — a defined white card (matches the BO card style) with real
+    // inner padding so the search and controls never touch the block edges.
+    &__toolbar {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        display: flex;
+        flex-direction: column;
+        gap: .85rem;
+        padding: 1rem 1.15rem;
+        margin-bottom: 1rem;
+        background: #fff;
+        border: 1px solid var(--bs-border-color, #d9d9d9);
+        border-radius: var(--bs-border-radius, .75rem);
     }
 
-    .bo-sortable-row {
-        cursor: default;
+    &__toolbar-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 1rem;
+
+        &--split {
+            justify-content: space-between;
+        }
+    }
+
+    // Search: a single input with floated icons — no input-group, so there is
+    // no inner border seam between an icon segment and the field.
+    &__search {
+        position: relative;
+        flex: 1 1 340px;
+        max-width: 560px;
+
+        .form-control {
+            height: var(--bo-ctrl-h);
+            padding-left: 2.5rem;
+            padding-right: 2.2rem;
+            font-size: .9rem;
+        }
+    }
+
+    &__search-icon {
+        position: absolute;
+        top: 50%;
+        left: .95rem;
+        transform: translateY(-50%);
+        pointer-events: none;
+        color: var(--bs-secondary-color, #8a9099);
+    }
+
+    // "/" shortcut hint, floated inside the field's right edge.
+    &__search-hint {
+        position: absolute;
+        top: 50%;
+        right: .55rem;
+        transform: translateY(-50%);
+        pointer-events: none;
+        padding: .05rem .45rem;
+        font-size: .75rem;
+        line-height: 1.4;
+        color: var(--bs-secondary-color, #8a9099);
+        background: var(--bs-body-tertiary-bg, #f0f2f4);
+        border: 1px solid var(--bs-border-color, #d9d9d9);
+        border-radius: 5px;
+        box-shadow: none;
+    }
+
+    // Sort: inline label + select, hugging the right edge.
+    &__sort {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+
+        .form-select {
+            height: var(--bo-ctrl-h);
+            min-width: 165px;
+        }
+    }
+
+    &__sort-label {
+        margin: 0;
+        font-size: .82rem;
+        font-weight: 500;
+        color: var(--bs-secondary-color, #8a9099);
+        white-space: nowrap;
+    }
+
+    // Selection bar revealed when at least one row is checked.
+    &__bulk {
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+        padding: .55rem .9rem;
+        margin-bottom: .75rem;
+        border: 1px solid rgba(242, 96, 65, .35);
+        border-radius: var(--bs-border-radius, .5rem);
+        background: rgba(242, 96, 65, .06);
+    }
+
+    &__bulk-label {
+        font-weight: 500;
+    }
+
+    &__list {
+        border: 1px solid var(--bs-border-color, #d9d9d9);
+        border-radius: var(--bs-border-radius, .5rem);
+        overflow: hidden;
+        background: #fff;
+    }
+
+    &__hl {
+        background: rgba(242, 96, 65, .22);
+        padding: 0;
+        border-radius: 2px;
+    }
+}
+
+// Segmented controls: consistent height, neutral idle, brand active.
+.bo-segmented {
+    .btn {
+        height: var(--bo-ctrl-h, 42px);
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        padding: 0 .85rem;
+        font-size: .85rem;
+    }
+}
+
+.bo-segmented__count {
+    display: inline-block;
+    min-width: 1.25em;
+    padding: 0 .35em;
+    font-size: .72em;
+    line-height: 1.5;
+    text-align: center;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, .08);
+    color: inherit;
+
+    &:empty {
+        display: none;
+    }
+}
+
+.btn-check:checked + .btn .bo-segmented__count {
+    background: rgba(255, 255, 255, .3);
+}
+
+// A single, dense list row — one line, ~40px tall.
+.bo-module-row {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    min-height: 38px;
+    padding: .2rem .85rem;
+    border-bottom: 1px solid var(--bs-border-color-translucent, #eceef1);
+
+    &:last-child {
+        border-bottom: 0;
+    }
+
+    &:hover {
+        background: rgba(242, 96, 65, .04);
+    }
+
+    &--selected {
+        background: rgba(242, 96, 65, .08);
+    }
+
+    // Checkbox only shows on hover / focus / selection to keep the row clean.
+    &__select {
+        flex: 0 0 auto;
+        display: inline-flex;
+        margin: 0;
+        opacity: 0;
+        transition: opacity .12s;
+    }
+
+    &:hover &__select,
+    &--selected &__select,
+    &__select:focus-within {
+        opacity: 1;
+    }
+
+    &__dot {
+        flex: 0 0 auto;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+
+        &--on {
+            background: var(--bs-success, #198754);
+        }
+
+        &--off {
+            background: var(--bs-gray-400, #ced4da);
+        }
+    }
+
+    &__avatar {
+        flex: 0 0 auto;
+        width: 26px;
+        height: 26px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        background: #eceef1;
+        color: #6b7280;
+        font-size: .82rem;
+    }
+
+    // The text block: name + code + version + ellipsised description on one line.
+    &__main {
+        display: flex;
+        align-items: baseline;
+        gap: .5rem;
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+
+    &__name {
+        flex: 0 0 auto;
+        font-weight: 600;
+        font-size: 1rem;
+        color: #1c2026;
+        text-decoration: none;
+        white-space: nowrap;
+
+        &:hover {
+            color: var(--bs-primary, #f26041);
+        }
+    }
+
+    &__version {
+        flex: 0 0 auto;
+        font-family: var(--bs-font-monospace);
+        font-size: .7rem;
+        padding: .05rem .4rem;
+        border-radius: 4px;
+        background: #f0f2f4;
+        color: #6c757d;
+    }
+
+    // Secondary caption (the human title) — discreet, trailing the code name.
+    &__caption {
+        flex: 1 1 auto;
+        min-width: 0;
+        margin-left: .15rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: .78rem;
+        font-weight: 400;
+        color: #9aa0a8;
+
+        // A faint separator makes the code name clearly lead, ahead of the title.
+        &::before {
+            content: "·";
+            margin-right: .5rem;
+            color: var(--bs-border-color, #d9d9d9);
+        }
+    }
+
+    // Fixed-width lanes so the toggle and the kebab line up in clean vertical
+    // columns from row to row — independent of whether a row shows a config gear.
+    &__toggle {
+        flex: 0 0 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: .35rem;
+        padding-left: .6rem;
+        border-left: 1px solid var(--bs-border-color-translucent, #eceef1);
+    }
+
+    &__actions {
+        flex: 0 0 4rem;
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    // Inactive rows fade the avatar + description; the name and controls stay legible.
+    &--inactive {
+        .bo-module-row__avatar,
+        .bo-module-row__caption {
+            opacity: .5;
+        }
+    }
+}
+
+// iOS-style activation switch (links to the existing toggle endpoint).
+.bo-switch {
+    display: inline-block;
+    position: relative;
+    width: 34px;
+    height: 18px;
+    border-radius: 999px;
+    background: #cfd4da;
+    text-decoration: none;
+    transition: background .15s ease;
+
+    &__knob {
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, .25);
+        transition: left .15s ease;
+    }
+
+    &--on {
+        background: var(--bs-success, #198754);
+
+        .bo-switch__knob {
+            left: 18px;
+        }
+    }
+
+    &--locked {
+        opacity: .55;
+        cursor: not-allowed;
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--bs-primary, #f26041);
+        outline-offset: 2px;
     }
 }
 

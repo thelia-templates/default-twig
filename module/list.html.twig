@@ -15,125 +15,197 @@
 {% block content %}
     {{ safe_hook('modules.top', { location: 'modules_top' }) }}
 
-    <div class="container-fluid" data-testid="modules-page" data-controller="bo-list-filter">
-        {% embed '@BackOfficeDefaultTwig/_page_header.html.twig' with {
-            title: 'Modules management'|trans,
-            allow_module_zip_install: allow_module_zip_install|default(false),
-        } only %}
-            {% block actions %}
-                <a href="{{ path('admin.hook') }}" class="btn btn-outline-secondary" data-testid="modules-manage-hooks">
-                    <i class="bi bi-plug" aria-hidden="true"></i> {{ 'Manage hooks'|trans }}
-                </a>
-                <a href="{{ path('admin.module-hook') }}" class="btn btn-outline-secondary" data-testid="modules-manage-modules-hooks">
-                    <i class="bi bi-diagram-3" aria-hidden="true"></i> {{ 'Manage modules attachements'|trans }}
+    <div class="bo-modules" data-testid="modules-page"
+         data-controller="bo-modules-list"
+         data-bo-modules-list-activate-confirm-value="{{ 'Activate the %count% selected module(s)?'|trans }}"
+         data-bo-modules-list-deactivate-confirm-value="{{ 'Deactivate the %count% selected module(s)?'|trans }}">
+
+        {# ---------- Header ---------- #}
+        <div class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-3">
+            <div>
+                <h1 class="h3 mb-1">{{ 'Modules management'|trans }}</h1>
+                <p class="text-muted small mb-0" data-testid="modules-summary">
+                    <span data-bo-modules-list-target="summaryTotal">{{ total_count }}</span> {{ 'modules'|trans }}
+                    · <span data-bo-modules-list-target="summaryActive">{{ active_count }}</span> {{ 'active'|trans }}
+                    · <span data-bo-modules-list-target="summaryInactive">{{ inactive_count }}</span> {{ 'inactive'|trans }}
+                </p>
+            </div>
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <a href="{{ path('admin.module-hook') }}" class="btn btn-outline-secondary btn-sm" data-testid="modules-manage-hooks">
+                    <i class="bi bi-diagram-3" aria-hidden="true"></i> {{ 'Attachment points'|trans }}
                 </a>
                 {% if is_granted('UPDATE', 'admin.module') %}
                     <form method="post" action="{{ path('admin.module.refresh') }}?_token={{ assignToken() }}" class="d-inline">
-                        <button type="submit" class="btn btn-outline-secondary" data-testid="modules-refresh">
-                            <i class="bi bi-arrow-clockwise" aria-hidden="true"></i> {{ 'Check modules'|trans }}
+                        <button type="submit" class="btn btn-outline-secondary btn-sm" data-testid="modules-refresh">
+                            <i class="bi bi-arrow-clockwise" aria-hidden="true"></i> {{ 'Check'|trans }}
                         </button>
                     </form>
                 {% endif %}
                 {% if allow_module_zip_install|default(false) %}
                     <button type="button"
-                            class="btn btn-primary"
+                            class="btn btn-primary btn-sm"
                             data-bs-toggle="modal"
                             data-bs-target="#module-install-modal"
                             data-testid="module-install-open">
                         <i class="bi bi-cloud-upload" aria-hidden="true"></i> {{ 'Install a module'|trans }}
                     </button>
                 {% endif %}
-            {% endblock %}
-        {% endembed %}
+            </div>
+        </div>
 
-        <div class="card mb-4" data-testid="modules-filter-bar">
-            <div class="card-body py-3">
-                <div class="row g-2 align-items-center">
-                    <div class="col-md">
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-search" aria-hidden="true"></i></span>
-                            <input type="search"
-                                   class="form-control"
-                                   placeholder="{{ 'Search a module by code, title or version…'|trans }}"
-                                   aria-label="{{ 'Search a module'|trans }}"
-                                   data-bo-list-filter-target="search"
-                                   data-action="input->bo-list-filter#apply"
-                                   data-testid="modules-filter-search">
-                        </div>
-                    </div>
-                    <div class="col-md-auto">
-                        <select class="form-select"
-                                aria-label="{{ 'Filter by type'|trans }}"
-                                data-bo-list-filter-target="group"
-                                data-action="bo-list-filter#apply"
-                                data-testid="modules-filter-type">
-                            <option value="">{{ 'All types'|trans }}</option>
-                            {% for type, group in groups %}
-                                <option value="{{ group.slug }}">{{ group.label }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="col-md-auto">
-                        <div class="btn-group" role="group" aria-label="{{ 'Filter by status'|trans }}">
-                            {% for value, label in { '': 'All'|trans, '1': 'Active'|trans, '0': 'Inactive'|trans } %}
-                                <input type="radio"
-                                       class="btn-check"
-                                       name="modules-filter-state"
-                                       id="modules-filter-state-{{ value == '' ? 'all' : value }}"
-                                       value="{{ value }}"
-                                       autocomplete="off"
-                                       {{ value == '' ? 'checked' }}
-                                       data-bo-list-filter-target="state"
-                                       data-action="bo-list-filter#apply"
-                                       data-testid="modules-filter-state-{{ value == '' ? 'all' : value }}">
-                                <label class="btn btn-outline-secondary" for="modules-filter-state-{{ value == '' ? 'all' : value }}">{{ label }}</label>
-                            {% endfor %}
-                        </div>
-                    </div>
+        {# ---------- Toolbar (sticky) ---------- #}
+        <div class="bo-modules__toolbar" data-testid="modules-toolbar">
+            <div class="bo-modules__toolbar-row bo-modules__toolbar-row--split">
+                <div class="bo-modules__search">
+                    <i class="bi bi-search bo-modules__search-icon" aria-hidden="true"></i>
+                    <input type="search"
+                           class="form-control"
+                           placeholder="{{ 'Search a module…'|trans }}"
+                           aria-label="{{ 'Search a module'|trans }}"
+                           data-bo-modules-list-target="search"
+                           data-action="input->bo-modules-list#apply"
+                           data-testid="modules-search">
+                    <kbd class="bo-modules__search-hint" aria-hidden="true">/</kbd>
+                </div>
+
+                <div class="bo-modules__sort">
+                    <label class="bo-modules__sort-label" for="modules-sort">{{ 'Sort'|trans }}</label>
+                    <select id="modules-sort" class="form-select"
+                            data-bo-modules-list-target="sort"
+                            data-action="bo-modules-list#apply"
+                            data-testid="modules-sort">
+                        <option value="az">{{ 'Name (A→Z)'|trans }}</option>
+                        <option value="recent">{{ 'Most recent'|trans }}</option>
+                        <option value="status">{{ 'Status'|trans }}</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="bo-modules__toolbar-row bo-modules__toolbar-row--split">
+                {# Type segmented control — replaces the former stacked tables #}
+                <div class="btn-group bo-segmented" role="group" aria-label="{{ 'Filter by type'|trans }}">
+                    {% set type_filters = [{ slug: '', label: 'All'|trans }]|merge(type_groups) %}
+                    {% for type in type_filters %}
+                        {% set tid = 'modules-type-' ~ (type.slug == '' ? 'all' : type.slug) %}
+                        <input type="radio" class="btn-check" name="modules-type" id="{{ tid }}"
+                               value="{{ type.slug }}" autocomplete="off"{{ type.slug == '' ? ' checked' }}
+                               data-bo-modules-list-target="type"
+                               data-action="change->bo-modules-list#apply"
+                               data-testid="{{ tid }}">
+                        <label class="btn btn-outline-secondary" for="{{ tid }}">
+                            {{ type.label }}
+                            <span class="bo-segmented__count" data-bo-modules-list-target="typeCount" data-type="{{ type.slug }}"></span>
+                        </label>
+                    {% endfor %}
+                </div>
+
+                {# Status segmented control — defaults to Active #}
+                <div class="btn-group bo-segmented" role="group" aria-label="{{ 'Filter by status'|trans }}">
+                    {% for value, label in { '': 'All'|trans, '1': 'Active'|trans, '0': 'Inactive'|trans } %}
+                        {% set sid = 'modules-status-' ~ (value == '' ? 'all' : value) %}
+                        <input type="radio" class="btn-check" name="modules-status" id="{{ sid }}"
+                               value="{{ value }}" autocomplete="off"{{ value == '1' ? ' checked' }}
+                               data-bo-modules-list-target="status"
+                               data-action="change->bo-modules-list#apply"
+                               data-testid="{{ sid }}">
+                        <label class="btn btn-outline-secondary" for="{{ sid }}">{{ label }}</label>
+                    {% endfor %}
                 </div>
             </div>
         </div>
 
-        {% for type, group in groups %}
-            <section class="mb-4"
-                     data-testid="modules-block-{{ group.slug }}"
-                     data-bo-list-filter-target="section"
-                     data-group="{{ group.slug }}">
-                <h2 class="h5 mb-2 d-flex align-items-center gap-2">
-                    {{ group.label }}
-                    <span class="badge text-bg-secondary fw-normal" data-testid="modules-count-{{ group.slug }}">
-                        {{ '%active% / %total% active'|trans({ '%active%': group.active_count, '%total%': group.total_count }) }}
-                    </span>
-                </h2>
-                {{ component('BoDataTable', {
-                    id: 'modules-' ~ group.slug,
-                    columns: [
-                        column_html('drag_html', ''),
-                        column_html('module_html', 'Module'|trans),
-                        column_html('version_html', 'Version'|trans, 'center'),
-                        column_toggle('activated', 'Active'|trans, 'toggle_url', 'center', 'bi-toggle-on text-success fs-4', 'bi-toggle-off text-body-tertiary fs-4'),
-                        column_actions('_actions', 'Actions'|trans),
-                    ],
-                    rows: group.rows,
-                    emptyMessage: 'No module of this type installed.'|trans,
-                    extraColumnsHeaderHook: 'modules.table-header',
-                    extraColumnsHook: 'modules.table-row',
-                    headerHookContext: { location: 'modules_table_header' },
-                    rowHookContext: { location: 'modules_table_row' },
-                    rowHookArgs: { module_code: 'code' },
-                    tbodyAttributes: {
-                        'data-controller': 'bo-sortable',
-                        'data-bo-sortable-url-value': update_position_url,
-                        'data-bo-sortable-token-value': update_position_token,
-                        'data-bo-sortable-param-name-value': 'module_id',
-                    },
-                }) }}
-            </section>
-        {% endfor %}
+        {# ---------- Bulk action bar ---------- #}
+        <div class="bo-modules__bulk d-none" data-bo-modules-list-target="bulkBar" data-testid="modules-bulk-bar" role="region" aria-label="{{ 'Bulk actions'|trans }}">
+            <span class="bo-modules__bulk-label">
+                <span data-bo-modules-list-target="bulkCount">0</span> {{ 'selected'|trans }}
+            </span>
+            <div class="d-flex gap-2 ms-auto">
+                {% if is_granted('UPDATE', 'admin.module') %}
+                    <button type="button" class="btn btn-sm btn-outline-success" data-action="bo-modules-list#bulkActivate" data-testid="modules-bulk-activate">
+                        <i class="bi bi-toggle-on" aria-hidden="true"></i> {{ 'Activate'|trans }}
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-action="bo-modules-list#bulkDeactivate" data-testid="modules-bulk-deactivate">
+                        <i class="bi bi-toggle-off" aria-hidden="true"></i> {{ 'Deactivate'|trans }}
+                    </button>
+                {% endif %}
+                <button type="button" class="btn btn-sm btn-link text-muted" data-action="bo-modules-list#clearSelection" aria-label="{{ 'Clear selection'|trans }}">
+                    {{ 'Clear'|trans }}
+                </button>
+            </div>
+        </div>
 
-        <div class="text-center text-muted py-5 d-none"
-             data-bo-list-filter-target="empty"
-             data-testid="modules-filter-empty">
+        {# ---------- The single dense list ---------- #}
+        <ul class="bo-modules__list list-unstyled mb-0" data-bo-modules-list-target="list" data-testid="modules-list">
+            {% for module in modules %}
+                <li class="bo-module-row{{ module.activated ? '' : ' bo-module-row--inactive' }}"
+                    data-bo-modules-list-target="row"
+                    data-testid="module-row-{{ module.code }}"
+                    data-type="{{ module.type_slug }}"
+                    data-active="{{ module.activated ? '1' : '0' }}"
+                    data-code="{{ module.code }}"
+                    data-name="{{ module.name }}"
+                    data-version="{{ module.version }}"
+                    data-id="{{ module.id }}"
+                    data-search="{{ module.search }}">
+
+                    <label class="bo-module-row__select" aria-label="{{ 'Select %name%'|trans({ '%name%': module.name }) }}">
+                        <input type="checkbox" class="form-check-input"
+                               data-bo-modules-list-target="checkbox"
+                               data-action="change->bo-modules-list#onSelect"
+                               data-toggle-url="{{ module.toggle_url|default('') }}"
+                               data-testid="module-select-{{ module.code }}">
+                    </label>
+
+                    <span class="bo-module-row__dot bo-module-row__dot--{{ module.activated ? 'on' : 'off' }}"
+                          aria-hidden="true"
+                          title="{{ module.activated ? 'Active'|trans : 'Inactive'|trans }}"></span>
+
+                    <span class="bo-module-row__avatar" aria-hidden="true"><i class="bi {{ module.icon }}"></i></span>
+
+                    <span class="bo-module-row__main">
+                        <a class="bo-module-row__name" href="{{ path('admin.module.update', { module_id: module.id }) }}"
+                           data-bo-modules-list-target="name">{{ module.name }}</a>
+                        {% if module.caption %}
+                            <span class="bo-module-row__caption"
+                                  data-bo-modules-list-target="desc"
+                                  data-bs-toggle="tooltip"
+                                  data-bs-placement="top"
+                                  title="{{ module.caption }}">{{ module.caption }}</span>
+                        {% endif %}
+                        {% if module.version %}
+                            <span class="bo-module-row__version" title="{{ 'Version'|trans }}">{{ module.version }}</span>
+                        {% endif %}
+                    </span>
+
+                    <span class="bo-module-row__toggle">
+                        {% if module.toggle_url %}
+                            <a href="{{ module.toggle_url }}"
+                               class="bo-switch {{ module.activated ? 'bo-switch--on' : '' }}"
+                               role="switch"
+                               aria-checked="{{ module.activated ? 'true' : 'false' }}"
+                               aria-label="{{ module.activated ? 'Deactivate'|trans : 'Activate'|trans }}"
+                               data-testid="module-toggle-{{ module.code }}">
+                                <span class="bo-switch__knob"></span>
+                            </a>
+                        {% else %}
+                            <span class="bo-switch bo-switch--on bo-switch--locked"
+                                  role="switch" aria-checked="true" aria-disabled="true"
+                                  title="{{ 'This module is mandatory and cannot be deactivated.'|trans }}">
+                                <span class="bo-switch__knob"></span>
+                            </span>
+                        {% endif %}
+                    </span>
+
+                    <span class="bo-module-row__actions">
+                        {% include '@BackOfficeDefaultTwig/components/DataTable/cells/actions.html.twig' with { value: module.actions } only %}
+                    </span>
+                </li>
+            {% endfor %}
+        </ul>
+
+        <div class="bo-modules__empty text-center text-muted py-5 d-none"
+             data-bo-modules-list-target="empty"
+             data-testid="modules-empty">
             <i class="bi bi-puzzle fs-2 d-block mb-2" aria-hidden="true"></i>
             {{ 'No module matches your filters.'|trans }}
         </div>

@@ -41,40 +41,63 @@ final readonly class ModuleListPresenter
      */
     public function buildListContext(string $locale): array
     {
-        $groups = $this->initialGroups();
+        $labels = $this->typeLabels();
+        $modules = [];
+        $typeCount = [];
 
         foreach ($this->modules->findAllOrderedByPosition($locale) as $module) {
-            $type = (int) $module->getType();
-            if (!isset($groups[$type])) {
-                $groups[$type] = ['slug' => 'other', 'label' => $this->translator->trans('Other modules'), 'rows' => []];
-            }
-            $groups[$type]['rows'][] = $this->moduleToRow($module);
+            $row = $this->moduleToRow($module);
+            $modules[] = $row;
+            $typeCount[$row['type_slug']] = ($typeCount[$row['type_slug']] ?? 0) + 1;
         }
 
-        foreach ($groups as &$group) {
-            $group['total_count'] = \count($group['rows']);
-            $group['active_count'] = \count(array_filter($group['rows'], static fn (array $row): bool => $row['activated']));
+        // Default view order: a single alphabetical list is the most scannable for a unified
+        // list. The client-side sort control re-orders in place (A->Z / newest / status).
+        usort($modules, static fn (array $a, array $b): int => strnatcasecmp($a['name'], $b['name']));
+
+        $typeGroups = [];
+        foreach ($labels as $slug => $label) {
+            $typeGroups[] = ['slug' => $slug, 'label' => $label, 'count' => $typeCount[$slug] ?? 0];
         }
-        unset($group);
+        // Surface any unmapped type ("other") that actually has modules.
+        foreach ($typeCount as $slug => $count) {
+            if (!isset($labels[$slug])) {
+                $typeGroups[] = ['slug' => $slug, 'label' => $this->translator->trans('Other modules'), 'count' => $count];
+            }
+        }
+
+        $activeCount = \count(array_filter($modules, static fn (array $row): bool => $row['activated']));
 
         return [
-            'groups' => $groups,
+            'modules' => $modules,
+            'type_groups' => $typeGroups,
+            'total_count' => \count($modules),
+            'active_count' => $activeCount,
+            'inactive_count' => \count($modules) - $activeCount,
             'allow_module_zip_install' => (bool) (int) ConfigQuery::read('allow_module_zip_install', 0),
-            'update_position_url' => $this->urls->generate('admin.module.update-position'),
-            'update_position_token' => $this->tokens->assignToken(),
         ];
     }
 
     /**
-     * @return array<int, array{slug: string, label: string, rows: list<array<string, mixed>>}>
+     * @return array<string, string>
      */
-    private function initialGroups(): array
+    private function typeLabels(): array
     {
         return [
-            BaseModule::DELIVERY_MODULE_TYPE => ['slug' => 'delivery', 'label' => $this->translator->trans('Delivery modules'), 'rows' => []],
-            BaseModule::PAYMENT_MODULE_TYPE => ['slug' => 'payment', 'label' => $this->translator->trans('Payment modules'), 'rows' => []],
-            BaseModule::CLASSIC_MODULE_TYPE => ['slug' => 'classic', 'label' => $this->translator->trans('Classic modules'), 'rows' => []],
+            'delivery' => $this->translator->trans('Delivery'),
+            'payment' => $this->translator->trans('Payment'),
+            'classic' => $this->translator->trans('Classic'),
         ];
+    }
+
+    private function typeSlug(int $type): string
+    {
+        return match ($type) {
+            BaseModule::DELIVERY_MODULE_TYPE => 'delivery',
+            BaseModule::PAYMENT_MODULE_TYPE => 'payment',
+            BaseModule::CLASSIC_MODULE_TYPE => 'classic',
+            default => 'other',
+        };
     }
 
     /**
@@ -88,39 +111,49 @@ final readonly class ModuleListPresenter
         $version = (string) $module->getVersion();
         $activated = (bool) $module->getActivate();
         $type = (int) $module->getType();
+        $typeSlug = $this->typeSlug($type);
         $mandatory = ((int) $module->getMandatory()) === 1;
+        $description = $this->shortDescription($module);
+
+        // The module code is the identity (the "name"); the human title becomes the
+        // descriptive line beside it. The chapo stays searchable but off the row.
+        $caption = ($title !== '' && $title !== $code) ? $title : '';
 
         return [
             'id' => $id,
             'code' => $code,
-            'title' => $title,
+            'name' => $code,
+            'caption' => $caption,
             'type' => $type,
+            'type_slug' => $typeSlug,
             'version' => $version,
-            'drag_html' => '<span class="bo-drag-handle text-muted" aria-hidden="true"><i class="bi bi-grip-vertical"></i></span>',
-            'module_html' => $this->renderModule($code, $title),
-            'version_html' => $version === '' ? '' : '<span class="badge text-bg-light border">'.htmlspecialchars($version).'</span>',
+            'icon' => $this->iconForType($type),
             'activated' => $activated,
             'mandatory' => $mandatory,
-            'position' => (int) $module->getPosition(),
+            'configurable' => $activated && $this->capabilities->isConfigurable($module),
             'toggle_url' => $this->toggleActivationUrl($id, $mandatory, $activated),
-            '_row_class' => $activated ? '' : 'bo-module-row--inactive',
-            '_attrs' => [
-                'data-search' => mb_strtolower($id.' '.$code.' '.$title.' '.$version),
-                'data-active' => $activated ? '1' : '0',
-            ],
-            '_actions' => $this->buildRowActions($module, $id, $code, $type, $activated, $mandatory),
+            'search' => mb_strtolower(trim($code.' '.$title.' '.$version.' '.$description)),
+            'actions' => $this->buildRowActions($module, $id, $code, $type, $activated, $mandatory),
         ];
     }
 
-    private function renderModule(string $code, string $title): string
+    /** A monochrome glyph hinting at the module type — shape only, no semantic color. */
+    private function iconForType(int $type): string
     {
-        $html = '<span class="fw-semibold">'.htmlspecialchars($code).'</span>';
+        return match ($type) {
+            BaseModule::DELIVERY_MODULE_TYPE => 'bi-truck',
+            BaseModule::PAYMENT_MODULE_TYPE => 'bi-credit-card',
+            BaseModule::CLASSIC_MODULE_TYPE => 'bi-puzzle',
+            default => 'bi-box',
+        };
+    }
 
-        if ($title !== '' && $title !== $code) {
-            $html .= '<small class="d-block text-muted bo-module-title">'.htmlspecialchars($title).'</small>';
-        }
+    private function shortDescription(Module $module): string
+    {
+        $raw = (string) ($module->getChapo() ?: $module->getDescription() ?: '');
+        $text = trim((string) preg_replace('/\s+/', ' ', strip_tags($raw)));
 
-        return $html;
+        return $text;
     }
 
     private function toggleActivationUrl(int $id, bool $mandatory, bool $activated): ?string
@@ -158,6 +191,7 @@ final readonly class ModuleListPresenter
             href: $this->urls->generate('admin.module.update', ['module_id' => $id]),
             grantedAttribute: AccessManager::UPDATE,
             grantedSubject: AdminResources::MODULE,
+            inMenu: true,
         );
 
         $actions[] = new RowAction(
