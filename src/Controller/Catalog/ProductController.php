@@ -563,10 +563,22 @@ final class ProductController
             ),
         ];
 
+        $editUrl = $this->urls->generate(self::EDIT_ROUTE, ['product_id' => $id]);
+
         return [
             'id' => $id,
             'ref' => (string) $product->getRef(),
+            'ref_html' => \sprintf(
+                '<a href="%s" class="text-decoration-none" data-testid="bo-product-ref-link">%s</a>',
+                htmlspecialchars($editUrl),
+                htmlspecialchars((string) $product->getRef()),
+            ),
             'title' => (string) $product->getTitle(),
+            'title_html' => \sprintf(
+                '<a href="%s" class="text-decoration-none fw-semibold" data-testid="bo-product-title-link">%s</a>',
+                htmlspecialchars($editUrl),
+                htmlspecialchars((string) $product->getTitle()),
+            ),
             'visible' => (bool) $product->getVisible(),
             'position' => (int) $product->getPosition(),
             'toggle_visible_url' => $this->tokenizedUrl('admin.products.set-default', ['product_id' => $id]),

@@ -303,7 +303,7 @@
             {{ component('BoDataTable', {
                 id: 'customers',
                 columns: [
-                    column('ref', 'Reference'|trans, 'start', 'ref'),
+                    column_html('ref_html', 'Reference'|trans, 'start', 'ref'),
                     column_html('name_html', 'Customer'|trans, 'start', 'lastname'),
                     column_html('phone_html', 'Phone'|trans),
                     column_html('country_html', 'Country'|trans),

@@ -62,7 +62,8 @@ final readonly class CustomerListRowPresenter
         return [
             'id' => $customerId,
             'ref' => (string) ($customer->getRef() ?: '-'),
-            'name_html' => $this->renderName($firstname, $lastname, $email),
+            'ref_html' => $this->renderRef($customerId, (string) ($customer->getRef() ?: '-')),
+            'name_html' => $this->renderName($customerId, $firstname, $lastname, $email),
             'phone_html' => $this->renderPhone($phone),
             'country_html' => $this->renderCountry($countryFlag, $countryTitle),
             'orders_html' => $this->renderOrders($customerId, $orderCount),
@@ -77,15 +78,29 @@ final readonly class CustomerListRowPresenter
         ];
     }
 
-    private function renderName(string $firstname, string $lastname, string $email): string
+    private function renderRef(int $customerId, string $ref): string
+    {
+        $href = $this->urls->generate(self::EDIT_ROUTE, ['customer_id' => $customerId]);
+
+        return \sprintf(
+            '<a href="%s" class="text-decoration-none" data-testid="bo-customer-ref-link">%s</a>',
+            htmlspecialchars($href),
+            htmlspecialchars($ref),
+        );
+    }
+
+    private function renderName(int $customerId, string $firstname, string $lastname, string $email): string
     {
         $fullName = trim($firstname.' '.$lastname);
         if ($fullName === '') {
             $fullName = $email;
         }
 
+        $href = $this->urls->generate(self::EDIT_ROUTE, ['customer_id' => $customerId]);
+
         return \sprintf(
-            '<div class="bo-customer-name"><div class="fw-semibold">%s</div><div class="text-muted small text-truncate">%s</div></div>',
+            '<div class="bo-customer-name"><div class="fw-semibold"><a href="%s" class="text-decoration-none" data-testid="bo-customer-name-link">%s</a></div><div class="text-muted small text-truncate">%s</div></div>',
+            htmlspecialchars($href),
             htmlspecialchars($fullName),
             htmlspecialchars($email),
         );
