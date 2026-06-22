@@ -53,6 +53,7 @@
                 <table class="table table-sm align-middle" data-testid="combinations-table">
                     <thead class="table-light">
                         <tr>
+                            <th class="text-center" style="width:1%" aria-label="{{ 'Position'|trans }}"></th>
                             <th>{{ 'Default'|trans }}</th>
                             <th>{{ 'Combination'|trans }}</th>
                             <th>{{ 'Reference'|trans }}</th>
@@ -67,9 +68,15 @@
                             <th></th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody data-controller="bo-sortable"
+                           data-bo-sortable-url-value="{{ path('admin.product.product-sale-element-position', { product_id: product.id }) }}"
+                           data-bo-sortable-token-value="{{ assignToken() }}"
+                           data-bo-sortable-param-name-value="product_sale_element_id">
                         {% for row in pse_rows %}
-                            <tr data-testid="combinations-row-{{ row.id }}">
+                            <tr data-testid="combinations-row-{{ row.id }}" data-row-id="{{ row.id }}">
+                                <td class="text-center text-muted" data-bo-sortable-handle title="{{ 'Drag to reorder'|trans }}" style="cursor:grab">
+                                    <i class="bi bi-grip-vertical" aria-hidden="true"></i>
+                                </td>
                                 <td class="text-center">
                                     <input type="radio" name="default_pse" value="{{ row.id }}" {% if row.isdefault %}checked{% endif %} aria-label="{{ 'Default combination'|trans }}">
                                 </td>

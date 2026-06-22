@@ -42,7 +42,16 @@ export default class extends Controller {
     }
 
     makeDraggable(row) {
-        row.setAttribute('draggable', 'true');
+        // When a row exposes an explicit handle, only the handle starts the
+        // drag so inline form fields stay editable. Otherwise the whole row
+        // is draggable (default behaviour for handle-less lists).
+        const handle = row.querySelector('[data-bo-sortable-handle]');
+        if (handle) {
+            handle.setAttribute('draggable', 'true');
+            handle.classList.add('bo-sortable-handle');
+        } else {
+            row.setAttribute('draggable', 'true');
+        }
         row.classList.add('bo-sortable-row');
     }
 

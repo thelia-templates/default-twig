@@ -49,6 +49,7 @@ final readonly class CombinationsTabContextBuilder
         $currency = $this->resolveCurrency($currencyId);
         $pseRecords = ProductSaleElementsQuery::create()
             ->filterByProductId((int) $product->getId())
+            ->orderByPosition()
             ->orderById()
             ->find();
 
