@@ -87,7 +87,7 @@ export default class extends Controller {
 
         const card = document.createElement('button');
         card.type = 'button';
-        card.className = `card h-100 text-start p-0 border-2 ${item.is_associated ? 'border-primary' : 'border-light'}`;
+        card.className = `card h-100 w-100 text-start p-0 border-2 ${item.is_associated ? 'border-primary' : 'border-light'}`;
         card.dataset.itemId = String(item.id);
         card.dataset.associated = item.is_associated ? '1' : '0';
         card.setAttribute('data-testid', `pse-assoc-item-${item.id}`);
