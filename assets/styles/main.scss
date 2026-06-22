@@ -511,6 +511,16 @@ input[type="color"].form-control {
     transition: background-color .15s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease;
 }
 
+// A later-loaded global stylesheet resets `<button type="...">` to
+// `background-color: transparent` (selector `[type="button"]`, specificity 0,1,0).
+// On real <button> elements that ties `.btn` and wins by source order, so solid
+// variants (.btn-danger/.btn-success/.btn-warning…) render with no fill. Re-assert
+// the variant background with a higher-specificity selector (`button.btn` = 0,1,1).
+// Outline/link variants set `--bs-btn-bg: transparent`, so they stay transparent.
+button.btn {
+    background-color: var(--bs-btn-bg);
+}
+
 // Tables - modern striping and hover
 .table {
     --bs-table-hover-bg: rgba(242, 96, 65, .04);
