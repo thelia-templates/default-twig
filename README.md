@@ -1,6 +1,6 @@
-# Thelia back-office — Twig template (`default-twig`)
+# Thelia back-office Twig template (`default-twig`)
 
-Modern Bootstrap 5 / Twig / Stimulus port of the legacy Smarty back-office. Lives side by side with `templates/backOffice/default/` during the transition.
+A Bootstrap 5 / Twig / Stimulus port of the legacy Smarty back-office. It runs alongside `templates/backOffice/default/` during the transition.
 
 ## Activation
 
@@ -97,13 +97,13 @@ ddev exec bin/console cache:clear -e dev
 
 ### Adding a new admin domain
 
-The proven recipe (Folder → Content → CustomerTitle → Country → State → Newsletter → Message):
+The recipe used for each domain so far (Folder → Content → CustomerTitle → Country → State → Newsletter → Message):
 
-1. **Form** — `src/Form/<Group>/<Name>Type.php`: `final class extends AbstractType`, options `include_id` / `include_description`.
-2. **Controller** — `src/Controller/<Group>/<Name>Controller.php`: `#[Route('/admin/...', name: 'admin.X.')]`. Inject `AdminFormAction`, `AdminAccessChecker`, `Environment`, `FormFactoryInterface`, `UrlGeneratorInterface`, `TokenProvider`, `TranslatorInterface`.
-3. **Methods** — `list()` (GET), `create()` (POST), `updateView({id})` (GET), `processUpdate()` (POST), `delete()` (POST/GET), `updatePosition()` (POST/GET).
-4. **Events** — use `$this->action->submit(form: ..., eventFactory: ..., eventName: TheliaEvents::X_CREATE)` for forms; `$this->action->tokenAction(event: ..., eventName: ...)` for single-shot actions.
-5. **Templates** — `list.html.twig` (DataTable + create modal), `edit.html.twig` (form_start + form_end).
+1. **Form**: `src/Form/<Group>/<Name>Type.php`, a `final class extends AbstractType` with options `include_id` / `include_description`.
+2. **Controller**: `src/Controller/<Group>/<Name>Controller.php` with `#[Route('/admin/...', name: 'admin.X.')]`. Inject `AdminFormAction`, `AdminAccessChecker`, `Environment`, `FormFactoryInterface`, `UrlGeneratorInterface`, `TokenProvider`, `TranslatorInterface`.
+3. **Methods**: `list()` (GET), `create()` (POST), `updateView({id})` (GET), `processUpdate()` (POST), `delete()` (POST/GET), `updatePosition()` (POST/GET).
+4. **Events**: `$this->action->submit(form: ..., eventFactory: ..., eventName: TheliaEvents::X_CREATE)` for forms; `$this->action->tokenAction(event: ..., eventName: ...)` for single-shot actions.
+5. **Templates**: `list.html.twig` (DataTable + create modal), `edit.html.twig` (form_start + form_end).
 
 ### ACL
 
@@ -142,7 +142,7 @@ are emitted systematically:
 
 Hooks consumed by bundled modules (CustomerFamily, SEOne, HookAdminHome, VirtualProductControl,
 TheliaBlocks) are all wired. A hook code that is **not** emitted is considered deprecated for the
-Twig back-office — open an issue if your module needs one that is missing. The `<screen>.js` /
+Twig back-office. Open an issue if your module needs one that is missing. The `<screen>.js` /
 `<entity>.edit-js` script hooks are emitted on a per-screen basis as screens are migrated.
 
 ## Tests
@@ -160,11 +160,11 @@ Twig back-office — open an issue if your module needs one that is missing. The
 This template runs side by side with the legacy Smarty back-office. A few names diverge from the
 legacy ones; here is how third-party modules are affected.
 
-### Hooks — bridged, no change required
+### Hooks: bridged, no change required
 
 Renamed hooks are replayed under their legacy Smarty name by `Service\Hook\LegacyHookAliases`
 (wired into `HookExtension`), so a module listening on the old name keeps contributing. Render
-arguments follow the new (Twig) convention — adapt listeners that read a renamed argument.
+arguments follow the new (Twig) convention, so adapt listeners that read a renamed argument.
 
 | Legacy Smarty hook           | Twig hook                    |
 |------------------------------|------------------------------|
@@ -175,12 +175,12 @@ arguments follow the new (Twig) convention — adapt listeners that read a renam
 
 The `wysiwyg.js` hook on the hook-edit screen keeps its legacy `wysiwyg-hook-edit-js` location.
 
-### ACL — bridged
+### ACL: bridged
 
 The advanced-configuration screen accepts both the new `admin.configuration.advanced` resource and
 the legacy `admin.cache` one, so existing profiles keep access without a data migration.
 
-### Routes — update your module
+### Routes: update your module
 
 Renamed route names are **not** aliased. A module referencing an old name through `path()` / `url()`
 must update it:
@@ -195,4 +195,4 @@ The ACL resource for the mailing system stays `admin.configuration.mailing-syste
 
 ## License
 
-LGPL-3.0+ — same as Thelia core.
+LGPL-3.0+, same as Thelia core.
