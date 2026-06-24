@@ -171,8 +171,8 @@
             <div class="tab-pane fade {% if current_tab == 'seo' %}show active{% endif %}" id="tab-seo" role="tabpanel">
                 {{ safe_hook('tab-seo.top', { id: folder.id, type: 'folder' }) }}
                 {{ safe_hook('folder.seo.update-form', { folder_id: folder.id, id: folder.id }) }}
-                {{ safe_hook('tab-seo.update-form', { folder_id: folder.id, id: folder.id }) }}
-                {{ safe_hook('tab-seo.bottom', { folder_id: folder.id, id: folder.id }) }}
+                {{ safe_hook('tab-seo.update-form', { folder_id: folder.id, id: folder.id, type: 'folder' }) }}
+                {{ safe_hook('tab-seo.bottom', { folder_id: folder.id, id: folder.id, type: 'folder' }) }}
                 {{ form_start(seo_form, { action: path('admin.folders.seo.save'), method: 'post', attr: { 'data-testid': 'folder-seo-form' } }) }}
                     <div class="mb-3">
                         {{ form_label(seo_form.url) }}

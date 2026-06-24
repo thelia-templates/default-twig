@@ -217,8 +217,8 @@
                     {{ form_widget(seo_form.id) }}
                     {{ form_widget(seo_form.locale) }}
                     {{ safe_hook('brand.seo.update-form', { brand: brand.id }) }}
-                    {{ safe_hook('tab-seo.update-form', { brand: brand.id, id: brand.id }) }}
-                    {{ safe_hook('tab-seo.bottom', { brand: brand.id, id: brand.id }) }}
+                    {{ safe_hook('tab-seo.update-form', { brand: brand.id, id: brand.id, type: 'brand' }) }}
+                    {{ safe_hook('tab-seo.bottom', { brand: brand.id, id: brand.id, type: 'brand' }) }}
                     <button type="submit" class="btn btn-primary" data-testid="brand-seo-submit">
                         <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save SEO'|trans }}
                     </button>
