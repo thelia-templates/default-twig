@@ -155,7 +155,7 @@ final class HookExtension extends AbstractExtension
         }
 
         return \sprintf(
-            '<div class="card mb-3 bo-hook-card"><div class="card-header py-2 d-flex align-items-center gap-2">'
+            '<div class="card my-3 bo-hook-card"><div class="card-header py-2 d-flex align-items-center gap-2">'
             .'<i class="bi bi-puzzle text-muted" aria-hidden="true"></i>'
             .'<h3 class="h6 mb-0 text-muted">%s</h3></div>'
             .'<div class="card-body">%s</div></div>',
