@@ -89,10 +89,23 @@
                             <input type="hidden" name="content_id" value="{{ content.id }}">
                             <div class="row g-3">
                                 <div class="col-md-8">
-                                    {{ form_row(form.title) }}
-                                    {{ form_row(form.chapo) }}
-                                    {{ form_row(form.description) }}
-                                    {{ form_row(form.postscriptum) }}
+                                    <div class="mb-3">
+                                        {{ form_label(form.title) }}
+                                        {{ form_widget(form.title, { attr: { class: 'form-control' } }) }}
+                                        {{ form_errors(form.title) }}
+                                    </div>
+                                    <div class="mb-3">
+                                        {{ form_label(form.chapo) }}
+                                        {{ form_widget(form.chapo, { attr: { class: 'form-control', rows: 3 } }) }}
+                                    </div>
+                                    <div class="mb-3">
+                                        {{ form_label(form.description) }}
+                                        {{ form_widget(form.description, { attr: { class: 'form-control', rows: 8 } }) }}
+                                    </div>
+                                    <div class="mb-3">
+                                        {{ form_label(form.postscriptum) }}
+                                        {{ form_widget(form.postscriptum, { attr: { class: 'form-control', rows: 3 } }) }}
+                                    </div>
                                 </div>
                                 <div class="col-md-4">
                                     {{ safe_hook('content.modification.form-right.top', { content_id: content.id }) }}
