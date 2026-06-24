@@ -139,8 +139,6 @@
                 {{ safe_hook('tab-seo.top', { id: content.id, type: 'content' }) }}
                 <div class="card">
                     <div class="card-body">
-                        {{ safe_hook('content.seo.update-form', { content_id: content.id, id: content.id }) }}
-                        {{ safe_hook('tab-seo.update-form', { content_id: content.id, id: content.id, type: 'content' }) }}
                         {{ form_start(seo_form, { action: path('admin.content.seo.save'), method: 'post', attr: { 'data-testid': 'content-seo-form' } }) }}
                             <div class="mb-3">
                                 {{ form_label(seo_form.url) }}
@@ -166,9 +164,9 @@
                         {{ form_widget(seo_form._token) }}
                         {# module fields added through the legacy form bridge are rendered by the module hooks, not auto-dumped #}
                         {{ form_end(seo_form, {render_rest: false}) }}
-                        {{ safe_hook('tab-seo.bottom', { content_id: content.id, id: content.id, type: 'content' }) }}
                     </div>
                 </div>
+                {{ hook_cards(['content.seo.update-form', 'tab-seo.update-form', 'tab-seo.bottom'], { content_id: content.id, id: content.id, type: 'content' }) }}
             </div>
 
             <div class="tab-pane fade {% if current_tab|default('') == 'associations' %}show active{% endif %}" id="tab-associations" role="tabpanel">
@@ -232,7 +230,7 @@
             {% endfor %}
 
             <div class="tab-pane fade {% if current_tab|default('') == 'modules' %}show active{% endif %}" id="tab-modules" role="tabpanel">
-                {{ safe_hook('content.tab-content', { content: content.id, content_id: content.id, location: 'content-edit', view: 'content' }) }}
+                {{ hook_cards('content.tab-content', { content: content.id, content_id: content.id, location: 'content-edit', view: 'content' }) }}
             </div>
         </div>
     </div>

@@ -21,6 +21,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Thelia\Core\Event\Hook\HookRenderBlockEvent;
 use Thelia\Core\Event\Hook\HookRenderEvent;
+use Thelia\Core\Hook\BaseHook;
 use Thelia\Core\Hook\FragmentBag;
 use Thelia\Core\Template\TemplateDefinition;
 use Thelia\Model\ModuleQuery;
@@ -60,6 +61,7 @@ final class HookExtension extends AbstractExtension
             new TwigFunction('hook_block', $this->renderHookBlock(...)),
             new TwigFunction('has_hook', $this->hasActiveHook(...)),
             new TwigFunction('safe_hook', $this->safeHook(...), ['is_safe' => ['html']]),
+            new TwigFunction('hook_cards', $this->hookCards(...), ['is_safe' => ['html']]),
             new TwigFunction('pdf_hook', $this->pdfHook(...), ['is_safe' => ['html']]),
             new TwigFunction('pdf_hook_block', $this->renderPdfHookBlock(...)),
             new TwigFunction('has_pdf_hook', $this->hasActivePdfHook(...)),
@@ -74,6 +76,92 @@ final class HookExtension extends AbstractExtension
     public function pdfHook(string $name, array $parameters = []): string
     {
         return $this->dispatchHookRender($name, $parameters, self::HOOK_TYPE_PDF);
+    }
+
+    /**
+     * Like {@see safeHook()}, but wraps each contributing module in its own titled card so the
+     * stacked output of several modules on the same hook (e.g. the SEO or Modules tab) stays
+     * readable. Opt-in: only templates that call `hook_cards` get the framing — `safe_hook` is
+     * untouched, so JS/menu/tab hooks keep rendering raw.
+     *
+     * Accepts one hook name or a list of them: passing several names groups a module spread over
+     * adjacent hooks (e.g. a SEO module on both `content.seo.update-form` and `tab-seo.update-form`)
+     * into a single card.
+     *
+     * @param string|list<string> $names
+     */
+    public function hookCards(string|array $names, array $parameters = []): string
+    {
+        $event = new HookRenderEvent(\is_array($names) ? ($names[0] ?? '') : $names, $parameters);
+        $suffix = $this->moduleSuffix($parameters);
+
+        // Ordered [moduleCode, content] sections; consecutive fragments from the same module are
+        // merged so a module exposing several listeners (or hooks) gets a single card.
+        $sections = [];
+
+        foreach ((array) $names as $name) {
+            foreach ($this->hookNamesFor($name) as $hookName) {
+                $eventName = \sprintf('hook.%s.%s', self::HOOK_TYPE, $hookName).$suffix;
+
+                foreach ($this->dispatcher->getListeners($eventName) as $listener) {
+                    $before = \count($event->get());
+
+                    try {
+                        $listener($event, $eventName, $this->dispatcher);
+                    } catch (\Throwable $exception) {
+                        $this->logSwallowed('hook', $name, $exception);
+                        continue;
+                    }
+
+                    $fragment = implode('', \array_slice($event->get(), $before));
+
+                    if ('' === trim($fragment)) {
+                        continue;
+                    }
+
+                    $code = $this->listenerModuleCode($listener);
+                    $last = array_key_last($sections);
+
+                    if (null !== $last && $sections[$last][0] === $code) {
+                        $sections[$last][1] .= $fragment;
+                    } else {
+                        $sections[] = [$code, $fragment];
+                    }
+                }
+            }
+        }
+
+        $html = '';
+        foreach ($sections as [$code, $content]) {
+            $html .= $this->wrapInCard($content, $code);
+        }
+
+        return $html;
+    }
+
+    private function listenerModuleCode(callable $listener): ?string
+    {
+        if (\is_array($listener) && ($listener[0] ?? null) instanceof BaseHook) {
+            return $listener[0]->getModule()?->getCode();
+        }
+
+        return null;
+    }
+
+    private function wrapInCard(string $content, ?string $moduleCode): string
+    {
+        if (null === $moduleCode || '' === $moduleCode) {
+            return $content;
+        }
+
+        return \sprintf(
+            '<div class="card mb-3 bo-hook-card"><div class="card-header py-2 d-flex align-items-center gap-2">'
+            .'<i class="bi bi-puzzle text-muted" aria-hidden="true"></i>'
+            .'<h3 class="h6 mb-0 text-muted">%s</h3></div>'
+            .'<div class="card-body">%s</div></div>',
+            htmlspecialchars($moduleCode, ENT_QUOTES, 'UTF-8'),
+            $content
+        );
     }
 
     public function renderHookBlock(string $name, array $parameters = []): FragmentBag

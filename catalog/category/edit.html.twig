@@ -320,15 +320,13 @@
                     </div>
                     {{ form_widget(seo_form.id) }}
                     {{ form_widget(seo_form.locale) }}
-                    {{ safe_hook('category.seo.update-form', { category: category.id }) }}
-                    {{ safe_hook('tab-seo.update-form', { category: category.id, id: category.id, type: 'category' }) }}
                     <button type="submit" class="btn btn-primary" data-testid="category-seo-submit">
                         <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save SEO'|trans }}
                     </button>
                 {{ form_widget(seo_form._token) }}
                 {# module fields added through the legacy form bridge are rendered by the module hooks, not auto-dumped #}
                 {{ form_end(seo_form, {render_rest: false}) }}
-                    {{ safe_hook('tab-seo.bottom', { category: category.id, id: category.id, type: 'category' }) }}
+                {{ hook_cards(['category.seo.update-form', 'tab-seo.update-form', 'tab-seo.bottom'], { category: category.id, id: category.id, type: 'category' }) }}
             </div>
 
             {% for block in extra_tabs %}
@@ -342,7 +340,7 @@
             {% endfor %}
 
             <div class="tab-pane fade {% if current_tab == 'modules' %}show active{% endif %}" id="tab-modules" role="tabpanel">
-                {{ safe_hook('category.tab-content', { category: category.id, category_id: category.id, location: 'category-edit', view: 'category' }) }}
+                {{ hook_cards('category.tab-content', { category: category.id, category_id: category.id, location: 'category-edit', view: 'category' }) }}
             </div>
         </div>
     </div>

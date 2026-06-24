@@ -301,7 +301,7 @@
 
                 {% if has_hook('order.tab-content') %}
                     <div class="tab-pane fade" id="tab-modules" role="tabpanel" aria-labelledby="tab-modules-toggle">
-                        {{ safe_hook('order.tab-content', { order: order.id, order_id: order.id, location: 'order-edit', view: 'order' }) }}
+                        {{ hook_cards('order.tab-content', { order: order.id, order_id: order.id, location: 'order-edit', view: 'order' }) }}
                     </div>
                 {% endif %}
 
