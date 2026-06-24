@@ -218,13 +218,13 @@
                     {{ form_widget(seo_form.locale) }}
                     {{ safe_hook('brand.seo.update-form', { brand: brand.id }) }}
                     {{ safe_hook('tab-seo.update-form', { brand: brand.id, id: brand.id, type: 'brand' }) }}
-                    {{ safe_hook('tab-seo.bottom', { brand: brand.id, id: brand.id, type: 'brand' }) }}
                     <button type="submit" class="btn btn-primary" data-testid="brand-seo-submit">
                         <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save SEO'|trans }}
                     </button>
                 {{ form_widget(seo_form._token) }}
                 {# module fields added through the legacy form bridge are rendered by the module hooks, not auto-dumped #}
                 {{ form_end(seo_form, {render_rest: false}) }}
+                    {{ safe_hook('tab-seo.bottom', { brand: brand.id, id: brand.id, type: 'brand' }) }}
             </div>
 
             {% for block in extra_tabs %}
