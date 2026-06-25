@@ -372,7 +372,7 @@ final class CategoryController
             ->setChapo($this->stringOrNull($data['chapo'] ?? null))
             ->setDescription($this->stringOrNull($data['description'] ?? null))
             ->setPostscriptum($this->stringOrNull($data['postscriptum'] ?? null))
-            ->setDefaultTemplateId($this->intOrNull($data['default_template_id'] ?? null));
+            ->setDefaultTemplateId((int) ($data['default_template_id'] ?? 0));
 
         return $event;
     }
@@ -589,14 +589,5 @@ final class CategoryController
         $cast = (string) $value;
 
         return $cast === '' ? null : $cast;
-    }
-
-    private function intOrNull(mixed $value): ?int
-    {
-        if ($value === null || $value === '') {
-            return null;
-        }
-
-        return (int) $value;
     }
 }
