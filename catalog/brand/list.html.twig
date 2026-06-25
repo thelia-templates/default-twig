@@ -32,6 +32,7 @@
             id: 'brands',
             columns: [
                 column('id', 'ID'|trans, 'start', 'id'),
+                column_html('thumbnail_html', 'Image'|trans, 'center'),
                 column('title', 'Title'|trans, 'start', 'title'),
                 column_toggle('visible', 'Online'|trans, 'toggle_visible_url', 'center', 'bi-check-circle-fill text-success', 'bi-circle text-secondary', 'visible'),
                 column('position', 'Position'|trans, 'center', 'position'),

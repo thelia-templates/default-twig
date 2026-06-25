@@ -674,6 +674,7 @@ return [
     'If yes, redirections through Redirect::exec() will be displayed as links.' => 'Ha igen, a Redirect::exec() által végrehajtott átirányítások hivatkozásként jelennek meg.',
     'If you change the product template, some of the product attribute combinations may be deleted, and you may have to reconfigure some of the product prices.' => 'Ha módosítja a terméksablont, egyes termékattribútum-kombinációk törölhetők, és előfordulhat, hogy egyes termékárakat újra be kell állítani.',
     'If you want to translate core components of Thelia (core, install, default modules or templates), please use our translation platform' => 'Ha a Thelia alapkomponenseit szeretné lefordítani (mag, telepítő, alapértelmezett modulok vagy sablonok), kérjük, használja fordítási platformunkat',
+    'Image' => 'Kép',
     'Image file not found' => 'A képfájl nem található',
     'Image information' => 'Képadatok',
     'Images' => 'Képek',

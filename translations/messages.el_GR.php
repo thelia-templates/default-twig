@@ -674,6 +674,7 @@ return [
     'If yes, redirections through Redirect::exec() will be displayed as links.' => 'Εάν ναι, οι ανακατευθύνσεις μέσω Redirect::exec() θα εμφανίζονται ως σύνδεσμοι.',
     'If you change the product template, some of the product attribute combinations may be deleted, and you may have to reconfigure some of the product prices.' => 'Εάν αλλάξετε το πρότυπο προϊόντος, ορισμένοι συνδυασμοί χαρακτηριστικών προϊόντος ενδέχεται να διαγραφούν και μπορεί να χρειαστεί να διαμορφώσετε εκ νέου ορισμένες τιμές προϊόντος.',
     'If you want to translate core components of Thelia (core, install, default modules or templates), please use our translation platform' => 'Εάν θέλετε να μεταφράσετε βασικά στοιχεία του Thelia (core, εγκατάσταση, προεπιλεγμένες μονάδες ή πρότυπα), χρησιμοποιήστε την πλατφόρμα μετάφρασής μας',
+    'Image' => 'Εικόνα',
     'Image file not found' => 'Το αρχείο εικόνας δεν βρέθηκε',
     'Image information' => 'Πληροφορίες εικόνας',
     'Images' => 'Εικόνες',

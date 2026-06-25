@@ -674,6 +674,7 @@ return [
     'If yes, redirections through Redirect::exec() will be displayed as links.' => 'Se sim, os redireccionamentos através de Redirect::exec() serão apresentados como ligações.',
     'If you change the product template, some of the product attribute combinations may be deleted, and you may have to reconfigure some of the product prices.' => 'Se alterar o template do produto, algumas combinações de atributos do produto podem ser eliminadas, e poderá ter de reconfigurar alguns dos preços do produto.',
     'If you want to translate core components of Thelia (core, install, default modules or templates), please use our translation platform' => 'Se pretender traduzir componentes principais do Thelia (core, instalação, módulos ou templates predefinidos), utilize a nossa plataforma de tradução',
+    'Image' => 'Imagem',
     'Image file not found' => 'Ficheiro de imagem não encontrado',
     'Image information' => 'Informação da imagem',
     'Images' => 'Imagens',

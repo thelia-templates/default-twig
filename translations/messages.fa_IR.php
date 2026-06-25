@@ -674,6 +674,7 @@ return [
     'If yes, redirections through Redirect::exec() will be displayed as links.' => 'در صورت فعال‌سازی، تغییر مسیرها از طریق Redirect::exec() به صورت لینک نمایش داده خواهند شد.',
     'If you change the product template, some of the product attribute combinations may be deleted, and you may have to reconfigure some of the product prices.' => 'اگر قالب محصول را تغییر دهید، ممکن است برخی از ترکیب‌های خصوصیت‌های محصول حذف شوند و لازم باشد برخی از قیمت‌های محصول را مجدداً پیکربندی کنید.',
     'If you want to translate core components of Thelia (core, install, default modules or templates), please use our translation platform' => 'اگر می‌خواهید اجزای اصلی Thelia (هسته، نصب، ماژول‌ها یا قالب‌های پیش‌فرض) را ترجمه کنید، لطفاً از پلتفرم ترجمه ما استفاده کنید',
+    'Image' => 'تصویر',
     'Image file not found' => 'فایل تصویر یافت نشد',
     'Image information' => 'اطلاعات تصویر',
     'Images' => 'تصاویر',

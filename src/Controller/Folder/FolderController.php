@@ -22,6 +22,7 @@ use BackOfficeDefaultTwigBundle\Repository\FolderRepository;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
+use BackOfficeDefaultTwigBundle\Service\Listing\ListingThumbnailPresenter;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\ListSort;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
 use Symfony\Component\Form\FormFactoryInterface;
@@ -68,6 +69,7 @@ final class FolderController
         private readonly EditLocaleResolver $editLocale,
         private readonly FolderRepository $folderRepository,
         private readonly ContentRepository $contentRepository,
+        private readonly ListingThumbnailPresenter $thumbnails,
     ) {
     }
 
@@ -330,6 +332,7 @@ final class FolderController
 
         return [
             'id' => $id,
+            'thumbnail_html' => $this->thumbnails->forContent($id),
             'title' => $title,
             'title_html' => \sprintf(
                 '<a href="%s" class="text-decoration-none fw-medium">%s</a>',
@@ -364,6 +367,7 @@ final class FolderController
 
         return [
             'id' => $id,
+            'thumbnail_html' => $this->thumbnails->forFolder($id),
             'title' => $title,
             'title_html' => \sprintf(
                 '<a href="%s" class="text-decoration-none fw-medium">%s</a>',

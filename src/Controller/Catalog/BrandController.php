@@ -21,6 +21,7 @@ use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\Service\Catalog\BrandImagePresenter;
 use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
+use BackOfficeDefaultTwigBundle\Service\Listing\ListingThumbnailPresenter;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\ListSort;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
 use Symfony\Component\Form\FormFactoryInterface;
@@ -65,6 +66,7 @@ final class BrandController
         private readonly EditLocaleResolver $editLocale,
         private readonly BrandImagePresenter $brandImages,
         private readonly BrandRepository $brandRepository,
+        private readonly ListingThumbnailPresenter $thumbnails,
     ) {
     }
 
@@ -404,6 +406,7 @@ final class BrandController
 
         return [
             'id' => $id,
+            'thumbnail_html' => $this->thumbnails->forBrand($id),
             'title' => (string) $brand->getTitle(),
             'visible' => (bool) $brand->getVisible(),
             'position' => (int) $brand->getPosition(),

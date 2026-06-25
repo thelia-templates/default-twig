@@ -2,6 +2,7 @@
 
 return [
     'Format: %fmt' => 'Format: %fmt ',
+    'Image' => 'Image',
     'Manage the tax rule taxes appliance order' => 'Manage the tax rules application order',
     'System variables' => 'Configuration parameters',
     'Tax rules' => 'Taxes and Tax rules',

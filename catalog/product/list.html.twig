@@ -51,6 +51,7 @@
             id: 'products',
             columns: [
                 column('id', 'ID'|trans),
+                column_html('thumbnail_html', 'Image'|trans, 'center'),
                 column_html('ref_html', 'Reference'|trans, 'start', 'ref'),
                 column_html('title_html', 'Title'|trans, 'start', 'title'),
                 column_toggle('visible', 'Online'|trans, 'toggle_visible_url'),

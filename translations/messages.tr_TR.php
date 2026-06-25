@@ -674,6 +674,7 @@ return [
     'If yes, redirections through Redirect::exec() will be displayed as links.' => 'Evet ise, Redirect::exec() üzerinden yönlendirmeler bağlantı olarak görüntülenecektir.',
     'If you change the product template, some of the product attribute combinations may be deleted, and you may have to reconfigure some of the product prices.' => 'Ürün şablonunu değiştirirseniz, bazı ürün öznitelik kombinasyonları silinebilir ve bazı ürün fiyatlarını yeniden yapılandırmanız gerekebilir.',
     'If you want to translate core components of Thelia (core, install, default modules or templates), please use our translation platform' => 'Thelia\'nın temel bileşenlerini (core, kurulum, varsayılan modüller veya şablonlar) çevirmek istiyorsanız, lütfen çeviri platformumuzu kullanın',
+    'Image' => 'Görsel',
     'Image file not found' => 'Görsel dosyası bulunamadı',
     'Image information' => 'Görsel bilgileri',
     'Images' => 'Resim dosyası',

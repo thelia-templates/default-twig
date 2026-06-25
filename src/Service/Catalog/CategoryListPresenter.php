@@ -16,6 +16,7 @@ namespace BackOfficeDefaultTwigBundle\Service\Catalog;
 
 use BackOfficeDefaultTwigBundle\Repository\CategoryRepository;
 use BackOfficeDefaultTwigBundle\Repository\ProductRepository;
+use BackOfficeDefaultTwigBundle\Service\Listing\ListingThumbnailPresenter;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -35,6 +36,7 @@ final readonly class CategoryListPresenter
         private UrlGeneratorInterface $urls,
         private TokenProvider $tokens,
         private TranslatorInterface $translator,
+        private ListingThumbnailPresenter $thumbnails,
     ) {
     }
 
@@ -121,6 +123,7 @@ final readonly class CategoryListPresenter
 
         return [
             'id' => $id,
+            'thumbnail_html' => $this->thumbnails->forCategory($id),
             'title_html' => $this->renderTitleLink($browseUrl, $title, $productCount, $childCount),
             'title' => $title,
             'visible' => (bool) $category->getVisible(),
@@ -200,6 +203,7 @@ final readonly class CategoryListPresenter
 
         return [
             'id' => $id,
+            'thumbnail_html' => $this->thumbnails->forProduct($id),
             'ref' => $ref,
             'title' => $title,
             'title_html' => \sprintf(

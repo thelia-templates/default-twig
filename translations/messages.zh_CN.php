@@ -674,6 +674,7 @@ return [
     'If yes, redirections through Redirect::exec() will be displayed as links.' => '如果启用，通过 Redirect::exec() 的重定向将以链接形式显示。',
     'If you change the product template, some of the product attribute combinations may be deleted, and you may have to reconfigure some of the product prices.' => '如果更改产品模板，部分产品属性组合可能会被删除，您可能需要重新配置部分产品价格。',
     'If you want to translate core components of Thelia (core, install, default modules or templates), please use our translation platform' => '如果您希望翻译 Thelia 的核心组件（核心、安装、默认模块或模板），请使用我们的翻译平台',
+    'Image' => '图片',
     'Image file not found' => '未找到图片文件',
     'Image information' => '图片信息',
     'Images' => '图片',
