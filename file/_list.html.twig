@@ -3,7 +3,8 @@
      data-bo-file-list-toggle-url-template-value="{{ path(urls.toggle, id_placeholder) }}"
      data-bo-file-list-delete-url-template-value="{{ path(urls.delete, id_placeholder) }}"
      data-bo-file-list-position-url-value="{{ path(urls.position, { parentType: parent_type, parentId: parent_id }) }}"
-     data-bo-file-list-token-value="{{ assignToken() }}">
+     data-bo-file-list-token-value="{{ assignToken() }}"
+     data-bo-file-list-sortable-value="{{ kind == 'image' ? 'true' : 'false' }}">
     {% if items|length == 0 %}
         <div class="alert alert-info" data-testid="bo-file-list-empty">
             {% if kind == 'image' %}
@@ -14,7 +15,7 @@
         </div>
     {% else %}
         <ul class="list-unstyled row g-3" data-bo-file-list-target="grid" data-testid="bo-file-list-grid">
-            {% for item in items %}
+            {% for item in items|sort((a, b) => a.position <=> b.position) %}
                 <li class="col-12 col-md-6 col-xl-4" data-bo-file-list-target="item" data-file-id="{{ item.id }}">
                     <div class="card h-100">
                         {% if kind == 'image' %}
@@ -44,12 +45,14 @@
                                 <div class="small fw-semibold text-truncate mb-2">{{ item.title }}</div>
                             {% endif %}
                             <div class="d-flex gap-2 justify-content-between align-items-center small text-muted">
-                                <span>#{{ item.position }}</span>
+                                <span data-position-label="">#{{ item.position }}</span>
                                 <div class="btn-group btn-group-sm">
                                     {% if can_update %}
                                         <button type="button" class="btn btn-outline-secondary" data-action="bo-file-list#toggle"
                                                 data-bo-file-list-id-param="{{ item.id }}"
                                                 title="{{ item.visible ? 'Hide'|trans : 'Show'|trans }}"
+                                                data-label-show="{{ 'Show'|trans }}"
+                                                data-label-hide="{{ 'Hide'|trans }}"
                                                 data-testid="bo-file-toggle-{{ item.id }}">
                                             <i class="bi bi-eye{% if not item.visible %}-slash{% endif %}" aria-hidden="true"></i>
                                         </button>
