@@ -166,7 +166,7 @@ final class AttributeController
             resource: self::RESOURCE,
             access: AccessManager::DELETE,
             request: $request,
-            event: new AttributeDeleteEvent((int) $request->get('attribute_id', 0)),
+            event: new AttributeDeleteEvent((int) ($request->query->get('attribute_id') ?? $request->request->get('attribute_id', 0))),
             eventName: TheliaEvents::ATTRIBUTE_DELETE,
             actionLabel: 'Attribute deletion',
             successRoute: self::LIST_ROUTE,
@@ -177,9 +177,9 @@ final class AttributeController
     public function updatePosition(Request $request): Response
     {
         $event = new UpdatePositionEvent(
-            (int) $request->get('attribute_id', 0),
-            (int) $request->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE),
-            (int) $request->get('position', 0),
+            (int) ($request->query->get('attribute_id') ?? $request->request->get('attribute_id', 0)),
+            (int) ($request->query->get('mode') ?? $request->request->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE)),
+            (int) ($request->query->get('position') ?? $request->request->get('position', 0)),
         );
 
         return $this->action->tokenAction(
@@ -207,7 +207,7 @@ final class AttributeController
 
     private function dispatchTemplateBulk(Request $request, string $eventName, string $label): Response
     {
-        $attribute = AttributeQuery::create()->findPk((int) $request->get('attribute_id', 0));
+        $attribute = AttributeQuery::create()->findPk((int) ($request->query->get('attribute_id') ?? $request->request->get('attribute_id', 0)));
         if ($attribute === null) {
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }

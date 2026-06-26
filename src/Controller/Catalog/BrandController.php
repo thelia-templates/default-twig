@@ -190,7 +190,7 @@ final class BrandController
     #[Route('/toggle-online', name: 'toggle-online', methods: ['GET', 'POST'])]
     public function toggleOnline(Request $request): Response
     {
-        $brand = $this->brandRepository->findById((int) $request->get('brand_id', 0));
+        $brand = $this->brandRepository->findById((int) ($request->query->get('brand_id') ?? $request->request->get('brand_id', 0)));
         if ($brand === null) {
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }
@@ -210,9 +210,9 @@ final class BrandController
     public function updatePosition(Request $request): Response
     {
         $event = new UpdatePositionEvent(
-            (int) $request->get('brand_id', 0),
-            (int) $request->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE),
-            (int) $request->get('position', 0),
+            (int) ($request->query->get('brand_id') ?? $request->request->get('brand_id', 0)),
+            (int) ($request->query->get('mode') ?? $request->request->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE)),
+            (int) ($request->query->get('position') ?? $request->request->get('position', 0)),
         );
 
         return $this->action->tokenAction(
@@ -233,7 +233,7 @@ final class BrandController
             resource: self::RESOURCE,
             access: AccessManager::DELETE,
             request: $request,
-            event: new BrandDeleteEvent((int) $request->get('brand_id', 0)),
+            event: new BrandDeleteEvent((int) ($request->query->get('brand_id') ?? $request->request->get('brand_id', 0))),
             eventName: TheliaEvents::BRAND_DELETE,
             actionLabel: 'Brand deletion',
             successRoute: self::LIST_ROUTE,

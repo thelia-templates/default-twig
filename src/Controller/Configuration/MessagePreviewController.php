@@ -130,7 +130,7 @@ final class MessagePreviewController
 
     private function resolveLocale(Request $request): string
     {
-        $editLanguageId = $request->get('edit_language_id');
+        $editLanguageId = $request->query->get('edit_language_id') ?? $request->request->get('edit_language_id');
         if ($editLanguageId !== null && '' !== (string) $editLanguageId) {
             $lang = LangQuery::create()->findPk((int) $editLanguageId);
             if ($lang !== null) {

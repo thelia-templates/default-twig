@@ -285,7 +285,7 @@ final class ProductController
     #[Route('/toggle-online', name: 'set-default', methods: ['GET', 'POST'])]
     public function toggleOnline(Request $request): Response
     {
-        $productId = (int) $request->get('product_id', 0);
+        $productId = (int) ($request->query->get('product_id') ?? $request->request->get('product_id', 0));
         $product = ProductQuery::create()->findPk($productId);
         if ($product === null) {
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
@@ -306,9 +306,9 @@ final class ProductController
     public function updatePosition(Request $request): Response
     {
         $event = new UpdatePositionEvent(
-            (int) $request->get('product_id', 0),
-            (int) $request->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE),
-            (int) $request->get('position', 0),
+            (int) ($request->query->get('product_id') ?? $request->request->get('product_id', 0)),
+            (int) ($request->query->get('mode') ?? $request->request->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE)),
+            (int) ($request->query->get('position') ?? $request->request->get('position', 0)),
         );
 
         return $this->action->tokenAction(
@@ -329,7 +329,7 @@ final class ProductController
             resource: self::RESOURCE,
             access: AccessManager::DELETE,
             request: $request,
-            event: new ProductDeleteEvent((int) $request->get('product_id', 0)),
+            event: new ProductDeleteEvent((int) ($request->query->get('product_id') ?? $request->request->get('product_id', 0))),
             eventName: TheliaEvents::PRODUCT_DELETE,
             actionLabel: 'Product deletion',
             successRoute: self::LIST_ROUTE,

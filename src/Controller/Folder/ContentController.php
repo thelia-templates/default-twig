@@ -165,7 +165,7 @@ final class ContentController
     #[Route('/toggle-online', name: 'toggle-online', methods: ['GET', 'POST'])]
     public function toggleOnline(Request $request): Response
     {
-        $content = ContentQuery::create()->findPk((int) $request->get('content_id', 0));
+        $content = ContentQuery::create()->findPk((int) ($request->query->get('content_id') ?? $request->request->get('content_id', 0)));
         if ($content === null) {
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }
@@ -212,7 +212,7 @@ final class ContentController
             resource: self::RESOURCE,
             access: AccessManager::DELETE,
             request: $request,
-            event: new ContentDeleteEvent((int) $request->get('content_id', 0)),
+            event: new ContentDeleteEvent((int) ($request->query->get('content_id') ?? $request->request->get('content_id', 0))),
             eventName: TheliaEvents::CONTENT_DELETE,
             actionLabel: 'Content deletion',
             successRoute: self::LIST_ROUTE,
@@ -245,8 +245,8 @@ final class ContentController
     #[Route('/additional-folder/delete', name: 'additional-folder.delete', methods: ['POST', 'GET'])]
     public function deleteAdditionalFolder(Request $request): Response
     {
-        $contentId = (int) $request->get('content_id', 0);
-        $folderId = (int) $request->get('additional_folder_id', 0);
+        $contentId = (int) ($request->query->get('content_id') ?? $request->request->get('content_id', 0));
+        $folderId = (int) ($request->query->get('additional_folder_id') ?? $request->request->get('additional_folder_id', 0));
 
         $content = ContentQuery::create()->findPk($contentId);
         if ($content === null) {

@@ -131,7 +131,7 @@ final class TaxController
             return $denied;
         }
 
-        $taxId = (int) $request->request->get('tax_id', $request->get('tax_id', 0));
+        $taxId = (int) $request->request->get('tax_id', 0);
         $form = $this->createUpdateForm(null);
 
         try {
@@ -173,7 +173,7 @@ final class TaxController
     public function delete(Request $request): Response
     {
         $event = new TaxEvent();
-        $event->setId((int) $request->get('tax_id', 0));
+        $event->setId((int) ($request->query->get('tax_id') ?? $request->request->get('tax_id', 0)));
 
         return $this->action->tokenAction(
             resource: self::RESOURCE,

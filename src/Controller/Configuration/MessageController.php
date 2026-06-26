@@ -177,7 +177,7 @@ final class MessageController
             resource: self::RESOURCE,
             access: AccessManager::DELETE,
             request: $request,
-            event: new MessageDeleteEvent((int) $request->get('message_id', 0)),
+            event: new MessageDeleteEvent((int) ($request->query->get('message_id') ?? $request->request->get('message_id', 0))),
             eventName: TheliaEvents::MESSAGE_DELETE,
             actionLabel: 'Message deletion',
             successRoute: self::LIST_ROUTE,

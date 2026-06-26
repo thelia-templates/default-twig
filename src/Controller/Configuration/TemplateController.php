@@ -175,7 +175,7 @@ final class TemplateController
             resource: self::RESOURCE,
             access: AccessManager::DELETE,
             request: $request,
-            event: new TemplateDeleteEvent((int) $request->get('template_id', 0)),
+            event: new TemplateDeleteEvent((int) ($request->query->get('template_id') ?? $request->request->get('template_id', 0))),
             eventName: TheliaEvents::TEMPLATE_DELETE,
             actionLabel: 'Template deletion',
             successRoute: self::LIST_ROUTE,
@@ -185,9 +185,9 @@ final class TemplateController
     #[Route('/duplicate', name: 'duplicate', methods: ['POST', 'GET'])]
     public function duplicate(Request $request): Response
     {
-        $sourceId = (int) $request->get('source_template_id', $request->get('template_id', 0));
+        $sourceId = (int) ($request->query->get('source_template_id') ?? $request->request->get('source_template_id') ?? $request->query->get('template_id') ?? $request->request->get('template_id', 0));
         $event = new TemplateDuplicateEvent($sourceId, $this->defaultLocale());
-        $newName = trim((string) $request->get('new_name', ''));
+        $newName = trim((string) ($request->query->get('new_name') ?? $request->request->get('new_name', '')));
 
         $response = $this->action->tokenAction(
             resource: self::RESOURCE,
@@ -233,7 +233,7 @@ final class TemplateController
     #[Route('/features/add', name: 'features.add', methods: ['POST', 'GET'])]
     public function addFeature(Request $request): Response
     {
-        $template = TemplateQuery::create()->findPk((int) $request->get('template_id', 0));
+        $template = TemplateQuery::create()->findPk((int) ($request->query->get('template_id') ?? $request->request->get('template_id', 0)));
         if ($template === null) {
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }
@@ -242,7 +242,7 @@ final class TemplateController
             resource: self::RESOURCE,
             access: AccessManager::UPDATE,
             request: $request,
-            event: new TemplateAddFeatureEvent($template, (int) $request->get('feature_id', 0)),
+            event: new TemplateAddFeatureEvent($template, (int) ($request->query->get('feature_id') ?? $request->request->get('feature_id', 0))),
             eventName: TheliaEvents::TEMPLATE_ADD_FEATURE,
             actionLabel: 'Template feature added',
             successRoute: self::EDIT_ROUTE,
@@ -253,7 +253,7 @@ final class TemplateController
     #[Route('/features/delete', name: 'features.delete', methods: ['POST', 'GET'])]
     public function deleteFeature(Request $request): Response
     {
-        $template = TemplateQuery::create()->findPk((int) $request->get('template_id', 0));
+        $template = TemplateQuery::create()->findPk((int) ($request->query->get('template_id') ?? $request->request->get('template_id', 0)));
         if ($template === null) {
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }
@@ -262,7 +262,7 @@ final class TemplateController
             resource: self::RESOURCE,
             access: AccessManager::UPDATE,
             request: $request,
-            event: new TemplateDeleteFeatureEvent($template, (int) $request->get('feature_id', 0)),
+            event: new TemplateDeleteFeatureEvent($template, (int) ($request->query->get('feature_id') ?? $request->request->get('feature_id', 0))),
             eventName: TheliaEvents::TEMPLATE_DELETE_FEATURE,
             actionLabel: 'Template feature removed',
             successRoute: self::EDIT_ROUTE,
@@ -293,7 +293,7 @@ final class TemplateController
     #[Route('/attributes/add', name: 'attributes.add', methods: ['POST', 'GET'])]
     public function addAttribute(Request $request): Response
     {
-        $template = TemplateQuery::create()->findPk((int) $request->get('template_id', 0));
+        $template = TemplateQuery::create()->findPk((int) ($request->query->get('template_id') ?? $request->request->get('template_id', 0)));
         if ($template === null) {
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }
@@ -302,7 +302,7 @@ final class TemplateController
             resource: self::RESOURCE,
             access: AccessManager::UPDATE,
             request: $request,
-            event: new TemplateAddAttributeEvent($template, (int) $request->get('attribute_id', 0)),
+            event: new TemplateAddAttributeEvent($template, (int) ($request->query->get('attribute_id') ?? $request->request->get('attribute_id', 0))),
             eventName: TheliaEvents::TEMPLATE_ADD_ATTRIBUTE,
             actionLabel: 'Template attribute added',
             successRoute: self::EDIT_ROUTE,
@@ -313,7 +313,7 @@ final class TemplateController
     #[Route('/attributes/delete', name: 'attributes.delete', methods: ['POST', 'GET'])]
     public function deleteAttribute(Request $request): Response
     {
-        $template = TemplateQuery::create()->findPk((int) $request->get('template_id', 0));
+        $template = TemplateQuery::create()->findPk((int) ($request->query->get('template_id') ?? $request->request->get('template_id', 0)));
         if ($template === null) {
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }
@@ -322,7 +322,7 @@ final class TemplateController
             resource: self::RESOURCE,
             access: AccessManager::UPDATE,
             request: $request,
-            event: new TemplateDeleteAttributeEvent($template, (int) $request->get('attribute_id', 0)),
+            event: new TemplateDeleteAttributeEvent($template, (int) ($request->query->get('attribute_id') ?? $request->request->get('attribute_id', 0))),
             eventName: TheliaEvents::TEMPLATE_DELETE_ATTRIBUTE,
             actionLabel: 'Template attribute removed',
             successRoute: self::EDIT_ROUTE,

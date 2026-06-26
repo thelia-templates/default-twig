@@ -69,22 +69,22 @@ final class TranslationsController
             return $denied;
         }
 
-        $this->tokens->checkToken((string) $request->get('_token'));
+        $this->tokens->checkToken((string) $request->request->get('_token'));
 
         return $this->renderEditor($request);
     }
 
     private function renderEditor(Request $request): Response
     {
-        $itemToTranslate = (string) ($request->get('item_to_translate') ?? '');
-        $itemName = (string) ($request->get('item_name') ?? '');
+        $itemToTranslate = (string) ($request->query->get('item_to_translate') ?? $request->request->get('item_to_translate', ''));
+        $itemName = (string) ($request->query->get('item_name') ?? $request->request->get('item_name', ''));
         $modulePart = '';
         if ($itemToTranslate === 'mo' && $itemName !== '') {
-            $modulePart = (string) ($request->get('module_part') ?? '');
+            $modulePart = (string) ($request->query->get('module_part') ?? $request->request->get('module_part', ''));
         }
 
         $locale = $this->editionLocale($request);
-        $viewMissingOnly = (bool) $request->get('view_missing_traductions_only', false);
+        $viewMissingOnly = (bool) ($request->query->get('view_missing_traductions_only') ?? $request->request->get('view_missing_traductions_only', false));
 
         $context = [
             'item_to_translate' => $itemToTranslate,
@@ -407,7 +407,7 @@ final class TranslationsController
 
     private function editionLocale(Request $request): string
     {
-        $editionId = $request->get('edit_language_id');
+        $editionId = $request->query->get('edit_language_id') ?? $request->request->get('edit_language_id');
         if ($editionId !== null && (int) $editionId > 0) {
             $lang = LangQuery::create()->findPk((int) $editionId);
             if ($lang !== null) {
@@ -427,7 +427,7 @@ final class TranslationsController
 
     private function editionLanguageId(Request $request): int
     {
-        $editionId = $request->get('edit_language_id');
+        $editionId = $request->query->get('edit_language_id') ?? $request->request->get('edit_language_id');
         if ($editionId !== null && (int) $editionId > 0) {
             return (int) $editionId;
         }

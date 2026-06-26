@@ -79,7 +79,7 @@ final class ConfigController
             return $denied;
         }
 
-        $this->tokens->checkToken((string) $request->get('_token'));
+        $this->tokens->checkToken((string) $request->request->get('_token'));
 
         /** @var array<int|string, string> $variables */
         $variables = $request->request->all('variable');
@@ -177,7 +177,7 @@ final class ConfigController
             resource: self::RESOURCE,
             access: AccessManager::DELETE,
             request: $request,
-            event: new ConfigDeleteEvent((int) $request->get('variable_id', 0)),
+            event: new ConfigDeleteEvent((int) ($request->query->get('variable_id') ?? $request->request->get('variable_id', 0))),
             eventName: TheliaEvents::CONFIG_DELETE,
             actionLabel: 'Variable deletion',
             successRoute: self::LIST_ROUTE,

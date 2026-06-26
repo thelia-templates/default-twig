@@ -147,7 +147,7 @@ final class CurrencyController
             resource: self::RESOURCE,
             access: AccessManager::DELETE,
             request: $request,
-            event: new CurrencyDeleteEvent((int) $request->get('currency_id', 0)),
+            event: new CurrencyDeleteEvent((int) ($request->query->get('currency_id') ?? $request->request->get('currency_id', 0))),
             eventName: TheliaEvents::CURRENCY_DELETE,
             actionLabel: 'Currency deletion',
             successRoute: self::LIST_ROUTE,
@@ -195,9 +195,9 @@ final class CurrencyController
     public function updatePosition(Request $request): Response
     {
         $event = new UpdatePositionEvent(
-            (int) $request->get('currency_id', 0),
+            (int) ($request->query->get('currency_id') ?? $request->request->get('currency_id', 0)),
             UpdatePositionEvent::POSITION_ABSOLUTE,
-            (int) $request->get('position', 0),
+            (int) ($request->query->get('position') ?? $request->request->get('position', 0)),
         );
 
         return $this->action->tokenAction(

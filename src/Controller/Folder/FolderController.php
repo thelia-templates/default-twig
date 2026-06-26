@@ -184,7 +184,7 @@ final class FolderController
     #[Route('/toggle-online', name: 'toggle-online', methods: ['GET', 'POST'])]
     public function toggleOnline(Request $request): Response
     {
-        $folder = FolderQuery::create()->findPk((int) $request->get('folder_id', 0));
+        $folder = FolderQuery::create()->findPk((int) ($request->query->get('folder_id') ?? $request->request->get('folder_id', 0)));
         if ($folder === null) {
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }
@@ -204,9 +204,9 @@ final class FolderController
     public function updatePosition(Request $request): Response
     {
         $event = new UpdatePositionEvent(
-            (int) $request->get('folder_id', 0),
-            (int) $request->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE),
-            (int) $request->get('position', 0),
+            (int) ($request->query->get('folder_id') ?? $request->request->get('folder_id', 0)),
+            (int) ($request->query->get('mode') ?? $request->request->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE)),
+            (int) ($request->query->get('position') ?? $request->request->get('position', 0)),
         );
 
         return $this->action->tokenAction(
@@ -227,7 +227,7 @@ final class FolderController
             resource: self::RESOURCE,
             access: AccessManager::DELETE,
             request: $request,
-            event: new FolderDeleteEvent((int) $request->get('folder_id', 0)),
+            event: new FolderDeleteEvent((int) ($request->query->get('folder_id') ?? $request->request->get('folder_id', 0))),
             eventName: TheliaEvents::FOLDER_DELETE,
             actionLabel: 'Folder deletion',
             successRoute: self::LIST_ROUTE,

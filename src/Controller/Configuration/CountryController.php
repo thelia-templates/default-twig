@@ -183,7 +183,7 @@ final class CountryController
     #[Route('/toggle-visibility', name: 'toggle-visibility', methods: ['GET', 'POST'])]
     public function toggleVisibility(Request $request): Response
     {
-        $country = CountryQuery::create()->findPk((int) $request->get('country_id', 0));
+        $country = CountryQuery::create()->findPk((int) ($request->query->get('country_id') ?? $request->request->get('country_id', 0)));
         if ($country === null) {
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }
@@ -202,7 +202,7 @@ final class CountryController
     #[Route('/toggle-default', name: 'toggle-default', methods: ['GET', 'POST'])]
     public function toggleDefault(Request $request): Response
     {
-        $country = CountryQuery::create()->findPk((int) $request->get('country_id', 0));
+        $country = CountryQuery::create()->findPk((int) ($request->query->get('country_id') ?? $request->request->get('country_id', 0)));
         if ($country === null) {
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }
@@ -225,7 +225,7 @@ final class CountryController
             resource: self::RESOURCE,
             access: AccessManager::DELETE,
             request: $request,
-            event: new CountryDeleteEvent((int) $request->get('country_id', 0)),
+            event: new CountryDeleteEvent((int) ($request->query->get('country_id') ?? $request->request->get('country_id', 0))),
             eventName: TheliaEvents::COUNTRY_DELETE,
             actionLabel: 'Country deletion',
             successRoute: self::LIST_ROUTE,

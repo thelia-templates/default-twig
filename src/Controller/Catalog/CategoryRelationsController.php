@@ -49,13 +49,13 @@ final class CategoryRelationsController
     #[Route('/admin/categories/related-content/add', name: 'admin.categories.related-content.add', methods: ['POST', 'GET'])]
     public function addRelatedContent(Request $request): Response
     {
-        $categoryId = (int) $request->get('category_id', 0);
+        $categoryId = (int) ($request->query->get('category_id') ?? $request->request->get('category_id', 0));
         $category = CategoryQuery::create()->findPk($categoryId);
         if ($category === null) {
             return new RedirectResponse($this->urls->generate('admin.categories.default'));
         }
 
-        $contentId = (int) $request->get('content_id', 0);
+        $contentId = (int) ($request->query->get('content_id') ?? $request->request->get('content_id', 0));
         if ($contentId <= 0) {
             return new RedirectResponse($this->urls->generate(self::EDIT_ROUTE, ['category_id' => $categoryId, 'current_tab' => 'associations']));
         }
@@ -75,7 +75,7 @@ final class CategoryRelationsController
     #[Route('/admin/categories/related-content/delete', name: 'admin.categories.related-content.delete', methods: ['POST', 'GET'])]
     public function deleteRelatedContent(Request $request): Response
     {
-        $categoryId = (int) $request->get('category_id', 0);
+        $categoryId = (int) ($request->query->get('category_id') ?? $request->request->get('category_id', 0));
         $category = CategoryQuery::create()->findPk($categoryId);
         if ($category === null) {
             return new RedirectResponse($this->urls->generate('admin.categories.default'));
@@ -85,7 +85,7 @@ final class CategoryRelationsController
             resource: self::RESOURCE,
             access: AccessManager::UPDATE,
             request: $request,
-            event: new CategoryDeleteContentEvent($category, (int) $request->get('content_id', 0)),
+            event: new CategoryDeleteContentEvent($category, (int) ($request->query->get('content_id') ?? $request->request->get('content_id', 0))),
             eventName: TheliaEvents::CATEGORY_REMOVE_CONTENT,
             actionLabel: 'Category related content removed',
             successRoute: self::EDIT_ROUTE,
@@ -100,7 +100,7 @@ final class CategoryRelationsController
             return $denied;
         }
 
-        $categoryId = (int) $request->get('category_id', 0);
+        $categoryId = (int) ($request->query->get('category_id') ?? $request->request->get('category_id', 0));
 
         return new RedirectResponse($this->urls->generate(self::EDIT_ROUTE, ['category_id' => $categoryId, 'current_tab' => 'images']));
     }

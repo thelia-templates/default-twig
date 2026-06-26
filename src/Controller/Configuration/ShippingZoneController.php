@@ -122,7 +122,7 @@ final class ShippingZoneController
             return $denied;
         }
 
-        $this->tokens->checkToken((string) $request->get('_token'));
+        $this->tokens->checkToken((string) $request->request->get('_token'));
 
         $deliveryModuleId = (int) $request->request->get('shipping_zone_id', 0);
         $areaId = (int) $request->request->get('area_id', 0);
@@ -144,7 +144,7 @@ final class ShippingZoneController
             return $denied;
         }
 
-        $this->tokens->checkToken((string) $request->get('_token'));
+        $this->tokens->checkToken((string) $request->request->get('_token'));
 
         $deliveryModuleId = (int) $request->request->get('shipping_zone_id', 0);
         $areaId = (int) $request->request->get('area_id', 0);

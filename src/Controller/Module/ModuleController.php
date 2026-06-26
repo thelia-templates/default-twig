@@ -224,9 +224,9 @@ final class ModuleController
     public function updatePosition(Request $request): Response
     {
         $event = new UpdatePositionEvent(
-            (int) $request->get('module_id', 0),
-            (int) $request->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE),
-            (int) $request->get('position', 0),
+            (int) $request->request->get('module_id', 0),
+            (int) $request->request->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE),
+            (int) $request->request->get('position', 0),
         );
 
         return $this->action->tokenAction(

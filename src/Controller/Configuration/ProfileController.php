@@ -194,7 +194,7 @@ final class ProfileController
     public function delete(Request $request): Response
     {
         $event = new ProfileEvent();
-        $event->setId((int) $request->get('profile_id', 0));
+        $event->setId((int) ($request->query->get('profile_id') ?? $request->request->get('profile_id', 0)));
 
         return $this->action->tokenAction(
             resource: self::RESOURCE,

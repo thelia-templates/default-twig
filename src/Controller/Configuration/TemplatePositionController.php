@@ -36,12 +36,12 @@ final class TemplatePositionController
     #[Route('/admin/template/update-feature-position', name: 'admin.configuration.templates.attributes.update-feature-position', methods: ['GET', 'POST'])]
     public function updateFeaturePosition(Request $request): Response
     {
-        $templateId = (int) $request->get('template_id', 0);
+        $templateId = (int) ($request->query->get('template_id') ?? $request->request->get('template_id', 0));
 
         $event = new UpdatePositionEvent(
-            (int) $request->get('feature_id', 0),
-            (int) $request->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE),
-            (int) $request->get('position', 0),
+            (int) ($request->query->get('feature_id') ?? $request->request->get('feature_id', 0)),
+            (int) ($request->query->get('mode') ?? $request->request->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE)),
+            (int) ($request->query->get('position') ?? $request->request->get('position', 0)),
         );
 
         return $this->action->tokenAction(
@@ -59,12 +59,12 @@ final class TemplatePositionController
     #[Route('/admin/template/update-attribute-position', name: 'admin.configuration.templates.attributes.update-attribute-position', methods: ['GET', 'POST'])]
     public function updateAttributePosition(Request $request): Response
     {
-        $templateId = (int) $request->get('template_id', 0);
+        $templateId = (int) ($request->query->get('template_id') ?? $request->request->get('template_id', 0));
 
         $event = new UpdatePositionEvent(
-            (int) $request->get('attribute_id', 0),
-            (int) $request->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE),
-            (int) $request->get('position', 0),
+            (int) ($request->query->get('attribute_id') ?? $request->request->get('attribute_id', 0)),
+            (int) ($request->query->get('mode') ?? $request->request->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE)),
+            (int) ($request->query->get('position') ?? $request->request->get('position', 0)),
         );
 
         return $this->action->tokenAction(

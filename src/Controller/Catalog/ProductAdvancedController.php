@@ -151,9 +151,9 @@ final class ProductAdvancedController
     public function updateContentPosition(Request $request): Response
     {
         $event = new UpdatePositionEvent(
-            (int) $request->get('content_id', 0),
-            (int) $request->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE),
-            (int) $request->get('position', 0),
+            (int) ($request->query->get('content_id') ?? $request->request->get('content_id', 0)),
+            (int) ($request->query->get('mode') ?? $request->request->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE)),
+            (int) ($request->query->get('position') ?? $request->request->get('position', 0)),
         );
 
         return $this->action->tokenAction(
@@ -164,7 +164,7 @@ final class ProductAdvancedController
             eventName: TheliaEvents::PRODUCT_UPDATE_CONTENT_POSITION,
             actionLabel: 'Product content reorder',
             successRoute: self::EDIT_ROUTE,
-            successParameters: ['product_id' => (int) $request->get('product_id', 0), 'current_tab' => 'related'],
+            successParameters: ['product_id' => (int) ($request->query->get('product_id') ?? $request->request->get('product_id', 0)), 'current_tab' => 'related'],
         );
     }
 
@@ -172,9 +172,9 @@ final class ProductAdvancedController
     public function updateAccessoryPosition(Request $request): Response
     {
         $event = new UpdatePositionEvent(
-            (int) $request->get('accessory_id', 0),
-            (int) $request->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE),
-            (int) $request->get('position', 0),
+            (int) ($request->query->get('accessory_id') ?? $request->request->get('accessory_id', 0)),
+            (int) ($request->query->get('mode') ?? $request->request->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE)),
+            (int) ($request->query->get('position') ?? $request->request->get('position', 0)),
         );
 
         return $this->action->tokenAction(
@@ -185,7 +185,7 @@ final class ProductAdvancedController
             eventName: TheliaEvents::PRODUCT_UPDATE_ACCESSORY_POSITION,
             actionLabel: 'Product accessory reorder',
             successRoute: self::EDIT_ROUTE,
-            successParameters: ['product_id' => (int) $request->get('product_id', 0), 'current_tab' => 'related'],
+            successParameters: ['product_id' => (int) ($request->query->get('product_id') ?? $request->request->get('product_id', 0)), 'current_tab' => 'related'],
         );
     }
 
@@ -283,7 +283,7 @@ final class ProductAdvancedController
     #[Route('/admin/product/product-sale-element-visibility', name: 'admin.product.product-sale-element-visibility', methods: ['GET', 'POST'])]
     public function pseToggleVisibility(Request $request): Response
     {
-        $pseId = (int) $request->get('product_sale_element_id', 0);
+        $pseId = (int) ($request->query->get('product_sale_element_id') ?? $request->request->get('product_sale_element_id', 0));
 
         return $this->action->tokenAction(
             resource: self::RESOURCE,
@@ -293,7 +293,7 @@ final class ProductAdvancedController
             eventName: TheliaEvents::PRODUCT_PRODUCT_SALE_ELEMENT_TOGGLE_VISIBILITY,
             actionLabel: 'PSE visibility',
             successRoute: self::EDIT_ROUTE,
-            successParameters: ['product_id' => (int) $request->get('product_id', 0), 'current_tab' => 'pse'],
+            successParameters: ['product_id' => (int) ($request->query->get('product_id') ?? $request->request->get('product_id', 0)), 'current_tab' => 'pse'],
         );
     }
 
@@ -301,9 +301,9 @@ final class ProductAdvancedController
     public function psePosition(Request $request): Response
     {
         $event = new UpdatePositionEvent(
-            (int) $request->get('product_sale_element_id', 0),
-            (int) $request->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE),
-            (int) $request->get('position', 0),
+            (int) ($request->query->get('product_sale_element_id') ?? $request->request->get('product_sale_element_id', 0)),
+            (int) ($request->query->get('mode') ?? $request->request->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE)),
+            (int) ($request->query->get('position') ?? $request->request->get('position', 0)),
         );
 
         return $this->action->tokenAction(
@@ -314,7 +314,7 @@ final class ProductAdvancedController
             eventName: TheliaEvents::PRODUCT_PRODUCT_SALE_ELEMENT_UPDATE_POSITION,
             actionLabel: 'PSE reorder',
             successRoute: self::EDIT_ROUTE,
-            successParameters: ['product_id' => (int) $request->get('product_id', 0), 'current_tab' => 'pse'],
+            successParameters: ['product_id' => (int) ($request->query->get('product_id') ?? $request->request->get('product_id', 0)), 'current_tab' => 'pse'],
         );
     }
 
@@ -325,7 +325,7 @@ final class ProductAdvancedController
             return $denied;
         }
 
-        $productId = (int) $request->get('product_id', 0);
+        $productId = (int) $request->query->get('product_id', 0);
         $product = ProductQuery::create()->findPk($productId);
         if ($product === null) {
             return new Response('', Response::HTTP_NO_CONTENT);
@@ -345,7 +345,7 @@ final class ProductAdvancedController
             return new RedirectResponse($this->urls->generate('admin.products.default'));
         }
 
-        $event = new ProductSetTemplateEvent($product, (int) $request->get('template_id', 0), $this->defaultCurrencyId());
+        $event = new ProductSetTemplateEvent($product, (int) ($request->query->get('template_id') ?? $request->request->get('template_id', 0)), $this->defaultCurrencyId());
 
         return $this->action->tokenAction(
             resource: self::RESOURCE,
@@ -417,12 +417,12 @@ final class ProductAdvancedController
     #[Route('/admin/product/combination/add', name: 'admin.product.combination.add', methods: ['POST', 'GET'])]
     public function combinationAdd(Request $request): Response
     {
-        $product = ProductQuery::create()->findPk((int) $request->get('product_id', 0));
+        $product = ProductQuery::create()->findPk((int) ($request->query->get('product_id') ?? $request->request->get('product_id', 0)));
         if ($product === null) {
             return new RedirectResponse($this->urls->generate('admin.products.default'));
         }
 
-        $combination = (string) $request->get('combination_attributes', '');
+        $combination = (string) ($request->query->get('combination_attributes') ?? $request->request->get('combination_attributes', ''));
         $attributeAvList = $combination !== '' ? array_filter(array_map('intval', explode(',', $combination))) : [];
         $event = new ProductSaleElementCreateEvent($product, $attributeAvList, $this->defaultCurrencyId());
 
@@ -449,7 +449,7 @@ final class ProductAdvancedController
             eventName: TheliaEvents::PRODUCT_PRODUCT_SALE_ELEMENT_TOGGLE_VISIBILITY,
             actionLabel: 'PSE visibility toggled',
             successRoute: self::EDIT_ROUTE,
-            successParameters: ['product_id' => (int) $request->get('product_id', 0), 'current_tab' => 'pse'],
+            successParameters: ['product_id' => (int) ($request->query->get('product_id') ?? $request->request->get('product_id', 0)), 'current_tab' => 'pse'],
         );
     }
 
@@ -457,7 +457,7 @@ final class ProductAdvancedController
     public function combinationDelete(Request $request): Response
     {
         $event = new ProductSaleElementDeleteEvent(
-            (int) $request->get('product_sale_element_id', 0),
+            (int) ($request->query->get('product_sale_element_id') ?? $request->request->get('product_sale_element_id', 0)),
             $this->defaultCurrencyId(),
         );
 
@@ -469,7 +469,7 @@ final class ProductAdvancedController
             eventName: TheliaEvents::PRODUCT_DELETE_PRODUCT_SALE_ELEMENT,
             actionLabel: 'PSE deleted',
             successRoute: self::EDIT_ROUTE,
-            successParameters: ['product_id' => (int) $request->get('product_id', 0), 'current_tab' => 'pse'],
+            successParameters: ['product_id' => (int) ($request->query->get('product_id') ?? $request->request->get('product_id', 0)), 'current_tab' => 'pse'],
         );
     }
 
@@ -480,26 +480,26 @@ final class ProductAdvancedController
             return $denied;
         }
 
-        $productId = (int) $request->get('product_id', 0);
+        $productId = (int) ($request->query->get('product_id') ?? $request->request->get('product_id', 0));
         $product = ProductQuery::create()->findPk($productId);
         if ($product === null) {
             return new RedirectResponse($this->urls->generate('admin.products.default'));
         }
 
         $currency = $this->defaultCurrencyId();
-        $taxRule = (int) $request->get('tax_rule', (int) $product->getTaxRuleId());
-        $useExchangeRate = (int) $request->get('use_exchange_rate', 0);
-        $defaultPse = (int) $request->get('default_pse', 0);
+        $taxRule = (int) ($request->query->get('tax_rule') ?? $request->request->get('tax_rule', (int) $product->getTaxRuleId()));
+        $useExchangeRate = (int) ($request->query->get('use_exchange_rate') ?? $request->request->get('use_exchange_rate', 0));
+        $defaultPse = (int) ($request->query->get('default_pse') ?? $request->request->get('default_pse', 0));
 
-        $ids = (array) $request->get('product_sale_element_id', []);
-        $refs = (array) $request->get('reference', []);
-        $prices = (array) $request->get('price', []);
-        $weights = (array) $request->get('weight', []);
-        $quantities = (array) $request->get('quantity', []);
-        $salePrices = (array) $request->get('sale_price', []);
-        $eans = (array) $request->get('ean_code', []);
-        $onsale = (array) $request->get('onsale', []);
-        $isnew = (array) $request->get('isnew', []);
+        $ids = $request->query->all('product_sale_element_id') ?: $request->request->all('product_sale_element_id');
+        $refs = $request->query->all('reference') ?: $request->request->all('reference');
+        $prices = $request->query->all('price') ?: $request->request->all('price');
+        $weights = $request->query->all('weight') ?: $request->request->all('weight');
+        $quantities = $request->query->all('quantity') ?: $request->request->all('quantity');
+        $salePrices = $request->query->all('sale_price') ?: $request->request->all('sale_price');
+        $eans = $request->query->all('ean_code') ?: $request->request->all('ean_code');
+        $onsale = $request->query->all('onsale') ?: $request->request->all('onsale');
+        $isnew = $request->query->all('isnew') ?: $request->request->all('isnew');
 
         foreach ($ids as $index => $rawId) {
             $pseId = (int) $rawId;
@@ -531,7 +531,7 @@ final class ProductAdvancedController
     #[Route('/admin/products/combinations/tab', name: 'admin.product.combinations.tab', methods: ['GET'])]
     public function combinationsTab(Request $request): Response
     {
-        $productId = (int) $request->get('product_id', 0);
+        $productId = (int) $request->query->get('product_id', 0);
         $product = ProductQuery::create()->findPk($productId);
         if ($product === null) {
             return new Response('', Response::HTTP_NOT_FOUND);
@@ -541,7 +541,7 @@ final class ProductAdvancedController
             return $denied;
         }
 
-        $currencyId = (int) $request->get('currency_id', 0);
+        $currencyId = (int) $request->query->get('currency_id', 0);
 
         return new Response($this->twig->render(
             '@BackOfficeDefaultTwig/catalog/product/_combinations_tab.html.twig',
@@ -552,7 +552,7 @@ final class ProductAdvancedController
     #[Route('/admin/product/combination/build', name: 'admin.product.combination.build', methods: ['POST', 'GET'])]
     public function combinationBuild(Request $request): Response
     {
-        $product = ProductQuery::create()->findPk((int) $request->get('product_id', 0));
+        $product = ProductQuery::create()->findPk((int) ($request->query->get('product_id') ?? $request->request->get('product_id', 0)));
         if ($product === null) {
             return new RedirectResponse($this->urls->generate('admin.products.default'));
         }
@@ -631,28 +631,28 @@ final class ProductAdvancedController
             return $denied;
         }
 
-        $productId = (int) $request->get('product_id', 0);
+        $productId = (int) ($request->query->get('product_id') ?? $request->request->get('product_id', 0));
         $product = ProductQuery::create()->findPk($productId);
         if ($product === null) {
             return new RedirectResponse($this->urls->generate('admin.products.default'));
         }
 
-        $pseId = (int) $request->get('product_sale_element_id', 0);
+        $pseId = (int) ($request->query->get('product_sale_element_id') ?? $request->request->get('product_sale_element_id', 0));
         if ($pseId > 0) {
             $event = new ProductSaleElementUpdateEvent($product, $pseId);
             $event
-                ->setReference((string) $request->get('reference', ''))
-                ->setPrice((float) $request->get('price', 0))
-                ->setCurrencyId((int) $request->get('currency', $this->defaultCurrencyId()))
-                ->setWeight((float) $request->get('weight', 0))
-                ->setQuantity((float) $request->get('quantity', 0))
-                ->setSalePrice((float) $request->get('sale_price', 0))
-                ->setOnsale($request->get('onsale') !== null ? 1 : 0)
-                ->setIsnew($request->get('isnew') !== null ? 1 : 0)
+                ->setReference((string) ($request->query->get('reference') ?? $request->request->get('reference', '')))
+                ->setPrice((float) ($request->query->get('price') ?? $request->request->get('price', 0)))
+                ->setCurrencyId((int) ($request->query->get('currency') ?? $request->request->get('currency', $this->defaultCurrencyId())))
+                ->setWeight((float) ($request->query->get('weight') ?? $request->request->get('weight', 0)))
+                ->setQuantity((float) ($request->query->get('quantity') ?? $request->request->get('quantity', 0)))
+                ->setSalePrice((float) ($request->query->get('sale_price') ?? $request->request->get('sale_price', 0)))
+                ->setOnsale(($request->query->get('onsale') ?? $request->request->get('onsale')) !== null ? 1 : 0)
+                ->setIsnew(($request->query->get('isnew') ?? $request->request->get('isnew')) !== null ? 1 : 0)
                 ->setIsdefault(true)
-                ->setEanCode((string) $request->get('ean_code', ''))
-                ->setTaxRuleId((int) $request->get('tax_rule', (int) $product->getTaxRuleId()))
-                ->setFromDefaultCurrency((int) $request->get('use_exchange_rate', 0));
+                ->setEanCode((string) ($request->query->get('ean_code') ?? $request->request->get('ean_code', '')))
+                ->setTaxRuleId((int) ($request->query->get('tax_rule') ?? $request->request->get('tax_rule', (int) $product->getTaxRuleId())))
+                ->setFromDefaultCurrency((int) ($request->query->get('use_exchange_rate') ?? $request->request->get('use_exchange_rate', 0)));
 
             $events->dispatch($event, TheliaEvents::PRODUCT_UPDATE_PRODUCT_SALE_ELEMENT);
         }

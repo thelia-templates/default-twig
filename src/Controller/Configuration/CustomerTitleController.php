@@ -162,7 +162,7 @@ final class CustomerTitleController
     #[Route('/delete', name: 'delete', methods: ['POST', 'GET'])]
     public function delete(Request $request): Response
     {
-        $title = CustomerTitleQuery::create()->findPk((int) $request->get('customer_title_id', 0));
+        $title = CustomerTitleQuery::create()->findPk((int) ($request->query->get('customer_title_id') ?? $request->request->get('customer_title_id', 0)));
         if ($title === null) {
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }

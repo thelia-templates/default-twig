@@ -140,7 +140,7 @@ final class LangController
             resource: self::RESOURCE,
             access: AccessManager::DELETE,
             request: $request,
-            event: new LangDeleteEvent((int) $request->get('language_id', 0)),
+            event: new LangDeleteEvent((int) ($request->query->get('language_id') ?? $request->request->get('language_id', 0))),
             eventName: TheliaEvents::LANG_DELETE,
             actionLabel: 'Language deletion',
             successRoute: self::LIST_ROUTE,

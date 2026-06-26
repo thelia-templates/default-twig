@@ -141,7 +141,7 @@ final class OrderStatusController
     #[Route('/delete', name: 'delete', methods: ['POST', 'GET'])]
     public function delete(Request $request): Response
     {
-        $statusId = (int) $request->get('order_status_id', 0);
+        $statusId = (int) ($request->query->get('order_status_id') ?? $request->request->get('order_status_id', 0));
         $event = new OrderStatusDeleteEvent($statusId);
 
         return $this->action->tokenAction(
@@ -159,9 +159,9 @@ final class OrderStatusController
     public function updatePosition(Request $request): Response
     {
         $event = new UpdatePositionEvent(
-            (int) $request->get('order_status_id', 0),
-            (int) $request->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE),
-            (int) $request->get('position', 0),
+            (int) ($request->query->get('order_status_id') ?? $request->request->get('order_status_id', 0)),
+            (int) ($request->query->get('mode') ?? $request->request->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE)),
+            (int) ($request->query->get('position') ?? $request->request->get('position', 0)),
         );
 
         return $this->action->tokenAction(

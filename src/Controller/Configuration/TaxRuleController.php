@@ -185,7 +185,7 @@ final class TaxRuleController
         }
 
         $form = $this->createUpdateForm(null);
-        $taxRuleId = (int) $request->request->get('tax_rule_id', $request->get('tax_rule_id', 0));
+        $taxRuleId = (int) $request->request->get('tax_rule_id', 0);
 
         try {
             $validated = $this->validator->validate($form);
@@ -284,7 +284,7 @@ final class TaxRuleController
     public function delete(Request $request): Response
     {
         $event = new TaxRuleEvent();
-        $event->setId((int) $request->get('tax_rule_id', 0));
+        $event->setId((int) ($request->query->get('tax_rule_id') ?? $request->request->get('tax_rule_id', 0)));
 
         return $this->action->tokenAction(
             resource: self::RESOURCE,

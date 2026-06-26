@@ -153,7 +153,7 @@ final class SaleController
             resource: self::RESOURCE,
             access: AccessManager::DELETE,
             request: $request,
-            event: new SaleDeleteEvent((int) $request->get('sale_id', 0)),
+            event: new SaleDeleteEvent((int) ($request->query->get('sale_id') ?? $request->request->get('sale_id', 0))),
             eventName: TheliaEvents::SALE_DELETE,
             actionLabel: 'Sale deletion',
             successRoute: self::LIST_ROUTE,

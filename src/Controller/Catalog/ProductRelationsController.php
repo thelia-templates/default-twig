@@ -137,7 +137,7 @@ final class ProductRelationsController
     #[Route('/category/add', name: 'additional-category.add', methods: ['POST', 'GET'])]
     public function addAdditionalCategory(Request $request): Response
     {
-        $product = ProductQuery::create()->findPk((int) $request->get('product_id', 0));
+        $product = ProductQuery::create()->findPk((int) ($request->query->get('product_id') ?? $request->request->get('product_id', 0)));
         if ($product === null) {
             return new RedirectResponse($this->urls->generate('admin.products.default'));
         }
@@ -146,7 +146,7 @@ final class ProductRelationsController
             resource: self::RESOURCE,
             access: AccessManager::UPDATE,
             request: $request,
-            event: new ProductAddCategoryEvent($product, (int) $request->get('category_id', 0)),
+            event: new ProductAddCategoryEvent($product, (int) ($request->query->get('category_id') ?? $request->request->get('category_id', 0))),
             eventName: TheliaEvents::PRODUCT_ADD_CATEGORY,
             actionLabel: 'Product additional category added',
             successRoute: self::EDIT_ROUTE,
@@ -157,7 +157,7 @@ final class ProductRelationsController
     #[Route('/category/delete', name: 'additional-category.delete', methods: ['POST', 'GET'])]
     public function deleteAdditionalCategory(Request $request): Response
     {
-        $product = ProductQuery::create()->findPk((int) $request->get('product_id', 0));
+        $product = ProductQuery::create()->findPk((int) ($request->query->get('product_id') ?? $request->request->get('product_id', 0)));
         if ($product === null) {
             return new RedirectResponse($this->urls->generate('admin.products.default'));
         }
@@ -166,7 +166,7 @@ final class ProductRelationsController
             resource: self::RESOURCE,
             access: AccessManager::UPDATE,
             request: $request,
-            event: new ProductDeleteCategoryEvent($product, (int) $request->get('category_id', 0)),
+            event: new ProductDeleteCategoryEvent($product, (int) ($request->query->get('category_id') ?? $request->request->get('category_id', 0))),
             eventName: TheliaEvents::PRODUCT_REMOVE_CATEGORY,
             actionLabel: 'Product additional category removed',
             successRoute: self::EDIT_ROUTE,
@@ -177,7 +177,7 @@ final class ProductRelationsController
     #[Route('/content/add', name: 'related-content.add', methods: ['POST', 'GET'])]
     public function addRelatedContent(Request $request): Response
     {
-        $product = ProductQuery::create()->findPk((int) $request->get('product_id', 0));
+        $product = ProductQuery::create()->findPk((int) ($request->query->get('product_id') ?? $request->request->get('product_id', 0)));
         if ($product === null) {
             return new RedirectResponse($this->urls->generate('admin.products.default'));
         }
@@ -186,7 +186,7 @@ final class ProductRelationsController
             resource: self::RESOURCE,
             access: AccessManager::UPDATE,
             request: $request,
-            event: new ProductAddContentEvent($product, (int) $request->get('content_id', 0)),
+            event: new ProductAddContentEvent($product, (int) ($request->query->get('content_id') ?? $request->request->get('content_id', 0))),
             eventName: TheliaEvents::PRODUCT_ADD_CONTENT,
             actionLabel: 'Product related content added',
             successRoute: self::EDIT_ROUTE,
@@ -197,7 +197,7 @@ final class ProductRelationsController
     #[Route('/content/delete', name: 'related-content.delete', methods: ['POST', 'GET'])]
     public function deleteRelatedContent(Request $request): Response
     {
-        $product = ProductQuery::create()->findPk((int) $request->get('product_id', 0));
+        $product = ProductQuery::create()->findPk((int) ($request->query->get('product_id') ?? $request->request->get('product_id', 0)));
         if ($product === null) {
             return new RedirectResponse($this->urls->generate('admin.products.default'));
         }
@@ -206,7 +206,7 @@ final class ProductRelationsController
             resource: self::RESOURCE,
             access: AccessManager::UPDATE,
             request: $request,
-            event: new ProductDeleteContentEvent($product, (int) $request->get('content_id', 0)),
+            event: new ProductDeleteContentEvent($product, (int) ($request->query->get('content_id') ?? $request->request->get('content_id', 0))),
             eventName: TheliaEvents::PRODUCT_REMOVE_CONTENT,
             actionLabel: 'Product related content removed',
             successRoute: self::EDIT_ROUTE,
@@ -217,7 +217,7 @@ final class ProductRelationsController
     #[Route('/accessory/add', name: 'accessories.add', methods: ['POST', 'GET'])]
     public function addAccessory(Request $request): Response
     {
-        $product = ProductQuery::create()->findPk((int) $request->get('product_id', 0));
+        $product = ProductQuery::create()->findPk((int) ($request->query->get('product_id') ?? $request->request->get('product_id', 0)));
         if ($product === null) {
             return new RedirectResponse($this->urls->generate('admin.products.default'));
         }
@@ -226,7 +226,7 @@ final class ProductRelationsController
             resource: self::RESOURCE,
             access: AccessManager::UPDATE,
             request: $request,
-            event: new ProductAddAccessoryEvent($product, (int) $request->get('accessory_id', 0)),
+            event: new ProductAddAccessoryEvent($product, (int) ($request->query->get('accessory_id') ?? $request->request->get('accessory_id', 0))),
             eventName: TheliaEvents::PRODUCT_ADD_ACCESSORY,
             actionLabel: 'Product accessory added',
             successRoute: self::EDIT_ROUTE,
@@ -237,7 +237,7 @@ final class ProductRelationsController
     #[Route('/accessory/delete', name: 'accessories.delete', methods: ['POST', 'GET'])]
     public function deleteAccessory(Request $request): Response
     {
-        $product = ProductQuery::create()->findPk((int) $request->get('product_id', 0));
+        $product = ProductQuery::create()->findPk((int) ($request->query->get('product_id') ?? $request->request->get('product_id', 0)));
         if ($product === null) {
             return new RedirectResponse($this->urls->generate('admin.products.default'));
         }
@@ -246,7 +246,7 @@ final class ProductRelationsController
             resource: self::RESOURCE,
             access: AccessManager::UPDATE,
             request: $request,
-            event: new ProductDeleteAccessoryEvent($product, (int) $request->get('accessory_id', 0)),
+            event: new ProductDeleteAccessoryEvent($product, (int) ($request->query->get('accessory_id') ?? $request->request->get('accessory_id', 0))),
             eventName: TheliaEvents::PRODUCT_REMOVE_ACCESSORY,
             actionLabel: 'Product accessory removed',
             successRoute: self::EDIT_ROUTE,

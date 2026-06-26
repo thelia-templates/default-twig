@@ -165,7 +165,7 @@ final class CouponController
     #[Route('/delete', name: 'delete', methods: ['POST', 'GET'])]
     public function delete(Request $request): Response
     {
-        $coupon = CouponQuery::create()->findPk((int) $request->get('coupon_id', 0));
+        $coupon = CouponQuery::create()->findPk((int) ($request->query->get('coupon_id') ?? $request->request->get('coupon_id', 0)));
         if ($coupon === null) {
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }
@@ -369,7 +369,7 @@ final class CouponController
 
     private function handleCreateOrUpdate(Request $request, ?Coupon $coupon): Response
     {
-        $this->tokens->checkToken((string) $request->get('_token'));
+        $this->tokens->checkToken((string) ($request->request->get('_token') ?? $request->query->get('_token')));
 
         $eventName = $coupon === null ? TheliaEvents::COUPON_CREATE : TheliaEvents::COUPON_UPDATE;
         $data = $request->request->all();

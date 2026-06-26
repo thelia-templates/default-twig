@@ -166,7 +166,7 @@ final class FeatureController
             resource: self::RESOURCE,
             access: AccessManager::DELETE,
             request: $request,
-            event: new FeatureDeleteEvent((int) $request->get('feature_id', 0)),
+            event: new FeatureDeleteEvent((int) ($request->query->get('feature_id') ?? $request->request->get('feature_id', 0))),
             eventName: TheliaEvents::FEATURE_DELETE,
             actionLabel: 'Feature deletion',
             successRoute: self::LIST_ROUTE,
@@ -177,9 +177,9 @@ final class FeatureController
     public function updatePosition(Request $request): Response
     {
         $event = new UpdatePositionEvent(
-            (int) $request->get('feature_id', 0),
-            (int) $request->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE),
-            (int) $request->get('position', 0),
+            (int) ($request->query->get('feature_id') ?? $request->request->get('feature_id', 0)),
+            (int) ($request->query->get('mode') ?? $request->request->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE)),
+            (int) ($request->query->get('position') ?? $request->request->get('position', 0)),
         );
 
         return $this->action->tokenAction(
@@ -207,7 +207,7 @@ final class FeatureController
 
     private function dispatchTemplateBulk(Request $request, string $eventName, string $label): Response
     {
-        $feature = FeatureQuery::create()->findPk((int) $request->get('feature_id', 0));
+        $feature = FeatureQuery::create()->findPk((int) ($request->query->get('feature_id') ?? $request->request->get('feature_id', 0)));
         if ($feature === null) {
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }

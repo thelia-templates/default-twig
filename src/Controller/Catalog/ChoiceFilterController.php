@@ -44,7 +44,7 @@ final class ChoiceFilterController
             return $denied;
         }
 
-        $this->tokens->checkToken((string) $request->get('_token'));
+        $this->tokens->checkToken((string) $request->request->get('_token'));
 
         $data = (array) $request->request->all('ChoiceFilter');
         [$templateId, $categoryId, $redirectUrl] = $this->resolveScope($data);
@@ -88,7 +88,7 @@ final class ChoiceFilterController
             return $denied;
         }
 
-        $this->tokens->checkToken((string) $request->get('_token'));
+        $this->tokens->checkToken((string) $request->request->get('_token'));
 
         $data = (array) $request->request->all('ChoiceFilter');
         [$templateId, $categoryId, $redirectUrl] = $this->resolveScope($data);

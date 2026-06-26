@@ -150,8 +150,8 @@ final class OrderController
 
         try {
             $this->tokens->checkToken((string) $request->query->get('_token'));
-            $orderIds = (array) $request->get('order_ids', []);
-            $statusId = (int) $request->get('status_id', 0);
+            $orderIds = $request->query->all('order_ids') ?: $request->request->all('order_ids');
+            $statusId = (int) ($request->query->get('status_id') ?? $request->request->get('status_id', 0));
 
             foreach ($orderIds as $id) {
                 $order = OrderQuery::create()->findPk((int) $id);
@@ -178,7 +178,7 @@ final class OrderController
         }
 
         $event = new OrderEvent($order);
-        $event->setStatus((int) $request->get('status_id', 0));
+        $event->setStatus((int) ($request->query->get('status_id') ?? $request->request->get('status_id', 0)));
 
         return $this->action->tokenAction(
             resource: self::RESOURCE,
@@ -228,7 +228,7 @@ final class OrderController
         }
 
         $event = new OrderEvent($order);
-        $event->setDeliveryRef((string) $request->get('delivery_ref', ''));
+        $event->setDeliveryRef((string) ($request->query->get('delivery_ref') ?? $request->request->get('delivery_ref', '')));
 
         return $this->action->tokenAction(
             resource: self::RESOURCE,

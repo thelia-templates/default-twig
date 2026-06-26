@@ -151,7 +151,7 @@ final class ModuleHookController
     #[Route('/admin/module-hooks/delete', name: 'admin.module-hook.delete', methods: ['POST', 'GET'])]
     public function delete(Request $request): Response
     {
-        $moduleHookId = (int) $request->get('module_hook_id', 0);
+        $moduleHookId = (int) ($request->query->get('module_hook_id') ?? $request->request->get('module_hook_id', 0));
 
         return $this->action->tokenAction(
             resource: self::RESOURCE,
@@ -187,9 +187,9 @@ final class ModuleHookController
     public function updatePosition(Request $request): Response
     {
         $event = new UpdatePositionEvent(
-            (int) $request->get('module_hook_id', 0),
-            (int) $request->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE),
-            (int) $request->get('position', 0),
+            (int) ($request->query->get('module_hook_id') ?? $request->request->get('module_hook_id', 0)),
+            (int) ($request->query->get('mode') ?? $request->request->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE)),
+            (int) ($request->query->get('position') ?? $request->request->get('position', 0)),
         );
 
         return $this->action->tokenAction(

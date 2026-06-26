@@ -180,7 +180,7 @@ final class AreaController
     #[Route('/delete', name: 'delete', methods: ['POST', 'GET'])]
     public function delete(Request $request): Response
     {
-        $area = AreaQuery::create()->findPk((int) $request->get('area_id', 0));
+        $area = AreaQuery::create()->findPk((int) ($request->query->get('area_id') ?? $request->request->get('area_id', 0)));
         if ($area === null) {
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }

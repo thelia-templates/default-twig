@@ -191,7 +191,7 @@ final class StateController
     #[Route('/toggle-visibility', name: 'toggle-visibility', methods: ['GET', 'POST'])]
     public function toggleVisibility(Request $request): Response
     {
-        $state = StateQuery::create()->findPk((int) $request->get('state_id', 0));
+        $state = StateQuery::create()->findPk((int) ($request->query->get('state_id') ?? $request->request->get('state_id', 0)));
         if ($state === null) {
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }
@@ -214,7 +214,7 @@ final class StateController
             resource: self::RESOURCE,
             access: AccessManager::DELETE,
             request: $request,
-            event: new StateDeleteEvent((int) $request->get('state_id', 0)),
+            event: new StateDeleteEvent((int) ($request->query->get('state_id') ?? $request->request->get('state_id', 0))),
             eventName: TheliaEvents::STATE_DELETE,
             actionLabel: 'State deletion',
             successRoute: self::LIST_ROUTE,

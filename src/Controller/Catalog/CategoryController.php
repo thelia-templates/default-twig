@@ -214,7 +214,7 @@ final class CategoryController
     #[Route('/toggle-online', name: 'set-default', methods: ['GET', 'POST'])]
     public function toggleOnline(Request $request): Response
     {
-        $categoryId = (int) $request->get('category_id', 0);
+        $categoryId = (int) ($request->query->get('category_id') ?? $request->request->get('category_id', 0));
         $category = CategoryQuery::create()->findPk($categoryId);
         if ($category === null) {
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
@@ -236,9 +236,9 @@ final class CategoryController
     public function updatePosition(Request $request): Response
     {
         $event = new UpdatePositionEvent(
-            (int) $request->get('category_id', 0),
-            (int) $request->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE),
-            (int) $request->get('position', 0),
+            (int) ($request->query->get('category_id') ?? $request->request->get('category_id', 0)),
+            (int) ($request->query->get('mode') ?? $request->request->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE)),
+            (int) ($request->query->get('position') ?? $request->request->get('position', 0)),
         );
 
         return $this->action->tokenAction(
@@ -329,7 +329,7 @@ final class CategoryController
     #[Route('/delete', name: 'delete', methods: ['POST', 'GET'])]
     public function delete(Request $request): Response
     {
-        $categoryId = (int) $request->get('category_id', 0);
+        $categoryId = (int) ($request->query->get('category_id') ?? $request->request->get('category_id', 0));
         $category = CategoryQuery::create()->findPk($categoryId);
         $parentId = $category?->getParent() ?? 0;
 

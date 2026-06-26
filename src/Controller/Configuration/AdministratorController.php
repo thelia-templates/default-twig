@@ -150,7 +150,7 @@ final class AdministratorController
     #[Route('/delete', name: 'delete', methods: ['POST', 'GET'])]
     public function delete(Request $request): Response
     {
-        $administratorId = (int) $request->get('administrator_id', 0);
+        $administratorId = (int) ($request->query->get('administrator_id') ?? $request->request->get('administrator_id', 0));
 
         if ($administratorId === $this->currentAdminId()) {
             $this->flashError($request, $this->translator->trans('You cannot delete your own administrator account.'));
