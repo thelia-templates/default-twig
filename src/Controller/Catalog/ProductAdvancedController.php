@@ -325,7 +325,7 @@ final class ProductAdvancedController
             return $denied;
         }
 
-        $productId = (int) $request->query->get('product_id', 0);
+        $productId = (int) ($request->attributes->get('product_id') ?? $request->query->get('product_id', 0));
         $product = ProductQuery::create()->findPk($productId);
         if ($product === null) {
             return new Response('', Response::HTTP_NO_CONTENT);
@@ -531,17 +531,17 @@ final class ProductAdvancedController
     #[Route('/admin/products/combinations/tab', name: 'admin.product.combinations.tab', methods: ['GET'])]
     public function combinationsTab(Request $request): Response
     {
-        $productId = (int) $request->query->get('product_id', 0);
+        $productId = (int) ($request->attributes->get('product_id') ?? $request->query->get('product_id', 0));
         $product = ProductQuery::create()->findPk($productId);
         if ($product === null) {
-            return new Response('', Response::HTTP_NOT_FOUND);
+            return new Response('', Response::HTTP_NO_CONTENT);
         }
 
         if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::VIEW)) {
             return $denied;
         }
 
-        $currencyId = (int) $request->query->get('currency_id', 0);
+        $currencyId = (int) ($request->attributes->get('currency_id') ?? $request->query->get('currency_id', 0));
 
         return new Response($this->twig->render(
             '@BackOfficeDefaultTwig/catalog/product/_combinations_tab.html.twig',
