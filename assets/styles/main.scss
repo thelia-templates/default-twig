@@ -889,6 +889,13 @@ button.btn {
     cursor: grab;
 }
 
+.bo-file-list-placeholder {
+    > .card {
+        border: 2px dashed var(--bs-primary) !important;
+        background: rgba(var(--bs-primary-rgb), 0.05);
+    }
+}
+
 // ---------- Modules: single dense list (scoped to .bo-modules) ----------
 .bo-modules {
     --bo-ctrl-h: 42px;
