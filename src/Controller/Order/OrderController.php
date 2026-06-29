@@ -40,6 +40,7 @@ use Thelia\Model\Order;
 use Thelia\Model\OrderAddressQuery;
 use Thelia\Model\OrderQuery;
 use Thelia\Model\OrderStatusQuery;
+use Thelia\Model\ProductQuery;
 use Thelia\Model\StateQuery;
 use Thelia\Tools\TokenProvider;
 use Twig\Environment;
@@ -345,6 +346,13 @@ final class OrderController
             }
             $quantity = (float) $product->getQuantity();
 
+            // Resolve the catalog product by reference so the row can link back to
+            // its edit page (the product may have been deleted: then no link).
+            $productRef = (string) $product->getProductRef();
+            $productId = $productRef !== ''
+                ? ProductQuery::create()->filterByRef($productRef)->select(['Id'])->findOne()
+                : null;
+
             $combinations = [];
             foreach ($product->getOrderProductAttributeCombinations() as $combination) {
                 $combinations[] = [
@@ -355,7 +363,8 @@ final class OrderController
 
             $items[] = [
                 'id' => (int) $product->getId(),
-                'ref' => (string) $product->getProductRef(),
+                'ref' => $productRef,
+                'product_id' => $productId !== null ? (int) $productId : null,
                 'pse_ref' => (string) $product->getProductSaleElementsRef(),
                 'title' => (string) $product->getTitle(),
                 'quantity' => $quantity,

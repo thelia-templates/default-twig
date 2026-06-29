@@ -107,7 +107,11 @@
                 {% for item in order_items %}
                     {% set product_html %}
                         <div>
-                            <code>{{ item.ref }}</code> &mdash; <strong>{{ item.title }}</strong>
+                            {% if item.product_id %}
+                                <a href="{{ path('admin.products.update', { product_id: item.product_id }) }}" class="text-decoration-none" data-testid="order-item-product-link"><code>{{ item.ref }}</code> &mdash; <strong>{{ item.title }}</strong></a>
+                            {% else %}
+                                <code>{{ item.ref }}</code> &mdash; <strong>{{ item.title }}</strong>
+                            {% endif %}
                             {% if item.virtual %}
                                 <i class="bi bi-download text-muted" title="{{ 'Virtual product'|trans }}" aria-hidden="true"></i>
                             {% endif %}
