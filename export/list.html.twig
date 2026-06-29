@@ -28,31 +28,31 @@
                         <div class="card">
                             <div class="card-header">{{ category.title }}</div>
                             {{ safe_hook('exports.row', { category: category.id|default(null) }) }}
-                            <table class="table table-hover align-middle mb-0">
-                                <thead>
-                                    <tr>{{ safe_hook('export.table-header') }}</tr>
-                                </thead>
-                                <tbody data-controller="bo-sortable"
-                                       data-bo-sortable-url-value="{{ position_url }}"
-                                       data-bo-sortable-token-value="{{ position_token }}"
-                                       data-bo-sortable-param-name-value="export_id">
-                                    {% for export in category.exports %}
-                                        <tr data-row-id="{{ export.id }}">
-                                            <td class="text-muted" style="width: 1%"><i class="bi bi-grip-vertical" aria-hidden="true"></i></td>
-                                            <td>
-                                                <strong>{{ export.title }}</strong>
-                                                {% if export.description %}<div class="text-muted small">{{ export.description }}</div>{% endif %}
-                                            </td>
-                                            <td class="text-end">
-                                                <a href="{{ path('export.view', { id: export.id }) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-download" aria-hidden="true"></i> {{ 'Export'|trans }}</a>
-                                            </td>
-                                            {{ safe_hook('export.table-row', { export_id: export.id }) }}
-                                        </tr>
-                                    {% else %}
-                                        <tr><td class="text-muted small">{{ 'No export in this category.'|trans }}</td></tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
+
+                            {% set rows = [] %}
+                            {% for export in category.exports %}
+                                {% set rows = rows|merge([{
+                                    'id': export.id,
+                                    'title_html': '<strong>' ~ export.title|e ~ '</strong>' ~ (export.description ? '<br><small class="text-muted">' ~ export.description|e ~ '</small>' : ''),
+                                    '_actions': [ row_action('download', 'Export'|trans, path('export.view', { id: export.id })) ],
+                                }]) %}
+                            {% endfor %}
+
+                            {{ component('BoDataTable', {
+                                id: 'exports-' ~ category.id,
+                                columns: [
+                                    column_html('title_html', 'Export'|trans),
+                                    column_actions('_actions', 'Actions'|trans),
+                                ],
+                                rows: rows,
+                                emptyMessage: 'No export in this category.'|trans,
+                                tbodyAttributes: {
+                                    'data-controller': 'bo-sortable',
+                                    'data-bo-sortable-url-value': position_url,
+                                    'data-bo-sortable-token-value': position_token,
+                                    'data-bo-sortable-param-name-value': 'export_id',
+                                },
+                            }) }}
                         </div>
                     </div>
                 {% endfor %}

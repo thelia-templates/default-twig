@@ -103,36 +103,26 @@
                         <span>{{ 'Products using this template'|trans }}</span>
                         <span class="badge bg-secondary" data-testid="template-products-using-count">{{ products_using|length }}</span>
                     </div>
-                    {% if products_using|length > 0 %}
-                        <table class="table table-striped mb-0" data-testid="template-products-using-table">
-                            <thead>
-                                <tr>
-                                    <th>{{ 'ID'|trans }}</th>
-                                    <th>{{ 'Reference'|trans }}</th>
-                                    <th>{{ 'Title'|trans }}</th>
-                                    <th class="text-end">{{ 'Actions'|trans }}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for product in products_using %}
-                                    <tr data-testid="template-products-using-row-{{ product.id }}">
-                                        <td>{{ product.id }}</td>
-                                        <td>{{ product.ref }}</td>
-                                        <td>{{ product.title }}</td>
-                                        <td class="text-end">
-                                            <a href="{{ product.edit_url }}" class="btn btn-sm btn-outline-secondary" data-testid="template-products-using-edit-{{ product.id }}">
-                                                <i class="bi bi-pencil" aria-hidden="true"></i> {{ 'Edit'|trans }}
-                                            </a>
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    {% else %}
-                        <div class="card-body text-muted" data-testid="template-products-using-empty">
-                            {{ 'This template is not used by any product.'|trans }}
-                        </div>
-                    {% endif %}
+                    {% set products_using_rows = [] %}
+                    {% for product in products_using %}
+                        {% set products_using_rows = products_using_rows|merge([{
+                            'id': product.id,
+                            'ref': product.ref,
+                            'title': product.title,
+                            '_actions': [ row_action('edit', 'Edit'|trans, product.edit_url) ],
+                        }]) %}
+                    {% endfor %}
+                    {{ component('BoDataTable', {
+                        id: 'products-using',
+                        columns: [
+                            column('id', 'ID'|trans),
+                            column('ref', 'Reference'|trans),
+                            column('title', 'Title'|trans),
+                            column_actions(),
+                        ],
+                        rows: products_using_rows,
+                        emptyMessage: 'This template is not used by any product.'|trans,
+                    }) }}
                 </div>
             </div>
 
@@ -142,34 +132,24 @@
                         <span>{{ 'Default template for categories'|trans }}</span>
                         <span class="badge bg-secondary" data-testid="template-categories-defaulting-count">{{ categories_defaulting|length }}</span>
                     </div>
-                    {% if categories_defaulting|length > 0 %}
-                        <table class="table table-striped mb-0" data-testid="template-categories-defaulting-table">
-                            <thead>
-                                <tr>
-                                    <th>{{ 'ID'|trans }}</th>
-                                    <th>{{ 'Title'|trans }}</th>
-                                    <th class="text-end">{{ 'Actions'|trans }}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for category in categories_defaulting %}
-                                    <tr data-testid="template-categories-defaulting-row-{{ category.id }}">
-                                        <td>{{ category.id }}</td>
-                                        <td>{{ category.title }}</td>
-                                        <td class="text-end">
-                                            <a href="{{ category.edit_url }}" class="btn btn-sm btn-outline-secondary" data-testid="template-categories-defaulting-edit-{{ category.id }}">
-                                                <i class="bi bi-pencil" aria-hidden="true"></i> {{ 'Edit'|trans }}
-                                            </a>
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    {% else %}
-                        <div class="card-body text-muted" data-testid="template-categories-defaulting-empty">
-                            {{ 'No category uses this template as its default.'|trans }}
-                        </div>
-                    {% endif %}
+                    {% set categories_defaulting_rows = [] %}
+                    {% for category in categories_defaulting %}
+                        {% set categories_defaulting_rows = categories_defaulting_rows|merge([{
+                            'id': category.id,
+                            'title': category.title,
+                            '_actions': [ row_action('edit', 'Edit'|trans, category.edit_url) ],
+                        }]) %}
+                    {% endfor %}
+                    {{ component('BoDataTable', {
+                        id: 'categories-defaulting',
+                        columns: [
+                            column('id', 'ID'|trans),
+                            column('title', 'Title'|trans),
+                            column_actions(),
+                        ],
+                        rows: categories_defaulting_rows,
+                        emptyMessage: 'No category uses this template as its default.'|trans,
+                    }) }}
                 </div>
             </div>
         </div>

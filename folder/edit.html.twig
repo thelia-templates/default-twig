@@ -132,32 +132,27 @@
                 <a href="{{ path('admin.folders.default', { folder_id: folder.id }) }}" class="btn btn-outline-primary mb-3">
                     <i class="bi bi-list" aria-hidden="true"></i> {{ 'Manage subfolders'|trans }}
                 </a>
-                <table class="table" data-testid="folder-children-table">
-                    <thead>
-                        <tr>
-                            <th>{{ 'Title'|trans }}</th>
-                            <th class="text-center">{{ 'Online'|trans }}</th>
-                            <th class="text-center">{{ 'Position'|trans }}</th>
-                            <th class="text-end">{{ 'Actions'|trans }}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for child in children %}
-                            <tr data-testid="folder-child-row-{{ child.id }}">
-                                <td>{{ child.title }}</td>
-                                <td class="text-center">{% if child.visible %}<i class="bi bi-check2 text-success"></i>{% else %}<i class="bi bi-x text-danger"></i>{% endif %}</td>
-                                <td class="text-center">{{ child.position }}</td>
-                                <td class="text-end">
-                                    <a href="{{ child.edit_url }}" class="btn btn-sm btn-outline-secondary" data-testid="folder-child-edit-{{ child.id }}">
-                                        <i class="bi bi-pencil" aria-hidden="true"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                        {% else %}
-                            <tr><td colspan="4" class="text-muted text-center">{{ 'No subfolder.'|trans }}</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                {% set children_rows = [] %}
+                {% for child in children %}
+                    {% set children_rows = children_rows|merge([{
+                        'id': child.id,
+                        'title_html': '<a href="' ~ child.edit_url ~ '">' ~ child.title|e ~ '</a>',
+                        'visible_html': child.visible ? '<i class="bi bi-check-circle text-success"></i>' : '<i class="bi bi-x-circle text-muted"></i>',
+                        'position': child.position,
+                        '_actions': [ row_action('edit', 'Edit'|trans, child.edit_url) ],
+                    }]) %}
+                {% endfor %}
+                {{ component('BoDataTable', {
+                    id: 'folder-children-table',
+                    columns: [
+                        column_html('title_html', 'Title'|trans),
+                        column_html('visible_html', 'Online'|trans, 'center'),
+                        column('position', 'Position'|trans, 'center'),
+                        column_actions(),
+                    ],
+                    rows: children_rows,
+                    emptyMessage: 'No subfolder.'|trans,
+                }) }}
             </div>
 
             <div class="tab-pane fade {% if current_tab == 'images' %}show active{% endif %}" id="tab-images" role="tabpanel">
