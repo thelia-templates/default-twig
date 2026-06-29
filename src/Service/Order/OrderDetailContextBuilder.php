@@ -33,20 +33,20 @@ final readonly class OrderDetailContextBuilder
     {
         $currency = $order->getCurrency();
 
-        $subtotalHt = 0.0;
-        $subtotalTaxes = 0.0;
+        // Tax breakdown per rule and total weight are promo-aware: when a line was
+        // sold in promo, the promo tax amount applies (mirrors OrderController's
+        // per-line rendering and the legacy back-office order-product loop).
         $weight = 0.0;
         $itemsTaxes = [];
         foreach ($order->getOrderProducts() as $orderProduct) {
             $quantity = (float) $orderProduct->getQuantity();
-            $subtotalHt += (float) $orderProduct->getPrice() * $quantity;
+            $wasInPromo = (bool) $orderProduct->getWasInPromo();
             $weight += (float) $orderProduct->getWeight() * $quantity;
 
             $lineTax = 0.0;
             foreach ($orderProduct->getOrderProductTaxes() as $orderProductTax) {
-                $lineTax += (float) $orderProductTax->getAmount();
+                $lineTax += (float) ($wasInPromo ? $orderProductTax->getPromoAmount() : $orderProductTax->getAmount());
             }
-            $subtotalTaxes += $lineTax * $quantity;
 
             $ruleTitle = (string) ($orderProduct->getTaxRuleTitle() ?? '');
             if ($lineTax > 0 && $ruleTitle !== '') {
@@ -54,13 +54,23 @@ final readonly class OrderDetailContextBuilder
             }
         }
 
+        // The amounts themselves come from the canonical Order::getTotalAmount(),
+        // the very same source used by the order list, the invoice PDF and the
+        // legacy back-office. This guarantees promo-aware, identically rounded
+        // figures across every screen (no manual re-computation that could drift).
+        $tax = 0.0;
+        $itemsTax = 0.0;
+        $grandTotal = $order->getTotalAmount($tax);
+        $itemsTtc = $order->getTotalAmount($itemsTax, false, false);
+        $subtotalHt = $itemsTtc - $itemsTax;
+        $subtotalTaxes = $itemsTax;
+
         $postageHt = (float) $order->getPostage();
         $postageTax = (float) $order->getPostageTax();
         $postageTaxRuleTitle = (string) ($order->getPostageTaxRuleTitle() ?? '');
         $discount = (float) $order->getDiscount();
         $discountTax = $this->estimateDiscountTax($discount, $subtotalHt, $subtotalTaxes);
-        $totalTax = $subtotalTaxes + $postageTax - $discountTax;
-        $grandTotal = $subtotalHt + $subtotalTaxes + $postageHt - $discount;
+        $totalTax = $tax;
 
         $coupons = [];
         foreach ($order->getOrderCoupons() as $orderCoupon) {
