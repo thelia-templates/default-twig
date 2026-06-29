@@ -123,7 +123,7 @@ final readonly class OrderDetailContextBuilder
             'customer' => $customer,
             'payment' => [
                 'module_id' => (int) $order->getPaymentModuleId(),
-                'module_title' => $this->moduleTitle((int) $order->getPaymentModuleId()),
+                'module_title' => $this->moduleTitle((int) $order->getPaymentModuleId(), $locale),
                 'transaction_ref' => (string) $order->getTransactionRef(),
                 'invoice_ref' => (string) $order->getInvoiceRef(),
                 'invoice_date' => $invoiceDateString,
@@ -131,7 +131,7 @@ final readonly class OrderDetailContextBuilder
             ],
             'delivery' => [
                 'module_id' => (int) $order->getDeliveryModuleId(),
-                'module_title' => $this->moduleTitle((int) $order->getDeliveryModuleId()),
+                'module_title' => $this->moduleTitle((int) $order->getDeliveryModuleId(), $locale),
                 'module_description' => $this->moduleDescription((int) $order->getDeliveryModuleId(), $locale),
                 'delivery_ref' => (string) $order->getDeliveryRef(),
             ],
@@ -163,14 +163,18 @@ final readonly class OrderDetailContextBuilder
         return round($discount * ($subtotalTaxes / $taxedTotal), 6);
     }
 
-    private function moduleTitle(int $moduleId): string
+    private function moduleTitle(int $moduleId, string $locale): string
     {
         if ($moduleId === 0) {
             return '';
         }
         $module = ModuleQuery::create()->findPk($moduleId);
+        if ($module === null) {
+            return '';
+        }
+        $module->setLocale($locale);
 
-        return $module !== null ? (string) $module->getTitle() : '';
+        return (string) $module->getTitle();
     }
 
     private function moduleDescription(int $moduleId, string $locale): string
