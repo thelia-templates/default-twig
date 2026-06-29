@@ -149,131 +149,136 @@
 
         {{ safe_hook('customer.edit', { customer_id: customer.id }) }}
 
-        <div class="card mt-4" data-testid="customer-addresses-section">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <span>{{ 'Addresses'|trans }} <span class="badge bg-secondary ms-1">{{ addresses|length }}</span></span>
-                {% if is_granted('CREATE', 'admin.address') %}
-                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#customer-address-create-modal" data-testid="customer-address-create-button">
-                        <i class="bi bi-plus-lg" aria-hidden="true"></i> {{ 'Add a new address'|trans }}
-                    </button>
-                {% endif %}
-            </div>
-            <div class="card-body">
-                {% if addresses is empty %}
-                    <p class="text-muted mb-0">{{ 'No address registered for this customer.'|trans }}</p>
-                {% else %}
-                    <div class="table-responsive">
-                        <table class="table table-sm align-middle mb-0" data-testid="customer-addresses-table">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>{{ 'Label'|trans }}</th>
-                                    <th>{{ 'Name'|trans }}</th>
-                                    <th>{{ 'Address'|trans }}</th>
-                                    <th class="text-end">{{ 'Actions'|trans }}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for addr in addresses %}
-                                    <tr data-testid="customer-address-row" data-address-id="{{ addr.id }}">
-                                        <td>
-                                            {{ addr.label }}
-                                            {% if addr.is_default %}<span class="badge bg-success ms-1">{{ 'Default'|trans }}</span>{% endif %}
-                                        </td>
-                                        <td>{{ addr.firstname }} {{ addr.lastname }}</td>
-                                        <td class="text-muted small">{{ addr.address }}</td>
-                                        <td class="text-end">
-                                            <div class="d-inline-flex gap-1 justify-content-end">
-                                                <a href="{{ path('admin.address.update.view', { address_id: addr.id }) }}" class="btn btn-sm btn-outline-secondary" title="{{ 'Edit'|trans }}" data-testid="customer-address-edit">
-                                                    <i class="bi bi-pencil"></i>
-                                                </a>
-                                                {% if not addr.is_default and is_granted('UPDATE', 'admin.address') %}
-                                                    <form method="post" action="{{ path('admin.address.makeItDefault') }}?_token={{ assignToken() }}" class="d-inline">
-                                                        <input type="hidden" name="address_id" value="{{ addr.id }}">
-                                                        <button type="submit" class="btn btn-sm btn-outline-secondary" title="{{ 'Set as default'|trans }}" data-testid="customer-address-default">
-                                                            <i class="bi bi-star"></i>
-                                                        </button>
-                                                    </form>
-                                                {% endif %}
-                                                {% if is_granted('DELETE', 'admin.address') %}
-                                                    <form method="post" action="{{ path('admin.address.delete') }}?_token={{ assignToken() }}" class="d-inline" onsubmit="return confirm('{{ 'Delete this address?'|trans|e('js') }}');">
-                                                        <input type="hidden" name="address_id" value="{{ addr.id }}">
-                                                        {{ safe_hook('customer.address-delete-form', { customer_id: customer.id, location: 'customer_address_delete_form' }) }}
-                                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ 'Delete'|trans }}" data-testid="customer-address-delete">
-                                                            <i class="bi bi-trash"></i>
-                                                        </button>
-                                                    </form>
-                                                {% endif %}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% endif %}
-            </div>
+        {# ── Addresses ──────────────────────────────────────────────────── #}
+        {% set addresses_rows = [] %}
+        {% for addr in addresses %}
+            {% set addr_label_html = addr.label|e ~ (addr.is_default ? ' <span class="badge bg-success ms-1">' ~ 'Default'|trans ~ '</span>' : '') %}
+            {% set addr_actions = [
+                row_action('edit', 'Edit'|trans, path('admin.address.update.view', { address_id: addr.id })),
+            ] %}
+            {% if not addr.is_default and is_granted('UPDATE', 'admin.address') %}
+                {% set addr_actions = addr_actions|merge([
+                    row_action('set-default', 'Set as default'|trans, null, '#address-set-default-modal', null, null, {'data-address-id': addr.id}),
+                ]) %}
+            {% endif %}
+            {% if is_granted('DELETE', 'admin.address') %}
+                {% set addr_actions = addr_actions|merge([
+                    row_action('delete', 'Delete'|trans, null, '#address-delete-modal', null, null, {'data-address-id': addr.id}),
+                ]) %}
+            {% endif %}
+            {% set addresses_rows = addresses_rows|merge([{
+                'id': addr.id,
+                'label_html': addr_label_html,
+                'name': addr.firstname|e ~ ' ' ~ addr.lastname|e,
+                'address': addr.address,
+                '_actions': addr_actions,
+            }]) %}
+        {% endfor %}
+
+        <div class="mt-4" data-testid="customer-addresses-section">
+            {{ component('BoDataTable', {
+                id: 'customer-addresses',
+                caption: 'Addresses'|trans ~ ' (' ~ addresses|length ~ ')',
+                columns: [
+                    column_html('label_html', 'Label'|trans),
+                    column('name', 'Name'|trans),
+                    column('address', 'Address'|trans),
+                    column_actions(),
+                ],
+                rows: addresses_rows,
+                emptyMessage: 'No address registered for this customer.'|trans,
+            }) }}
         </div>
 
-        <div class="card mt-4" data-testid="customer-orders-section">
-            <div class="card-header">
-                {{ 'Orders for this customer'|trans }}
-                <span class="badge bg-secondary ms-1">{{ orders_total|default(0) }}</span>
+        {% if is_granted('CREATE', 'admin.address') %}
+            <div class="d-flex justify-content-end mt-2">
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#customer-address-create-modal" data-testid="customer-address-create-button">
+                    <i class="bi bi-plus-lg" aria-hidden="true"></i> {{ 'Add a new address'|trans }}
+                </button>
             </div>
-            <div class="card-body p-0">
-                {% if recent_orders is empty %}
-                    <p class="text-muted mb-0 p-3">{{ 'This customer has not placed any order yet.'|trans }}</p>
-                {% else %}
-                    <div class="table-responsive">
-                        <table class="table table-sm align-middle mb-0" data-testid="customer-orders-table">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>{{ 'Reference'|trans }}</th>
-                                    <th>{{ 'Date'|trans }}</th>
-                                    <th>{{ 'Status'|trans }}</th>
-                                    <th class="text-end">{{ 'Total'|trans }}</th>
-                                    <th class="text-end">{{ 'Actions'|trans }}</th>
-                                    {{ safe_hook('customer.orders-table-header', { customer_id: customer.id, location: 'orders_table_header' }) }}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for order in recent_orders %}
-                                    <tr data-testid="customer-order-row" data-order-id="{{ order.id }}">
-                                        <td><a href="{{ order.edit_url }}" class="link-primary text-decoration-none fw-medium">{{ order.ref }}</a></td>
-                                        <td>{{ order.created_at ? order.created_at|format_datetime('medium', 'short') : '-' }}</td>
-                                        <td><span class="badge" style="background-color: {{ order.status_color }};">{{ order.status_title }}</span></td>
-                                        <td class="text-end">{{ order.amount|number_format(2, '.', ' ') }} {{ order.currency_symbol }}</td>
-                                        <td class="text-end">
-                                            <a href="{{ order.edit_url }}" class="btn btn-sm btn-outline-primary" data-testid="customer-order-view">
-                                                <i class="bi bi-eye"></i>
-                                            </a>
-                                        </td>
-                                        {{ safe_hook('customer.orders-table-row', { customer_id: customer.id, order_id: order.id, location: 'orders_table_row' }) }}
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% if orders_last_page|default(1) > 1 %}
-                        <div class="card-footer">
-                            {{ component('BoPagination', {
-                                route: 'admin.customer.update.view',
-                                currentPage: orders_page,
-                                lastPage: orders_last_page,
-                                routeParams: { customer_id: customer.id },
-                                pageParam: 'orders_page',
-                                ariaLabel: 'Customer orders pagination'|trans,
-                                testid: 'customer-orders',
-                            }) }}
-                        </div>
-                    {% endif %}
-                {% endif %}
-            </div>
+        {% endif %}
+
+        {# ── Recent orders ───────────────────────────────────────────────── #}
+        {% set orders_rows = [] %}
+        {% for order in recent_orders %}
+            {% set orders_rows = orders_rows|merge([{
+                'id': order.id,
+                'ref_html': '<a href="' ~ order.edit_url|e ~ '" class="link-primary text-decoration-none fw-medium">' ~ order.ref|e ~ '</a>',
+                'created_at': order.created_at ? order.created_at|format_datetime('medium', 'short') : '-',
+                'status_html': '<span class="badge" style="background-color: ' ~ order.status_color|e ~ ';">' ~ order.status_title|e ~ '</span>',
+                'total': order.amount|number_format(2, '.', ' ') ~ ' ' ~ order.currency_symbol,
+                '_actions': [
+                    row_action('view', 'View'|trans, order.edit_url),
+                ],
+            }]) %}
+        {% endfor %}
+
+        <div class="mt-4" data-testid="customer-orders-section">
+            {{ component('BoDataTable', {
+                id: 'customer-orders',
+                caption: ('Orders for this customer'|trans) ~ ' (' ~ orders_total|default(0) ~ ')',
+                columns: [
+                    column_html('ref_html', 'Reference'|trans),
+                    column('created_at', 'Date'|trans),
+                    column_html('status_html', 'Status'|trans),
+                    column('total', 'Total'|trans, 'end'),
+                    column_actions(),
+                ],
+                rows: orders_rows,
+                emptyMessage: 'This customer has not placed any order yet.'|trans,
+                extraColumnsHeaderHook: 'customer.orders-table-header',
+                extraColumnsHook: 'customer.orders-table-row',
+                headerHookContext: { customer_id: customer.id, location: 'orders_table_header' },
+                rowHookContext: { customer_id: customer.id, location: 'orders_table_row' },
+                rowHookArgs: { order_id: 'id' },
+            }) }}
+            {% if orders_last_page|default(1) > 1 %}
+                <div class="mt-2">
+                    {{ component('BoPagination', {
+                        route: 'admin.customer.update.view',
+                        currentPage: orders_page,
+                        lastPage: orders_last_page,
+                        routeParams: { customer_id: customer.id },
+                        pageParam: 'orders_page',
+                        ariaLabel: 'Customer orders pagination'|trans,
+                        testid: 'customer-orders',
+                    }) }}
+                </div>
+            {% endif %}
         </div>
     </div>
 
     {% if address_create_form is defined and is_granted('CREATE', 'admin.address') %}
         {% include '@BackOfficeDefaultTwig/customer/_customer_address_create_modal.html.twig' %}
     {% endif %}
+
+    {{ component('BoConfirmDialog', {
+        id: 'address-set-default-modal',
+        title: 'Set as default address',
+        formAction: path('admin.address.makeItDefault'),
+        message: 'Set this address as the default address for this customer?',
+        variant: 'primary',
+        confirmLabel: 'Set as default',
+        confirmIcon: 'bi-star-fill',
+        token: true,
+        testid: 'address-set-default',
+        prefillTrigger: 'data-address-id',
+        prefillInput: 'address_id',
+    }) }}
+
+    {{ component('BoConfirmDialog', {
+        id: 'address-delete-modal',
+        title: 'Delete address',
+        formAction: path('admin.address.delete'),
+        message: 'Delete this address?',
+        variant: 'danger',
+        token: true,
+        testid: 'address-delete',
+        hook: 'customer.address-delete-form',
+        hookContext: { customer_id: customer.id, location: 'customer_address_delete_form' },
+        prefillTrigger: 'data-address-id',
+        prefillInput: 'address_id',
+    }) }}
 
     {{ safe_hook('customer-edit.bottom', { customer_id: customer.id }) }}
 {% endblock %}

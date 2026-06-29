@@ -242,7 +242,7 @@ export default class extends Controller {
             return;
         }
 
-        this.conditionsListTarget.querySelectorAll('.bo-coupon-condition-delete').forEach((button) => {
+        this.conditionsListTarget.querySelectorAll('.bo-action--delete').forEach((button) => {
             button.addEventListener('click', () => {
                 const index = button.dataset.conditionIndex;
                 if (index !== undefined) {
@@ -251,7 +251,7 @@ export default class extends Controller {
             });
         });
 
-        this.conditionsListTarget.querySelectorAll('.bo-coupon-condition-edit').forEach((button) => {
+        this.conditionsListTarget.querySelectorAll('.bo-action--edit').forEach((button) => {
             button.addEventListener('click', () => {
                 const serviceId = button.dataset.conditionServiceId;
                 const index = button.dataset.conditionIndex;

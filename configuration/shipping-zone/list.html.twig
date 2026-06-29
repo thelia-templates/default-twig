@@ -28,54 +28,36 @@
             </div>
         {% endif %}
 
-        <div class="card">
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-striped align-middle mb-0">
-                        <caption class="px-3 pt-3">{{ 'Shipping configuration'|trans }}</caption>
-                        <thead>
-                            <tr>
-                                <th>{{ 'Delivery module'|trans }}</th>
-                                <th>{{ 'Shipping zones for this module'|trans }}</th>
-                                <th class="text-center">{{ 'Actions'|trans }}</th>
-                                {{ safe_hook('shipping-zones.table-header', { location: 'shipping_zones_table_header' }) }}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% if rows|length == 0 %}
-                                <tr>
-                                    <td colspan="3">
-                                        <div class="alert alert-info mb-0">{{ 'No shipping zone defined yet. Click the + button to create one.'|trans }}</div>
-                                    </td>
-                                </tr>
-                            {% endif %}
-                            {% for row in rows %}
-                                <tr data-testid="shipping-zones-row-{{ row.id }}">
-                                    <td><a href="{{ row.edit_url }}">{{ row.code }} - {{ row.title }}</a></td>
-                                    <td>
-                                        {% if row.zones|length == 0 %}
-                                            <span class="text-muted">{{ 'There are no shipping zones attached to this module.'|trans }}</span>
-                                        {% else %}
-                                            {% for zone in row.zones %}
-                                                <a href="{{ path('admin.configuration.shipping-configuration.update.view', { area_id: zone.id }) }}" title="{{ zone.countries }}">{{ zone.name }}</a>{% if not loop.last %}, {% endif %}
-                                            {% endfor %}
-                                        {% endif %}
-                                    </td>
-                                    <td class="text-center">
-                                        {% if is_granted('UPDATE', 'admin.configuration.shipping-zone') %}
-                                            <a class="btn btn-sm btn-outline-primary" href="{{ row.edit_url }}" title="{{ 'Change this shipping zone'|trans }}">
-                                                <i class="bi bi-pencil" aria-hidden="true"></i>
-                                            </a>
-                                        {% endif %}
-                                    </td>
-                                    {{ safe_hook('shipping-zones.table-row', { module_id: row.id, location: 'shipping_zones_table_row' }) }}
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+        {% set table_rows = [] %}
+        {% for row in rows %}
+            {% set zones_html = '' %}
+            {% if row.zones is empty %}
+                {% set zones_html = '<span class="text-muted fst-italic">' ~ 'There are no shipping zones attached to this module.'|trans|e ~ '</span>' %}
+            {% else %}
+                {% for zone in row.zones %}
+                    {% set zone_url = path('admin.configuration.shipping-configuration.update.view', { area_id: zone.id }) %}
+                    {% set zones_html = zones_html ~ '<a href="' ~ zone_url|e ~ '" title="' ~ zone.countries|e ~ '">' ~ zone.name|e ~ '</a>' %}
+                    {% if not loop.last %}{% set zones_html = zones_html ~ ', ' %}{% endif %}
+                {% endfor %}
+            {% endif %}
+            {% set table_rows = table_rows|merge([{
+                'id': row.id,
+                'module_html': '<a href="' ~ row.edit_url|e ~ '">' ~ row.code|e ~ ' - ' ~ row.title|e ~ '</a>',
+                'zones_html': zones_html,
+                '_actions': [ row_action('edit', 'Edit'|trans, row.edit_url, null, 'UPDATE', 'admin.configuration.shipping-zone') ],
+            }]) %}
+        {% endfor %}
+
+        {{ component('BoDataTable', {
+            id: 'shipping-zones',
+            columns: [
+                column('module_html', 'Delivery module'|trans),
+                column_html('zones_html', 'Shipping zones for this module'|trans),
+                column_actions(),
+            ],
+            rows: table_rows,
+            emptyMessage: 'No shipping zone defined yet. Click the + button to create one.'|trans,
+        }) }}
     </div>
 
     {{ safe_hook('shipping-zones.bottom', { location: 'shipping_zones_bottom' }) }}

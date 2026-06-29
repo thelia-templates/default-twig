@@ -77,8 +77,8 @@
             {% set visible_items = section.items|filter((item) => is_granted('VIEW', item.resource)) %}
             {% if visible_items|length > 0 or section.hookTop is defined %}
                 <h2 class="h5 text-muted mb-3">{{ section.title }}</h2>
-                {% if section.hookTop is defined %}{{ safe_hook(section.hookTop) }}{% endif %}
                 <div class="row g-3 mb-4" data-testid="configuration-section">
+                    {% if section.hookTop is defined %}{{ safe_hook(section.hookTop) }}{% endif %}
                     {% for item in visible_items %}
                         <div class="col-md-3">
                             <a href="{{ path(item.route) }}" class="card text-decoration-none h-100" data-testid="configuration-link-{{ item.route }}">

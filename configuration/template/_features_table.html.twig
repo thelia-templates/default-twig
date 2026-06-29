@@ -1,30 +1,30 @@
-<table class="table mb-0" data-testid="template-features-table">
-    <thead>
-        <tr>
-            <th>{{ 'Feature'|trans }}</th>
-            <th class="text-center">{{ 'Position'|trans }}</th>
-            <th class="text-end">{{ 'Actions'|trans }}</th>
-            {{ safe_hook('template.features-table-header', { location: 'template_features_table_header' }) }}
-        </tr>
-    </thead>
-    <tbody data-controller="bo-sortable"
-           data-bo-sortable-url-value="{{ feature_position_url }}"
-           data-bo-sortable-token-value="{{ position_token }}"
-           data-bo-sortable-param-name-value="feature_id"
-           data-bo-sortable-extra-params-value='{"template_id": {{ template.id }}}'>
-        {% for feature in features %}
-            <tr data-row-id="{{ feature.id }}" data-testid="template-feature-row-{{ feature.id }}">
-                <td>{{ feature.title }}</td>
-                <td class="text-center">{{ feature.position }}</td>
-                <td class="text-end">
-                    <a href="{{ feature.delete_url }}" class="btn btn-sm btn-outline-danger" data-testid="template-feature-delete-{{ feature.id }}" onclick="return confirm('{{ 'Remove this feature from the template?'|trans }}')">
-                        <i class="bi bi-trash" aria-hidden="true"></i>
-                    </a>
-                </td>
-                {{ safe_hook('template.features-table-row', { location: 'template_features_table_row' }) }}
-            </tr>
-        {% else %}
-            <tr><td colspan="3" class="text-muted text-center">{{ 'No feature attached.'|trans }}</td></tr>
-        {% endfor %}
-    </tbody>
-</table>
+{% set rows = [] %}
+{% for feature in features %}
+    {% set rows = rows|merge([{
+        'id': feature.id,
+        'title': feature.title,
+        'position': feature.position,
+        '_actions': [ row_action('delete', 'Remove this feature from the template?'|trans, feature.delete_url) ],
+    }]) %}
+{% endfor %}
+{{ component('BoDataTable', {
+    id: 'template-features',
+    columns: [
+        column('title', 'Feature'|trans),
+        column('position', 'Position'|trans, 'center'),
+        column_actions(),
+    ],
+    rows: rows,
+    emptyMessage: 'No feature attached.'|trans,
+    extraColumnsHeaderHook: 'template.features-table-header',
+    extraColumnsHook: 'template.features-table-row',
+    headerHookContext: { location: 'template_features_table_header' },
+    rowHookContext: { location: 'template_features_table_row' },
+    tbodyAttributes: {
+        'data-controller': 'bo-sortable',
+        'data-bo-sortable-url-value': feature_position_url,
+        'data-bo-sortable-token-value': position_token,
+        'data-bo-sortable-param-name-value': 'feature_id',
+        'data-bo-sortable-extra-params-value': '{"template_id": ' ~ template.id ~ '}',
+    },
+}) }}

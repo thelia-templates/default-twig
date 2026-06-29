@@ -531,12 +531,14 @@ button.btn {
             text-transform: uppercase;
             letter-spacing: .03em;
             color: #6c757d;
+            white-space: nowrap;
         }
     }
 
     > tbody > tr {
         > td {
             vertical-align: middle;
+            white-space: nowrap;
         }
     }
 }

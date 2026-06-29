@@ -160,32 +160,29 @@
                 <a href="{{ path('admin.categories.default', { category_id: category.id }) }}" class="btn btn-outline-primary mb-3">
                     <i class="bi bi-list" aria-hidden="true"></i> {{ 'Manage subcategories'|trans }}
                 </a>
-                <table class="table" data-testid="category-children-table">
-                    <thead>
-                        <tr>
-                            <th>{{ 'Title'|trans }}</th>
-                            <th class="text-center">{{ 'Online'|trans }}</th>
-                            <th class="text-center">{{ 'Position'|trans }}</th>
-                            <th class="text-end">{{ 'Actions'|trans }}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for child in children %}
-                            <tr data-testid="category-child-row-{{ child.id }}">
-                                <td>{{ child.title }}</td>
-                                <td class="text-center">{% if child.visible %}<i class="bi bi-check2 text-success"></i>{% else %}<i class="bi bi-x text-danger"></i>{% endif %}</td>
-                                <td class="text-center">{{ child.position }}</td>
-                                <td class="text-end">
-                                    <a href="{{ child.edit_url }}" class="btn btn-sm btn-outline-secondary" data-testid="category-child-edit-{{ child.id }}">
-                                        <i class="bi bi-pencil" aria-hidden="true"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                        {% else %}
-                            <tr><td colspan="4" class="text-muted text-center">{{ 'No subcategory.'|trans }}</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                {% set subcategories_rows = [] %}
+                {% for child in children %}
+                    {% set subcategories_rows = subcategories_rows|merge([{
+                        'id': child.id,
+                        'title_html': '<a href="' ~ child.edit_url|e ~ '">' ~ child.title|e ~ '</a>',
+                        'visible_html': child.visible
+                            ? '<i class="bi bi-check-circle-fill text-success" aria-hidden="true"></i>'
+                            : '<i class="bi bi-x-circle text-muted" aria-hidden="true"></i>',
+                        'position': child.position,
+                        '_actions': [ row_action('edit', 'Edit'|trans, child.edit_url) ],
+                    }]) %}
+                {% endfor %}
+                {{ component('BoDataTable', {
+                    id: 'subcategories',
+                    columns: [
+                        column_html('title_html', 'Title'|trans),
+                        column_html('visible_html', 'Online'|trans, 'center'),
+                        column('position', 'Position'|trans, 'center'),
+                        column_actions(),
+                    ],
+                    rows: subcategories_rows,
+                    emptyMessage: 'No subcategory.'|trans,
+                }) }}
             </div>
 
             <div class="tab-pane fade {% if current_tab == 'associations' %}show active{% endif %}" id="tab-associations" role="tabpanel" data-testid="category-associations-tab">
@@ -234,36 +231,29 @@
                             <div class="alert alert-info">{{ 'No folders found'|trans }}</div>
                         {% endif %}
 
-                        <div class="table-responsive">
-                            <table class="table align-middle" data-testid="category-related-content-table">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 80px;">{{ 'ID'|trans }}</th>
-                                        <th>{{ 'Content title'|trans }}</th>
-                                        {{ safe_hook('category.contents-table-header', { category_id: category.id }) }}
-                                        <th class="text-end" style="width: 100px;">{{ 'Actions'|trans }}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for content in assigned_contents %}
-                                        <tr data-testid="category-related-content-row-{{ content.id }}">
-                                            <td>{{ content.id }}</td>
-                                            <td><a href="{{ content.url }}">{{ content.title }}</a></td>
-                                            {{ safe_hook('category.contents-table-row', { category_id: category.id, content_id: content.id }) }}
-                                            <td class="text-end">
-                                                {% if is_granted('UPDATE', 'admin.category') %}
-                                                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#category-related-content-delete" data-content-id="{{ content.id }}" data-content-label="{{ content.title }}" data-testid="category-related-content-delete-{{ content.id }}">
-                                                        <i class="bi bi-trash" aria-hidden="true"></i>
-                                                    </button>
-                                                {% endif %}
-                                            </td>
-                                        </tr>
-                                    {% else %}
-                                        <tr><td colspan="3" class="text-muted text-center">{{ 'This category contains no contents'|trans }}</td></tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
+                        {% set related_rows = [] %}
+                        {% for content in assigned_contents %}
+                            {% set related_rows = related_rows|merge([{
+                                'id': content.id,
+                                'title_html': '<a href="' ~ content.url|e ~ '">' ~ content.title|e ~ '</a>',
+                                '_actions': [
+                                    row_action('delete', 'Delete'|trans, null, '#category-related-content-delete', null, null, {
+                                        'data-content-id': content.id,
+                                        'data-content-label': content.title,
+                                    }),
+                                ],
+                            }]) %}
+                        {% endfor %}
+                        {{ component('BoDataTable', {
+                            id: 'related-content',
+                            columns: [
+                                column('id', 'ID'|trans),
+                                column_html('title_html', 'Content title'|trans),
+                                column_actions(),
+                            ],
+                            rows: related_rows,
+                            emptyMessage: 'This category contains no contents'|trans,
+                        }) }}
                     </div>
                 </div>
 

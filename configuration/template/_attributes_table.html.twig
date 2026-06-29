@@ -1,30 +1,34 @@
-<table class="table mb-0" data-testid="template-attributes-table">
-    <thead>
-        <tr>
-            <th>{{ 'Attribute'|trans }}</th>
-            <th class="text-center">{{ 'Position'|trans }}</th>
-            <th class="text-end">{{ 'Actions'|trans }}</th>
-            {{ safe_hook('template.attributes-table-header', { location: 'template_attributes_table_header' }) }}
-        </tr>
-    </thead>
-    <tbody data-controller="bo-sortable"
-           data-bo-sortable-url-value="{{ attribute_position_url }}"
-           data-bo-sortable-token-value="{{ position_token }}"
-           data-bo-sortable-param-name-value="attribute_id"
-           data-bo-sortable-extra-params-value='{"template_id": {{ template.id }}}'>
-        {% for attribute in attributes %}
-            <tr data-row-id="{{ attribute.id }}" data-testid="template-attribute-row-{{ attribute.id }}">
-                <td>{{ attribute.title }}</td>
-                <td class="text-center">{{ attribute.position }}</td>
-                <td class="text-end">
-                    <a href="{{ attribute.delete_url }}" class="btn btn-sm btn-outline-danger" data-testid="template-attribute-delete-{{ attribute.id }}" onclick="return confirm('{{ 'Remove this attribute from the template?'|trans }}')">
-                        <i class="bi bi-trash" aria-hidden="true"></i>
-                    </a>
-                </td>
-                {{ safe_hook('template.attributes-table-row', { location: 'template_attributes_table_row' }) }}
-            </tr>
-        {% else %}
-            <tr><td colspan="3" class="text-muted text-center">{{ 'No attribute attached.'|trans }}</td></tr>
-        {% endfor %}
-    </tbody>
-</table>
+{% set columns = [
+    column('title', 'Attribute'|trans),
+    column('position', 'Position'|trans, 'center'),
+    column_actions(),
+] %}
+
+{% set rows = [] %}
+{% for attribute in attributes %}
+    {% set rows = rows|merge([{
+        'id': attribute.id,
+        'title': attribute.title,
+        'position': attribute.position,
+        '_actions': [
+            row_action('delete', 'Remove this attribute from the template?'|trans, attribute.delete_url),
+        ],
+    }]) %}
+{% endfor %}
+
+{{ component('BoDataTable', {
+    id: 'template-attributes',
+    columns: columns,
+    rows: rows,
+    emptyMessage: 'No attribute attached.'|trans,
+    extraColumnsHeaderHook: 'template.attributes-table-header',
+    extraColumnsHook: 'template.attributes-table-row',
+    headerHookContext: { location: 'template_attributes_table_header' },
+    rowHookContext: { location: 'template_attributes_table_row' },
+    tbodyAttributes: {
+        'data-controller': 'bo-sortable',
+        'data-bo-sortable-url-value': attribute_position_url,
+        'data-bo-sortable-token-value': position_token,
+        'data-bo-sortable-param-name-value': 'attribute_id',
+    },
+}) }}

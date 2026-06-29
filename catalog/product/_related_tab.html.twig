@@ -44,43 +44,40 @@
                         <div class="alert alert-info">{{ 'No folders found'|trans }}</div>
                     {% endif %}
 
-                    <div class="table-responsive">
-                        <table class="table align-middle"
-                               data-testid="product-related-content-table"
-                               data-controller="bo-sortable"
-                               data-bo-sortable-url-value="{{ update_content_position_url }}?product_id={{ product.id }}&current_tab=related&mode=1"
-                               data-bo-sortable-token-value="{{ token }}"
-                               data-bo-sortable-param-name-value="content_id">
-                            <thead>
-                                <tr>
-                                    <th style="width: 60px;">{{ 'ID'|trans }}</th>
-                                    <th>{{ 'Content title'|trans }}</th>
-                                    <th class="text-center" style="width: 80px;">{{ 'Position'|trans }}</th>
-                                    {{ safe_hook('product.contents-table-header', { product_id: product.id }) }}
-                                    <th class="text-end" style="width: 80px;">{{ 'Actions'|trans }}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for content in assigned_contents %}
-                                    <tr data-row-id="{{ content.id }}" data-testid="product-related-content-row-{{ content.id }}">
-                                        <td>{{ content.id }}</td>
-                                        <td><a href="{{ content.url }}">{{ content.title }}</a></td>
-                                        <td class="text-center">{{ content.position }}</td>
-                                        {{ safe_hook('product.contents-table-row', { product_id: product.id, content_id: content.id }) }}
-                                        <td class="text-end">
-                                            {% if is_granted('UPDATE', 'admin.product') %}
-                                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#product-related-content-delete" data-content-id="{{ content.id }}" data-testid="product-related-content-delete-{{ content.id }}">
-                                                    <i class="bi bi-trash" aria-hidden="true"></i>
-                                                </button>
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                {% else %}
-                                    <tr><td colspan="4" class="text-muted text-center">{{ 'This product contains no contents'|trans }}</td></tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+                    {% set contents_rows = [] %}
+                    {% for content in assigned_contents %}
+                        {% set contents_rows = contents_rows|merge([{
+                            'id': content.id,
+                            'title_html': '<a href="' ~ content.url|e ~ '">' ~ content.title|e ~ '</a>',
+                            'position': content.position,
+                            '_actions': [
+                                row_action('delete', 'Remove'|trans, null, '#product-related-content-delete', 'UPDATE', 'admin.product', { 'content-id': content.id }),
+                            ],
+                        }]) %}
+                    {% endfor %}
+
+                    {{ component('BoDataTable', {
+                        id: 'product-related-content',
+                        columns: [
+                            column('id', 'ID'|trans),
+                            column_html('title_html', 'Content title'|trans),
+                            column('position', 'Position'|trans, 'center'),
+                            column_actions(),
+                        ],
+                        rows: contents_rows,
+                        emptyMessage: 'This product contains no contents'|trans,
+                        tbodyAttributes: {
+                            'data-controller': 'bo-sortable',
+                            'data-bo-sortable-url-value': update_content_position_url ~ '?product_id=' ~ product.id ~ '&current_tab=related&mode=1',
+                            'data-bo-sortable-token-value': token,
+                            'data-bo-sortable-param-name-value': 'content_id',
+                        },
+                        extraColumnsHeaderHook: 'product.contents-table-header',
+                        headerHookContext: { product_id: product.id },
+                        extraColumnsHook: 'product.contents-table-row',
+                        rowHookContext: { product_id: product.id },
+                        rowHookArgs: { content_id: 'id' },
+                    }) }}
                 </div>
             </div>
         </div>
@@ -129,43 +126,40 @@
                         <div class="alert alert-info">{{ 'No categories found'|trans }}</div>
                     {% endif %}
 
-                    <div class="table-responsive">
-                        <table class="table align-middle"
-                               data-testid="product-accessory-table"
-                               data-controller="bo-sortable"
-                               data-bo-sortable-url-value="{{ update_accessory_position_url }}?product_id={{ product.id }}&current_tab=related&mode=1"
-                               data-bo-sortable-token-value="{{ token }}"
-                               data-bo-sortable-param-name-value="accessory_id">
-                            <thead>
-                                <tr>
-                                    <th style="width: 60px;">{{ 'ID'|trans }}</th>
-                                    <th>{{ 'Accessory title'|trans }}</th>
-                                    <th class="text-center" style="width: 80px;">{{ 'Position'|trans }}</th>
-                                    {{ safe_hook('product.accessories-table-header', { product_id: product.id }) }}
-                                    <th class="text-end" style="width: 80px;">{{ 'Actions'|trans }}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for accessory in assigned_accessories %}
-                                    <tr data-row-id="{{ accessory.accessory_id }}" data-testid="product-accessory-row-{{ accessory.accessory_id }}">
-                                        <td>{{ accessory.accessory_id }}</td>
-                                        <td>{{ accessory.title }}</td>
-                                        <td class="text-center">{{ accessory.position }}</td>
-                                        {{ safe_hook('product.accessories-table-row', { product_id: product.id, accessory_id: accessory.accessory_id }) }}
-                                        <td class="text-end">
-                                            {% if is_granted('UPDATE', 'admin.product') %}
-                                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#product-accessory-delete" data-accessory-id="{{ accessory.accessory_id }}" data-testid="product-accessory-delete-{{ accessory.accessory_id }}">
-                                                    <i class="bi bi-trash" aria-hidden="true"></i>
-                                                </button>
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                {% else %}
-                                    <tr><td colspan="4" class="text-muted text-center">{{ 'This product contains no accessories'|trans }}</td></tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+                    {% set accessories_rows = [] %}
+                    {% for accessory in assigned_accessories %}
+                        {% set accessories_rows = accessories_rows|merge([{
+                            'id': accessory.accessory_id,
+                            'title': accessory.title,
+                            'position': accessory.position,
+                            '_actions': [
+                                row_action('delete', 'Remove'|trans, null, '#product-accessory-delete', 'UPDATE', 'admin.product', { 'accessory-id': accessory.accessory_id }),
+                            ],
+                        }]) %}
+                    {% endfor %}
+
+                    {{ component('BoDataTable', {
+                        id: 'product-accessory',
+                        columns: [
+                            column('id', 'ID'|trans),
+                            column('title', 'Accessory title'|trans),
+                            column('position', 'Position'|trans, 'center'),
+                            column_actions(),
+                        ],
+                        rows: accessories_rows,
+                        emptyMessage: 'This product contains no accessories'|trans,
+                        tbodyAttributes: {
+                            'data-controller': 'bo-sortable',
+                            'data-bo-sortable-url-value': update_accessory_position_url ~ '?product_id=' ~ product.id ~ '&current_tab=related&mode=1',
+                            'data-bo-sortable-token-value': token,
+                            'data-bo-sortable-param-name-value': 'accessory_id',
+                        },
+                        extraColumnsHeaderHook: 'product.accessories-table-header',
+                        headerHookContext: { product_id: product.id },
+                        extraColumnsHook: 'product.accessories-table-row',
+                        rowHookContext: { product_id: product.id },
+                        rowHookArgs: { accessory_id: 'id' },
+                    }) }}
                 </div>
             </div>
         </div>
@@ -203,36 +197,32 @@
                 <div class="alert alert-info">{{ 'No categories found'|trans }}</div>
             {% endif %}
 
-            <div class="table-responsive">
-                <table class="table align-middle" data-testid="product-additional-category-table">
-                    <thead>
-                        <tr>
-                            <th style="width: 60px;">{{ 'ID'|trans }}</th>
-                            <th>{{ 'Category title'|trans }}</th>
-                            {{ safe_hook('product.categories-table-header', { product_id: product.id }) }}
-                            <th class="text-end" style="width: 80px;">{{ 'Actions'|trans }}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for additional in additional_categories %}
-                            <tr data-testid="product-additional-category-row-{{ additional.id }}">
-                                <td>{{ additional.id }}</td>
-                                <td>{{ additional.title }}</td>
-                                {{ safe_hook('product.categories-table-row', { product_id: product.id, category_id: additional.id }) }}
-                                <td class="text-end">
-                                    {% if is_granted('UPDATE', 'admin.product') %}
-                                        <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#product-additional-category-delete" data-category-id="{{ additional.id }}" data-testid="product-additional-category-delete-{{ additional.id }}">
-                                            <i class="bi bi-trash" aria-hidden="true"></i>
-                                        </button>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                        {% else %}
-                            <tr><td colspan="3" class="text-muted text-center">{{ 'This product does not belong to any additional category.'|trans }}</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+            {% set categories_rows = [] %}
+            {% for additional in additional_categories %}
+                {% set categories_rows = categories_rows|merge([{
+                    'id': additional.id,
+                    'title': additional.title,
+                    '_actions': [
+                        row_action('delete', 'Remove'|trans, null, '#product-additional-category-delete', 'UPDATE', 'admin.product', { 'category-id': additional.id }),
+                    ],
+                }]) %}
+            {% endfor %}
+
+            {{ component('BoDataTable', {
+                id: 'product-additional-category',
+                columns: [
+                    column('id', 'ID'|trans),
+                    column('title', 'Category title'|trans),
+                    column_actions(),
+                ],
+                rows: categories_rows,
+                emptyMessage: 'This product does not belong to any additional category.'|trans,
+                extraColumnsHeaderHook: 'product.categories-table-header',
+                headerHookContext: { product_id: product.id },
+                extraColumnsHook: 'product.categories-table-row',
+                rowHookContext: { product_id: product.id },
+                rowHookArgs: { category_id: 'id' },
+            }) }}
         </div>
     </div>
 

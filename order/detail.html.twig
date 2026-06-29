@@ -102,76 +102,89 @@
 
                 <div class="tab-pane fade show active" id="tab-cart" role="tabpanel" aria-labelledby="tab-cart-toggle">
                 {{ safe_hook('order-edit.cart-top', { order_id: order.id, location: 'order-edit-cart-top' }) }}
-                <div class="card mb-3">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <span>{{ 'Order items'|trans }}</span>
-                        <small class="text-muted">{{ 'Prices in %currency'|trans({'%currency': currency.symbol}) }}</small>
-                    </div>
-                    <div class="table-responsive">
-                        {{ safe_hook('order-edit.before-order-product-list', { order_id: order.id, location: 'before-order-product-list' }) }}
-                        <table class="table mb-0 align-middle" data-testid="order-items-table">
-                            <thead>
-                                <tr>
-                                    <th>{{ 'Product'|trans }}</th>
-                                    <th class="text-end">{{ 'Unit price (excl. tax)'|trans }}</th>
-                                    <th class="text-end">{{ 'Tax'|trans }}</th>
-                                    <th class="text-end">{{ 'Unit price (incl. tax)'|trans }}</th>
-                                    <th class="text-end">{{ 'Quantity'|trans }}</th>
-                                    <th class="text-end">{{ 'Line total (excl. tax)'|trans }}</th>
-                                    <th class="text-end">{{ 'Line tax'|trans }}</th>
-                                    <th class="text-end">{{ 'Line total (incl. tax)'|trans }}</th>
-                                    {{ safe_hook('order-edit.order-product-table-header', { location: 'order_edit_table_header' }) }}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for item in order_items %}
-                                    {{ safe_hook('order-edit.before-order-product-row', { order_id: order.id, order_product_id: item.id, location: 'before-order-product-row' }) }}
-                                    <tr data-testid="order-item-row" data-order-product-id="{{ item.id }}">
-                                        <td>
-                                            <div><code>{{ item.ref }}</code> &mdash; <strong>{{ item.title }}</strong>
-                                                {% if item.virtual %}
-                                                    <i class="bi bi-download text-muted" title="{{ 'Virtual product'|trans }}" aria-hidden="true"></i>
-                                                {% endif %}
-                                            </div>
-                                            {% if item.pse_ref and item.pse_ref != item.ref %}
-                                                <small class="text-muted d-block">{{ 'Combination reference'|trans }}: <code>{{ item.pse_ref }}</code></small>
-                                            {% endif %}
-                                            {% if item.combinations|length > 0 %}
-                                                <dl class="row mb-0 mt-1 small">
-                                                    {% for combination in item.combinations %}
-                                                        <dt class="col-sm-4 fw-normal text-muted">{{ combination.attribute_title }}</dt>
-                                                        <dd class="col-sm-8 mb-0">{{ combination.attribute_av_title }}</dd>
-                                                    {% endfor %}
-                                                </dl>
-                                            {% endif %}
-                                            {{ safe_hook('order-edit.product-list', { order_id: order.id, order_product_id: item.id, location: 'order-product-list' }) }}
-                                        </td>
-                                        <td class="text-end">{{ item.price|number_format(2, '.', ' ') }} {{ currency.symbol }}</td>
-                                        <td class="text-end">{{ item.tax|number_format(2, '.', ' ') }} {{ currency.symbol }}</td>
-                                        <td class="text-end">{{ item.unit_taxed_price|number_format(2, '.', ' ') }} {{ currency.symbol }}</td>
-                                        <td class="text-end">{{ item.quantity }}</td>
-                                        <td class="text-end">{{ item.line_ht|number_format(2, '.', ' ') }} {{ currency.symbol }}</td>
-                                        <td class="text-end">{{ item.line_tax|number_format(2, '.', ' ') }} {{ currency.symbol }}</td>
-                                        <td class="text-end fw-semibold">{{ item.line_ttc|number_format(2, '.', ' ') }} {{ currency.symbol }}</td>
-                                        {{ safe_hook('order-edit.order-product-table-row', { order_product_id: item.id, location: 'order_edit_table_row' }) }}
-                                    </tr>
-                                    {{ safe_hook('order-edit.after-order-product-row', { order_id: order.id, order_product_id: item.id, location: 'after-order-product-row' }) }}
-                                {% else %}
-                                    <tr><td colspan="8" class="text-muted text-center">{{ 'No item.'|trans }}</td></tr>
-                                {% endfor %}
-                            </tbody>
-                            {% if order_items|length > 0 %}
-                                <tfoot class="table-light">
-                                    <tr>
-                                        <td colspan="7" class="text-end fw-bold">{{ 'Items subtotal (incl. tax)'|trans }}</td>
-                                        <td class="text-end fw-bold" data-testid="order-items-subtotal">{{ totals.subtotal_ttc|number_format(2, '.', ' ') }} {{ currency.symbol }}</td>
-                                    </tr>
-                                </tfoot>
+
+                {% set order_rows = [] %}
+                {% for item in order_items %}
+                    {% set product_html %}
+                        <div>
+                            <code>{{ item.ref }}</code> &mdash; <strong>{{ item.title }}</strong>
+                            {% if item.virtual %}
+                                <i class="bi bi-download text-muted" title="{{ 'Virtual product'|trans }}" aria-hidden="true"></i>
                             {% endif %}
-                        </table>
-                        {{ safe_hook('order-edit.after-order-product-list', { order_id: order.id, location: 'after-order-product-list' }) }}
+                        </div>
+                        {% if item.pse_ref and item.pse_ref != item.ref %}
+                            <small class="text-muted d-block">{{ 'Combination reference'|trans }}: <code>{{ item.pse_ref }}</code></small>
+                        {% endif %}
+                        {% if item.combinations|length > 0 %}
+                            <dl class="row mb-0 mt-1 small">
+                                {% for combination in item.combinations %}
+                                    <dt class="col-sm-4 fw-normal text-muted">{{ combination.attribute_title }}</dt>
+                                    <dd class="col-sm-8 mb-0">{{ combination.attribute_av_title }}</dd>
+                                {% endfor %}
+                            </dl>
+                        {% endif %}
+                        {{ safe_hook('order-edit.product-list', { order_id: order.id, order_product_id: item.id, location: 'order-product-list' }) }}
+                    {% endset %}
+                    {% set order_rows = order_rows|merge([{
+                        'id': item.id,
+                        'product_html': product_html,
+                        'price': item.price|number_format(2, '.', ' ') ~ ' ' ~ currency.symbol,
+                        'tax': item.tax|number_format(2, '.', ' ') ~ ' ' ~ currency.symbol,
+                        'unit_taxed_price': item.unit_taxed_price|number_format(2, '.', ' ') ~ ' ' ~ currency.symbol,
+                        'quantity': item.quantity,
+                        'line_ht': item.line_ht|number_format(2, '.', ' ') ~ ' ' ~ currency.symbol,
+                        'line_tax': item.line_tax|number_format(2, '.', ' ') ~ ' ' ~ currency.symbol,
+                        'line_ttc': '<span class="fw-semibold">' ~ item.line_ttc|number_format(2, '.', ' ') ~ ' ' ~ currency.symbol ~ '</span>',
+                        '_attrs': { 'data-order-product-id': item.id, 'data-testid': 'order-item-row' },
+                    }]) %}
+                {% endfor %}
+
+                {{ safe_hook('order-edit.before-order-product-list', { order_id: order.id, location: 'before-order-product-list' }) }}
+                {{ component('BoDataTable', {
+                    id: 'order-items',
+                    caption: 'Order items'|trans ~ ' — ' ~ 'Prices in %currency'|trans({'%currency': currency.symbol}),
+                    columns: [
+                        column_html('product_html', 'Product'|trans),
+                        column('price', 'Unit price (excl. tax)'|trans, 'end'),
+                        column('tax', 'Tax'|trans, 'end'),
+                        column('unit_taxed_price', 'Unit price (incl. tax)'|trans, 'end'),
+                        column('quantity', 'Quantity'|trans, 'end'),
+                        column('line_ht', 'Line total (excl. tax)'|trans, 'end'),
+                        column('line_tax', 'Line tax'|trans, 'end'),
+                        column_html('line_ttc', 'Line total (incl. tax)'|trans, 'end'),
+                    ],
+                    rows: order_rows,
+                    emptyMessage: 'No item.'|trans,
+                    extraColumnsHeaderHook: 'order-edit.order-product-table-header',
+                    extraColumnsHook: 'order-edit.order-product-table-row',
+                    rowHookArgs: { order_product_id: 'id' },
+                    headerHookContext: { location: 'order_edit_table_header' },
+                    rowHookContext: { location: 'order_edit_table_row' },
+                }) }}
+                {{ safe_hook('order-edit.after-order-product-list', { order_id: order.id, location: 'after-order-product-list' }) }}
+
+                {% if order_items|length > 0 %}
+                    <div class="card mb-3">
+                        <div class="card-body py-2 d-flex justify-content-end">
+                            <span class="fw-bold me-3">{{ 'Items subtotal (incl. tax)'|trans }}</span>
+                            <span class="fw-bold" data-testid="order-items-subtotal">{{ totals.subtotal_ttc|number_format(2, '.', ' ') }} {{ currency.symbol }}</span>
+                        </div>
+                        {% if items_last_page|default(1) > 1 %}
+                            <div class="card-footer">
+                                {{ component('BoPagination', {
+                                    route: 'admin.order.update.view',
+                                    currentPage: items_page,
+                                    lastPage: items_last_page,
+                                    routeParams: { order_id: order.id },
+                                    pageParam: 'items_page',
+                                    ariaLabel: 'Order items pagination'|trans,
+                                    testid: 'order-items',
+                                }) }}
+                            </div>
+                        {% endif %}
                     </div>
-                    {% if items_last_page|default(1) > 1 %}
+                {% elsif items_last_page|default(1) > 1 %}
+                    <div class="card mb-3">
                         <div class="card-footer">
                             {{ component('BoPagination', {
                                 route: 'admin.order.update.view',
@@ -183,8 +196,8 @@
                                 testid: 'order-items',
                             }) }}
                         </div>
-                    {% endif %}
-                </div>
+                    </div>
+                {% endif %}
 
                 <div class="card mb-3" data-testid="order-taxes-breakdown">
                     <div class="card-header">{{ 'Taxes detail'|trans }}</div>

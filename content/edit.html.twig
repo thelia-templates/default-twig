@@ -199,35 +199,23 @@
                                 <i class="bi bi-plus-lg" aria-hidden="true"></i> {{ 'Add to folder'|trans }}
                             </button>
                         </form>
-                        <table class="table align-middle mb-0" data-testid="content-additional-folders-table">
-                            <thead>
-                                <tr>
-                                    <th>{{ 'Folder'|trans }}</th>
-                                    <th class="text-end">{{ 'Actions'|trans }}</th>
-                                    {{ safe_hook('product.folders-table-header', { location: 'product_folders_table_header' }) }}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for folder in additional_folders %}
-                                    <tr data-testid="content-additional-folder-row-{{ folder.id }}">
-                                        <td>
-                                            {{ folder.title }}
-                                            {% if folder.is_default %}<span class="badge bg-secondary ms-2">{{ 'Default folder'|trans }}</span>{% endif %}
-                                        </td>
-                                        <td class="text-end">
-                                            {% if not folder.is_default %}
-                                                <a href="{{ folder.delete_url }}&_token={{ additional_folder_delete_token }}" class="btn btn-sm btn-outline-danger" data-testid="content-additional-folder-delete-{{ folder.id }}">
-                                                    <i class="bi bi-trash" aria-hidden="true"></i>
-                                                </a>
-                                            {% endif %}
-                                        </td>
-                                        {{ safe_hook('product.folders-table-row', { location: 'product_folders_table_row' }) }}
-                                    </tr>
-                                {% else %}
-                                    <tr><td colspan="2" class="text-muted text-center">{{ 'No additional folder linked.'|trans }}</td></tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                        {% set rows = [] %}
+                        {% for folder in additional_folders %}
+                            {% set rows = rows|merge([{
+                                'id': folder.id,
+                                'title_html': folder.title ~ (folder.is_default ? ' <span class="badge bg-secondary ms-2">' ~ 'Default folder'|trans ~ '</span>' : ''),
+                                '_actions': folder.is_default ? [] : [ row_action('delete', 'Delete'|trans, folder.delete_url ~ '&_token=' ~ additional_folder_delete_token) ],
+                            }]) %}
+                        {% endfor %}
+                        {{ component('BoDataTable', {
+                            id: 'content-additional-folders-table',
+                            columns: [
+                                column_html('title_html', 'Folder'|trans),
+                                column_actions(),
+                            ],
+                            rows: rows,
+                            emptyMessage: 'No additional folder linked.'|trans,
+                        }) }}
                     </div>
                 </div>
             </div>
