@@ -1,6 +1,7 @@
 <div class="modal fade" id="variable-edit-modal-{{ variable_id }}" tabindex="-1" aria-labelledby="variable-edit-modal-title-{{ variable_id }}" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
+            {% form_theme form with bo_form_themes only %}
             {{ form_start(form, { action: path('admin.configuration.variables.save'), method: 'post', attr: { 'data-testid': 'variable-edit-form-' ~ variable_id } }) }}
                 <div class="modal-header">
                     <h2 class="modal-title h5" id="variable-edit-modal-title-{{ variable_id }}">{{ 'Edit variable'|trans }}</h2>

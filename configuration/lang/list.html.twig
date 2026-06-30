@@ -52,6 +52,7 @@
                         <h2 class="h5 mb-0">{{ 'Parameters'|trans }}</h2>
                     </div>
                     <div class="card-body">
+                        {% form_theme default_behavior_form with bo_form_themes only %}
                         {{ form_start(default_behavior_form, { action: path('admin.configuration.languages.defaultBehavior'), method: 'post', attr: { 'data-testid': 'lang-default-behavior-form' } }) }}
                             {{ form_row(default_behavior_form.behavior) }}
                             <div class="text-end">
@@ -70,6 +71,7 @@
                         <h2 class="h5 mb-0">{{ 'Using a domain or subdomain for each language'|trans }}</h2>
                     </div>
                     <div class="card-body">
+                        {% form_theme url_form with bo_form_themes only %}
                         {{ form_start(url_form, { action: path('admin.configuration.languages.updateUrl'), method: 'post', attr: { 'data-testid': 'lang-url-form' } }) }}
                             <table class="table table-sm align-middle">
                                 <tbody>

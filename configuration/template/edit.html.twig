@@ -34,6 +34,7 @@
                 <div class="card">
                     <div class="card-header">{{ 'General'|trans }}</div>
                     <div class="card-body">
+                        {% form_theme form with bo_form_themes only %}
                         {{ form_start(form, { action: path('admin.configuration.templates.save', { template_id: template.id }), method: 'post', attr: { 'data-testid': 'template-edit-form' } }) }}
                             <input type="hidden" name="template_id" value="{{ template.id }}">
                             <div class="mb-3">

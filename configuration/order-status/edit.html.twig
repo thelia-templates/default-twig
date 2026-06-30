@@ -49,6 +49,7 @@
 
         <div class="tab-content">
             <div class="tab-pane fade {% if current_tab|default('general') == 'general' %}show active{% endif %}" id="tab-general" role="tabpanel">
+                {% form_theme form with bo_form_themes only %}
                 {{ form_start(form, { action: path('admin.order-status.save', { order_status_id: status.id }), method: 'post', attr: { 'data-testid': 'order-status-edit-form' } }) }}
                     <div class="row">
                         <div class="col-md-6 mb-3">

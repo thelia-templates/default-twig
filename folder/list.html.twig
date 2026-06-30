@@ -126,6 +126,7 @@
     <div class="modal fade" id="folder-create-modal" tabindex="-1" aria-labelledby="folder-create-modal-title" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
+                {% form_theme create_form with bo_form_themes only %}
                 {{ form_start(create_form, { action: path('admin.folders.create'), method: 'post', attr: { 'data-testid': 'folder-create-form' } }) }}
                     <div class="modal-header">
                         <h2 class="modal-title h5" id="folder-create-modal-title">{{ 'Create a new folder'|trans }}</h2>
@@ -170,6 +171,7 @@
         <div class="modal fade" id="content-create-modal" tabindex="-1" aria-labelledby="content-create-modal-title" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
+                    {% form_theme content_create_form with bo_form_themes only %}
                     {{ form_start(content_create_form, { action: path('admin.content.create'), method: 'post', attr: { 'data-testid': 'content-create-form' } }) }}
                         <div class="modal-header">
                             <h2 class="modal-title h5" id="content-create-modal-title">{{ 'Create a new content'|trans }}</h2>

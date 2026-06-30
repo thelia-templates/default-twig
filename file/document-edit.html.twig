@@ -35,6 +35,7 @@
 
         <div class="card">
             <div class="card-body">
+                {% form_theme form with bo_form_themes only %}
                 {{ form_start(form, { action: edit_url, method: 'post', attr: { 'data-testid': 'bo-document-edit-form' } }) }}
                     {{ form_widget(form.id) }}
                     {{ form_widget(form.locale) }}

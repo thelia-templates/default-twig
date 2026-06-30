@@ -26,6 +26,7 @@
             {{ component('BoLanguageSwitcher', { currentLanguageId: edit_language_id }) }}
         </div>
 
+        {% form_theme form with bo_form_themes only %}
         {{ form_start(form, {
             action: path('admin.configuration.taxes.save'),
             method: 'post',

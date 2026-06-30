@@ -22,6 +22,7 @@
          data-bo-sale-product-picker-products-url-value="{{ products_url }}"
          data-bo-sale-product-picker-attributes-label-value="{{ 'Restrict to attribute values'|trans }}">
 
+        {% form_theme form with bo_form_themes only %}
         {{ form_start(form, { action: path('admin.sale.save', { sale_id: sale.id }), attr: { 'data-testid': 'sale-edit-form' } }) }}
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h1 class="h3 mb-0">{{ sale.title ?: '#' ~ sale.id }}</h1>

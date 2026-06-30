@@ -24,6 +24,7 @@
 
         <div class="card">
             <div class="card-body">
+                {% form_theme form with bo_form_themes only %}
                 {{ form_start(form, { action: path('admin.configuration.customer-titles.save'), method: 'post' }) }}
                     <input type="hidden" name="customer_title_id" value="{{ title.id }}">
                     {{ form_row(form.short) }}

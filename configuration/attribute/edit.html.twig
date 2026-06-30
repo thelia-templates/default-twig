@@ -42,6 +42,7 @@
                 <div class="card">
                     <div class="card-header">{{ 'General'|trans }}</div>
                     <div class="card-body">
+                        {% form_theme form with bo_form_themes only %}
                         {{ form_start(form, { action: path('admin.configuration.attributes.save', { attribute_id: attribute.id }), method: 'post', attr: { 'data-testid': 'attribute-edit-form' } }) }}
                             <input type="hidden" name="attribute_id" value="{{ attribute.id }}">
                             <div class="mb-3">
@@ -132,6 +133,7 @@
     <div class="modal fade" id="attribute-av-create-modal" tabindex="-1" aria-labelledby="attribute-av-create-modal-title" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
+                {% form_theme av_create_form with bo_form_themes only %}
                 {{ form_start(av_create_form, { action: path('admin.configuration.attributes-av.create'), method: 'post', attr: { 'data-testid': 'attributeav-create-form' } }) }}
                     <div class="modal-header">
                         <h2 class="modal-title h5" id="attribute-av-create-modal-title">{{ 'Add a attribute value'|trans }}</h2>

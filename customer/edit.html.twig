@@ -31,6 +31,7 @@
             } only %}
         </div>
 
+        {% form_theme form with bo_form_themes only %}
         {{ form_start(form, {
             action: path('admin.customer.update.process'),
             method: 'post',

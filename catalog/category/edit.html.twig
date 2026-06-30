@@ -95,6 +95,7 @@
 
         <div class="tab-content">
             <div class="tab-pane fade {% if current_tab == 'general' %}show active{% endif %}" id="tab-general" role="tabpanel">
+                {% form_theme form with bo_form_themes only %}
                 {{ form_start(form, { action: path('admin.categories.save', { category_id: category.id }), method: 'post', attr: { 'data-testid': 'category-edit-form' } }) }}
                     <input type="hidden" name="category_id" value="{{ category.id }}">
                     <div class="row">
@@ -291,6 +292,7 @@
 
             <div class="tab-pane fade {% if current_tab == 'seo' %}show active{% endif %}" id="tab-seo" role="tabpanel">
                 {{ safe_hook('tab-seo.top', { id: category.id, type: 'category' }) }}
+                {% form_theme seo_form with bo_form_themes only %}
                 {{ form_start(seo_form, { action: path('admin.categories.seo.save'), method: 'post', attr: { 'data-testid': 'category-seo-form' } }) }}
                     <div class="mb-3">
                         {{ form_label(seo_form.url) }}

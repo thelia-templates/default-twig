@@ -51,6 +51,7 @@
         <div class="modal fade" id="message-create-modal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
+                    {% form_theme create_form with bo_form_themes only %}
                     {{ form_start(create_form, { action: path('admin.configuration.messages.create'), method: 'post' }) }}
                     <div class="modal-header">
                         <h2 class="modal-title h5">{{ 'New message'|trans }}</h2>

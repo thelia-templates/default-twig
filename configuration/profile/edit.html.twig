@@ -40,6 +40,7 @@
             <div class="tab-pane fade show active" id="tab-general" role="tabpanel">
                 <div class="card">
                     <div class="card-body">
+                        {% form_theme update_form with bo_form_themes only %}
                         {{ form_start(update_form, { action: path('admin.configuration.profiles.save'), method: 'post', attr: { 'data-testid': 'profile-update-form' } }) }}
                             {{ form_widget(update_form.id) }}
                             {{ form_widget(update_form.locale) }}

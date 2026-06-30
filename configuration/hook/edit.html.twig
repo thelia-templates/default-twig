@@ -29,6 +29,7 @@
             {{ component('BoLanguageSwitcher', { currentLanguageId: edit_language_id }) }}
         </div>
 
+        {% form_theme form with bo_form_themes only %}
         {{ form_start(form, { attr: { action: path('admin.hook.save', { hook_id: hook_id }), 'data-testid': 'hook-edit-form' } }) }}
             <div class="card">
                 <div class="card-body">

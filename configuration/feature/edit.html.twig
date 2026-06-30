@@ -37,6 +37,7 @@
             {{ component('BoLanguageSwitcher', { currentLanguageId: edit_language_id }) }}
         </div>
 
+        {% form_theme form with bo_form_themes only %}
         {{ form_start(form, { action: path('admin.configuration.features.save', { feature_id: feature.id }), method: 'post', attr: { 'data-testid': 'feature-edit-form' } }) }}
         <input type="hidden" name="feature_id" value="{{ feature.id }}">
         <div class="row">
@@ -122,6 +123,7 @@
     <div class="modal fade" id="feature-av-create-modal" tabindex="-1" aria-labelledby="feature-av-create-modal-title" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
+                {% form_theme av_create_form with bo_form_themes only %}
                 {{ form_start(av_create_form, { action: path('admin.configuration.features-av.create'), method: 'post', attr: { 'data-testid': 'featureav-create-form' } }) }}
                     <div class="modal-header">
                         <h2 class="modal-title h5" id="feature-av-create-modal-title">{{ 'Add a feature value'|trans }}</h2>

@@ -89,6 +89,7 @@
 
         <div class="tab-content">
             <div class="tab-pane fade {% if current_tab == 'general' %}show active{% endif %}" id="tab-general" role="tabpanel">
+                {% form_theme form with bo_form_themes only %}
                 {{ form_start(form, { action: path('admin.products.save', { product_id: product.id }), method: 'post', attr: { 'data-testid': 'product-edit-form' } }) }}
                     <input type="hidden" name="product_id" value="{{ product.id }}">
                     {{ safe_hook('product.modification.form_top', { product_id: product.id }) }}
@@ -208,6 +209,7 @@
 
             <div class="tab-pane fade {% if current_tab == 'seo' %}show active{% endif %}" id="tab-seo" role="tabpanel">
                 {{ safe_hook('tab-seo.top', { id: product.id, type: 'product' }) }}
+                {% form_theme seo_form with bo_form_themes only %}
                 {{ form_start(seo_form, { action: path('admin.products.seo.save'), method: 'post', attr: { 'data-testid': 'product-seo-form' } }) }}
                     <div class="mb-3">
                         {{ form_label(seo_form.url) }}
@@ -264,6 +266,7 @@
     <div class="modal fade" id="product-clone-modal" tabindex="-1" aria-labelledby="product-clone-modal-title" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
+                {% form_theme clone_form with bo_form_themes only %}
                 {{ form_start(clone_form, { action: path('admin.products.clone'), method: 'post', attr: { 'data-testid': 'product-clone-form' } }) }}
                     <div class="modal-header">
                         <h5 class="modal-title" id="product-clone-modal-title">{{ 'Clone product'|trans }}</h5>

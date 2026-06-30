@@ -53,6 +53,7 @@
             <div class="tab-pane fade show active" id="data" role="tabpanel" aria-labelledby="tab-data">
                 <div class="card">
                     <div class="card-body">
+                        {% form_theme form with bo_form_themes only %}
                         {{ form_start(form, { action: path('admin.configuration.messages.save'), method: 'post', attr: { 'data-testid': 'message-edit-form' } }) }}
                             <input type="hidden" name="message_id" value="{{ message.id }}">
                             <div class="row g-3">

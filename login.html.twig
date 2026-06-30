@@ -12,12 +12,8 @@
 {% endblock %}
 
 {% block auth_content %}
-    {# Force the back-office form theme to win over the globally-registered Flexy
-       front-office theme: both define password_widget, and the Flexy one (last in
-       twig.form_themes) would otherwise inject its FieldInput reveal toggle, which
-       is unstyled on /admin. A local form_theme tag takes precedence over globals. #}
     {% set login_form = getForm('thelia.admin.login') %}
-    {% form_theme login_form '@BackOfficeDefaultTwigForm/bo_form_theme.html.twig' %}
+    {% form_theme login_form with bo_form_themes only %}
 
     <form action="{{ path('admin.checklogin') }}" method="post" data-testid="login-form" novalidate>
         {{ form_widget(login_form._token) }}

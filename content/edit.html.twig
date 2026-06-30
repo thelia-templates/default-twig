@@ -85,6 +85,7 @@
             <div class="tab-pane fade {% if current_tab|default('general') == 'general' %}show active{% endif %}" id="tab-general" role="tabpanel">
                 <div class="card">
                     <div class="card-body">
+                        {% form_theme form with bo_form_themes only %}
                         {{ form_start(form, { action: path('admin.content.save'), method: 'post', attr: { 'data-testid': 'content-edit-form' } }) }}
                             <input type="hidden" name="content_id" value="{{ content.id }}">
                             <div class="row g-3">
@@ -152,6 +153,7 @@
                 {{ safe_hook('tab-seo.top', { id: content.id, type: 'content' }) }}
                 <div class="card">
                     <div class="card-body">
+                        {% form_theme seo_form with bo_form_themes only %}
                         {{ form_start(seo_form, { action: path('admin.content.seo.save'), method: 'post', attr: { 'data-testid': 'content-seo-form' } }) }}
                             <div class="mb-3">
                                 {{ form_label(seo_form.url) }}

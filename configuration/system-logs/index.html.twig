@@ -17,6 +17,7 @@
     <div class="container-fluid" data-testid="system-logs-page" data-controller="bo-system-logs">
         <h1 class="h3 mb-4">{{ 'System logs configuration'|trans }}</h1>
 
+        {% form_theme form with bo_form_themes only %}
         {{ form_start(form, { action: path('admin.configuration.system-logs.save'), method: 'post', attr: { 'data-testid': 'system-logs-form' } }) }}
             <div class="row g-3">
                 <div class="col-lg-6">

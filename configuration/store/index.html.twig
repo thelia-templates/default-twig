@@ -19,6 +19,7 @@
     <div class="container-fluid" data-testid="config-store-page">
         <h1 class="h3 mb-4">{{ 'Store configuration'|trans }}</h1>
 
+        {% form_theme form with bo_form_themes only %}
         {{ form_start(form, {
             action: path('admin.configuration.store.save'),
             method: 'post',

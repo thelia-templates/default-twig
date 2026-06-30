@@ -1,5 +1,11 @@
 twig:
   paths:
     "%kernel.project_dir%/templates/backOffice/default-twig/form": BackOfficeDefaultTwigForm
-  form_themes:
-    - "@BackOfficeDefaultTwigForm/bo_form_theme.html.twig"
+  # The back-office form theme is intentionally NOT registered globally: the one
+  # global form theme is the front-office Flexy theme. Back-office templates opt
+  # in per form with `{% form_theme form with bo_form_themes only %}`, which keeps
+  # Flexy widgets out of /admin and the back-office overrides out of the front.
+  globals:
+    bo_form_themes:
+      - "bootstrap_5_layout.html.twig"
+      - "@BackOfficeDefaultTwigForm/bo_form_theme.html.twig"

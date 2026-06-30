@@ -38,6 +38,7 @@
                     {{ "Be careful, we do not advise to use this interface. It's safer to put your smtp informations in your environement variables."|trans }}
                 </div>
 
+                {% form_theme form with bo_form_themes only %}
                 {{ form_start(form, { action: path('admin.mailingSystem.save'), method: 'post', attr: { 'data-testid': 'mailing-system-form' } }) }}
                     <div class="row g-3">
                         <div class="col-12">

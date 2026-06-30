@@ -36,6 +36,7 @@
             <div class="col-md-4">
                 <div class="card mb-3">
                     <div class="card-body">
+                        {% form_theme form with bo_form_themes only %}
                         {{ form_start(form, { attr: { action: path('admin.configuration.shipping-configuration.save', { area_id: area_id }), 'data-testid': 'shipping-configuration-save-form' } }) }}
                             <div class="input-group">
                                 {{ form_widget(form.name, { attr: { 'aria-label': 'Shipping zone name'|trans } }) }}

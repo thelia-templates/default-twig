@@ -48,6 +48,7 @@
     <div class="modal fade" id="shipping-configuration-create-modal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
+                {% form_theme create_form with bo_form_themes only %}
                 {{ form_start(create_form, { attr: { action: path('admin.configuration.shipping-configuration.create'), 'data-testid': 'shipping-configuration-create-form' } }) }}
                     <div class="modal-header">
                         <h5 class="modal-title">{{ 'Create a new shipping zone'|trans }}</h5>
