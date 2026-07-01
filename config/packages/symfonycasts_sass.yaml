@@ -1,0 +1,3 @@
+symfonycasts_sass:
+    root_sass:
+        - '%kernel.project_dir%/templates/backOffice/default-twig/assets/styles/main.scss'

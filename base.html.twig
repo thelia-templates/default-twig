@@ -9,8 +9,9 @@
 
             <title>{% block title %}{{ 'Back-office'|trans }}{% endblock %} - Thelia</title>
 
-            {% block stylesheets %}
-                {{ encore_entry_link_tags('app', null, 'backoffice') }}
+
+            {% block javascripts %}
+                {% block importmap %}{{ importmap('app') }}{% endblock %}
             {% endblock %}
 
             {% block head_extra %}{% endblock %}
@@ -52,9 +53,8 @@
             </div>
         {% endblock %}
 
-        {% block scripts %}
-            {{ encore_entry_script_tags('app', null, 'backoffice') }}
-        {% endblock %}
+        {# JS is loaded as ESM by importmap('app') in the document head. #}
+        {% block scripts %}{% endblock %}
 
         {% block scripts_extra %}{% endblock %}
         {{ safe_hook('main.footer-js') }}

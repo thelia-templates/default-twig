@@ -1,31 +1,16 @@
 {
     "name": "thelia-backoffice-default-twig",
     "version": "0.1.0",
-    "description": "Thelia 3 back-office Twig template — Bootstrap 5 + Stimulus + HTMX",
-    "license": "GPL-3.0-or-later",
+    "description": "Thelia 3 back-office Twig template — Bootstrap 5 + Stimulus + HTMX (served via Symfony AssetMapper)",
+    "license": "LGPL-3.0+",
     "private": true,
-    "scripts": {
-        "dev": "encore dev",
-        "watch": "encore dev --watch",
-        "build": "encore production --progress"
+    "comments": {
+        "dependencies": "bootstrap and bootstrap-icons are kept ONLY as SCSS/font sources for symfonycasts/sass-bundle (compiled by dart-sass, no bundler). All runtime JS is vendored through the AssetMapper importmap (see importmap.php). Run `npm install` to refresh the SCSS sources; the icon fonts in assets/styles/fonts are copied from bootstrap-icons.",
+        "css": "bin/console sass:build [--watch]",
+        "assets": "bin/console asset-map:compile (prod)"
     },
     "dependencies": {
-        "@hotwired/stimulus": "^3.2.2",
         "bootstrap": "^5.3.0",
-        "bootstrap-icons": "^1.11.0",
-        "chart.js": "^4.5.1",
-        "htmx.org": "^2.0.0"
-    },
-    "devDependencies": {
-        "@symfony/stimulus-bridge": "^3.2.2",
-        "@symfony/webpack-encore": "^4.0.0",
-        "core-js": "^3.23.0",
-        "file-loader": "^6.2.0",
-        "regenerator-runtime": "^0.13.9",
-        "sass": "^1.70.0",
-        "sass-loader": "^14.0.0",
-        "webpack": "^5.74.0",
-        "webpack-cli": "^4.10.0",
-        "webpack-notifier": "^1.15.0"
+        "bootstrap-icons": "^1.11.0"
     }
 }

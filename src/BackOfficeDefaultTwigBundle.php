@@ -28,14 +28,6 @@ final class BackOfficeDefaultTwigBundle extends AbstractBundle
 
     private const ADMIN_TEMPLATE_PARAMETER = 'thelia_admin_template';
 
-    private const ASSETS_SYMLINK_RELATIVE = 'templates-assets/backOffice/default-twig/dist';
-
-    public function boot(): void
-    {
-        parent::boot();
-        $this->ensureAssetsSymlink();
-    }
-
     public function build(ContainerBuilder $container): void
     {
         parent::build($container);
@@ -142,31 +134,5 @@ final class BackOfficeDefaultTwigBundle extends AbstractBundle
         // Templates live at the bundle root so the Thelia ParserResolver picks them up
         // automatically (`templates/backOffice/<active>/<name>.html.twig`).
         return \dirname(__DIR__);
-    }
-
-    /**
-     * Mirror the assets dist/ folder into public/templates-assets so encore_entry_*_tags URLs resolve.
-     * The shared EncoreExtension only creates one symlink per request based on a static admin flag,
-     * which is set too late for the BO build, so we replicate it at bundle boot.
-     */
-    private function ensureAssetsSymlink(): void
-    {
-        if (!\defined('THELIA_WEB_DIR')) {
-            return;
-        }
-
-        $source = \dirname(__DIR__).'/dist';
-        $target = THELIA_WEB_DIR.self::ASSETS_SYMLINK_RELATIVE;
-
-        if (!is_dir($source) || is_link($target) || is_dir($target)) {
-            return;
-        }
-
-        $parent = \dirname($target);
-        if (!is_dir($parent) && !mkdir($parent, 0o755, true) && !is_dir($parent)) {
-            return;
-        }
-
-        @symlink($source, $target);
     }
 }

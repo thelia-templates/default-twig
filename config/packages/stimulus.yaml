@@ -1,0 +1,6 @@
+stimulus:
+    # The Stimulus controllers live inside this AssetMapper-served template.
+    # (The front-office flexy theme loads its own controllers through Webpack Encore.)
+    controllers_json: '%kernel.project_dir%/templates/backOffice/default-twig/assets/controllers.json'
+    controller_paths:
+        - '%kernel.project_dir%/templates/backOffice/default-twig/assets/controllers'

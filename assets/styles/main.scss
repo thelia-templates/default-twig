@@ -3,12 +3,18 @@
 
 @import "variables";
 
-// Bootstrap 5
-@import "~bootstrap/scss/bootstrap";
+// Bootstrap 5 — compiled from source (via symfonycasts/sass-bundle) so the
+// $variable overrides in _variables.scss regenerate Bootstrap's utilities.
+@import "../../node_modules/bootstrap/scss/bootstrap";
 
-// Bootstrap Icons
-$bootstrap-icons-font-dir: "~bootstrap-icons/font/fonts";
-@import "~bootstrap-icons/font/bootstrap-icons.scss";
+// Bootstrap Icons — the font files are copied to ./fonts (next to the compiled
+// CSS) so AssetMapper can digest and serve them. We override the font src with
+// clean URLs (no ?hash cache-buster) to keep AssetMapper's url() rewriting happy.
+$bootstrap-icons-font-dir: "fonts";
+$bootstrap-icons-font-src:
+    url("fonts/bootstrap-icons.woff2") format("woff2"),
+    url("fonts/bootstrap-icons.woff") format("woff");
+@import "../../node_modules/bootstrap-icons/font/bootstrap-icons";
 
 // Back-office layout
 $bo-side-nav-width: 240px;

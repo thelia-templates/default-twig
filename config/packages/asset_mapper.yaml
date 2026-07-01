@@ -1,0 +1,20 @@
+framework:
+    asset_mapper:
+        # Only the back-office `default-twig` template is served through AssetMapper.
+        # The front-office (flexy) still builds its assets with Webpack Encore.
+        # (Imported by BackOfficeDefaultTwigBundle::prependExtension when this
+        # template is the active admin template.)
+        paths:
+            # Root assets/ holds only the importmap vendor dir (assets/vendor);
+            # it must be a mapped path so vendored packages are discoverable.
+            assets: ''
+            templates/backOffice/default-twig/assets: backoffice
+        missing_import_mode: strict
+        excluded_patterns:
+            - '*/assets/styles/_*.scss'
+            - '*/assets/styles/**/_*.scss'
+
+when@prod:
+    framework:
+        asset_mapper:
+            missing_import_mode: warn

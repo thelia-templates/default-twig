@@ -214,7 +214,7 @@ final class CategoryController
     #[Route('/toggle-online', name: 'set-default', methods: ['GET', 'POST'])]
     public function toggleOnline(Request $request): Response
     {
-        $categoryId = (int) ($request->query->get('category_id') ?? $request->request->get('category_id', 0));
+        $categoryId = (int) $request->get('category_id', 0);
         $category = CategoryQuery::create()->findPk($categoryId);
         if ($category === null) {
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
@@ -236,9 +236,9 @@ final class CategoryController
     public function updatePosition(Request $request): Response
     {
         $event = new UpdatePositionEvent(
-            (int) ($request->query->get('category_id') ?? $request->request->get('category_id', 0)),
-            (int) ($request->query->get('mode') ?? $request->request->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE)),
-            (int) ($request->query->get('position') ?? $request->request->get('position', 0)),
+            (int) $request->get('category_id', 0),
+            (int) $request->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE),
+            (int) $request->get('position', 0),
         );
 
         return $this->action->tokenAction(
@@ -329,7 +329,7 @@ final class CategoryController
     #[Route('/delete', name: 'delete', methods: ['POST', 'GET'])]
     public function delete(Request $request): Response
     {
-        $categoryId = (int) ($request->query->get('category_id') ?? $request->request->get('category_id', 0));
+        $categoryId = (int) $request->get('category_id', 0);
         $category = CategoryQuery::create()->findPk($categoryId);
         $parentId = $category?->getParent() ?? 0;
 
@@ -372,7 +372,7 @@ final class CategoryController
             ->setChapo($this->stringOrNull($data['chapo'] ?? null))
             ->setDescription($this->stringOrNull($data['description'] ?? null))
             ->setPostscriptum($this->stringOrNull($data['postscriptum'] ?? null))
-            ->setDefaultTemplateId((int) ($data['default_template_id'] ?? 0));
+            ->setDefaultTemplateId($this->intOrNull($data['default_template_id'] ?? null));
 
         return $event;
     }
@@ -589,5 +589,14 @@ final class CategoryController
         $cast = (string) $value;
 
         return $cast === '' ? null : $cast;
+    }
+
+    private function intOrNull(mixed $value): ?int
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return (int) $value;
     }
 }
