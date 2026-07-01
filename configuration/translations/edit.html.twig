@@ -16,7 +16,8 @@
 {% block content %}
     <div class="container-fluid" data-testid="translations-page"
          data-controller="bo-translations"
-         data-bo-translations-base-url-value="{{ path('admin.configuration.translations') }}">
+         data-bo-translations-base-url-value="{{ path('admin.configuration.translations') }}"
+         data-bo-translations-developer-allowed-value="{{ developer_mode_enabled ? 'true' : 'false' }}">
 
         <h1 class="h3 mb-3">{{ 'Translations'|trans }}</h1>
 
@@ -149,16 +150,27 @@
                             <li>{{ 'Redefine the text globally. Every text will be translated with this translation, except if there is a translation for this resource.'|trans }}</li>
                         </ul>
                         <p class="mb-1 small text-muted">
-                            <strong>{{ 'User mode'|trans }}</strong>: {{ 'redefines translations for your website only.'|trans }}<br>
-                            <strong>{{ 'Developer mode'|trans }}</strong>: {{ 'edits the resource translations directly (Thelia core, modules, templates).'|trans }}
+                            <strong>{{ 'User mode'|trans }}</strong>: {{ 'redefines translations for your website only.'|trans }}
+                            {% if developer_mode_enabled %}
+                                <br>
+                                <strong>{{ 'Developer mode'|trans }}</strong>: {{ 'edits the resource translations directly (Thelia core, modules, templates).'|trans }}
+                            {% endif %}
                         </p>
+                        {% if not developer_mode_enabled %}
+                            <p class="mb-0 small text-muted" data-testid="translations-user-mode-only">
+                                <i class="bi bi-shield-check me-1" aria-hidden="true"></i>
+                                {{ 'Your edits are saved to the local override layer and never overwrite the translations shipped with the code. Developer mode, which edits those versioned files, is available on development instances only.'|trans }}
+                            </p>
+                        {% endif %}
                     </div>
-                    <div class="col-md-3">
-                        <div class="btn-group w-100" role="group" aria-label="{{ 'Editing mode'|trans }}">
-                            <button type="button" class="btn btn-outline-primary" data-bo-translations-target="userModeButton" data-action="bo-translations#selectUserMode" data-testid="translations-mode-user">{{ 'User mode'|trans }}</button>
-                            <button type="button" class="btn btn-outline-primary" data-bo-translations-target="developerModeButton" data-action="bo-translations#selectDeveloperMode" data-testid="translations-mode-developer">{{ 'Developer mode'|trans }}</button>
+                    {% if developer_mode_enabled %}
+                        <div class="col-md-3">
+                            <div class="btn-group w-100" role="group" aria-label="{{ 'Editing mode'|trans }}">
+                                <button type="button" class="btn btn-outline-primary" data-bo-translations-target="userModeButton" data-action="bo-translations#selectUserMode" data-testid="translations-mode-user">{{ 'User mode'|trans }}</button>
+                                <button type="button" class="btn btn-outline-primary" data-bo-translations-target="developerModeButton" data-action="bo-translations#selectDeveloperMode" data-testid="translations-mode-developer">{{ 'Developer mode'|trans }}</button>
+                            </div>
                         </div>
-                    </div>
+                    {% endif %}
                 </div>
             </div>
 

@@ -31,13 +31,16 @@ export default class extends Controller {
     static values = {
         baseUrl: String,
         userModeCookie: { type: String, default: 'translation_userMode' },
+        // When false, developer mode (which edits the versioned translation files) is
+        // unavailable: the editor is locked to the safe local-override path.
+        developerAllowed: { type: Boolean, default: true },
     };
 
     static targets = ['customRow', 'globalRow', 'defaultInput', 'userModeButton', 'developerModeButton', 'developerOnly'];
 
     connect() {
         this.dirty = false;
-        this.#applyMode(this.#readMode());
+        this.#applyMode(this.developerAllowedValue ? this.#readMode() : true);
     }
 
     changeItem() {
@@ -70,6 +73,9 @@ export default class extends Controller {
 
     selectDeveloperMode(event) {
         event?.preventDefault();
+        if (!this.developerAllowedValue) {
+            return;
+        }
         this.#applyMode(false);
     }
 

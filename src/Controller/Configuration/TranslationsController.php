@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace BackOfficeDefaultTwigBundle\Controller\Configuration;
 
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -49,6 +50,8 @@ final class TranslationsController
         private readonly TemplateHelperInterface $templateHelper,
         private readonly UrlGeneratorInterface $urls,
         private readonly TokenProvider $tokens,
+        #[Autowire(param: 'kernel.debug')]
+        private readonly bool $developerModeEnabled = false,
     ) {
     }
 
@@ -100,6 +103,7 @@ final class TranslationsController
             'email_templates' => $this->templateNames(TemplateDefinition::EMAIL, THELIA_TEMPLATE_DIR),
             'available_languages' => $this->languageOptions(),
             'is_writable' => $this->isWritableI18nDirectory(THELIA_LOCAL_DIR.'I18n'),
+            'developer_mode_enabled' => $this->developerModeEnabled,
             'all_strings' => [],
             'max_input_vars_warning' => false,
             'required_max_input_vars' => 0,
@@ -135,7 +139,11 @@ final class TranslationsController
                             ->setDomain($domain)
                             ->setLocale($locale)
                             ->setCustomFallbackStrings((array) $request->request->all('translation_custom'))
-                            ->setGlobalFallbackStrings((array) $request->request->all('translation_global'));
+                            ->setGlobalFallbackStrings((array) $request->request->all('translation_global'))
+                            // Developer mode writes the versioned I18n files. Reserve it to dev
+                            // instances so a merchant edit never conflicts with a git push; a
+                            // merchant only ever writes the local (non-versioned) override layer.
+                            ->setDeveloperMode($this->developerModeEnabled);
 
                         $this->events->dispatch($event, TheliaEvents::TRANSLATION_WRITE_FILE);
 

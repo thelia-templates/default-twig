@@ -1523,4 +1523,5 @@ return [
     'This module is mandatory and cannot be deactivated.' => 'Ce module est obligatoire et ne peut pas être désactivé.',
     'Activate the %count% selected module(s)?' => 'Activer les %count% module(s) sélectionné(s) ?',
     'Deactivate the %count% selected module(s)?' => 'Désactiver les %count% module(s) sélectionné(s) ?',
+    'Your edits are saved to the local override layer and never overwrite the translations shipped with the code. Developer mode, which edits those versioned files, is available on development instances only.' => 'Vos modifications sont enregistrées dans la couche de surcharge locale et ne remplacent jamais les traductions livrées avec le code. Le mode développeur, qui édite ces fichiers versionnés, n\'est disponible que sur les instances de développement.',
 ];
