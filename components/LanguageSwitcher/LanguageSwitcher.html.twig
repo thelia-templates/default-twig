@@ -22,7 +22,7 @@
                    title="{{ 'Edit information in %lang'|trans({ '%lang': lang.title }) }}"
                    data-testid="bo-language-switcher-{{ lang.code }}"
                    {{ active ? 'aria-current="true"' : '' }}>
-                    <img src="{{ asset('backoffice/img/svgFlags/' ~ lang.code ~ '.svg') }}" alt="{{ lang.title }}" width="20" height="14" class="me-1">
+                    <img src="{{ asset('backOffice/img/svgFlags/' ~ lang.code ~ '.svg') }}" alt="{{ lang.title }}" width="20" height="14" class="me-1">
                     <span>{{ lang.code|upper }}</span>
                 </a>
             {% endfor %}

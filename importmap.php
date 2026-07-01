@@ -12,15 +12,15 @@
  * The "importmap:require" command can be used to add new entries to this file.
  */
 return [
-    'app' => [
-        'path' => 'backoffice/app.js',
+    'backOfficeApp' => [
+        'path' => './assets/app.js',
         'entrypoint' => true,
     ],
     '@hotwired/stimulus' => [
         'version' => '3.2.2',
     ],
     '@symfony/stimulus-bundle' => [
-        'path' => './vendor/symfony/stimulus-bundle/assets/dist/loader.js',
+        'path' => '../../../vendor/symfony/stimulus-bundle/assets/dist/loader.js',
     ],
     'bootstrap' => [
         'version' => '5.3.8',

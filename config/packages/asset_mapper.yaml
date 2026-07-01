@@ -7,12 +7,16 @@ framework:
         paths:
             # Root assets/ holds only the importmap vendor dir (assets/vendor);
             # it must be a mapped path so vendored packages are discoverable.
-            assets: ''
-            templates/backOffice/default-twig/assets: backoffice
+             '%kernel.project_dir%/templates/backOffice/default-twig/assets': backOffice
+             '%kernel.project_dir%/templates/backOffice/default-twig/assets/styles': backOfficeStyles
+        vendor_dir: '%kernel.project_dir%/templates/backOffice/default-twig/assets/vendor'
+        importmap_path: '%kernel.project_dir%/templates/backOffice/default-twig/importmap.php'
+        public_prefix: '/assets/backOffice/default-twig'
         missing_import_mode: strict
         excluded_patterns:
             - '*/assets/styles/_*.scss'
             - '*/assets/styles/**/_*.scss'
+            - '*/*.html.twig'
 
 when@prod:
     framework:
