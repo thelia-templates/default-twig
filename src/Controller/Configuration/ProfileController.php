@@ -262,10 +262,11 @@ final class ProfileController
         };
         $profiles = $query->find();
         $rows = [];
-        $createLocale = $request?->getLocale() ?? $this->resolveDefaultLocale();
+        $listLocale = $this->resolveDefaultLocale();
+        $createLocale = $request?->getLocale() ?? $listLocale;
 
         foreach ($profiles as $profile) {
-            $rows[] = $this->profileToRow($profile);
+            $rows[] = $this->profileToRow($profile->setLocale($listLocale));
         }
 
         $createForm = $this->formFactory->createNamed('thelia_profile_create', ProfileType::class, [
@@ -345,6 +346,7 @@ final class ProfileController
     private function profileToRow(Profile $profile): array
     {
         $id = $profile->getId();
+        $title = $profile->getTitle() ?: $profile->getCode();
 
         $actions = [
             new RowAction(
@@ -360,14 +362,14 @@ final class ProfileController
                 modalTarget: '#profile-delete-modal',
                 grantedAttribute: AccessManager::DELETE,
                 grantedSubject: self::RESOURCE,
-                dataAttributes: ['profile-id' => $id, 'profile-title' => $profile->getTitle()],
+                dataAttributes: ['profile-id' => $id, 'profile-title' => $title],
             ),
         ];
 
         return [
             'id' => $id,
             'code' => $profile->getCode(),
-            'title' => $profile->getTitle(),
+            'title' => $title,
             '_actions' => $actions,
         ];
     }
