@@ -234,17 +234,15 @@
                 rowHookArgs: { order_id: 'id' },
             }) }}
             {% if orders_last_page|default(1) > 1 %}
-                <div class="mt-2">
-                    {{ component('BoPagination', {
-                        route: 'admin.customer.update.view',
-                        currentPage: orders_page,
-                        lastPage: orders_last_page,
-                        routeParams: { customer_id: customer.id },
-                        pageParam: 'orders_page',
-                        ariaLabel: 'Customer orders pagination'|trans,
-                        testid: 'customer-orders',
-                    }) }}
-                </div>
+                {{ component('BoPagination', {
+                    route: 'admin.customer.update.view',
+                    currentPage: orders_page,
+                    lastPage: orders_last_page,
+                    routeParams: { customer_id: customer.id },
+                    pageParam: 'orders_page',
+                    ariaLabel: 'Customer orders pagination'|trans,
+                    testid: 'customer-orders',
+                }) }}
             {% endif %}
         </div>
     </div>

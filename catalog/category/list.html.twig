@@ -102,16 +102,14 @@
                     rowHookArgs: { product_id: 'id' },
                 }) }}
 
-                <div class="mt-3">
-                    {{ component('BoPagination', {
-                        route: 'admin.categories.default',
-                        currentPage: product_current_page,
-                        lastPage: product_pages,
-                        routeParams: { category_id: parent_id },
-                        ariaLabel: 'Category products pagination',
-                        testid: 'category-products-pagination',
-                    }) }}
-                </div>
+                {{ component('BoPagination', {
+                    route: 'admin.categories.default',
+                    currentPage: product_current_page,
+                    lastPage: product_pages,
+                    routeParams: { category_id: parent_id },
+                    ariaLabel: 'Category products pagination',
+                    testid: 'category-products-pagination',
+                }) }}
             </section>
 
             {% if is_granted('CREATE', 'admin.product') %}

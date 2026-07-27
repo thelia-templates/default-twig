@@ -55,15 +55,13 @@
             sortKeepParams: { page: current_page > 1 ? current_page : null },
         }) }}
 
-        <div class="mt-3">
-            {{ component('BoPagination', {
-                route: 'admin.coupon.default',
-                currentPage: current_page,
-                lastPage: pages,
-                ariaLabel: 'Coupons pagination',
-                testid: 'coupons-pagination',
-            }) }}
-        </div>
+        {{ component('BoPagination', {
+            route: 'admin.coupon.default',
+            currentPage: current_page,
+            lastPage: pages,
+            ariaLabel: 'Coupons pagination',
+            testid: 'coupons-pagination',
+        }) }}
     </div>
 
     {{ safe_hook('coupon.bottom') }}
