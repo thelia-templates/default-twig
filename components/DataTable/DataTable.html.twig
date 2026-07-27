@@ -18,7 +18,13 @@
                 <tr>
                     {% for column in columns %}
                         <th scope="col" class="text-{{ column.cellAlign }}">
-                            {%- if column.sortKey -%}
+                            {%- if column.kind.value == 'select' -%}
+                                <input type="checkbox" class="form-check-input"
+                                       data-bo-bulk-select-target="all"
+                                       data-action="change->bo-bulk-select#toggleAll"
+                                       aria-label="{{ 'Select all'|trans }}"
+                                       data-testid="datatable-{{ id }}-select-all">
+                            {%- elseif column.sortKey -%}
                                 {%- set isActive = sortField == column.sortKey -%}
                                 {%- set nextDirection = isActive and sortDirection == 'asc' ? 'desc' : 'asc' -%}
                                 {%- set sortParams = sortKeepParams|merge({ (sortParam): column.sortKey, (sortDirectionParam): nextDirection }) -%}

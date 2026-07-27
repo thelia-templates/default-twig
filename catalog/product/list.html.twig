@@ -15,7 +15,7 @@
 {% block content %}
     {{ safe_hook('products.top') }}
 
-    <div class="container-fluid" data-testid="products-page">
+    <div class="container-fluid" data-testid="products-page" data-controller="bo-bulk-select">
         {% embed '@BackOfficeDefaultTwig/_page_header.html.twig' with { title: 'Products management'|trans } %}
             {% block actions %}
                 {% if is_granted('CREATE', 'admin.product') %}
@@ -206,11 +206,63 @@
             </div>
         {% endif %}
 
+        {% if is_granted('UPDATE', 'admin.product') or is_granted('DELETE', 'admin.product') %}
+            <div class="bo-bulk-toolbar card border-0 shadow-sm mb-3" data-bo-bulk-select-target="toolbar" hidden
+                 data-testid="product-bulk-toolbar">
+                <div class="card-body d-flex flex-wrap align-items-center gap-2 py-2">
+                    <span class="badge text-bg-primary" data-testid="product-bulk-count">
+                        <span data-bo-bulk-select-target="count">0</span>
+                        {{ 'selected'|trans }}
+                    </span>
+
+                    <label class="visually-hidden" for="product-bulk-action">{{ 'Bulk actions'|trans }}</label>
+                    <select id="product-bulk-action" class="form-select form-select-sm w-auto"
+                            data-controller="bo-bulk-action-picker"
+                            data-bo-bulk-action-picker-confirm-delete-value="{{ 'Delete the selected products? This cannot be undone.'|trans }}"
+                            data-action="change->bo-bulk-action-picker#run"
+                            data-testid="product-bulk-action-select">
+                        <option value="">{{ 'Bulk actions'|trans }}</option>
+                        {% if is_granted('UPDATE', 'admin.product') %}
+                            <option value="edit">{{ 'Edit'|trans }}</option>
+                            <option value="online">{{ 'Put online'|trans }}</option>
+                            <option value="offline">{{ 'Take offline'|trans }}</option>
+                        {% endif %}
+                        {% if is_granted('DELETE', 'admin.product') %}
+                            <option value="delete">{{ 'Delete'|trans }}</option>
+                        {% endif %}
+                    </select>
+
+                    <button type="button" class="btn btn-sm btn-link" data-action="bo-bulk-select#clear"
+                            data-testid="product-bulk-clear">{{ 'Clear selection'|trans }}</button>
+
+                    {% if is_granted('UPDATE', 'admin.product') %}
+                        <form method="post" action="{{ path('admin.products.bulk.edit') }}" class="d-none"
+                              data-bo-bulk-select-target="form" data-bulk-form="online" data-testid="product-bulk-online-form">
+                            <input type="hidden" name="_token" value="{{ assignToken() }}">
+                            <input type="hidden" name="visibility" value="online">
+                        </form>
+                        <form method="post" action="{{ path('admin.products.bulk.edit') }}" class="d-none"
+                              data-bo-bulk-select-target="form" data-bulk-form="offline" data-testid="product-bulk-offline-form">
+                            <input type="hidden" name="_token" value="{{ assignToken() }}">
+                            <input type="hidden" name="visibility" value="offline">
+                        </form>
+                    {% endif %}
+                    {% if is_granted('DELETE', 'admin.product') %}
+                        <form method="post" action="{{ path('admin.products.bulk.delete') }}" class="d-none"
+                              data-bo-bulk-select-target="form" data-bulk-form="delete" data-testid="product-bulk-delete-form">
+                            <input type="hidden" name="_token" value="{{ assignToken() }}">
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+
         {{ safe_hook('products.caption', { location: 'product_list_caption' }) }}
 
         {{ component('BoDataTable', {
             id: 'products',
             columns: [
+                column_select('_select', 'Select this product'|trans, 'id', 'ref'),
                 column('id', 'ID'|trans),
                 column_html('thumbnail_html', 'Image'|trans, 'center'),
                 column_html('ref_html', 'Reference'|trans, 'start', 'ref'),
@@ -249,6 +301,127 @@
             ariaLabel: 'Product pagination',
             testid: 'product-pagination',
         }) }}
+
+        {% if is_granted('UPDATE', 'admin.product') %}
+            <div class="modal fade" id="product-bulk-edit-modal" tabindex="-1" aria-hidden="true" data-testid="product-bulk-edit-modal">
+                <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                    <form method="post" action="{{ path('admin.products.bulk.edit') }}" class="modal-content"
+                          data-bo-bulk-select-target="form" data-testid="product-bulk-edit-form">
+                        <input type="hidden" name="_token" value="{{ assignToken() }}">
+                        <div class="modal-header">
+                            <h2 class="modal-title h5">{{ 'Edit the selected products'|trans }}</h2>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'Close'|trans }}"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p class="text-muted small">
+                                {{ 'Products concerned'|trans }} (<span data-bo-bulk-select-target="count">0</span>) :
+                                <span class="fw-semibold" data-bo-bulk-select-target="summary"></span>
+                            </p>
+                            <p class="text-muted small">{{ 'Leave a field untouched to keep its current value.'|trans }}</p>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label" for="bulk-visibility">{{ 'Online'|trans }}</label>
+                                    <select id="bulk-visibility" name="visibility" class="form-select" data-testid="product-bulk-visibility">
+                                        <option value="">{{ 'Unchanged'|trans }}</option>
+                                        <option value="online">{{ 'Put online'|trans }}</option>
+                                        <option value="offline">{{ 'Take offline'|trans }}</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="bulk-default-category">{{ 'Default category'|trans }}</label>
+                                    <select id="bulk-default-category" name="default_category_id" class="form-select" data-testid="product-bulk-default-category">
+                                        <option value="">{{ 'Unchanged'|trans }}</option>
+                                        {% for cat in filters.category_options %}
+                                            {% if cat.id > 0 %}<option value="{{ cat.id }}">{{ cat.title }}</option>{% endif %}
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="bulk-template">{{ 'Product template'|trans }}</label>
+                                    <select id="bulk-template" name="template_id" class="form-select" data-testid="product-bulk-template">
+                                        <option value="">{{ 'Unchanged'|trans }}</option>
+                                        <option value="0">{{ 'No template'|trans }}</option>
+                                        {% for option in filters.template_options %}
+                                            <option value="{{ option.id }}">{{ option.title }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="bulk-brand">{{ 'Brand / Supplier'|trans }}</label>
+                                    <select id="bulk-brand" name="brand_id" class="form-select" data-testid="product-bulk-brand">
+                                        <option value="">{{ 'Unchanged'|trans }}</option>
+                                        <option value="0">{{ 'No brand'|trans }}</option>
+                                        {% for option in filters.brand_options %}
+                                            <option value="{{ option.id }}">{{ option.title }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <hr>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label" for="bulk-category-add">{{ 'Add additional categories'|trans }}</label>
+                                    <select id="bulk-category-add" name="category_add_ids[]" class="form-select" multiple size="5" data-testid="product-bulk-category-add">
+                                        {% for cat in filters.category_options %}
+                                            {% if cat.id > 0 %}<option value="{{ cat.id }}">{{ cat.title }}</option>{% endif %}
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="bulk-category-remove">{{ 'Remove additional categories'|trans }}</label>
+                                    <select id="bulk-category-remove" name="category_remove_ids[]" class="form-select" multiple size="5" data-testid="product-bulk-category-remove">
+                                        {% for cat in filters.category_options %}
+                                            {% if cat.id > 0 %}<option value="{{ cat.id }}">{{ cat.title }}</option>{% endif %}
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="bulk-content-add">{{ 'Add associated contents'|trans }}</label>
+                                    <select id="bulk-content-add" name="content_add_ids[]" class="form-select" multiple size="5" data-testid="product-bulk-content-add">
+                                        {% for option in bulk_contents %}
+                                            <option value="{{ option.id }}">{{ option.title }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="bulk-content-remove">{{ 'Remove associated contents'|trans }}</label>
+                                    <select id="bulk-content-remove" name="content_remove_ids[]" class="form-select" multiple size="5" data-testid="product-bulk-content-remove">
+                                        {% for option in bulk_contents %}
+                                            <option value="{{ option.id }}">{{ option.title }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="bulk-accessory-add">{{ 'Add accessories'|trans }}</label>
+                                    <select id="bulk-accessory-add" name="accessory_add_ids[]" class="form-select" multiple size="5" data-testid="product-bulk-accessory-add">
+                                        {% for option in bulk_products %}
+                                            <option value="{{ option.id }}">{{ option.title }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="bulk-accessory-remove">{{ 'Remove accessories'|trans }}</label>
+                                    <select id="bulk-accessory-remove" name="accessory_remove_ids[]" class="form-select" multiple size="5" data-testid="product-bulk-accessory-remove">
+                                        {% for option in bulk_products %}
+                                            <option value="{{ option.id }}">{{ option.title }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ 'Cancel'|trans }}</button>
+                            <button type="submit" class="btn btn-primary" data-testid="product-bulk-edit-submit">
+                                <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Apply to the selection'|trans }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        {% endif %}
     </div>
 
     {{ safe_hook('products.bottom') }}

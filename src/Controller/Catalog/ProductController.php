@@ -73,6 +73,7 @@ final class ProductController
     private const LIST_TEMPLATE = '@BackOfficeDefaultTwig/catalog/product/list.html.twig';
     private const EDIT_TEMPLATE = '@BackOfficeDefaultTwig/catalog/product/edit.html.twig';
     private const PAGE_SIZE = 25;
+    private const BULK_CHOICES_LIMIT = 500;
 
     public function __construct(
         private readonly AdminFormAction $action,
@@ -120,6 +121,8 @@ final class ProductController
                 'available_categories' => $categories,
                 'available_currencies' => $this->currencyChoices(),
                 'available_tax_rules' => $this->taxRuleChoices(),
+                'bulk_contents' => $this->contentChoices($locale),
+                'bulk_products' => $this->productChoices($locale),
             ],
         )));
     }
@@ -623,6 +626,42 @@ final class ProductController
         foreach (CategoryQuery::create()->orderById()->find() as $category) {
             $category->setLocale($locale);
             $items[] = ['id' => (int) $category->getId(), 'title' => (string) $category->getTitle()];
+        }
+
+        return $items;
+    }
+
+    /**
+     * Bounded option lists for the bulk edit modal: enough to cover a typical
+     * catalog without turning the select into a full search engine.
+     *
+     * @return list<array{id: int, title: string}>
+     */
+    private function contentChoices(string $locale): array
+    {
+        $items = [];
+        foreach (\Thelia\Model\ContentQuery::create()->orderById()->limit(self::BULK_CHOICES_LIMIT)->find() as $content) {
+            $content->setLocale($locale);
+            $items[] = ['id' => (int) $content->getId(), 'title' => (string) $content->getTitle()];
+        }
+
+        usort($items, static fn (array $a, array $b): int => strcasecmp($a['title'], $b['title']));
+
+        return $items;
+    }
+
+    /**
+     * @return list<array{id: int, title: string}>
+     */
+    private function productChoices(string $locale): array
+    {
+        $items = [];
+        foreach (ProductQuery::create()->orderByRef()->limit(self::BULK_CHOICES_LIMIT)->find() as $product) {
+            $product->setLocale($locale);
+            $items[] = [
+                'id' => (int) $product->getId(),
+                'title' => trim((string) $product->getRef().' - '.$product->getTitle()),
+            ];
         }
 
         return $items;
