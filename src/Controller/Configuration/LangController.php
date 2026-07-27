@@ -360,6 +360,7 @@ final class LangController
             'create_form' => $createForm->createView(),
             'default_behavior_form' => $defaultBehaviorForm->createView(),
             'url_form' => $urlForm->createView(),
+            'lang_url_prefix' => LangUrlType::FIELD_PREFIX,
             'one_domain_per_lang' => (bool) ConfigQuery::isMultiDomainActivated(),
             'sort_field' => $sort->field,
             'sort_direction' => $sort->direction,

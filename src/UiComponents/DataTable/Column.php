@@ -22,6 +22,7 @@ final readonly class Column
      *                                        - TOGGLE: { url_key: string|null, icon_on: string, icon_off: string } (null url_key → readonly)
      *                                        - BADGE:  { variants: array<scalar, string> mapping row value → Bootstrap variant, label_key?: string optional row key holding the visible label, color_key?: string optional row key holding a CSS color taking precedence over variants }
      *                                        - RADIO:  { name: string, value_key: string, checked_when_key: string|null, label_key: string|null }
+     *                                        - SELECT: { value_key: string, label_key: string|null } row checkbox feeding a bulk toolbar
      *                                        - TEXT / HTML / ACTIONS: empty
      * @param ?string              $sortKey   Sort field this column maps to. When set, the header becomes a sortable link.
      *                                        Use the same string the consuming controller expects in its order query param.

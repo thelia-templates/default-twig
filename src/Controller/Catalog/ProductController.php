@@ -24,6 +24,11 @@ use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\Service\Catalog\ProductRelationsContext;
 use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
 use BackOfficeDefaultTwigBundle\Service\Listing\ListingThumbnailPresenter;
+use BackOfficeDefaultTwigBundle\Service\Catalog\ProductFilterPresenter;
+use BackOfficeDefaultTwigBundle\Service\Catalog\ProductFilters;
+use BackOfficeDefaultTwigBundle\Service\Catalog\ProductPricingPresenter;
+use BackOfficeDefaultTwigBundle\Service\Catalog\ProductPricingProvider;
+use BackOfficeDefaultTwigBundle\Service\Catalog\ProductPricingSnapshot;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Symfony\Component\Form\FormFactoryInterface;
@@ -68,6 +73,7 @@ final class ProductController
     private const LIST_TEMPLATE = '@BackOfficeDefaultTwig/catalog/product/list.html.twig';
     private const EDIT_TEMPLATE = '@BackOfficeDefaultTwig/catalog/product/edit.html.twig';
     private const PAGE_SIZE = 25;
+    private const BULK_CHOICES_LIMIT = 500;
 
     public function __construct(
         private readonly AdminFormAction $action,
@@ -82,6 +88,9 @@ final class ProductController
         private readonly ProductRepository $productRepository,
         private readonly EditLocaleResolver $editLocale,
         private readonly ListingThumbnailPresenter $thumbnails,
+        private readonly ProductFilterPresenter $filterPresenter,
+        private readonly ProductPricingProvider $pricing,
+        private readonly ProductPricingPresenter $pricingPresenter,
     ) {
     }
 
@@ -93,22 +102,27 @@ final class ProductController
         }
 
         $page = max(1, (int) $request->query->get('page', 1));
-        $categoryId = (int) $request->query->get('category_id', 0);
-        $search = trim((string) $request->query->get('q', ''));
-        $order = (string) $request->query->get('product_order', 'manual');
+        $filters = ProductFilters::fromRequest($request);
+        $locale = $this->defaultLocale();
+        $categories = $this->categoryChoices();
 
         return new Response($this->twig->render(self::LIST_TEMPLATE, array_merge(
-            $this->paginatedRows($categoryId, $search, $order, $page),
+            $this->paginatedRows($filters, $page),
             [
                 'current_page' => $page,
-                'current_category' => $categoryId,
-                'current_search' => $search,
-                'current_order' => $order,
+                'current_category' => $filters->categoryId ?? 0,
+                'current_search' => $filters->search,
+                'current_order' => $filters->sort,
+                'filters' => $this->filterPresenter->present($filters, $locale, $categories),
+                'query_params' => $filters->toQueryParams(),
+                'allow_manual_ordering' => $filters->allowsManualOrdering(),
                 'create_form' => $this->buildCreateForm($request)->createView(),
                 'clone_form' => $this->buildCloneForm()->createView(),
-                'available_categories' => $this->categoryChoices(),
+                'available_categories' => $categories,
                 'available_currencies' => $this->currencyChoices(),
                 'available_tax_rules' => $this->taxRuleChoices(),
+                'bulk_contents' => $this->contentChoices($locale),
+                'bulk_products' => $this->productChoices($locale),
             ],
         )));
     }
@@ -479,38 +493,15 @@ final class ProductController
     /**
      * @return array<string, mixed>
      */
-    private function paginatedRows(int $categoryId, string $search, string $order, int $page): array
+    /**
+     * @return array<string, mixed>
+     */
+    private function paginatedRows(ProductFilters $filters, int $page): array
     {
         $locale = $this->defaultLocale();
-        $query = ProductQuery::create();
+        $query = $filters->applyTo(ProductQuery::create(), $locale);
 
-        if ($categoryId > 0) {
-            $query->useProductCategoryQuery()
-                ->filterByCategoryId($categoryId)
-                ->endUse();
-        }
-
-        if ($search !== '') {
-            $titleIds = \Thelia\Model\ProductI18nQuery::create()
-                ->filterByLocale($locale)
-                ->filterByTitle('%'.$search.'%', Criteria::LIKE)
-                ->select(['Id'])
-                ->find()
-                ->toArray();
-
-            // select(['Id']) yields a flat list of scalar ids; normalize to int.
-            $ids = array_map(static fn ($id): int => (int) $id, $titleIds);
-
-            // condition+combine groups the title/ref match as a single OR cluster,
-            // otherwise chaining _or() bleeds into the category scope above and turns
-            // the whole WHERE into an OR (products from every category leak in).
-            $query
-                ->condition('search_title', ProductTableMap::COL_ID.' IN ('.implode(',', $ids ?: [0]).')')
-                ->condition('search_ref', ProductTableMap::COL_REF.' LIKE ?', '%'.$search.'%', \PDO::PARAM_STR)
-                ->combine(['search_title', 'search_ref'], Criteria::LOGICAL_OR);
-        }
-
-        $this->applyOrder($query, $order);
+        $this->applyOrder($query, $filters);
 
         $total = (int) $query->count();
         $pages = max(1, (int) ceil($total / self::PAGE_SIZE));
@@ -521,11 +512,17 @@ final class ProductController
             ->limit(self::PAGE_SIZE)
             ->find();
 
+        $productIds = [];
+        foreach ($products as $product) {
+            $productIds[] = (int) $product->getId();
+        }
+        $pricing = $this->pricing->forProducts($productIds);
+
         $rows = [];
         foreach ($products as $product) {
             \assert($product instanceof Product);
             $product->setLocale($locale);
-            $rows[] = $this->productToRow($product);
+            $rows[] = $this->productToRow($product, $pricing[(int) $product->getId()] ?? null);
         }
 
         return [
@@ -540,9 +537,10 @@ final class ProductController
     /**
      * @return array<string, mixed>
      */
-    private function productToRow(Product $product): array
+    private function productToRow(Product $product, ?ProductPricingSnapshot $pricing): array
     {
         $id = (int) $product->getId();
+        $pricing ??= new ProductPricingSnapshot();
 
         $actions = [
             new RowAction(
@@ -582,6 +580,9 @@ final class ProductController
                 htmlspecialchars($editUrl),
                 htmlspecialchars((string) $product->getTitle()),
             ),
+            'price_html' => $this->pricingPresenter->price($pricing),
+            'promo_price_html' => $this->pricingPresenter->promoPrice($pricing),
+            'stock_html' => $this->pricingPresenter->stock($pricing),
             'visible' => (bool) $product->getVisible(),
             'position' => (int) $product->getPosition(),
             'toggle_visible_url' => $this->tokenizedUrl('admin.products.set-default', ['product_id' => $id]),
@@ -589,15 +590,28 @@ final class ProductController
         ];
     }
 
-    private function applyOrder(ProductQuery $query, string $order): void
+    private function applyOrder(ProductQuery $query, ProductFilters $filters): void
     {
-        match ($order) {
-            'ref' => $query->orderByRef(Criteria::ASC),
-            'ref_reverse' => $query->orderByRef(Criteria::DESC),
-            'visible' => $query->orderByVisible(Criteria::ASC),
-            'visible_reverse' => $query->orderByVisible(Criteria::DESC),
-            'created' => $query->orderByCreatedAt(Criteria::ASC),
-            'created_reverse' => $query->orderByCreatedAt(Criteria::DESC),
+        $direction = $filters->direction === 'desc' ? Criteria::DESC : Criteria::ASC;
+
+        match ($filters->sort) {
+            'id' => $query->orderById($direction),
+            'ref' => $query->orderByRef($direction),
+            'title' => $query->useProductI18nQuery('order_i18n')
+                ->filterByLocale($this->defaultLocale())
+                ->orderByTitle($direction)
+                ->endUse(),
+            'price' => $query->addAsColumn(
+                'sort_price',
+                '(SELECT pp.price FROM product_price pp
+                    INNER JOIN product_sale_elements pse_sort ON pse_sort.id = pp.product_sale_elements_id
+                    WHERE pse_sort.product_id = '.ProductTableMap::COL_ID.' AND pse_sort.is_default = 1 LIMIT 1)'
+            )->orderBy('sort_price', $direction),
+            'quantity' => $query->addAsColumn(
+                'sort_quantity',
+                '(SELECT COALESCE(SUM(pse_sort_qty.quantity), 0) FROM product_sale_elements pse_sort_qty
+                    WHERE pse_sort_qty.product_id = '.ProductTableMap::COL_ID.')'
+            )->orderBy('sort_quantity', $direction),
             default => $query->orderByPosition(Criteria::ASC),
         };
     }
@@ -612,6 +626,42 @@ final class ProductController
         foreach (CategoryQuery::create()->orderById()->find() as $category) {
             $category->setLocale($locale);
             $items[] = ['id' => (int) $category->getId(), 'title' => (string) $category->getTitle()];
+        }
+
+        return $items;
+    }
+
+    /**
+     * Bounded option lists for the bulk edit modal: enough to cover a typical
+     * catalog without turning the select into a full search engine.
+     *
+     * @return list<array{id: int, title: string}>
+     */
+    private function contentChoices(string $locale): array
+    {
+        $items = [];
+        foreach (\Thelia\Model\ContentQuery::create()->orderById()->limit(self::BULK_CHOICES_LIMIT)->find() as $content) {
+            $content->setLocale($locale);
+            $items[] = ['id' => (int) $content->getId(), 'title' => (string) $content->getTitle()];
+        }
+
+        usort($items, static fn (array $a, array $b): int => strcasecmp($a['title'], $b['title']));
+
+        return $items;
+    }
+
+    /**
+     * @return list<array{id: int, title: string}>
+     */
+    private function productChoices(string $locale): array
+    {
+        $items = [];
+        foreach (ProductQuery::create()->orderByRef()->limit(self::BULK_CHOICES_LIMIT)->find() as $product) {
+            $product->setLocale($locale);
+            $items[] = [
+                'id' => (int) $product->getId(),
+                'title' => trim((string) $product->getRef().' - '.$product->getTitle()),
+            ];
         }
 
         return $items;

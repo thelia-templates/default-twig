@@ -163,7 +163,7 @@
                     <span class="bo-module-row__avatar" aria-hidden="true"><i class="bi {{ module.icon }}"></i></span>
 
                     <span class="bo-module-row__main">
-                        <a class="bo-module-row__name" href="{{ path('admin.module.update', { module_id: module.id }) }}"
+                        <a class="bo-module-row__name" href="{{ module.name_url }}"
                            data-bo-modules-list-target="name">{{ module.name }}</a>
                         {% if module.caption %}
                             <span class="bo-module-row__caption"

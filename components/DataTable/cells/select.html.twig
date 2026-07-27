@@ -1,0 +1,10 @@
+{%- set valueKey = column.options.value_key|default('id') -%}
+{%- set labelKey = column.options.label_key|default(null) -%}
+<input type="checkbox"
+       class="form-check-input"
+       value="{{ row[valueKey]|default('') }}"
+       {% if labelKey %}data-label="{{ row[labelKey]|default('') }}"{% endif %}
+       data-bo-bulk-select-target="row"
+       data-action="change->bo-bulk-select#onRow"
+       aria-label="{{ column.label }}"
+       data-testid="datatable-select-{{ row[valueKey]|default('') }}">

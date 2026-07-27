@@ -23,12 +23,19 @@ use BackOfficeDefaultTwigBundle\Repository\ProductRepository;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
+use Thelia\Core\Security\AccessManager;
+use Thelia\Core\Security\Resource\AdminResources;
+use Thelia\Core\Security\SecurityContext;
 use Thelia\Model\OrderQuery;
 
 /**
  * Composes every dashboard widget (KPIs, chart series, breakdowns, alerts) for
  * a given date range. Repository queries are cheap (indexed SUM/GROUP BY) so
  * we re-run them on every render; cache layer can be added later if needed.
+ *
+ * Each widget is gated on the ACL resource backing its data: an administrator
+ * limited to the catalog gets the stock widget, not the revenue or the orders.
+ * The gate skips the query too, so denied figures are never computed.
  */
 final readonly class DashboardStatsProvider
 {
@@ -44,26 +51,29 @@ final readonly class DashboardStatsProvider
         private ProductRepository $products,
         private UrlGeneratorInterface $urls,
         private TranslatorInterface $translator,
+        private SecurityContext $securityContext,
     ) {
     }
 
     public function compute(DateRange $range, string $locale): DashboardData
     {
         $previous = $range->previous();
+        $canViewOrders = $this->canView(AdminResources::ORDER);
+        $canViewCustomers = $this->canView(AdminResources::CUSTOMER);
+        $canViewProducts = $this->canView(AdminResources::PRODUCT);
 
-        $revenue = $this->orders->getRevenue($range);
-        $orderCount = $this->orders->countOrders($range);
-        $previousRevenue = $this->orders->getRevenue($previous);
-        $previousOrderCount = $this->orders->countOrders($previous);
+        $kpis = [];
 
-        $newCustomers = $this->customers->countNew($range);
-        $previousNewCustomers = $this->customers->countNew($previous);
+        if ($canViewOrders) {
+            $revenue = $this->orders->getRevenue($range);
+            $orderCount = $this->orders->countOrders($range);
+            $previousRevenue = $this->orders->getRevenue($previous);
+            $previousOrderCount = $this->orders->countOrders($previous);
 
-        $aov = $orderCount > 0 ? $revenue / $orderCount : 0.0;
-        $previousAov = $previousOrderCount > 0 ? $previousRevenue / $previousOrderCount : 0.0;
+            $aov = $orderCount > 0 ? $revenue / $orderCount : 0.0;
+            $previousAov = $previousOrderCount > 0 ? $previousRevenue / $previousOrderCount : 0.0;
 
-        $kpis = [
-            new Kpi(
+            $kpis[] = new Kpi(
                 label: $this->translator->trans('Revenue'),
                 value: $this->formatCurrency($revenue),
                 variationPercent: $this->variation($revenue, $previousRevenue),
@@ -71,8 +81,8 @@ final readonly class DashboardStatsProvider
                 accent: 'primary',
                 href: $this->urls->generate('admin.order.list'),
                 testid: 'kpi-revenue',
-            ),
-            new Kpi(
+            );
+            $kpis[] = new Kpi(
                 label: $this->translator->trans('Orders'),
                 value: (string) $orderCount,
                 variationPercent: $this->variation((float) $orderCount, (float) $previousOrderCount),
@@ -80,16 +90,22 @@ final readonly class DashboardStatsProvider
                 accent: 'info',
                 href: $this->urls->generate('admin.order.list'),
                 testid: 'kpi-orders',
-            ),
-            new Kpi(
+            );
+            $kpis[] = new Kpi(
                 label: $this->translator->trans('Average order'),
                 value: $this->formatCurrency($aov),
                 variationPercent: $this->variation($aov, $previousAov),
                 icon: 'bi-receipt',
                 accent: 'success',
                 testid: 'kpi-aov',
-            ),
-            new Kpi(
+            );
+        }
+
+        if ($canViewCustomers) {
+            $newCustomers = $this->customers->countNew($range);
+            $previousNewCustomers = $this->customers->countNew($previous);
+
+            $kpis[] = new Kpi(
                 label: $this->translator->trans('New customers'),
                 value: (string) $newCustomers,
                 variationPercent: $this->variation((float) $newCustomers, (float) $previousNewCustomers),
@@ -97,22 +113,33 @@ final readonly class DashboardStatsProvider
                 accent: 'warning',
                 href: $this->urls->generate('admin.customers'),
                 testid: 'kpi-new-customers',
-            ),
-        ];
+            );
+        }
 
         return new DashboardData(
             range: $range,
             kpis: $kpis,
-            chart: $this->orders->getDailyBuckets($range),
-            statusBreakdown: $this->orders->getStatusBreakdown($locale),
-            recentOrders: $this->loadRecentOrders(),
-            topProducts: $this->products->findTopSellers($range, self::TOP_PRODUCTS_LIMIT, $locale),
-            lowStockProducts: $this->products->findLowStock(self::LOW_STOCK_THRESHOLD, self::LOW_STOCK_LIMIT, $locale),
+            chart: $canViewOrders ? $this->orders->getDailyBuckets($range) : ['labels' => [], 'revenue' => []],
+            statusBreakdown: $canViewOrders ? $this->orders->getStatusBreakdown($locale) : [],
+            recentOrders: $canViewOrders ? $this->loadRecentOrders() : [],
+            // Top sellers expose order amounts, so they follow the orders resource.
+            topProducts: $canViewOrders ? $this->products->findTopSellers($range, self::TOP_PRODUCTS_LIMIT, $locale) : [],
+            lowStockProducts: $canViewProducts ? $this->products->findLowStock(self::LOW_STOCK_THRESHOLD, self::LOW_STOCK_LIMIT, $locale) : [],
             lowStockThreshold: self::LOW_STOCK_THRESHOLD,
-            alerts: $this->buildAlerts(),
+            alerts: $canViewOrders ? $this->buildAlerts() : [],
             periodOptions: $this->buildPeriodOptions($range),
             locale: $locale,
+            showRevenueChart: $canViewOrders,
+            showOrderStatus: $canViewOrders,
+            showRecentOrders: $canViewOrders,
+            showTopProducts: $canViewOrders,
+            showLowStock: $canViewProducts,
         );
+    }
+
+    private function canView(string $resource): bool
+    {
+        return $this->securityContext->isGranted(['ADMIN'], [$resource], [], [AccessManager::VIEW]);
     }
 
     /**

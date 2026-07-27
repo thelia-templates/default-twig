@@ -32,6 +32,7 @@ final class DataTableExtension extends AbstractExtension
             new TwigFunction('column_badge', $this->badgeColumn(...)),
             new TwigFunction('column_actions', $this->actionsColumn(...)),
             new TwigFunction('column_radio', $this->radioColumn(...)),
+            new TwigFunction('column_select', $this->selectColumn(...)),
             new TwigFunction('row_action', $this->rowAction(...)),
         ];
     }
@@ -44,6 +45,25 @@ final class DataTableExtension extends AbstractExtension
     public function htmlColumn(string $key, string $label, string $cellAlign = 'start', ?string $sortKey = null): Column
     {
         return new Column($key, $label, ColumnKind::HTML, $cellAlign, sortKey: $sortKey);
+    }
+
+    /**
+     * Row checkbox driving the bulk-action toolbar. The header renders the
+     * select-all box, so the label is only used as its accessible name.
+     */
+    public function selectColumn(
+        string $key = '_select',
+        string $label = 'Select',
+        string $valueKey = 'id',
+        ?string $labelKey = null,
+    ): Column {
+        return new Column(
+            $key,
+            $label,
+            ColumnKind::SELECT,
+            'center',
+            ['value_key' => $valueKey, 'label_key' => $labelKey],
+        );
     }
 
     public function toggleColumn(

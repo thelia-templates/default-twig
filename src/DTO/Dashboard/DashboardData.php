@@ -41,6 +41,11 @@ final readonly class DashboardData
         public array $alerts,
         public array $periodOptions,
         public string $locale,
+        public bool $showRevenueChart = true,
+        public bool $showOrderStatus = true,
+        public bool $showRecentOrders = true,
+        public bool $showTopProducts = true,
+        public bool $showLowStock = true,
     ) {
     }
 }

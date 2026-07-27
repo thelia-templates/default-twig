@@ -6,10 +6,13 @@
       - prev_label:  translation string
       - next_label:  translation string
       - testid:      data-testid prefix (e.g. "category", "product")
+      - guard_unsaved: when true, the links register with the surrounding
+                       bo-unsaved-changes controller so leaving an edited form asks first
 #}
+{%- set guard_attr = guard_unsaved|default(false) ? ' data-bo-unsaved-changes-target="link"' : '' -%}
 <div class="btn-group" role="group" aria-label="{{ 'Navigation'|trans }}">
     {% if prev_url %}
-        <a href="{{ prev_url }}" class="btn btn-outline-secondary" title="{{ prev_label }}" data-testid="{{ testid }}-prev">
+        <a href="{{ prev_url }}" class="btn btn-outline-secondary" title="{{ prev_label }}" data-testid="{{ testid }}-prev"{{ guard_attr|raw }}>
             <i class="bi bi-chevron-left" aria-hidden="true"></i>
             <span class="visually-hidden">{{ prev_label }}</span>
         </a>
@@ -19,7 +22,7 @@
         </button>
     {% endif %}
     {% if next_url %}
-        <a href="{{ next_url }}" class="btn btn-outline-secondary" title="{{ next_label }}" data-testid="{{ testid }}-next">
+        <a href="{{ next_url }}" class="btn btn-outline-secondary" title="{{ next_label }}" data-testid="{{ testid }}-next"{{ guard_attr|raw }}>
             <i class="bi bi-chevron-right" aria-hidden="true"></i>
             <span class="visually-hidden">{{ next_label }}</span>
         </a>

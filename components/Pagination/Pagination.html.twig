@@ -11,12 +11,14 @@
         pageParam    query/route parameter carrying the page number (default: page)
         window       pages shown on each side of the current one (default: 2)
         align        start | center | end (default: center)
+        spacing      spacing classes keeping the nav off the table above (default: mt-4;
+                     pass '' when the caller already spaces it, e.g. inside a card-footer)
         ariaLabel    nav aria-label, |trans (default: Pagination)
         testid       data-testid on the nav (default: none)
 #}
 {% if lastPage > 1 %}
     {%- set justify = align == 'center' ? ' justify-content-center' : (align == 'end' ? ' justify-content-end' : '') -%}
-    <nav aria-label="{{ (ariaLabel ?? 'Pagination')|trans }}"{% if testid %} data-testid="{{ testid }}"{% endif %}>
+    <nav class="{{ spacing ?? 'mt-4' }}" aria-label="{{ (ariaLabel ?? 'Pagination')|trans }}"{% if testid %} data-testid="{{ testid }}"{% endif %}>
         <ul class="pagination{{ justify }} mb-0">
             <li class="page-item{% if currentPage <= 1 %} disabled{% endif %}">
                 {% if currentPage <= 1 %}

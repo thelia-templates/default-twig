@@ -1,0 +1,54 @@
+{#
+    Dual-thumb range filter, extracted so price and stock share one markup.
+
+    Expects:
+      - slider:    { min, max, step }
+      - min_name / max_name: query parameter names
+      - min_value / max_value: current inputs (may be empty)
+      - unit:      suffix shown in the input group (may be empty)
+      - testid:    data-testid prefix
+#}
+<div class="bo-range-slider" data-controller="bo-range-slider"
+     data-bo-range-slider-min-value="{{ slider.min }}"
+     data-bo-range-slider-max-value="{{ slider.max }}"
+     data-bo-range-slider-step-value="{{ slider.step }}">
+    <div class="bo-range-slider__rail">
+        <div class="bo-range-slider__track">
+            <div class="bo-range-slider__fill" data-bo-range-slider-target="fill"></div>
+        </div>
+        <input type="range" class="bo-range-slider__handle"
+               data-bo-range-slider-target="minRange"
+               data-action="input->bo-range-slider#onMinRange"
+               min="{{ slider.min }}" max="{{ slider.max }}" step="{{ slider.step }}"
+               value="{{ slider.min }}" aria-label="{{ 'Min'|trans }}">
+        <input type="range" class="bo-range-slider__handle"
+               data-bo-range-slider-target="maxRange"
+               data-action="input->bo-range-slider#onMaxRange"
+               min="{{ slider.min }}" max="{{ slider.max }}" step="{{ slider.step }}"
+               value="{{ slider.max }}" aria-label="{{ 'Max'|trans }}">
+    </div>
+    <div class="row g-1 mt-1">
+        <div class="col">
+            <div class="input-group input-group-sm">
+                <input type="text" name="{{ min_name }}" value="{{ min_value }}"
+                       class="form-control" placeholder="{{ 'Min'|trans }}" inputmode="decimal"
+                       aria-label="{{ 'Min'|trans }}"
+                       data-bo-range-slider-target="minInput"
+                       data-action="change->bo-range-slider#onMinInput"
+                       data-testid="{{ testid }}-min">
+                {% if unit %}<span class="input-group-text">{{ unit }}</span>{% endif %}
+            </div>
+        </div>
+        <div class="col">
+            <div class="input-group input-group-sm">
+                <input type="text" name="{{ max_name }}" value="{{ max_value }}"
+                       class="form-control" placeholder="{{ 'Max'|trans }}" inputmode="decimal"
+                       aria-label="{{ 'Max'|trans }}"
+                       data-bo-range-slider-target="maxInput"
+                       data-action="change->bo-range-slider#onMaxInput"
+                       data-testid="{{ testid }}-max">
+                {% if unit %}<span class="input-group-text">{{ unit }}</span>{% endif %}
+            </div>
+        </div>
+    </div>
+</div>

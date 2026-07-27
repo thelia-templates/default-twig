@@ -22,4 +22,5 @@ enum ColumnKind: string
     case BADGE = 'badge';
     case ACTIONS = 'actions';
     case RADIO = 'radio';
+    case SELECT = 'select';
 }
