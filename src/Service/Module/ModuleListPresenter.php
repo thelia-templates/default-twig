@@ -114,6 +114,7 @@ final readonly class ModuleListPresenter
         $typeSlug = $this->typeSlug($type);
         $mandatory = ((int) $module->getMandatory()) === 1;
         $description = $this->shortDescription($module);
+        $configurable = $activated && $this->capabilities->isConfigurable($module);
 
         // The module code is the identity (the "name"); the human title becomes the
         // descriptive line beside it. The chapo stays searchable but off the row.
@@ -130,7 +131,12 @@ final readonly class ModuleListPresenter
             'icon' => $this->iconForType($type),
             'activated' => $activated,
             'mandatory' => $mandatory,
-            'configurable' => $activated && $this->capabilities->isConfigurable($module),
+            'configurable' => $configurable,
+            // Clicking the name goes where admins actually go: the module settings.
+            // Modules without a configuration page fall back to their info form.
+            'name_url' => $configurable
+                ? $this->urls->generate('admin.module.configure', ['module_code' => $code])
+                : $this->urls->generate('admin.module.update', ['module_id' => $id]),
             'toggle_url' => $this->toggleActivationUrl($id, $mandatory, $activated),
             'search' => mb_strtolower(trim($code.' '.$title.' '.$version.' '.$description)),
             'actions' => $this->buildRowActions($module, $id, $code, $type, $activated, $mandatory),
@@ -185,13 +191,14 @@ final readonly class ModuleListPresenter
             );
         }
 
+        // Kept inline next to the gear: the name now opens the settings, so editing
+        // the module info needs its own visible entry point.
         $actions[] = new RowAction(
             kind: 'edit',
             label: $this->translator->trans('Edit module info'),
             href: $this->urls->generate('admin.module.update', ['module_id' => $id]),
             grantedAttribute: AccessManager::UPDATE,
             grantedSubject: AdminResources::MODULE,
-            inMenu: true,
         );
 
         $actions[] = new RowAction(
