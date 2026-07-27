@@ -1372,7 +1372,7 @@ return [
     'Top spenders' => 'Plus gros acheteurs',
     'Total' => 'Total',
     'Total amount (TTC)' => 'Montant total (TTC)',
-    'Total spent' => 'Total dépensé',
+    'Total spent' => 'CA client',
     'Total weight' => 'Poids total',
     'Total with taxes after discount' => 'Total TTC après remise',
     'Total with taxes before discount' => 'Total TTC avant remise',

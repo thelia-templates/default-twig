@@ -106,7 +106,6 @@ final class CustomerController
         $orderCounts = $this->customerRepository->findOrderCounts($customerIds);
         $totalsSpent = $this->customerRepository->findTotalSpentByCustomer($customerIds);
         $lastOrders = $this->customerRepository->findLastOrderDateByCustomer($customerIds);
-        $newsletter = $this->customerRepository->findNewsletterFlags($customerIds);
         $phones = $this->customerRepository->findPrimaryPhones($customerIds);
         $primaryCountryIds = $this->customerRepository->findPrimaryCountryIds($customerIds);
         $countriesIndex = $this->buildCountriesIndex($primaryCountryIds, $locale);
@@ -126,7 +125,6 @@ final class CustomerController
                 phone: $phones[$customerId] ?? '',
                 countryFlag: $country['flag'],
                 countryTitle: $country['title'],
-                newsletterSubscribed: $newsletter[$customerId] ?? false,
             );
         }
 

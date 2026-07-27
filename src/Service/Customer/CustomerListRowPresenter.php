@@ -24,7 +24,7 @@ use Thelia\Model\Customer;
 /**
  * Maps a Customer model to the DataTable row shape used by
  * `customer/list.html.twig`. Aggregations (orders count, total spent, last
- * order, primary phone/country, newsletter) are passed in as pre-batched
+ * order, primary phone/country) are passed in as pre-batched
  * maps to avoid N+1.
  */
 final readonly class CustomerListRowPresenter
@@ -51,7 +51,6 @@ final readonly class CustomerListRowPresenter
         string $phone,
         string $countryFlag,
         string $countryTitle,
-        bool $newsletterSubscribed,
     ): array {
         $customerId = (int) $customer->getId();
         $firstname = (string) $customer->getFirstname();
@@ -70,7 +69,6 @@ final readonly class CustomerListRowPresenter
             'total_spent_html' => $this->renderTotalSpent($totalSpent, $orderCount),
             'last_order_html' => $this->renderLastOrder($lastOrderAt),
             'created_html' => $this->renderCreatedAt($createdAt),
-            'newsletter_html' => $this->renderNewsletter($newsletterSubscribed),
             'firstname' => $firstname,
             'lastname' => $lastname,
             'email' => $email,
@@ -121,12 +119,15 @@ final readonly class CustomerListRowPresenter
             return '<span class="text-muted">-</span>';
         }
 
-        $left = $flag !== '' ? $flag.' ' : '';
+        // The flag alone keeps the column narrow; the country name stays reachable on hover.
+        if ($flag === '') {
+            return \sprintf('<span class="bo-customer-country">%s</span>', htmlspecialchars($title));
+        }
 
         return \sprintf(
-            '<span class="bo-customer-country">%s%s</span>',
-            $left,
+            '<span class="bo-customer-country" data-bs-toggle="tooltip" title="%s">%s</span>',
             htmlspecialchars($title),
+            $flag,
         );
     }
 
@@ -197,24 +198,6 @@ final readonly class CustomerListRowPresenter
         );
     }
 
-    private function renderNewsletter(bool $subscribed): string
-    {
-        if ($subscribed) {
-            $tooltip = $this->translator->trans('Subscribed to the newsletter');
-
-            return \sprintf(
-                '<span class="badge text-bg-success-subtle text-success-emphasis bo-customer-newsletter" data-bs-toggle="tooltip" title="%s"><i class="bi bi-envelope-check" aria-hidden="true"></i></span>',
-                htmlspecialchars($tooltip),
-            );
-        }
-
-        $tooltip = $this->translator->trans('Not subscribed');
-
-        return \sprintf(
-            '<span class="badge text-bg-light text-muted bo-customer-newsletter" data-bs-toggle="tooltip" title="%s"><i class="bi bi-envelope-slash" aria-hidden="true"></i></span>',
-            htmlspecialchars($tooltip),
-        );
-    }
 
     private function relativeTime(\DateTimeInterface $createdAt): string
     {
