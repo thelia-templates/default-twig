@@ -75,7 +75,7 @@
                         {{ form_start(url_form, { action: path('admin.configuration.languages.updateUrl'), method: 'post', attr: { 'data-testid': 'lang-url-form' } }) }}
                             <table class="table table-sm align-middle">
                                 <tbody>
-                                    {% for field in url_form %}
+                                    {% for field in url_form|filter(field => field.vars.name starts with lang_url_prefix) %}
                                         <tr>
                                             <th scope="row">{{ field.vars.label }}</th>
                                             <td>
