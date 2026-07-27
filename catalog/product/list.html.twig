@@ -26,24 +26,185 @@
             {% endblock %}
         {% endembed %}
 
-        <form method="get" action="{{ path('admin.products.default') }}" class="row g-2 mb-3" data-testid="product-search-form">
-            <div class="col-md-4">
-                <label class="form-label">{{ 'Category'|trans }}</label>
-                <select name="category_id" class="form-select" data-testid="product-filter-category">
-                    {% for cat in available_categories %}
-                        <option value="{{ cat.id }}" {% if cat.id == current_category %}selected{% endif %}>{{ cat.title }}</option>
-                    {% endfor %}
-                </select>
+        <form method="get" action="{{ path('admin.products.default') }}" class="bo-order-filters" data-testid="product-search-form">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-5">
+                    <label class="form-label" for="product-search-q">{{ 'Search'|trans }}</label>
+                    <input type="search" id="product-search-q" name="q" value="{{ filters.search_input }}"
+                           class="form-control"
+                           placeholder="{{ 'Title or reference'|trans }}"
+                           data-testid="product-search-input">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="product-filter-category">{{ 'Category'|trans }}</label>
+                    <select name="category_id" id="product-filter-category" class="form-select" data-testid="product-filter-category">
+                        {% for cat in filters.category_options %}
+                            <option value="{{ cat.id }}" {{ cat.id == (filters.selected_category_id ?? 0) ? 'selected' : '' }}>{{ cat.title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-primary flex-grow-1" data-testid="product-search-submit">
+                        <i class="bi bi-funnel me-1" aria-hidden="true"></i>{{ 'Apply'|trans }}
+                    </button>
+                    <a href="{{ filters.clear_all_url }}" class="btn btn-outline-secondary" data-testid="product-search-clear">{{ 'Reset'|trans }}</a>
+                </div>
             </div>
-            <div class="col-md-4">
-                <label class="form-label">{{ 'Search (title/ref)'|trans }}</label>
-                <input type="search" name="q" value="{{ current_search }}" class="form-control" data-testid="product-search-input">
+
+            <div class="mt-3">
+                <button type="button" class="btn btn-link p-0 bo-order-filters__toggle" data-bs-toggle="collapse"
+                        data-bs-target="#bo-product-advanced" aria-controls="bo-product-advanced"
+                        aria-expanded="{{ filters.advanced_count > 0 ? 'true' : 'false' }}"
+                        data-testid="product-advanced-toggle">
+                    <i class="bi bi-sliders me-1" aria-hidden="true"></i>
+                    <span class="bo-order-filters__toggle-label">{{ 'Advanced filters'|trans }}</span>
+                    {% if filters.advanced_count > 0 %}
+                        <span class="badge bg-primary ms-1">{{ filters.advanced_count }}</span>
+                    {% endif %}
+                    <i class="bi bi-chevron-down ms-1 bo-order-filters__toggle-caret" aria-hidden="true"></i>
+                </button>
             </div>
-            <div class="col-md-4 d-flex align-items-end gap-2">
-                <button type="submit" class="btn btn-secondary" data-testid="product-search-submit">{{ 'Search'|trans }}</button>
-                <a href="{{ path('admin.products.default') }}" class="btn btn-outline-secondary" data-testid="product-search-clear">{{ 'Reset'|trans }}</a>
+
+            <div id="bo-product-advanced" class="bo-order-filters__panel collapse {{ filters.advanced_count > 0 ? 'show' : '' }}"
+                 data-testid="product-advanced-panel">
+                <div class="row g-2 pt-2">
+                    <div class="col-md-6 col-lg-4">
+                        <fieldset>
+                            <legend class="form-label">{{ 'Brand / Supplier'|trans }}</legend>
+                            <select name="brand_id" class="form-select form-select-sm" data-testid="product-filter-brand">
+                                <option value="">{{ 'All'|trans }}</option>
+                                {% for option in filters.brand_options %}
+                                    <option value="{{ option.id }}" {{ option.id == filters.selected_brand_id ? 'selected' : '' }}>{{ option.title }}</option>
+                                {% endfor %}
+                            </select>
+                        </fieldset>
+                    </div>
+
+                    <div class="col-md-6 col-lg-4">
+                        <fieldset>
+                            <legend class="form-label">{{ 'Product template'|trans }}</legend>
+                            <select name="template_id" class="form-select form-select-sm" data-testid="product-filter-template">
+                                <option value="">{{ 'All'|trans }}</option>
+                                {% for option in filters.template_options %}
+                                    <option value="{{ option.id }}" {{ option.id == filters.selected_template_id ? 'selected' : '' }}>{{ option.title }}</option>
+                                {% endfor %}
+                            </select>
+                        </fieldset>
+                    </div>
+
+                    <div class="col-md-6 col-lg-4">
+                        <div class="row g-2">
+                            <div class="col">
+                                <fieldset>
+                                    <legend class="form-label">{{ 'Online'|trans }}</legend>
+                                    <select name="visible" class="form-select form-select-sm" data-testid="product-filter-visible">
+                                        {% for option in filters.tristate_options %}
+                                            <option value="{{ option.value }}" {{ option.value == filters.visible_value ? 'selected' : '' }}>{{ option.label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </fieldset>
+                            </div>
+                            <div class="col">
+                                <fieldset>
+                                    <legend class="form-label">{{ 'On sale'|trans }}</legend>
+                                    <select name="promo" class="form-select form-select-sm" data-testid="product-filter-promo">
+                                        {% for option in filters.tristate_options %}
+                                            <option value="{{ option.value }}" {{ option.value == filters.promo_value ? 'selected' : '' }}>{{ option.label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </fieldset>
+                            </div>
+                            <div class="col">
+                                <fieldset>
+                                    <legend class="form-label">{{ 'New'|trans }}</legend>
+                                    <select name="new" class="form-select form-select-sm" data-testid="product-filter-new">
+                                        {% for option in filters.tristate_options %}
+                                            <option value="{{ option.value }}" {{ option.value == filters.new_value ? 'selected' : '' }}>{{ option.label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </fieldset>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 col-lg-4">
+                        <fieldset>
+                            <legend class="form-label">{{ 'Price (excl. tax)'|trans }}</legend>
+                            {% include '@BackOfficeDefaultTwig/catalog/product/_range_filter.html.twig' with {
+                                slider: filters.price_slider,
+                                min_name: 'min_price',
+                                max_name: 'max_price',
+                                min_value: filters.min_price_input,
+                                max_value: filters.max_price_input,
+                                unit: '€',
+                                testid: 'product-filter-price',
+                            } only %}
+                        </fieldset>
+                    </div>
+
+                    <div class="col-md-6 col-lg-4">
+                        <fieldset>
+                            <legend class="form-label">{{ 'Stock'|trans }}</legend>
+                            {% include '@BackOfficeDefaultTwig/catalog/product/_range_filter.html.twig' with {
+                                slider: filters.quantity_slider,
+                                min_name: 'min_quantity',
+                                max_name: 'max_quantity',
+                                min_value: filters.min_quantity_input,
+                                max_value: filters.max_quantity_input,
+                                unit: '',
+                                testid: 'product-filter-quantity',
+                            } only %}
+                        </fieldset>
+                    </div>
+
+                    <div class="col-md-6 col-lg-4">
+                        <div class="row g-2">
+                            <div class="col">
+                                <fieldset>
+                                    <legend class="form-label">{{ 'Features'|trans }}</legend>
+                                    <select name="feature_ids[]" class="form-select form-select-sm" multiple size="4" data-testid="product-filter-features">
+                                        {% for option in filters.feature_options %}
+                                            <option value="{{ option.id }}" {{ option.id in filters.selected_feature_ids ? 'selected' : '' }}>{{ option.title }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </fieldset>
+                            </div>
+                            <div class="col">
+                                <fieldset>
+                                    <legend class="form-label">{{ 'Attributes'|trans }}</legend>
+                                    <select name="attribute_ids[]" class="form-select form-select-sm" multiple size="4" data-testid="product-filter-attributes">
+                                        {% for option in filters.attribute_options %}
+                                            <option value="{{ option.id }}" {{ option.id in filters.selected_attribute_ids ? 'selected' : '' }}>{{ option.title }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </fieldset>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </form>
+
+        {% if filters.active_chips %}
+            <div class="bo-order-filters__active-chips d-flex flex-wrap align-items-center gap-2 mt-3" data-testid="product-active-chips">
+                <span class="text-muted small">{{ 'Active filters:'|trans }}</span>
+                {% for chip in filters.active_chips %}
+                    <a class="bo-order-filters__chip d-inline-flex align-items-center gap-1 text-decoration-none"
+                       href="{{ chip.remove_url }}"
+                       data-testid="product-active-chip-{{ chip.key }}"
+                       title="{{ 'Remove this filter'|trans }}">
+                        <span class="bo-order-filters__chip-label">{{ chip.label }}:</span>
+                        <strong class="bo-order-filters__chip-value">{{ chip.value }}</strong>
+                        <i class="bi bi-x-lg" aria-hidden="true"></i>
+                    </a>
+                {% endfor %}
+                <a class="bo-order-filters__clear-all small text-decoration-none ms-1"
+                   href="{{ filters.clear_all_url }}"
+                   data-testid="product-clear-all">
+                    <i class="bi bi-eraser me-1" aria-hidden="true"></i>{{ 'Clear all'|trans }}
+                </a>
+            </div>
+        {% endif %}
 
         {{ safe_hook('products.caption', { location: 'product_list_caption' }) }}
 
@@ -54,6 +215,9 @@
                 column_html('thumbnail_html', 'Image'|trans, 'center'),
                 column_html('ref_html', 'Reference'|trans, 'start', 'ref'),
                 column_html('title_html', 'Title'|trans, 'start', 'title'),
+                column_html('price_html', 'Price'|trans, 'end', 'price'),
+                column_html('promo_price_html', 'Sale price'|trans, 'end'),
+                column_html('stock_html', 'Stock'|trans, 'center', 'quantity'),
                 column_toggle('visible', 'Online'|trans, 'toggle_visible_url'),
                 column('position', 'Position'|trans, 'center'),
                 column_actions('_actions', 'Actions'|trans),
@@ -65,19 +229,23 @@
             headerHookContext: { location: 'product_list_header' },
             rowHookContext: { location: 'product_list_row' },
             rowHookArgs: { product_id: 'id' },
-            tbodyAttributes: {
+            sortField: filters.sort_field,
+            sortDirection: filters.sort_direction,
+            sortParam: 'product_order',
+            sortKeepParams: query_params,
+            tbodyAttributes: allow_manual_ordering ? {
                 'data-controller': 'bo-sortable',
                 'data-bo-sortable-url-value': update_position_url,
                 'data-bo-sortable-token-value': update_position_token,
                 'data-bo-sortable-param-name-value': 'product_id',
-            },
+            } : {},
         }) }}
 
         {{ component('BoPagination', {
             route: 'admin.products.default',
             currentPage: current_page,
             lastPage: pages,
-            routeParams: { category_id: current_category > 0 ? current_category : null, q: current_search },
+            routeParams: query_params,
             ariaLabel: 'Product pagination',
             testid: 'product-pagination',
         }) }}
