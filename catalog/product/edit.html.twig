@@ -21,7 +21,9 @@
 
     {% set extra_tabs = hook_block('product.tab', { product: product.id, id: product.id }) %}
 
-    <div class="container-fluid" data-testid="product-edit-page">
+    <div class="container-fluid" data-testid="product-edit-page"
+         data-controller="bo-unsaved-changes"
+         data-bo-unsaved-changes-modal-value="#product-unsaved-changes-modal">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h1 class="h3 mb-0">{{ product.title }} <small class="text-muted">#{{ product.id }}</small></h1>
             <div class="d-flex gap-2">
@@ -31,6 +33,7 @@
                     prev_label: 'Edit previous product'|trans,
                     next_label: 'Edit next product'|trans,
                     testid: 'product',
+                    guard_unsaved: true,
                 } only %}
                 {% if preview_url is defined and preview_url %}
                     <a href="{{ preview_url }}" target="_blank" rel="noopener" class="btn btn-outline-secondary flex-shrink-0" title="{{ 'Preview product page'|trans }}" data-testid="product-preview-btn">
@@ -90,7 +93,7 @@
         <div class="tab-content">
             <div class="tab-pane fade {% if current_tab == 'general' %}show active{% endif %}" id="tab-general" role="tabpanel">
                 {% form_theme form with bo_form_themes only %}
-                {{ form_start(form, { action: path('admin.products.save', { product_id: product.id }), method: 'post', attr: { 'data-testid': 'product-edit-form' } }) }}
+                {{ form_start(form, { action: path('admin.products.save', { product_id: product.id }), method: 'post', attr: { 'data-testid': 'product-edit-form', 'data-bo-unsaved-changes-target': 'form' } }) }}
                     <input type="hidden" name="product_id" value="{{ product.id }}">
                     {{ safe_hook('product.modification.form_top', { product_id: product.id }) }}
                     <div class="row">
@@ -250,6 +253,38 @@
 
             <div class="tab-pane fade {% if current_tab == 'modules' %}show active{% endif %}" id="tab-modules" role="tabpanel">
                 {{ hook_cards('product.tab-content', { product: product.id, location: 'product-edit', view: 'product' }) }}
+            </div>
+        </div>
+
+        <div class="modal fade" id="product-unsaved-changes-modal" tabindex="-1" aria-hidden="true" data-testid="product-unsaved-changes-modal">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title h5 d-flex align-items-center gap-2">
+                            <i class="bi bi-exclamation-triangle text-warning" aria-hidden="true"></i>
+                            {{ 'Unsaved changes'|trans }}
+                        </h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'Close'|trans }}"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-0">{{ 'This product has changes you have not saved yet. Leaving now discards them.'|trans }}</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" data-testid="product-unsaved-cancel">
+                            {{ 'Keep editing'|trans }}
+                        </button>
+                        <button type="button" class="btn btn-outline-danger"
+                                data-action="bo-unsaved-changes#leave"
+                                data-testid="product-unsaved-leave">
+                            {{ 'Leave without saving'|trans }}
+                        </button>
+                        <button type="button" class="btn btn-primary"
+                                data-action="bo-unsaved-changes#save"
+                                data-testid="product-unsaved-save">
+                            <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save'|trans }}
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
