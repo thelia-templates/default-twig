@@ -49,7 +49,7 @@
 
     {% if is_granted('CREATE', 'admin.configuration.message') %}
         <div class="modal fade" id="message-create-modal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog">
+            <div class="modal-dialog modal-dialog-scrollable">
                 <div class="modal-content">
                     {% form_theme create_form with bo_form_themes only %}
                     {{ form_start(create_form, { action: path('admin.configuration.messages.create'), method: 'post' }) }}

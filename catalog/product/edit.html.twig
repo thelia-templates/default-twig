@@ -299,7 +299,7 @@
     }) }}
 
     <div class="modal fade" id="product-clone-modal" tabindex="-1" aria-labelledby="product-clone-modal-title" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-scrollable">
             <div class="modal-content">
                 {% form_theme clone_form with bo_form_themes only %}
                 {{ form_start(clone_form, { action: path('admin.products.clone'), method: 'post', attr: { 'data-testid': 'product-clone-form' } }) }}

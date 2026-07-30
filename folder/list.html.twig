@@ -124,7 +124,7 @@
     {{ safe_hook('folders.bottom') }}
 
     <div class="modal fade" id="folder-create-modal" tabindex="-1" aria-labelledby="folder-create-modal-title" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-scrollable">
             <div class="modal-content">
                 {% form_theme create_form with bo_form_themes only %}
                 {{ form_start(create_form, { action: path('admin.folders.create'), method: 'post', attr: { 'data-testid': 'folder-create-form' } }) }}
@@ -169,7 +169,7 @@
 
     {% if parent_id > 0 and is_granted('CREATE', 'admin.content') %}
         <div class="modal fade" id="content-create-modal" tabindex="-1" aria-labelledby="content-create-modal-title" aria-hidden="true">
-            <div class="modal-dialog">
+            <div class="modal-dialog modal-dialog-scrollable">
                 <div class="modal-content">
                     {% form_theme content_create_form with bo_form_themes only %}
                     {{ form_start(content_create_form, { action: path('admin.content.create'), method: 'post', attr: { 'data-testid': 'content-create-form' } }) }}

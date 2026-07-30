@@ -5,7 +5,7 @@
      data-bo-price-preview-url-value="{{ path('admin.product.calculate-price') }}"
      data-bo-price-preview-prefix-value="≈ "
      data-bo-price-preview-suffix-value=" {{ 'incl. tax'|trans }}">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
             {% form_theme create_form with bo_form_themes only %}
             {{ form_start(create_form, { action: path('admin.products.create'), method: 'post', attr: { 'data-testid': 'product-create-form' } }) }}

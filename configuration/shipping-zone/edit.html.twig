@@ -97,7 +97,7 @@
          data-controller="bo-prefill-modal"
          data-bo-prefill-modal-source-trigger-value="data-area-id"
          data-bo-prefill-modal-target-input-value="area_id">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-scrollable">
             <div class="modal-content">
                 <form method="POST" action="{{ path('admin.configuration.shipping-zones.area.remove') }}" data-testid="shipping-zones-remove-area-form">
                     <input type="hidden" name="_token" value="{{ assignToken() }}">

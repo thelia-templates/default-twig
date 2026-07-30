@@ -215,7 +215,7 @@
 
     {% if allow_module_zip_install|default(false) %}
         <div class="modal fade" id="module-install-modal" tabindex="-1" aria-hidden="true" data-testid="module-install-modal">
-            <div class="modal-dialog">
+            <div class="modal-dialog modal-dialog-scrollable">
                 <form action="{{ path('admin.module.install') }}" method="post" enctype="multipart/form-data" class="modal-content" data-testid="module-install-form">
                     <input type="hidden" name="_token" value="{{ assignToken() }}">
                     <div class="modal-header">

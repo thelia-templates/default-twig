@@ -308,7 +308,7 @@
 
     {% if template_attributes is not empty %}
         <div class="modal fade" id="combination-creation-modal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog">
+            <div class="modal-dialog modal-dialog-scrollable">
                 <form method="post" action="{{ path('admin.product.combination.add') }}?_token={{ assignToken() }}"
                       data-controller="bo-combination-creation" data-testid="combination-creation-form">
                     <div class="modal-content">
@@ -353,7 +353,7 @@
         </div>
 
         <div class="modal fade" id="combination-builder-modal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable">
                 <form method="post" action="{{ path('admin.product.combination.build') }}?_token={{ assignToken() }}"
                       data-controller="bo-combination-builder" data-testid="combination-builder-form">
                     <div class="modal-content">

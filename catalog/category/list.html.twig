@@ -123,7 +123,7 @@
     {{ safe_hook('categories.catalog-bottom', { location: 'catalog_bottom' }) }}
 
     <div class="modal fade" id="category-create-modal" tabindex="-1" aria-labelledby="category-create-modal-title" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-scrollable">
             <div class="modal-content">
                 {% form_theme create_form with bo_form_themes only %}
                 {{ form_start(create_form, { action: path('admin.categories.create'), method: 'post', attr: { 'data-testid': 'category-create-form' } }) }}
