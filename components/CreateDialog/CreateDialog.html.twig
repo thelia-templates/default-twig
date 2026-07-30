@@ -36,6 +36,7 @@
                     {% block fields %}{% endblock %}
                     {%- set effective_hook = hook ?? ((testid and testid ends with '-create') ? testid|slice(0, -7) ~ '.create-form' : null) -%}
                     {% if effective_hook %}{{ safe_hook(effective_hook, hookContext) }}{% endif %}
+                    {% if form._token is defined %}{{ form_widget(form._token) }}{% endif %}
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ cancelLabel|trans }}</button>
@@ -43,7 +44,10 @@
                         <i class="bi {{ submitIcon }}" aria-hidden="true"></i> {{ submitLabel|trans }}
                     </button>
                 </div>
-            {{ form_end(form) }}
+            {# render_rest would append the fields no template rendered *after* the footer,
+               outside the scrollable body: a module extending the form renders its own field
+               through the dialog hook instead (see the back-office form bridge). #}
+            {{ form_end(form, { render_rest: false }) }}
         </div>
     </div>
 </div>

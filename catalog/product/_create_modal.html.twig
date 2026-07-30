@@ -76,12 +76,15 @@
                     {# tax_price is wired into the FormType for the edit screen but not exposed in the create modal #}
                     {% do create_form.tax_price.setRendered %}
                     {{ safe_hook('product.create-form') }}
+                    {% if create_form._token is defined %}{{ form_widget(create_form._token) }}{% endif %}
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'Cancel'|trans }}</button>
                     <button type="submit" class="btn btn-primary" data-testid="product-create-submit">{{ 'Create'|trans }}</button>
                 </div>
-            {{ form_end(create_form) }}
+            {# a module field left unrendered would land after the footer, outside the modal:
+               modules render their own field through the product.create-form hook #}
+            {{ form_end(create_form, { render_rest: false }) }}
         </div>
     </div>
 </div>
