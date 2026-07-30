@@ -610,6 +610,19 @@ button.btn {
     border-radius: .5rem;
 }
 
+// Scrollable modals wrapping a form - Bootstrap only makes .modal-body scroll
+// when it is a direct flex child of .modal-content. Our dialogs put a <form>
+// in between (it has to wrap the header, the body and the submit button), which
+// breaks the chain: the body keeps its natural height, overflows the clipped
+// .modal-content and takes the footer out of view with no scrollbar. Carrying
+// the flex column over to the intermediate form restores it.
+.modal-dialog-scrollable .modal-content > form {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
 // Dropdowns - softer shadow
 .dropdown-menu {
     box-shadow: 0 8px 24px rgba(15, 23, 42, .12);
