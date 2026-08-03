@@ -42,7 +42,7 @@
             {% endif %}
             {% set table_rows = table_rows|merge([{
                 'id': row.id,
-                'module_html': '<a href="' ~ row.edit_url|e ~ '">' ~ row.code|e ~ ' - ' ~ row.title|e ~ '</a>',
+                'module': row.code ~ ' - ' ~ row.title,
                 'zones_html': zones_html,
                 '_actions': [ row_action('edit', 'Edit'|trans, row.edit_url, null, 'UPDATE', 'admin.configuration.shipping-zone') ],
             }]) %}
@@ -51,7 +51,7 @@
         {{ component('BoDataTable', {
             id: 'shipping-zones',
             columns: [
-                column('module_html', 'Delivery module'|trans),
+                column('module', 'Delivery module'|trans),
                 column_html('zones_html', 'Shipping zones for this module'|trans),
                 column_actions(),
             ],
