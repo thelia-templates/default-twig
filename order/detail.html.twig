@@ -149,10 +149,10 @@
                     caption: 'Order items'|trans ~ ' — ' ~ 'Prices in %currency'|trans({'%currency': currency.symbol}),
                     columns: [
                         column_html('product_html', 'Product'|trans),
+                        column('quantity', 'Quantity'|trans, 'end'),
                         column('price', 'Unit price (excl. tax)'|trans, 'end'),
                         column('tax', 'Tax'|trans, 'end'),
                         column('unit_taxed_price', 'Unit price (incl. tax)'|trans, 'end'),
-                        column('quantity', 'Quantity'|trans, 'end'),
                         column('line_ht', 'Line total (excl. tax)'|trans, 'end'),
                         column('line_tax', 'Line tax'|trans, 'end'),
                         column_html('line_ttc', 'Line total (incl. tax)'|trans, 'end'),
