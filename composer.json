@@ -14,7 +14,7 @@
         "symfony/twig-bundle": "^7.4",
         "symfony/webpack-encore-bundle": "^2.1",
         "symfony/stimulus-bundle": "^2.19",
-        "symfony/ux-twig-component": "^2.19",
+        "symfony/ux-twig-component": "^2.19 || ^3.0",
         "symfony/ux-icons": "^2.21",
         "thelia/twig-engine-module": "dev-twig",
         "thelia/tiptap-module": "dev-main",
