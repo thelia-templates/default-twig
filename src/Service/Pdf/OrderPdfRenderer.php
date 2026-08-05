@@ -30,10 +30,10 @@ use Thelia\Model\Order;
 use Thelia\Model\OrderQuery;
 
 /**
- * Renders order invoice / delivery PDFs through the active PDF template
- * (Smarty pdf-default-template), keeping parity with the legacy back-office.
+ * Renders order invoice / delivery PDFs through the active PDF template,
+ * keeping parity with the legacy back-office.
  *
- * The HTML produced by the Smarty parser is then dispatched as a {@see PdfEvent}
+ * The HTML produced by the template parser is then dispatched as a {@see PdfEvent}
  * so the Html2Pdf listener (or any third-party listener with higher priority)
  * converts it to a PDF binary stream.
  */
@@ -42,9 +42,11 @@ final class OrderPdfRenderer
     public const KIND_INVOICE = 'invoice';
     public const KIND_DELIVERY = 'delivery';
 
+    // Extensionless names: ParserResolver picks the parser whose extension matches
+    // a file in the active PDF template (invoice.html for Smarty, invoice.html.twig for Twig).
     private const PDF_FILE_BY_KIND = [
-        self::KIND_INVOICE => 'invoice.html',
-        self::KIND_DELIVERY => 'delivery.html',
+        self::KIND_INVOICE => 'invoice',
+        self::KIND_DELIVERY => 'delivery',
     ];
 
     public function __construct(
