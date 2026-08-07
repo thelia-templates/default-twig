@@ -34,6 +34,11 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 final class CustomerType extends AbstractType
 {
+    private const ADDRESS_FIELDS = [
+        'address1', 'address2', 'address3', 'zipcode', 'city',
+        'country', 'state', 'phone', 'cellphone', 'company',
+    ];
+
     public function __construct(
         private readonly TranslatorInterface $translator,
     ) {
@@ -172,6 +177,21 @@ final class CustomerType extends AbstractType
                 $form = $event->getForm();
                 if ($form->get('email')->getData() !== $form->get('email_confirm')->getData()) {
                     $form->get('email_confirm')->addError(new FormError($tr->trans('The two email addresses do not match.')));
+                }
+            });
+        }
+
+        if (!$options['include_address']) {
+            // Legacy module listeners (ForcePhone and friends) run on the builder after this
+            // method and re-add address fields, sometimes as required. Without an address to
+            // save them to, such a field can never be filled in nor persisted, so it would
+            // just block the whole form. Drop them once the form is assembled.
+            $builder->addEventListener(FormEvents::PRE_SET_DATA, static function (FormEvent $event): void {
+                $form = $event->getForm();
+                foreach (self::ADDRESS_FIELDS as $field) {
+                    if ($form->has($field)) {
+                        $form->remove($field);
+                    }
                 }
             });
         }
