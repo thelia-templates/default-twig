@@ -42,6 +42,7 @@ use Thelia\Core\Event\TheliaEvents;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
 use Thelia\Domain\Customer\Service\CustomerTitleService;
+use Thelia\Mailer\MailerFactory;
 use Thelia\Model\ConfigQuery;
 use Thelia\Model\CountryQuery;
 use Thelia\Model\Customer;
@@ -82,6 +83,7 @@ final class CustomerController
         private readonly CustomerListRowPresenter $rowPresenter,
         private readonly OrderRepository $orderRepository,
         private readonly StateChoiceProvider $stateChoices,
+        private readonly MailerFactory $mailer,
     ) {
     }
 
@@ -195,7 +197,8 @@ final class CustomerController
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }
 
-        $form = $this->buildUpdateForm($this->defaultLocale(), $this->customerToFormData($customer));
+        $hasAddress = $customer->getDefaultAddress() !== null;
+        $form = $this->buildUpdateForm($this->defaultLocale(), $this->customerToFormData($customer), $hasAddress);
         $addressCreateForm = $this->formFactory->createNamed(
             'thelia_address_create',
             AddressType::class,
@@ -217,6 +220,7 @@ final class CustomerController
         return new Response($this->twig->render(self::EDIT_TEMPLATE, [
             'form' => $form->createView(),
             'customer' => $customer,
+            'has_address' => $hasAddress,
             'addresses' => $this->addressRows($customer),
             'address_create_form' => $addressCreateForm->createView(),
             'recent_orders' => $this->customerOrdersPage($customerId, $ordersPage, $ordersPerPage),
@@ -255,20 +259,29 @@ final class CustomerController
         }
 
         $customerId = (int) $request->request->get('id', $request->request->get('customer_id', 0));
-        $form = $this->buildUpdateForm($this->defaultLocale(), null);
+        $customer = CustomerQuery::create()->findPk($customerId);
+        if ($customer === null) {
+            return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
+        }
+
+        // Decided from the database, never from the submitted payload: an address may have been
+        // added between the GET and this POST, and the form shape must follow the current state.
+        $hasAddress = $customer->getDefaultAddress() !== null;
+        $form = $this->buildUpdateForm($this->defaultLocale(), null, $hasAddress);
 
         try {
             $validated = $this->validator->validate($form);
             $data = $validated->getData() ?? [];
 
             $event = $this->buildEvent($data);
-            $customer = CustomerQuery::create()->findPk($customerId);
-            if ($customer !== null) {
-                $event->setCustomer($customer);
-            }
+            $event->setCustomer($customer);
             $event->setEmailUpdateAllowed(true);
 
-            $this->events->dispatch($event, TheliaEvents::CUSTOMER_UPDATEACCOUNT);
+            if ($hasAddress) {
+                $this->events->dispatch($event, TheliaEvents::CUSTOMER_UPDATEACCOUNT);
+            } else {
+                $this->updateProfileOnly($customer, $event, $data);
+            }
 
             $updated = $event->getCustomer() ?? $customer;
             if ($updated !== null) {
@@ -346,13 +359,37 @@ final class CustomerController
     /**
      * @param array<string, mixed>|null $data
      */
-    private function buildUpdateForm(string $locale, ?array $data): FormInterface
+    private function buildUpdateForm(string $locale, ?array $data, bool $includeAddress): FormInterface
     {
         return $this->formFactory->createNamed(self::UPDATE_FORM_NAME, CustomerType::class, $data, array_merge($this->formOptions($locale), [
             'include_id' => true,
             'include_password' => true,
             'password_required' => false,
+            'include_address' => $includeAddress,
         ]));
+    }
+
+    /**
+     * Customers registered through the minimal front-office registration have no address yet.
+     * CUSTOMER_UPDATEACCOUNT would create one from the submitted fields, which the admin does
+     * not know, so only the customer's own columns are updated here.
+     *
+     * @param array<string, mixed> $data
+     */
+    private function updateProfileOnly(Customer $customer, CustomerCreateOrUpdateEvent $event, array $data): void
+    {
+        $plainPassword = $event->getPassword();
+        $emailChanged = $customer->getEmail() !== $event->getEmail();
+
+        // updateProfile() ignores null values, while createOrUpdate() resets a blank discount
+        // to zero. Coalesce so that clearing the field means the same on both branches.
+        $event->setDiscount((float) ($data['discount'] ?? 0));
+
+        $this->events->dispatch($event, TheliaEvents::CUSTOMER_UPDATEPROFILE);
+
+        if (($plainPassword !== null && $plainPassword !== '' && $plainPassword !== '0') || $emailChanged) {
+            $this->mailer->sendEmailToCustomer('customer_account_changed', $customer, ['password' => $plainPassword]);
+        }
     }
 
     /**
@@ -479,9 +516,7 @@ final class CustomerController
      */
     private function customerToFormData(Customer $customer): array
     {
-        $address = $customer->getDefaultAddress();
-
-        return [
+        $data = [
             'id' => $customer->getId(),
             'title' => $customer->getTitleId(),
             'firstname' => $customer->getFirstname(),
@@ -490,17 +525,25 @@ final class CustomerController
             'lang_id' => $customer->getLangId(),
             'discount' => $customer->getDiscount(),
             'reseller' => (bool) $customer->getReseller(),
-            'company' => $address?->getCompany(),
-            'address1' => $address?->getAddress1(),
-            'address2' => $address?->getAddress2(),
-            'address3' => $address?->getAddress3(),
-            'phone' => $address?->getPhone(),
-            'cellphone' => $address?->getCellphone(),
-            'zipcode' => $address?->getZipcode(),
-            'city' => $address?->getCity(),
-            'country' => $address?->getCountryId(),
-            'state' => $address?->getStateId(),
         ];
+
+        $address = $customer->getDefaultAddress();
+        if ($address === null) {
+            return $data;
+        }
+
+        return array_merge($data, [
+            'company' => $address->getCompany(),
+            'address1' => $address->getAddress1(),
+            'address2' => $address->getAddress2(),
+            'address3' => $address->getAddress3(),
+            'phone' => $address->getPhone(),
+            'cellphone' => $address->getCellphone(),
+            'zipcode' => $address->getZipcode(),
+            'city' => $address->getCity(),
+            'country' => $address->getCountryId(),
+            'state' => $address->getStateId(),
+        ]);
     }
 
     /**

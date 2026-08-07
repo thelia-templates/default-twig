@@ -68,57 +68,65 @@ final class CustomerType extends AbstractType
             ->add('email', EmailType::class, [
                 'constraints' => [new NotBlank(), new Email()],
                 'label' => $tr->trans('Email address'),
-            ])
-            ->add('address1', TextType::class, [
-                'constraints' => [new NotBlank()],
-                'label' => $tr->trans('Street address'),
-            ])
-            ->add('address2', TextType::class, [
-                'required' => false,
-                'label' => $tr->trans('Address line 2'),
-            ])
-            ->add('address3', TextType::class, [
-                'required' => false,
-                'label' => $tr->trans('Address line 3'),
-            ])
-            ->add('zipcode', TextType::class, [
-                'constraints' => [new NotBlank()],
-                'label' => $tr->trans('Zip code'),
-            ])
-            ->add('city', TextType::class, [
-                'constraints' => [new NotBlank()],
-                'label' => $tr->trans('City'),
-            ])
-            ->add('country', ChoiceType::class, [
-                'choices' => $options['country_choices'],
-                'constraints' => [new NotBlank()],
-                'label' => $tr->trans('Country'),
-                'placeholder' => false,
-                'attr' => [
-                    'data-bo-state-cascade-target' => 'country',
-                    'data-action' => 'change->bo-state-cascade#sync',
-                ],
-            ])
-            ->add('state', ChoiceType::class, [
-                'choices' => $stateChoices,
-                'choice_attr' => static fn ($id): array => ['data-country-id' => (string) ($stateCountry[$id] ?? '')],
-                'required' => false,
-                'placeholder' => '-',
-                'label' => $tr->trans('State'),
-                'attr' => ['data-bo-state-cascade-target' => 'state'],
-            ])
-            ->add('phone', TextType::class, [
-                'required' => false,
-                'label' => $tr->trans('Phone'),
-            ])
-            ->add('cellphone', TextType::class, [
-                'required' => false,
-                'label' => $tr->trans('Cellphone'),
-            ])
-            ->add('company', TextType::class, [
-                'required' => false,
-                'label' => $tr->trans('Company'),
-            ])
+            ]);
+
+        // Company, phone and cellphone belong to the address table, not to the customer one:
+        // they only make sense when the default address is part of this form.
+        if ($options['include_address']) {
+            $builder
+                ->add('address1', TextType::class, [
+                    'constraints' => [new NotBlank()],
+                    'label' => $tr->trans('Street address'),
+                ])
+                ->add('address2', TextType::class, [
+                    'required' => false,
+                    'label' => $tr->trans('Address line 2'),
+                ])
+                ->add('address3', TextType::class, [
+                    'required' => false,
+                    'label' => $tr->trans('Address line 3'),
+                ])
+                ->add('zipcode', TextType::class, [
+                    'constraints' => [new NotBlank()],
+                    'label' => $tr->trans('Zip code'),
+                ])
+                ->add('city', TextType::class, [
+                    'constraints' => [new NotBlank()],
+                    'label' => $tr->trans('City'),
+                ])
+                ->add('country', ChoiceType::class, [
+                    'choices' => $options['country_choices'],
+                    'constraints' => [new NotBlank()],
+                    'label' => $tr->trans('Country'),
+                    'placeholder' => false,
+                    'attr' => [
+                        'data-bo-state-cascade-target' => 'country',
+                        'data-action' => 'change->bo-state-cascade#sync',
+                    ],
+                ])
+                ->add('state', ChoiceType::class, [
+                    'choices' => $stateChoices,
+                    'choice_attr' => static fn ($id): array => ['data-country-id' => (string) ($stateCountry[$id] ?? '')],
+                    'required' => false,
+                    'placeholder' => '-',
+                    'label' => $tr->trans('State'),
+                    'attr' => ['data-bo-state-cascade-target' => 'state'],
+                ])
+                ->add('phone', TextType::class, [
+                    'required' => false,
+                    'label' => $tr->trans('Phone'),
+                ])
+                ->add('cellphone', TextType::class, [
+                    'required' => false,
+                    'label' => $tr->trans('Cellphone'),
+                ])
+                ->add('company', TextType::class, [
+                    'required' => false,
+                    'label' => $tr->trans('Company'),
+                ]);
+        }
+
+        $builder
             ->add('lang_id', ChoiceType::class, [
                 'choices' => $options['lang_choices'],
                 'required' => false,
@@ -175,6 +183,7 @@ final class CustomerType extends AbstractType
             ->setDefaults([
                 'include_id' => false,
                 'include_password' => false,
+                'include_address' => true,
                 'password_required' => false,
                 'require_email_confirm' => false,
                 'csrf_token_id' => 'admin.customer',
@@ -182,6 +191,7 @@ final class CustomerType extends AbstractType
             ])
             ->setRequired(['title_choices', 'country_choices', 'lang_choices'])
             ->setAllowedTypes('include_id', 'bool')
+            ->setAllowedTypes('include_address', 'bool')
             ->setAllowedTypes('include_password', 'bool')
             ->setAllowedTypes('password_required', 'bool')
             ->setAllowedTypes('require_email_confirm', 'bool')

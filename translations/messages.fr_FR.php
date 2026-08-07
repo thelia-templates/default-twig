@@ -1403,6 +1403,7 @@ return [
     'This country uses a ZIP code' => 'Ce pays utilise un code postal',
     'This coupon applies to every cart, no condition is required.' => 'Ce code promo s\'applique à tous les paniers, aucune condition n\'est requise.',
     'This customer has existing orders and cannot be deleted.' => 'Ce client a des commandes existantes et ne peut pas être supprimé.',
+    'This customer has no address yet. Use the Addresses section below to add one.' => 'Ce client n\'a pas encore d\'adresse. Utilisez la section Adresses ci-dessous pour en ajouter une.',
     'This customer has not placed any order yet.' => 'Ce client n\'a pas encore passé de commande.',
     'This delivery module handles all shipping zones.' => 'Ce module livre dans toutes les zones de livraison.',
     'This document is online' => 'Ce document est en ligne',
