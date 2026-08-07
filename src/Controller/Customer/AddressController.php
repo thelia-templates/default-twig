@@ -38,6 +38,7 @@ use Thelia\Domain\Customer\Service\CustomerTitleService;
 use Thelia\Model\Address;
 use Thelia\Model\AddressQuery;
 use Thelia\Model\CountryQuery;
+use Thelia\Model\CustomerQuery;
 use Thelia\Model\Event\AddressEvent;
 use Twig\Environment;
 
@@ -100,9 +101,15 @@ final class AddressController
 
         try {
             $validated = $this->validator->validate($form);
-            $event = $this->buildEvent($validated);
-            $event->setCustomer(\Thelia\Model\CustomerQuery::create()->findPk($customerId)
-                ?? throw new \LogicException($this->translator->trans('Customer not found.')));
+            $customer = CustomerQuery::create()->findPk($customerId)
+                ?? throw new \LogicException($this->translator->trans('Customer not found.'));
+
+            // Customers registered through the minimal front-office registration have no address:
+            // their first one must become the default, or they would keep none at all.
+            $isDefault = $customer->getDefaultAddress() === null ? 1 : 0;
+
+            $event = $this->buildEvent($validated, $isDefault);
+            $event->setCustomer($customer);
 
             $this->events->dispatch($event, TheliaEvents::ADDRESS_CREATE);
 
@@ -235,7 +242,7 @@ final class AddressController
         ];
     }
 
-    private function buildEvent(FormInterface $validated): AddressCreateOrUpdateEvent
+    private function buildEvent(FormInterface $validated, int $isDefault = 0): AddressCreateOrUpdateEvent
     {
         $data = $validated->getData() ?? [];
 
@@ -253,7 +260,7 @@ final class AddressController
             cellphone: $this->stringOrNull($data['cellphone'] ?? null),
             phone: $this->stringOrNull($data['phone'] ?? null),
             company: $this->stringOrNull($data['company'] ?? null),
-            isDefault: 0,
+            isDefault: $isDefault,
             state: isset($data['state']) && $data['state'] !== '' ? (int) $data['state'] : null,
         );
     }
