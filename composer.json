@@ -16,13 +16,13 @@
         "symfony/stimulus-bundle": "^2.19",
         "symfony/ux-twig-component": "^2.19 || ^3.0",
         "symfony/ux-icons": "^2.21",
-        "thelia/twig-engine-module": "dev-twig",
-        "thelia/tiptap-module": "dev-main",
-        "thelia/virtual-product-control-module": "dev-main",
-        "thelia/virtual-product-delivery-module": "dev-twig",
-        "thelia/custom-delivery-module": "dev-twig",
-        "thelia/cheque-module": "dev-twig",
-        "thelia/free-order-module": "dev-twig"
+        "thelia/twig-engine-module": "^1.0",
+        "thelia/tiptap-module": "^1.0",
+        "thelia/virtual-product-control-module": "^2.6",
+        "thelia/virtual-product-delivery-module": "^3.0",
+        "thelia/custom-delivery-module": "^4.0",
+        "thelia/cheque-module": "^3.0",
+        "thelia/free-order-module": "^3.0"
     },
     "autoload": {
         "psr-4": {
