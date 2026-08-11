@@ -19,6 +19,7 @@ use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\ListSort;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
 use Propel\Runtime\ActiveQuery\Criteria;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -48,6 +49,8 @@ final class NewsletterController
         private readonly UrlGeneratorInterface $urls,
         private readonly TranslatorInterface $translator,
         private readonly TokenProvider $tokens,
+        #[Autowire(param: 'thelia_admin_template')]
+        private readonly string $adminTemplate,
     ) {
     }
 
@@ -154,10 +157,43 @@ final class NewsletterController
             'email' => (string) $subscriber->getEmail(),
             'firstname' => (string) $subscriber->getFirstname(),
             'lastname' => (string) $subscriber->getLastname(),
-            'locale' => (string) $subscriber->getLocale(),
+            'locale' => $this->localeFlagHtml((string) $subscriber->getLocale()),
             'created_at' => $subscriber->getCreatedAt() instanceof \DateTimeInterface ? $subscriber->getCreatedAt()->format('Y-m-d H:i') : '',
             '_actions' => $actions,
         ];
+    }
+
+    /**
+     * Renders the subscriber's locale (e.g. "fr_FR") as its country flag, with the
+     * locale itself as tooltip. Falls back to the plain locale text when it doesn't
+     * carry a recognizable 2-letter country code or the matching SVG doesn't exist.
+     */
+    private function localeFlagHtml(string $locale): string
+    {
+        $safeLocale = htmlspecialchars($locale, \ENT_QUOTES);
+
+        $countryCode = strtolower(substr(strrchr($locale, '_') ?: $locale, -2));
+
+        // Only ever accept a plain 2-letter code: $locale is user-submitted at
+        // newsletter sign-up, not picked from a closed list, and $countryCode is
+        // interpolated unescaped into the src attribute below.
+        if (!preg_match('/^[a-z]{2}$/', $countryCode)) {
+            return $safeLocale;
+        }
+
+        $svgPath = \dirname(__DIR__, 2).'/assets/img/svgFlags/'.$countryCode.'.svg';
+
+        if (!is_file($svgPath)) {
+            return $safeLocale;
+        }
+
+        return \sprintf(
+            '<img src="/templates-assets/backOffice/%s/dist/img/svgFlags/%s.svg" alt="%s" title="%s" width="22" height="14">',
+            $this->adminTemplate,
+            $countryCode,
+            $safeLocale,
+            $safeLocale,
+        );
     }
 
     /**
