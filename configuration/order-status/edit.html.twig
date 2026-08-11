@@ -65,6 +65,15 @@
                             {{ form_widget(form.color, { attr: { class: 'form-control', type: 'color' } }) }}
                         </div>
                     </div>
+                    {% if form.equivalent_code is defined %}
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form_label(form.equivalent_code) }}
+                                {{ form_widget(form.equivalent_code, { attr: { class: 'form-select' } }) }}
+                                <div class="form-text">{{ 'Orders in this status are handled as if they had the selected status.'|trans }}</div>
+                            </div>
+                        </div>
+                    {% endif %}
                     <div class="mb-3">
                         {{ form_label(form.chapo) }}
                         {{ form_widget(form.chapo, { attr: { class: 'form-control', rows: 3 } }) }}
