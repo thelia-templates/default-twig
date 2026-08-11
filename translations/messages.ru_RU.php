@@ -1399,7 +1399,6 @@ return [
     'Update tax rule taxes' => 'Обновить налоги налогового правила',
     'Update URL' => 'Обновить URL',
     'Upload documents' => 'Загрузить документы',
-    'Upload documents in the Documents tab to make one downloadable.' => 'Загрузите документы во вкладке «Документы», чтобы сделать их доступными для скачивания.',
     'Upload images' => 'Загрузить изображения',
     'Upload images in the Images tab before choosing a logo.' => 'Загрузите изображения на вкладке «Изображения» перед выбором логотипа.',
     'Usage count' => 'Количество использований',

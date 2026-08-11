@@ -1398,7 +1398,6 @@ return [
     'Update tax rule taxes' => 'تحديث ضرائب قاعدة الضريبة',
     'Update URL' => 'تحديث الرابط',
     'Upload documents' => 'رفع المستندات',
-    'Upload documents in the Documents tab to make one downloadable.' => 'قم بتحميل المستندات في تبويب المستندات لجعل أحدها قابلاً للتنزيل.',
     'Upload images' => 'رفع الصور',
     'Upload images in the Images tab before choosing a logo.' => 'ارفع الصور في تبويب الصور قبل اختيار شعار.',
     'Usage count' => 'الاستخدامات المتبقية',

@@ -1398,7 +1398,6 @@ return [
     'Update tax rule taxes' => 'Ενημέρωση φόρων κανόνα φορολογίας',
     'Update URL' => 'Ενημέρωση URL',
     'Upload documents' => 'Μεταφόρτωση εγγράφων',
-    'Upload documents in the Documents tab to make one downloadable.' => 'Ανεβάστε έγγραφα στην καρτέλα Έγγραφα για να τα κάνετε διαθέσιμα για λήψη.',
     'Upload images' => 'Μεταφόρτωση εικόνων',
     'Upload images in the Images tab before choosing a logo.' => 'Μεταφορτώστε εικόνες στην καρτέλα Εικόνες πριν επιλέξετε λογότυπο.',
     'Usage count' => 'Υπόλοιπες χρήσεις',

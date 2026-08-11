@@ -1398,7 +1398,6 @@ return [
     'Update tax rule taxes' => 'Zaktualizuj podatki reguły podatkowej',
     'Update URL' => 'Zaktualizuj URL',
     'Upload documents' => 'Prześlij dokumenty',
-    'Upload documents in the Documents tab to make one downloadable.' => 'Wgraj dokumenty w zakładce Dokumenty, aby udostępnić je do pobrania.',
     'Upload images' => 'Prześlij zdjęcia',
     'Upload images in the Images tab before choosing a logo.' => 'Przed wyborem logo prześlij zdjęcia w zakładce Zdjęcia.',
     'Usage count' => 'Pozostałe użycia',

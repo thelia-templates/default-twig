@@ -1399,7 +1399,6 @@ return [
     'Update tax rule taxes' => 'Adószabály adóinak frissítése',
     'Update URL' => 'URL frissítése',
     'Upload documents' => 'Dokumentumok feltöltése',
-    'Upload documents in the Documents tab to make one downloadable.' => 'Töltsön fel dokumentumokat a Dokumentumok fülön, hogy letölthetővé tegye őket.',
     'Upload images' => 'Képek feltöltése',
     'Upload images in the Images tab before choosing a logo.' => 'Töltse fel a képeket a Képek fülön, mielőtt logót választana.',
     'Usage count' => 'Hátralévő használhatóság száma',

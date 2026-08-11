@@ -1398,7 +1398,6 @@ return [
     'Update tax rule taxes' => 'Belastingen van belastingregel bijwerken',
     'Update URL' => 'URL bijwerken',
     'Upload documents' => 'Documenten uploaden',
-    'Upload documents in the Documents tab to make one downloadable.' => 'Upload documenten in het tabblad Documenten om een downloadbaar document aan te bieden.',
     'Upload images' => 'Afbeeldingen uploaden',
     'Upload images in the Images tab before choosing a logo.' => 'Upload eerst afbeeldingen op het tabblad Afbeeldingen voordat u een logo kiest.',
     'Usage count' => 'Resterend gebruik',

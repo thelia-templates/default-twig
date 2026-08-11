@@ -1399,7 +1399,6 @@ return [
     'Update tax rule taxes' => 'به روز رسانی نرخ مالیاتی مالیات‌ها',
     'Update URL' => 'به‌روزرسانی URL',
     'Upload documents' => 'آپلود اسناد',
-    'Upload documents in the Documents tab to make one downloadable.' => 'اسناد را در برگه اسناد بارگذاری کنید تا قابل دانلود شوند.',
     'Upload images' => 'آپلود تصاویر',
     'Upload images in the Images tab before choosing a logo.' => 'قبل از انتخاب لوگو، تصاویر را در تب تصاویر آپلود کنید.',
     'Usage count' => 'تعداد باقیمانده',
