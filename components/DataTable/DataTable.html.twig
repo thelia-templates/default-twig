@@ -17,7 +17,7 @@
             <thead class="table-light">
                 <tr>
                     {% for column in columns %}
-                        <th scope="col" class="text-{{ column.cellAlign }}">
+                        <th scope="col" class="text-{{ column.cellAlign }}{{ column.kind.value == 'actions' ? ' datatable-sticky-actions' : '' }}">
                             {%- if column.kind.value == 'select' -%}
                                 <input type="checkbox" class="form-check-input"
                                        data-bo-bulk-select-target="all"
@@ -46,7 +46,7 @@
                 {% for row in rows %}
                     <tr data-testid="datatable-{{ id }}-row" data-row-id="{{ row.id|default('') }}"{% if row._row_class is defined and row._row_class %} class="{{ row._row_class }}"{% endif %}{% for attrName, attrValue in row._attrs|default({}) %} {{ attrName }}="{{ attrValue }}"{% endfor %}>
                         {% for column in columns %}
-                            <td class="text-{{ column.cellAlign }}" data-testid="datatable-{{ id }}-cell-{{ column.key }}">
+                            <td class="text-{{ column.cellAlign }}{{ column.kind.value == 'actions' ? ' datatable-sticky-actions' : '' }}" data-testid="datatable-{{ id }}-cell-{{ column.key }}">
                                 {% include '@BackOfficeDefaultTwig/components/DataTable/cells/' ~ column.kind.value ~ '.html.twig' with {
                                     column: column,
                                     row: row,
