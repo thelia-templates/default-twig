@@ -1399,7 +1399,6 @@ return [
     'Update tax rule taxes' => 'Actualizar los impuestos de las reglas de impuesto',
     'Update URL' => 'Actualizar URL',
     'Upload documents' => 'Subir documentos',
-    'Upload documents in the Documents tab to make one downloadable.' => 'Suba documentos en la pestaña Documentos para hacer uno descargable.',
     'Upload images' => 'Subir imágenes',
     'Upload images in the Images tab before choosing a logo.' => 'Suba imágenes en la pestaña Imágenes antes de elegir un logotipo.',
     'Usage count' => 'Usos restantes',

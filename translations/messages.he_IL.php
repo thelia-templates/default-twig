@@ -1398,7 +1398,6 @@ return [
     'Update tax rule taxes' => 'עדכן מסי חוק מס',
     'Update URL' => 'עדכן כתובת URL',
     'Upload documents' => 'העלה מסמכים',
-    'Upload documents in the Documents tab to make one downloadable.' => 'העלה מסמכים בלשונית המסמכים כדי לאפשר הורדה.',
     'Upload images' => 'העלה תמונות',
     'Upload images in the Images tab before choosing a logo.' => 'העלה תמונות בלשונית התמונות לפני בחירת לוגו.',
     'Usage count' => 'שימושים שנותרו',

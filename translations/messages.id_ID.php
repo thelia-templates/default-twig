@@ -1398,7 +1398,6 @@ return [
     'Update tax rule taxes' => 'Perbarui pajak aturan pajak',
     'Update URL' => 'Perbarui URL',
     'Upload documents' => 'Unggah dokumen',
-    'Upload documents in the Documents tab to make one downloadable.' => 'Unggah dokumen di tab Dokumen untuk membuatnya dapat diunduh.',
     'Upload images' => 'Unggah gambar',
     'Upload images in the Images tab before choosing a logo.' => 'Unggah gambar di tab Gambar sebelum memilih logo.',
     'Usage count' => 'Sisa penggunaan',

@@ -166,13 +166,23 @@
                             </div>
                             <div class="mb-3" data-bo-virtual-toggle-target="field">
                                 {{ form_label(form.virtual_document_id) }}
-                                <select name="{{ form.virtual_document_id.vars.full_name }}" class="form-select" data-testid="product-edit-virtual-document">
-                                    <option value="0">{{ '- No document -'|trans }}</option>
-                                    {% for doc in available_documents %}
-                                        <option value="{{ doc.id }}"{{ doc.id == form.virtual_document_id.vars.value ? ' selected' }}>{{ doc.title }}</option>
-                                    {% endfor %}
-                                </select>
-                                {% if available_documents is empty %}<small class="form-text text-muted">{{ 'Upload documents in the Documents tab to make one downloadable.'|trans }}</small>{% endif %}
+                                {% if virtual_document_per_combination %}
+                                    {# The document is set per combination: -1 tells the save action to leave every association untouched. #}
+                                    <input type="hidden" name="{{ form.virtual_document_id.vars.full_name }}" value="-1">
+                                    <small class="form-text text-muted d-block" data-testid="product-edit-virtual-document-per-combination">{{ 'This product has several combinations: attach a document to each of them in the Combinations tab.'|trans }}</small>
+                                {% else %}
+                                    <select name="{{ form.virtual_document_id.vars.full_name }}" class="form-select" data-testid="product-edit-virtual-document">
+                                        <option value="0">{{ '- No document -'|trans }}</option>
+                                        {% for doc in available_documents %}
+                                            <option value="{{ doc.id }}"{{ doc.id == form.virtual_document_id.vars.value ? ' selected' }}>{{ doc.title }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    {% if available_documents is empty %}
+                                        <small class="form-text text-muted">{{ 'Upload a document in the Documents tab and leave it non-visible to make it downloadable.'|trans }}</small>
+                                    {% else %}
+                                        <small class="form-text text-muted">{{ 'Only non-visible documents are listed.'|trans }}</small>
+                                    {% endif %}
+                                {% endif %}
                                 {% do form.virtual_document_id.setRendered %}
                             </div>
                             {{ safe_hook('product.modification.form-right.bottom', { product_id: product.id }) }}

@@ -54,10 +54,12 @@ use Thelia\Model\CategoryQuery;
 use Thelia\Model\CurrencyQuery;
 use Thelia\Model\LangQuery;
 use Thelia\Model\Map\ProductTableMap;
+use Thelia\Model\MetaData;
+use Thelia\Model\MetaDataQuery;
 use Thelia\Model\Product;
 use Thelia\Model\ProductDocumentQuery;
 use Thelia\Model\ProductQuery;
-use Thelia\Model\ProductSaleElementsProductDocumentQuery;
+use Thelia\Model\ProductSaleElements;
 use Thelia\Model\ProductSaleElementsQuery;
 use Thelia\Model\TaxRuleQuery;
 use Thelia\Model\TemplateQuery;
@@ -238,6 +240,7 @@ final class ProductController
                 'available_categories' => $this->categories->flatTree($uiLocale),
                 'available_brands' => $this->brandChoices($uiLocale),
                 'available_documents' => $this->documentChoices($product, $uiLocale),
+                'virtual_document_per_combination' => $this->hasSeveralSaleElements($product),
                 'preview_url' => $product->getUrl($locale),
                 'breadcrumb_path' => $this->categories->buildBreadcrumbPath($defaultCategory, $uiLocale),
                 'prev_url' => $navigation['previous'] !== null ? $this->urls->generate(self::EDIT_ROUTE, ['product_id' => $navigation['previous']]) : null,
@@ -437,7 +440,8 @@ final class ProductController
             ->setPostscriptum($this->stringOrNull($data['postscriptum'] ?? null))
             ->setTemplateId($this->intOrNull($data['template_id'] ?? null))
             ->setBrandId($this->intOrNull($data['brand_id'] ?? null))
-            ->setVirtualDocumentId($this->intOrNull($data['virtual_document_id'] ?? null));
+            // 0 clears the association, -1 leaves it untouched (product with several combinations).
+            ->setVirtualDocumentId(isset($data['virtual_document_id']) ? (int) $data['virtual_document_id'] : -1);
 
         return $event;
     }
@@ -687,7 +691,15 @@ final class ProductController
     private function documentChoices(Product $product, string $locale): array
     {
         $items = [];
-        foreach (ProductDocumentQuery::create()->filterByProductId($product->getId())->orderByPosition()->find() as $document) {
+
+        // Only documents hidden from the front office can be sold: a visible one is freely downloadable.
+        $documents = ProductDocumentQuery::create()
+            ->filterByProductId($product->getId())
+            ->filterByVisible(0)
+            ->orderByPosition()
+            ->find();
+
+        foreach ($documents as $document) {
             $document->setLocale($locale);
             $label = (string) $document->getTitle();
             $items[] = ['id' => (int) $document->getId(), 'title' => $label !== '' ? $label : (string) $document->getFile()];
@@ -697,24 +709,37 @@ final class ProductController
     }
 
     /**
-     * Current virtual document assigned to the product's default sale element, if any.
-     * The link lives in product_sale_elements_product_document, not on the product row.
+     * Current virtual document of the product's default sale element, if any.
+     * The association is a meta_data row (virtual key, pse element), the storage the
+     * combinations tab and the order process also use.
      */
     private function currentVirtualDocumentId(Product $product): ?int
     {
-        $defaultPse = ProductSaleElementsQuery::create()
-            ->filterByProductId($product->getId())
-            ->filterByIsDefault(true)
-            ->findOne();
+        $defaultPse = $this->defaultSaleElement($product);
         if ($defaultPse === null) {
             return null;
         }
 
-        $link = ProductSaleElementsProductDocumentQuery::create()
-            ->filterByProductSaleElementsId($defaultPse->getId())
-            ->findOne();
+        $documentId = (int) MetaDataQuery::getVal('virtual', MetaData::PSE_KEY, $defaultPse->getId());
 
-        return $link !== null ? (int) $link->getProductDocumentId() : null;
+        return $documentId > 0 ? $documentId : null;
+    }
+
+    private function defaultSaleElement(Product $product): ?ProductSaleElements
+    {
+        return ProductSaleElementsQuery::create()
+            ->filterByProductId($product->getId())
+            ->filterByIsDefault(true)
+            ->findOne();
+    }
+
+    /**
+     * A product with several combinations gets one document per combination, set in the
+     * combinations tab: the general tab then leaves every association untouched.
+     */
+    private function hasSeveralSaleElements(Product $product): bool
+    {
+        return ProductSaleElementsQuery::create()->filterByProductId($product->getId())->count() > 1;
     }
 
     /**

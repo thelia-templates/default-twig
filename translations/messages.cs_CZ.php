@@ -1398,7 +1398,6 @@ return [
     'Update tax rule taxes' => 'Aktualizovat daně daňového pravidla',
     'Update URL' => 'Aktualizovat URL',
     'Upload documents' => 'Nahrát dokumenty',
-    'Upload documents in the Documents tab to make one downloadable.' => 'Nahrajte dokumenty na záložce Dokumenty, aby bylo možné je stáhnout.',
     'Upload images' => 'Nahrát obrázky',
     'Upload images in the Images tab before choosing a logo.' => 'Nahrajte obrázky na záložce Obrázky, než zvolíte logo.',
     'Usage count' => 'Zbývající počet použití',

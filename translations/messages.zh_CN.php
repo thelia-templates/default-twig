@@ -1398,7 +1398,6 @@ return [
     'Update tax rule taxes' => '更新税则税项',
     'Update URL' => '更新 URL',
     'Upload documents' => '上传文档',
-    'Upload documents in the Documents tab to make one downloadable.' => '请在"文档"标签页中上传文档以启用下载功能。',
     'Upload images' => '上传图片',
     'Upload images in the Images tab before choosing a logo.' => '请先在图片标签页上传图片，再选择 Logo。',
     'Usage count' => '剩余使用次数',

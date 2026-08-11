@@ -1399,7 +1399,6 @@ return [
     'Update tax rule taxes' => 'Kdv kuralı vergi güncelleştirmek',
     'Update URL' => 'URL\'yi güncelle',
     'Upload documents' => 'Belge yükle',
-    'Upload documents in the Documents tab to make one downloadable.' => 'İndirilebilir hale getirmek için Belgeler sekmesine belge yükleyin.',
     'Upload images' => 'Görsel yükle',
     'Upload images in the Images tab before choosing a logo.' => 'Logo seçmeden önce Görseller sekmesine görsel yükleyin.',
     'Usage count' => 'Kalan kullanım sayısı',
