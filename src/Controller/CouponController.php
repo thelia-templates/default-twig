@@ -33,6 +33,8 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Thelia\Condition\ConditionCollection;
+use Thelia\Condition\Exception\InvalidConditionOperatorException;
+use Thelia\Condition\Exception\InvalidConditionValueException;
 use Thelia\Core\Event\Coupon\CouponCreateOrUpdateEvent;
 use Thelia\Core\Event\Coupon\CouponDeleteEvent;
 use Thelia\Core\Event\TheliaEvents;
@@ -283,7 +285,20 @@ final class CouponController
 
         $manager = $this->couponFactory->buildCouponFromModel($coupon);
 
-        $built = $this->conditionsRenderer->buildConditionFromRequest($request);
+        try {
+            $built = $this->conditionsRenderer->buildConditionFromRequest($request);
+        } catch (InvalidConditionOperatorException|InvalidConditionValueException) {
+            // The exception constructor already logged the detailed error.
+            return new Response(
+                $this->translator->trans('Please check the parameters of this condition: some of them are missing or invalid.'),
+                Response::HTTP_BAD_REQUEST,
+            );
+        }
+
+        if ($built === null) {
+            return new Response('', Response::HTTP_NOT_FOUND);
+        }
+
         $conditions = $manager->getConditions();
         $conditionIndex = $request->request->get('conditionIndex');
 
