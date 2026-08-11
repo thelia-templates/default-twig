@@ -19,12 +19,14 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Contracts\Translation\TranslatorInterface;
+use Thelia\Core\HttpFoundation\Session\Session as TheliaSession;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
 use Thelia\Core\Template\Parser\ParserResolver;
 use Thelia\Core\Template\TemplateHelperInterface;
 use Thelia\Mailer\MailerFactory;
 use Thelia\Model\ConfigQuery;
+use Thelia\Model\Lang;
 use Thelia\Model\LangQuery;
 use Thelia\Model\MessageQuery;
 
@@ -110,6 +112,20 @@ final class MessagePreviewController
         }
 
         $mailTemplate = $this->templateHelper->getActiveMailTemplate();
+        $locale = $this->resolveLocale($request);
+
+        // The Twig parser reads its "locale" global and the translator locale from the admin
+        // language stored in session (LangService::getLang()), not from the message's edition
+        // locale. Temporarily switch it so the preview renders in the expected language, the
+        // same way MailerFactory::createEmailMessage() swaps the session language for real sends.
+        $session = $request->hasSession() ? $request->getSession() : null;
+        $previousAdminLang = null;
+        $editionLang = LangQuery::create()->findOneByLocale($locale);
+
+        if ($session instanceof TheliaSession && $editionLang instanceof Lang) {
+            $previousAdminLang = $session->getAdminLang();
+            $session->setAdminLang($editionLang);
+        }
 
         try {
             $parser = $this->parserResolver->getParser($mailTemplate->getAbsolutePath(), null);
@@ -119,10 +135,14 @@ final class MessagePreviewController
                 $parser->assign($key, $value);
             }
 
-            $message->setLocale($this->resolveLocale($request));
+            $message->setLocale($locale);
             $content = $asHtml ? $message->getHtmlMessageBody($parser) : $message->getTextMessageBody($parser);
         } catch (\Throwable $exception) {
             return new Response($this->translator->trans("You probably didn't inject the missing variable to preview the message. Error is : %err", ['%err' => $exception->getMessage()]));
+        } finally {
+            if ($session instanceof TheliaSession && $previousAdminLang instanceof Lang) {
+                $session->setAdminLang($previousAdminLang);
+            }
         }
 
         return new Response($content);
