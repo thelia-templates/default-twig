@@ -1063,6 +1063,7 @@ return [
     'Phone & Fax' => 'Téléphone & Fax',
     'Pick one value per attribute to define this combination.' => 'Choisissez une valeur par déclinaison pour définir cette combinaison.',
     'Plain text message body' => 'Corps du message en texte brut',
+    'Please check the parameters of this condition: some of them are missing or invalid.' => 'Merci de vérifier les paramètres de cette condition : certains sont manquants ou invalides.',
     'Please enter at least %count% characters to search.' => 'Veuillez saisir au moins %count% caractères pour lancer la recherche.',
     'Please enter the date using the %fmt format' => 'Veuillez saisir la date en utilisant le format %fmt',
     'Please select a condition' => 'Choisissez une condition',

@@ -19,6 +19,8 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Thelia\Condition\ConditionFactory;
+use Thelia\Condition\Exception\InvalidConditionOperatorException;
+use Thelia\Condition\Exception\InvalidConditionValueException;
 use Thelia\Condition\Implementation\AbstractMatchCountries;
 use Thelia\Condition\Implementation\CartContainsCategories;
 use Thelia\Condition\Implementation\CartContainsProducts;
@@ -99,9 +101,17 @@ final readonly class CouponConditionsRenderer
         ]);
     }
 
-    public function buildConditionFromRequest(Request $request): ConditionInterface
+    /**
+     * @throws InvalidConditionOperatorException if an operator submitted for this condition is not allowed
+     * @throws InvalidConditionValueException    if a value submitted for this condition is missing or invalid
+     */
+    public function buildConditionFromRequest(Request $request): ?ConditionInterface
     {
-        $serviceId = (string) $request->request->get('categoryCondition');
+        $serviceId = urldecode((string) $request->request->get('categoryCondition'));
+        if (!$this->container->has($serviceId)) {
+            return null;
+        }
+
         $operators = [];
         $values = [];
 
