@@ -75,6 +75,11 @@
                 {{ form_widget(create_form.code, { attr: { class: 'form-control' } }) }}
             </div>
             <div class="mb-3">
+                {{ form_label(create_form.equivalent_code) }}
+                {{ form_widget(create_form.equivalent_code, { attr: { class: 'form-select' } }) }}
+                <div class="form-text">{{ 'Orders in this status are handled as if they had the selected status.'|trans }}</div>
+            </div>
+            <div class="mb-3">
                 {{ form_label(create_form.color) }}
                 {{ form_widget(create_form.color, { attr: { class: 'form-control', type: 'color' } }) }}
             </div>

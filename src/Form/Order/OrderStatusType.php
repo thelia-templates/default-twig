@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace BackOfficeDefaultTwigBundle\Form\Order;
 
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
@@ -24,6 +25,7 @@ use Symfony\Component\Validator\Constraints\GreaterThan;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\Regex;
 use Symfony\Contracts\Translation\TranslatorInterface;
+use Thelia\Model\OrderStatus;
 
 final class OrderStatusType extends AbstractType
 {
@@ -54,6 +56,22 @@ final class OrderStatusType extends AbstractType
                 'constraints' => [new NotBlank()],
             ]);
 
+        if ($options['include_equivalent_code']) {
+            $builder->add('equivalent_code', ChoiceType::class, [
+                'choices' => [
+                    $this->translator->trans('Not paid') => OrderStatus::CODE_NOT_PAID,
+                    $this->translator->trans('Paid') => OrderStatus::CODE_PAID,
+                    $this->translator->trans('Processing') => OrderStatus::CODE_PROCESSING,
+                    $this->translator->trans('Sent') => OrderStatus::CODE_SENT,
+                    $this->translator->trans('Canceled') => OrderStatus::CODE_CANCELED,
+                    $this->translator->trans('Refunded') => OrderStatus::CODE_REFUNDED,
+                ],
+                'label' => $this->translator->trans('Equivalent to'),
+                'placeholder' => $this->translator->trans('Nothing, this status stands for itself'),
+                'required' => false,
+            ]);
+        }
+
         if ($options['include_id']) {
             $builder->add('id', HiddenType::class, [
                 'constraints' => [new NotBlank(), new GreaterThan(0)],
@@ -83,9 +101,11 @@ final class OrderStatusType extends AbstractType
             ->setDefaults([
                 'include_id' => false,
                 'include_description' => false,
+                'include_equivalent_code' => false,
                 'csrf_token_id' => 'admin.order-status',
             ])
             ->setAllowedTypes('include_id', 'bool')
-            ->setAllowedTypes('include_description', 'bool');
+            ->setAllowedTypes('include_description', 'bool')
+            ->setAllowedTypes('include_equivalent_code', 'bool');
     }
 }

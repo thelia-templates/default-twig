@@ -80,6 +80,7 @@ final class OrderStatusController
         $form = $this->formFactory->createNamed('thelia_order_status_creation', OrderStatusType::class, [
             'locale' => $request->getLocale(),
         ], [
+            'include_equivalent_code' => true,
         ]);
 
         return $this->action->submit(
@@ -123,6 +124,7 @@ final class OrderStatusController
         $form = $this->formFactory->createNamed('thelia_order_status_modification', OrderStatusType::class, null, [
             'include_id' => true,
             'include_description' => true,
+            'include_equivalent_code' => true,
         ]);
 
         return $this->action->submit(
@@ -183,6 +185,7 @@ final class OrderStatusController
         $event->setLocale((string) ($data['locale'] ?? $this->defaultLocale()))
             ->setTitle((string) ($data['title'] ?? ''))
             ->setCode((string) ($data['code'] ?? ''))
+            ->setEquivalentCode($this->equivalentCode($data))
             ->setColor((string) ($data['color'] ?? '#000000'));
 
         return $event;
@@ -196,12 +199,23 @@ final class OrderStatusController
         $event->setLocale((string) ($data['locale'] ?? $this->defaultLocale()))
             ->setTitle((string) ($data['title'] ?? ''))
             ->setCode((string) ($data['code'] ?? ''))
+            ->setEquivalentCode($this->equivalentCode($data))
             ->setColor((string) ($data['color'] ?? '#000000'))
             ->setChapo((string) ($data['chapo'] ?? ''))
             ->setDescription((string) ($data['description'] ?? ''))
             ->setPostscriptum((string) ($data['postscriptum'] ?? ''));
 
         return $event;
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    private function equivalentCode(array $data): ?string
+    {
+        $equivalentCode = (string) ($data['equivalent_code'] ?? '');
+
+        return $equivalentCode === '' ? null : $equivalentCode;
     }
 
     /**
@@ -230,6 +244,7 @@ final class OrderStatusController
         $createForm = $this->formFactory->createNamed('thelia_order_status_creation', OrderStatusType::class, [
             'locale' => $locale,
         ], [
+            'include_equivalent_code' => true,
         ]);
 
         return [
@@ -310,6 +325,7 @@ final class OrderStatusController
             'locale' => $locale,
             'title' => $status->getTitle(),
             'code' => $status->getCode(),
+            'equivalent_code' => $status->getEquivalentCode(),
             'color' => $status->getColor(),
             'chapo' => $status->getChapo(),
             'description' => $status->getDescription(),
@@ -317,6 +333,8 @@ final class OrderStatusController
         ], [
             'include_id' => true,
             'include_description' => true,
+            // A protected status always stands for itself: no equivalence to pick.
+            'include_equivalent_code' => !$status->getProtectedStatus(),
         ]);
     }
 
