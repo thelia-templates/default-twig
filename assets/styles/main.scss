@@ -504,8 +504,10 @@ input[type="color"].form-control {
     --bs-btn-border-color: #{$primary};
     --bs-btn-hover-bg: #{$primary-dark};
     --bs-btn-hover-border-color: #{$primary-dark};
+    --bs-btn-hover-color: #fff;
     --bs-btn-active-bg: #{$primary-dark};
     --bs-btn-active-border-color: #{$primary-dark};
+    --bs-btn-active-color: #fff;
 }
 
 .btn-outline-primary {
