@@ -59,7 +59,9 @@
                         </div>
                     {% endif %}
 
-                    {% if serializers|length == 0 %}
+                    {% if not handler_available %}
+                        <div class="alert alert-warning" data-testid="export-handler-missing">{{ 'This export cannot be run: the module that provided it has been removed. Run "import-export:clean" to delete the exports and imports left behind.'|trans }}</div>
+                    {% elseif serializers|length == 0 %}
                         <div class="alert alert-warning">{{ "You can't do exports, you don't have any serializer that handles this."|trans }}</div>
                     {% else %}
                         <div class="row g-3">
