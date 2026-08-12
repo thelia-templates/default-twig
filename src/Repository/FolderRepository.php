@@ -35,6 +35,41 @@ final readonly class FolderRepository
         return $folders;
     }
 
+    public function find(int $folderId, string $locale): ?Folder
+    {
+        $folder = FolderQuery::create()->findPk($folderId);
+        if ($folder === null) {
+            return null;
+        }
+        $folder->setLocale($locale);
+
+        return $folder;
+    }
+
+    /**
+     * @return list<array{id: int, title: string}>
+     */
+    public function buildBreadcrumbPath(?Folder $current, string $locale): array
+    {
+        if ($current === null) {
+            return [];
+        }
+
+        $path = [];
+        $node = $current;
+        while ($node !== null && (int) $node->getId() !== 0) {
+            $node->setLocale($locale);
+            array_unshift($path, [
+                'id' => (int) $node->getId(),
+                'title' => (string) $node->getTitle(),
+            ]);
+            $parentId = (int) $node->getParent();
+            $node = $parentId > 0 ? FolderQuery::create()->findPk($parentId) : null;
+        }
+
+        return $path;
+    }
+
     /**
      * @return ObjectCollection<int, Folder>
      */

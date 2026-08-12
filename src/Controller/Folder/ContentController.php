@@ -100,8 +100,11 @@ final class ContentController
         $locale = $editLang->getLocale() ?? 'en_US';
         $content->setLocale($locale);
 
+        $uiLocale = $request->getLocale();
+
         return new Response($this->twig->render(self::EDIT_TEMPLATE, [
             'content' => $content,
+            'breadcrumb_path' => $this->folderRepository->buildBreadcrumbPath($this->folderRepository->find($content->getDefaultFolderId(), $uiLocale), $uiLocale),
             'preview_url' => $content->getUrl($locale),
             'form' => $this->buildUpdateForm($content, $locale)->createView(),
             'seo_form' => $this->buildSeoForm($content, $locale)->createView(),
