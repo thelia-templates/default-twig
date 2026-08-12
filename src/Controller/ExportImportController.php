@@ -17,6 +17,7 @@ namespace BackOfficeDefaultTwigBundle\Controller;
 use BackOfficeDefaultTwigBundle\Repository\DataTransferRepository;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
+use BackOfficeDefaultTwigBundle\Service\Admin\ImportTemplateBuilder;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -299,6 +300,7 @@ final class ExportImportController
             'languages' => $this->languageOptions(),
             'allowed_extensions' => implode(', ', $this->importHandler->getAcceptedExtensions()),
             'allowed_mime_types' => implode(', ', $this->importHandler->getAcceptedMimeTypes()),
+            'has_template' => $this->importTemplateBuilder->columnsFor($import) !== [],
         ]));
     }
 
@@ -364,6 +366,45 @@ final class ExportImportController
         }
 
         return new RedirectResponse($this->urls->generate('import.view', ['id' => $id]));
+    }
+
+    #[Route('/admin/import/{id}/template', name: 'import.template', methods: ['GET'], requirements: ['id' => '\d+'])]
+    public function importTemplate(int $id): Response
+    {
+        if ($denied = $this->access->check(AdminResources::IMPORT, [], AccessManager::VIEW)) {
+            return $denied;
+        }
+
+        $import = $this->importHandler->getImport($id);
+        if ($import === null) {
+            return new RedirectResponse($this->urls->generate('import.list'));
+        }
+
+        if (!$this->importTemplateBuilder->isCsvAvailable()) {
+            $this->addFlash('error', $this->translator->trans('The CSV format is not available.'));
+
+            return new RedirectResponse($this->urls->generate('import.view', ['id' => $id]));
+        }
+
+        if ($this->importTemplateBuilder->columnsFor($import) === []) {
+            $this->addFlash('error', $this->translator->trans('No column template is available for this import.'));
+
+            return new RedirectResponse($this->urls->generate('import.view', ['id' => $id]));
+        }
+
+        return new Response(
+            $this->importTemplateBuilder->build($import),
+            Response::HTTP_OK,
+            [
+                'Content-Type' => $this->importTemplateBuilder->mimeType(),
+                'Content-Disposition' => \sprintf(
+                    '%s; filename="%s"',
+                    ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+                    $this->importTemplateBuilder->fileNameFor($import),
+                ),
+                'Cache-Control' => 'no-store, private',
+            ],
+        );
     }
 
     /** @return list<array{id: string, name: string, extension: string}> */

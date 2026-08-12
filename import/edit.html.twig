@@ -47,6 +47,12 @@
                             <label for="bo-import-file" class="form-label">{{ 'File'|trans }}</label>
                             <input id="bo-import-file" type="file" name="file_upload" accept="{{ allowed_mime_types }}" class="form-control" required>
                             <div class="form-text">{{ 'Accepted formats'|trans }} : {{ allowed_extensions }}</div>
+                            {% if has_template %}
+                                <a href="{{ path('import.template', { id: import_id }) }}"
+                                   class="btn btn-sm btn-outline-secondary mt-2"
+                                   download
+                                   data-testid="import-template-download"><i class="bi bi-download me-1" aria-hidden="true"></i>{{ 'Download a CSV template'|trans }}</a>
+                            {% endif %}
                         </div>
                     </div>
 

@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace BackOfficeDefaultTwigBundle\Repository;
 
+use BackOfficeDefaultTwigBundle\Service\Admin\ImportTemplateBuilder;
 use Thelia\Model\ExportCategoryQuery;
 use Thelia\Model\ExportQuery;
 use Thelia\Model\ImportCategoryQuery;
@@ -25,6 +26,11 @@ use Thelia\Model\ImportQuery;
  */
 final readonly class DataTransferRepository
 {
+    public function __construct(
+        private ImportTemplateBuilder $importTemplateBuilder,
+    ) {
+    }
+
     /**
      * @return list<array{id: int, title: string, exports: list<array{id: int, ref: string, title: string, description: string, position: int}>}>
      */
@@ -55,7 +61,7 @@ final readonly class DataTransferRepository
     }
 
     /**
-     * @return list<array{id: int, title: string, imports: list<array{id: int, ref: string, title: string, description: string, position: int}>}>
+     * @return list<array{id: int, title: string, imports: list<array{id: int, ref: string, title: string, description: string, position: int, has_template: bool}>}>
      */
     public function findImportCatalogue(string $locale): array
     {
@@ -71,6 +77,7 @@ final readonly class DataTransferRepository
                     'title' => (string) $import->getTitle(),
                     'description' => (string) $import->getDescription(),
                     'position' => (int) $import->getPosition(),
+                    'has_template' => $this->importTemplateBuilder->columnsFor($import) !== [],
                 ];
             }
             $categories[] = [
