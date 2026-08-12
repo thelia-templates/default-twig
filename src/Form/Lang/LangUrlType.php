@@ -18,7 +18,6 @@ use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\UrlType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
-use Symfony\Component\Validator\Constraints\NotBlank;
 
 final class LangUrlType extends AbstractType
 {
@@ -26,11 +25,13 @@ final class LangUrlType extends AbstractType
 
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
+        // No NotBlank here: the domains have to be savable one at a time, and languages that are
+        // not served in front office never need one. Completeness is enforced when the setting is
+        // activated, in LangController::switchDomainPerLang().
         foreach ($options['languages'] as $lang) {
             $builder->add(self::FIELD_PREFIX.$lang['id'], UrlType::class, [
                 'data' => $lang['url'] ?? '',
                 'required' => false,
-                'constraints' => [new NotBlank()],
                 'label' => $lang['title'],
             ]);
         }

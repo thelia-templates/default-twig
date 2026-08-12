@@ -71,6 +71,13 @@
                         <h2 class="h5 mb-0">{{ 'Using a domain or subdomain for each language'|trans }}</h2>
                     </div>
                     <div class="card-body">
+                        {% if one_domain_per_lang and languages_without_url is not empty %}
+                            <div class="alert alert-warning" role="alert" data-testid="lang-domain-missing-url">
+                                <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+                                {{ 'This setting is active but no domain is defined for: %languages. These languages are served from whichever domain the visitor arrived on.'|trans({'%languages': languages_without_url|join(', ')}) }}
+                            </div>
+                        {% endif %}
+
                         {% form_theme url_form with bo_form_themes only %}
                         {{ form_start(url_form, { action: path('admin.configuration.languages.updateUrl'), method: 'post', attr: { 'data-testid': 'lang-url-form' } }) }}
                             <table class="table table-sm align-middle">
@@ -83,14 +90,17 @@
                                                        class="form-control"
                                                        name="{{ field.vars.full_name }}"
                                                        value="{{ field.vars.value }}"
-                                                       placeholder="http://www.example.com"
-                                                       {% if not one_domain_per_lang %}readonly{% endif %}>
+                                                       placeholder="http://www.example.com">
                                                 {% do field.setRendered %}
                                             </td>
                                         </tr>
                                     {% endfor %}
                                 </tbody>
                             </table>
+                            {% if not one_domain_per_lang %}
+                                <p class="form-text mb-0">{{ 'Save a domain for every language served in front office, then activate.'|trans }}</p>
+                            {% endif %}
+
                             <div class="d-flex justify-content-end gap-2 mt-2">
                                 {% if one_domain_per_lang %}
                                     <a href="{{ path('admin.configuration.languages.domain.deactivation') }}" class="btn btn-outline-danger" data-testid="lang-domain-deactivate">
@@ -101,7 +111,7 @@
                                         <i class="bi bi-check-circle" aria-hidden="true"></i> {{ 'Activate'|trans }}
                                     </a>
                                 {% endif %}
-                                <button type="submit" class="btn btn-primary" {% if not one_domain_per_lang %}disabled{% endif %} data-testid="lang-url-submit">
+                                <button type="submit" class="btn btn-primary" data-testid="lang-url-submit">
                                     <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save'|trans }}
                                 </button>
                             </div>
