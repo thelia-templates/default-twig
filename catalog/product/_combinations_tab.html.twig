@@ -1,295 +1,299 @@
 <div data-testid="product-combinations-tab">
     {{ safe_hook('product.combinations-tab.top', { product: product.id }) }}
 
-    <div class="d-flex justify-content-between align-items-end gap-2 mb-3 flex-wrap">
-        {% if available_currencies|default([])|length > 1 %}
-            <div data-testid="combinations-currency-wrapper">
-                <label class="form-label mb-1" for="combinations-currency-switcher">{{ 'Prices in currency'|trans }}</label>
-                <select class="form-select form-select-sm" style="width:auto" id="combinations-currency-switcher"
-                        data-testid="combinations-currency-switcher"
-                        onchange="window.location.assign(this.value)">
-                    {% for option in available_currencies %}
-                        <option value="{{ path('admin.products.update', { product_id: product.id, current_tab: 'pse', combinations_currency_id: option.id }) }}"{% if option.id == currency.id %} selected{% endif %}>{{ option.code }} ({{ option.symbol }})</option>
-                    {% endfor %}
-                </select>
-            </div>
-        {% else %}
-            <span></span>
-        {% endif %}
-
-        {% if template_attributes is not empty %}
-            <div class="d-flex gap-2" data-testid="combinations-toolbar">
-                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#combination-creation-modal" data-testid="combination-create-btn">
-                    <i class="bi bi-plus-circle" aria-hidden="true"></i> {{ 'Add a combination'|trans }}
-                </button>
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#combination-builder-modal" data-testid="combination-builder-btn">
-                    <i class="bi bi-stars" aria-hidden="true"></i> {{ 'Combination builder'|trans }}
-                </button>
-            </div>
-        {% endif %}
-    </div>
-
-    {% if has_combinations %}
-        <form method="post" action="{{ path('admin.product.combination.update') }}?_token={{ assignToken() }}" data-testid="combinations-form">
-            <input type="hidden" name="product_id" value="{{ product.id }}">
-            <input type="hidden" name="tax_rule" value="{{ tax_rule_id }}">
-            <input type="hidden" name="currency" value="{{ currency.id }}">
-
-            {% if available_currencies|default([])|length > 1 and not currency.is_default %}
-                <div class="form-check form-switch mb-2" data-testid="combinations-use-exchange-rate-wrapper">
-                    <input class="form-check-input" type="checkbox" id="combinations-use-exchange-rate" name="use_exchange_rate" value="1" data-testid="combinations-use-exchange-rate">
-                    <label class="form-check-label" for="combinations-use-exchange-rate">
-                        {{ 'Convert prices from the default currency using the exchange rate'|trans }}
-                    </label>
+    <div class="card mb-3" data-testid="product-combinations-section">
+        <div class="card-header d-flex justify-content-between align-items-end gap-2 flex-wrap">
+            {% if available_currencies|default([])|length > 1 %}
+                <div data-testid="combinations-currency-wrapper">
+                    <label class="form-label mb-1" for="combinations-currency-switcher">{{ 'Prices in currency'|trans }}</label>
+                    <select class="form-select form-select-sm" style="width:auto" id="combinations-currency-switcher"
+                            data-testid="combinations-currency-switcher"
+                            onchange="window.location.assign(this.value)">
+                        {% for option in available_currencies %}
+                            <option value="{{ path('admin.products.update', { product_id: product.id, current_tab: 'pse', combinations_currency_id: option.id }) }}"{% if option.id == currency.id %} selected{% endif %}>{{ option.code }} ({{ option.symbol }})</option>
+                        {% endfor %}
+                    </select>
                 </div>
             {% else %}
-                <input type="hidden" name="use_exchange_rate" value="0">
+                <span></span>
             {% endif %}
 
-            {{ safe_hook('product.before-combinations', { location: 'product_before_combinations' }) }}
-            {{ safe_hook('product.combinations-list-caption', { location: 'product_combinations_list_caption' }) }}
-
-            <div class="table-responsive">
-                <table class="table table-sm align-middle" data-testid="combinations-table">
-                    <thead class="table-light">
-                        <tr>
-                            <th class="text-center" style="width:1%" aria-label="{{ 'Position'|trans }}"></th>
-                            <th>{{ 'Default'|trans }}</th>
-                            <th>{{ 'Combination'|trans }}</th>
-                            <th>{{ 'Reference'|trans }}</th>
-                            <th class="text-end">{{ 'Quantity'|trans }}</th>
-                            <th class="text-end">{{ 'Price'|trans }}</th>
-                            <th class="text-end">{{ 'Sale price'|trans }}</th>
-                            <th class="text-end">{{ 'Weight'|trans }}</th>
-                            <th>{{ 'EAN'|trans }}</th>
-                            <th>{{ 'Promo'|trans }}</th>
-                            <th>{{ 'New'|trans }}</th>
-                            <th>{{ 'Visible'|trans }}</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody data-controller="bo-sortable"
-                           data-bo-sortable-url-value="{{ path('admin.product.product-sale-element-position', { product_id: product.id }) }}"
-                           data-bo-sortable-token-value="{{ assignToken() }}"
-                           data-bo-sortable-param-name-value="product_sale_element_id">
-                        {% for row in pse_rows %}
-                            <tr data-testid="combinations-row-{{ row.id }}" data-row-id="{{ row.id }}">
-                                <td class="text-center text-muted" data-bo-sortable-handle title="{{ 'Drag to reorder'|trans }}" style="cursor:grab">
-                                    <i class="bi bi-grip-vertical" aria-hidden="true"></i>
-                                </td>
-                                <td class="text-center">
-                                    <input type="radio" name="default_pse" value="{{ row.id }}" {% if row.isdefault %}checked{% endif %} aria-label="{{ 'Default combination'|trans }}">
-                                </td>
-                                <td><small>{{ row.label }}</small></td>
-                                <td><input type="hidden" name="product_sale_element_id[]" value="{{ row.id }}"><input type="text" name="reference[]" value="{{ row.ref }}" class="form-control form-control-sm"></td>
-                                <td><input type="number" step="0.01" name="quantity[]" value="{{ row.quantity }}" class="form-control form-control-sm text-end"></td>
-                                <td><input type="number" step="0.0001" name="price[]" value="{{ row.price }}" class="form-control form-control-sm text-end"></td>
-                                <td><input type="number" step="0.0001" name="sale_price[]" value="{{ row.sale_price }}" class="form-control form-control-sm text-end"></td>
-                                <td><input type="number" step="0.0001" name="weight[]" value="{{ row.weight }}" class="form-control form-control-sm text-end"></td>
-                                <td><input type="text" name="ean_code[]" value="{{ row.ean_code }}" class="form-control form-control-sm"></td>
-                                <td class="text-center"><input type="checkbox" name="onsale[{{ loop.index0 }}]" value="1" {% if row.onsale %}checked{% endif %}></td>
-                                <td class="text-center"><input type="checkbox" name="isnew[{{ loop.index0 }}]" value="1" {% if row.isnew %}checked{% endif %}></td>
-                                <td class="text-center">
-                                    <a href="{{ path('admin.product.combination.toggle-visibility', { pse_id: row.id }) }}?_token={{ assignToken() }}&amp;product_id={{ product.id }}"
-                                       class="btn btn-sm {% if row.visible %}btn-success{% else %}btn-outline-secondary{% endif %}"
-                                       title="{{ row.visible ? 'Visible'|trans : 'Hidden'|trans }}"
-                                       data-testid="combinations-toggle-visible-{{ row.id }}">
-                                        <i class="bi bi-{% if row.visible %}eye{% else %}eye-slash{% endif %}" aria-hidden="true"></i>
-                                    </a>
-                                </td>
-                                <td class="text-nowrap">
-                                    <div class="btn-group btn-group-sm" role="group" aria-label="{{ 'Associate files'|trans }}">
-                                        <button type="button" class="btn btn-outline-secondary"
-                                                data-bs-toggle="modal" data-bs-target="#pse-assoc-modal"
-                                                data-pse-id="{{ row.id }}" data-assoc-type="image"
-                                                title="{{ 'Associate images'|trans }}"
-                                                data-testid="combinations-assoc-image-{{ row.id }}">
-                                            <i class="bi bi-images" aria-hidden="true"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-outline-secondary"
-                                                data-bs-toggle="modal" data-bs-target="#pse-assoc-modal"
-                                                data-pse-id="{{ row.id }}" data-assoc-type="document"
-                                                title="{{ 'Associate documents'|trans }}"
-                                                data-testid="combinations-assoc-document-{{ row.id }}">
-                                            <i class="bi bi-file-earmark-text" aria-hidden="true"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-outline-secondary"
-                                                data-bs-toggle="modal" data-bs-target="#pse-assoc-modal"
-                                                data-pse-id="{{ row.id }}" data-assoc-type="virtual"
-                                                title="{{ 'Associate virtual document'|trans }}"
-                                                data-testid="combinations-assoc-virtual-{{ row.id }}">
-                                            <i class="bi bi-cloud-arrow-down" aria-hidden="true"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-outline-danger"
-                                                data-bs-toggle="modal" data-bs-target="#pse-delete-modal"
-                                                data-pse-id="{{ row.id }}"
-                                                data-testid="combinations-delete-{{ row.id }}">
-                                            <i class="bi bi-trash" aria-hidden="true"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                                {{ safe_hook('product.combinations-row', { pse_id: row.id, pse: row.id, idx: loop.index0, product: product.id, product_id: product.id }) }}
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-
-            {{ safe_hook('product.after-combinations', { location: 'product_after_combinations' }) }}
-
-            <button type="submit" class="btn btn-primary" data-testid="combinations-submit">
-                <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save all combinations'|trans }}
-            </button>
-        </form>
-    {% else %}
-        {% if default_pse is null %}
-            <div class="alert alert-warning" data-testid="default-pse-missing">
-                {{ 'No default product sale element. Please contact your administrator.'|trans }}
-            </div>
-        {% else %}
             {% if template_attributes is not empty %}
-                <div class="alert alert-info" data-testid="combinations-empty-hint">
-                    {{ 'This product has no combination yet. The default pricing below is used while no combination exists.'|trans }}
-                </div>
-            {% endif %}
-
-            <form method="post" action="{{ path('admin.product.combination.defaut-price.update') }}?_token={{ assignToken() }}"
-                  data-testid="default-pse-form"
-                  data-controller="bo-pse-price-with-tax"
-                  data-bo-pse-price-with-tax-calc-url-value="{{ path('admin.product.calculate-price') }}">
-                <input type="hidden" name="product_id" value="{{ product.id }}">
-                <input type="hidden" name="product_sale_element_id" value="{{ default_pse.id }}">
-                <input type="hidden" name="isdefault" value="1">
-                <input type="hidden" name="reference" value="{{ default_pse.ref }}">
-                <input type="hidden" name="currency" value="{{ currency.id }}">
-                <input type="hidden" name="current_tab" value="pse">
-
-                <p class="text-muted">{{ 'The default pricing is used when no combination is defined.'|trans }}</p>
-
-                <div class="row g-3 mb-3">
-                    <div class="col-md-6">
-                        <label class="form-label" for="default_pse_tax_rule">{{ 'Tax rule'|trans }}</label>
-                        <select class="form-select" id="default_pse_tax_rule" name="tax_rule" required
-                                data-bo-pse-price-with-tax-target="taxRule">
-                            <option value="">{{ 'Select a tax rule'|trans }}</option>
-                            {% for rule in tax_rules %}
-                                <option value="{{ rule.id }}" {% if rule.id == tax_rule_id %}selected{% endif %}>{{ rule.title }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="col-md-6 d-flex align-items-end">
-                        <span class="text-muted small">{{ 'Currency'|trans }} : <strong>{{ currency.name }}</strong> ({{ currency.symbol }})</span>
-                    </div>
-                </div>
-
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        <div class="card h-100">
-                            <div class="card-body">
-                                <h2 class="h6 mb-3" data-testid="default-pse-pricing-title">{{ 'Pricing'|trans }}</h2>
-
-                                <div class="mb-3">
-                                    <label class="form-label" for="default_pse_price">{{ 'Product price excluding taxes'|trans }}</label>
-                                    <div class="input-group">
-                                        <input type="number" step="0.0001" id="default_pse_price" name="price" value="{{ default_pse.price }}" class="form-control" required
-                                               data-bo-pse-price-with-tax-target="priceExcl"
-                                               data-action="blur->bo-pse-price-with-tax#onPriceExclBlur">
-                                        <span class="input-group-text">{{ currency.symbol }}</span>
-                                    </div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label class="form-label" for="default_pse_price_with_tax">{{ 'Product price including taxes'|trans }}</label>
-                                    <div class="input-group">
-                                        <input type="number" step="0.0001" id="default_pse_price_with_tax" name="price_with_tax" value="" class="form-control" placeholder="{{ 'Auto-computed from price + tax rule'|trans }}"
-                                               data-bo-pse-price-with-tax-target="priceIncl"
-                                               data-action="blur->bo-pse-price-with-tax#onPriceInclBlur">
-                                        <span class="input-group-text">{{ currency.symbol }}</span>
-                                    </div>
-                                </div>
-
-                                {{ safe_hook('product.details-pricing-form', { product: product.id, location: 'product_details_pricing_form' }) }}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-md-4">
-                        <div class="card h-100">
-                            <div class="card-body">
-                                <h2 class="h6 mb-3" data-testid="default-pse-stock-title">{{ 'Stock'|trans }}</h2>
-
-                                <div class="mb-3">
-                                    <label class="form-label" for="default_pse_ean">{{ 'EAN Code'|trans }}</label>
-                                    <input type="text" id="default_pse_ean" name="ean_code" value="{{ default_pse.ean_code }}" class="form-control" placeholder="{{ 'Product EAN code'|trans }}">
-                                </div>
-
-                                <div class="mb-3">
-                                    <label class="form-label" for="default_pse_weight">{{ 'Weight'|trans }}</label>
-                                    <div class="input-group">
-                                        <input type="number" step="0.0001" id="default_pse_weight" name="weight" value="{{ default_pse.weight }}" class="form-control">
-                                        <span class="input-group-text">{{ 'Kg'|trans }}</span>
-                                    </div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label class="form-label" for="default_pse_quantity">{{ 'Stock quantity'|trans }}</label>
-                                    <input type="number" step="0.01" id="default_pse_quantity" name="quantity" value="{{ default_pse.quantity }}" class="form-control" required>
-                                </div>
-
-                                {{ safe_hook('product.details-details-form', { product: product.id, location: 'product_details_details_form' }) }}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-md-4">
-                        <div class="card h-100">
-                            <div class="card-body">
-                                <h2 class="h6 mb-3" data-testid="default-pse-promo-title">{{ 'Promotion'|trans }}</h2>
-
-                                <div class="mb-3">
-                                    <label class="form-label" for="default_pse_sale_price">{{ 'Sale price excluding taxes'|trans }}</label>
-                                    <div class="input-group">
-                                        <input type="number" step="0.0001" id="default_pse_sale_price" name="sale_price" value="{{ default_pse.sale_price }}" class="form-control" required
-                                               data-bo-pse-price-with-tax-target="salePriceExcl"
-                                               data-action="blur->bo-pse-price-with-tax#onSalePriceExclBlur">
-                                        <span class="input-group-text">{{ currency.symbol }}</span>
-                                    </div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label class="form-label" for="default_pse_sale_price_with_tax">{{ 'Sale price including taxes'|trans }}</label>
-                                    <div class="input-group">
-                                        <input type="number" step="0.0001" id="default_pse_sale_price_with_tax" name="sale_price_with_tax" value="" class="form-control" placeholder="{{ 'Auto-computed from sale price + tax rule'|trans }}"
-                                               data-bo-pse-price-with-tax-target="salePriceIncl"
-                                               data-action="blur->bo-pse-price-with-tax#onSalePriceInclBlur">
-                                        <span class="input-group-text">{{ currency.symbol }}</span>
-                                    </div>
-                                </div>
-
-                                <div class="form-check mb-2">
-                                    <input type="checkbox" class="form-check-input" id="default_pse_onsale" name="onsale" value="1" {% if default_pse.onsale %}checked{% endif %}>
-                                    <label class="form-check-label" for="default_pse_onsale">{{ 'On sale'|trans }}</label>
-                                </div>
-
-                                <div class="form-check">
-                                    <input type="checkbox" class="form-check-input" id="default_pse_isnew" name="isnew" value="1" {% if default_pse.isnew %}checked{% endif %}>
-                                    <label class="form-check-label" for="default_pse_isnew">{{ 'New product'|trans }}</label>
-                                </div>
-
-                                {{ safe_hook('product.details-promotion-form', { product: product.id, location: 'product_details_promotion_form' }) }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="text-end mt-3">
-                    <button type="submit" class="btn btn-primary" data-testid="default-pse-submit">
-                        <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save'|trans }}
+                <div class="d-flex gap-2" data-testid="combinations-toolbar">
+                    <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#combination-creation-modal" data-testid="combination-create-btn">
+                        <i class="bi bi-plus-circle" aria-hidden="true"></i> {{ 'Add a combination'|trans }}
+                    </button>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#combination-builder-modal" data-testid="combination-builder-btn">
+                        <i class="bi bi-stars" aria-hidden="true"></i> {{ 'Combination builder'|trans }}
                     </button>
                 </div>
-            </form>
-        {% endif %}
-    {% endif %}
+            {% endif %}
+        </div>
+
+        <div class="card-body">
+            {% if has_combinations %}
+                <form method="post" action="{{ path('admin.product.combination.update') }}?_token={{ assignToken() }}" data-testid="combinations-form">
+                    <input type="hidden" name="product_id" value="{{ product.id }}">
+                    <input type="hidden" name="tax_rule" value="{{ tax_rule_id }}">
+                    <input type="hidden" name="currency" value="{{ currency.id }}">
+
+                    {% if available_currencies|default([])|length > 1 and not currency.is_default %}
+                        <div class="form-check form-switch mb-2" data-testid="combinations-use-exchange-rate-wrapper">
+                            <input class="form-check-input" type="checkbox" id="combinations-use-exchange-rate" name="use_exchange_rate" value="1" data-testid="combinations-use-exchange-rate">
+                            <label class="form-check-label" for="combinations-use-exchange-rate">
+                                {{ 'Convert prices from the default currency using the exchange rate'|trans }}
+                            </label>
+                        </div>
+                    {% else %}
+                        <input type="hidden" name="use_exchange_rate" value="0">
+                    {% endif %}
+
+                    {{ safe_hook('product.before-combinations', { location: 'product_before_combinations' }) }}
+                    {{ safe_hook('product.combinations-list-caption', { location: 'product_combinations_list_caption' }) }}
+
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle" data-testid="combinations-table">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-center" style="width:1%" aria-label="{{ 'Position'|trans }}"></th>
+                                    <th>{{ 'Default'|trans }}</th>
+                                    <th>{{ 'Combination'|trans }}</th>
+                                    <th>{{ 'Reference'|trans }}</th>
+                                    <th class="text-end">{{ 'Quantity'|trans }}</th>
+                                    <th class="text-end">{{ 'Price'|trans }}</th>
+                                    <th class="text-end">{{ 'Sale price'|trans }}</th>
+                                    <th class="text-end">{{ 'Weight'|trans }}</th>
+                                    <th>{{ 'EAN'|trans }}</th>
+                                    <th>{{ 'Promo'|trans }}</th>
+                                    <th>{{ 'New'|trans }}</th>
+                                    <th>{{ 'Visible'|trans }}</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody data-controller="bo-sortable"
+                                   data-bo-sortable-url-value="{{ path('admin.product.product-sale-element-position', { product_id: product.id }) }}"
+                                   data-bo-sortable-token-value="{{ assignToken() }}"
+                                   data-bo-sortable-param-name-value="product_sale_element_id">
+                                {% for row in pse_rows %}
+                                    <tr data-testid="combinations-row-{{ row.id }}" data-row-id="{{ row.id }}">
+                                        <td class="text-center text-muted" data-bo-sortable-handle title="{{ 'Drag to reorder'|trans }}" style="cursor:grab">
+                                            <i class="bi bi-grip-vertical" aria-hidden="true"></i>
+                                        </td>
+                                        <td class="text-center">
+                                            <input type="radio" name="default_pse" value="{{ row.id }}" {% if row.isdefault %}checked{% endif %} aria-label="{{ 'Default combination'|trans }}">
+                                        </td>
+                                        <td><small>{{ row.label }}</small></td>
+                                        <td><input type="hidden" name="product_sale_element_id[]" value="{{ row.id }}"><input type="text" name="reference[]" value="{{ row.ref }}" class="form-control form-control-sm"></td>
+                                        <td><input type="number" step="0.01" name="quantity[]" value="{{ row.quantity }}" class="form-control form-control-sm text-end"></td>
+                                        <td><input type="number" step="0.0001" name="price[]" value="{{ row.price }}" class="form-control form-control-sm text-end"></td>
+                                        <td><input type="number" step="0.0001" name="sale_price[]" value="{{ row.sale_price }}" class="form-control form-control-sm text-end"></td>
+                                        <td><input type="number" step="0.0001" name="weight[]" value="{{ row.weight }}" class="form-control form-control-sm text-end"></td>
+                                        <td><input type="text" name="ean_code[]" value="{{ row.ean_code }}" class="form-control form-control-sm"></td>
+                                        <td class="text-center"><input type="checkbox" name="onsale[{{ loop.index0 }}]" value="1" {% if row.onsale %}checked{% endif %}></td>
+                                        <td class="text-center"><input type="checkbox" name="isnew[{{ loop.index0 }}]" value="1" {% if row.isnew %}checked{% endif %}></td>
+                                        <td class="text-center">
+                                            <a href="{{ path('admin.product.combination.toggle-visibility', { pse_id: row.id }) }}?_token={{ assignToken() }}&amp;product_id={{ product.id }}"
+                                               class="btn btn-sm {% if row.visible %}btn-success{% else %}btn-outline-secondary{% endif %}"
+                                               title="{{ row.visible ? 'Visible'|trans : 'Hidden'|trans }}"
+                                               data-testid="combinations-toggle-visible-{{ row.id }}">
+                                                <i class="bi bi-{% if row.visible %}eye{% else %}eye-slash{% endif %}" aria-hidden="true"></i>
+                                            </a>
+                                        </td>
+                                        <td class="text-nowrap">
+                                            <div class="btn-group btn-group-sm" role="group" aria-label="{{ 'Associate files'|trans }}">
+                                                <button type="button" class="btn btn-outline-secondary"
+                                                        data-bs-toggle="modal" data-bs-target="#pse-assoc-modal"
+                                                        data-pse-id="{{ row.id }}" data-assoc-type="image"
+                                                        title="{{ 'Associate images'|trans }}"
+                                                        data-testid="combinations-assoc-image-{{ row.id }}">
+                                                    <i class="bi bi-images" aria-hidden="true"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary"
+                                                        data-bs-toggle="modal" data-bs-target="#pse-assoc-modal"
+                                                        data-pse-id="{{ row.id }}" data-assoc-type="document"
+                                                        title="{{ 'Associate documents'|trans }}"
+                                                        data-testid="combinations-assoc-document-{{ row.id }}">
+                                                    <i class="bi bi-file-earmark-text" aria-hidden="true"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary"
+                                                        data-bs-toggle="modal" data-bs-target="#pse-assoc-modal"
+                                                        data-pse-id="{{ row.id }}" data-assoc-type="virtual"
+                                                        title="{{ 'Associate virtual document'|trans }}"
+                                                        data-testid="combinations-assoc-virtual-{{ row.id }}">
+                                                    <i class="bi bi-cloud-arrow-down" aria-hidden="true"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-outline-danger"
+                                                        data-bs-toggle="modal" data-bs-target="#pse-delete-modal"
+                                                        data-pse-id="{{ row.id }}"
+                                                        data-testid="combinations-delete-{{ row.id }}">
+                                                    <i class="bi bi-trash" aria-hidden="true"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                        {{ safe_hook('product.combinations-row', { pse_id: row.id, pse: row.id, idx: loop.index0, product: product.id, product_id: product.id }) }}
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {{ safe_hook('product.after-combinations', { location: 'product_after_combinations' }) }}
+
+                    <button type="submit" class="btn btn-primary" data-testid="combinations-submit">
+                        <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save all combinations'|trans }}
+                    </button>
+                </form>
+            {% else %}
+                {% if default_pse is null %}
+                    <div class="alert alert-warning" data-testid="default-pse-missing">
+                        {{ 'No default product sale element. Please contact your administrator.'|trans }}
+                    </div>
+                {% else %}
+                    {% if template_attributes is not empty %}
+                        <div class="alert alert-info" data-testid="combinations-empty-hint">
+                            {{ 'This product has no combination yet. The default pricing below is used while no combination exists.'|trans }}
+                        </div>
+                    {% endif %}
+
+                    <form method="post" action="{{ path('admin.product.combination.defaut-price.update') }}?_token={{ assignToken() }}"
+                          data-testid="default-pse-form"
+                          data-controller="bo-pse-price-with-tax"
+                          data-bo-pse-price-with-tax-calc-url-value="{{ path('admin.product.calculate-price') }}">
+                        <input type="hidden" name="product_id" value="{{ product.id }}">
+                        <input type="hidden" name="product_sale_element_id" value="{{ default_pse.id }}">
+                        <input type="hidden" name="isdefault" value="1">
+                        <input type="hidden" name="reference" value="{{ default_pse.ref }}">
+                        <input type="hidden" name="currency" value="{{ currency.id }}">
+                        <input type="hidden" name="current_tab" value="pse">
+
+                        <p class="text-muted">{{ 'The default pricing is used when no combination is defined.'|trans }}</p>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label" for="default_pse_tax_rule">{{ 'Tax rule'|trans }}</label>
+                                <select class="form-select" id="default_pse_tax_rule" name="tax_rule" required
+                                        data-bo-pse-price-with-tax-target="taxRule">
+                                    <option value="">{{ 'Select a tax rule'|trans }}</option>
+                                    {% for rule in tax_rules %}
+                                        <option value="{{ rule.id }}" {% if rule.id == tax_rule_id %}selected{% endif %}>{{ rule.title }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6 d-flex align-items-end">
+                                <span class="text-muted small">{{ 'Currency'|trans }} : <strong>{{ currency.name }}</strong> ({{ currency.symbol }})</span>
+                            </div>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h2 class="h6 mb-3" data-testid="default-pse-pricing-title">{{ 'Pricing'|trans }}</h2>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="default_pse_price">{{ 'Product price excluding taxes'|trans }}</label>
+                                            <div class="input-group">
+                                                <input type="number" step="0.0001" id="default_pse_price" name="price" value="{{ default_pse.price }}" class="form-control" required
+                                                       data-bo-pse-price-with-tax-target="priceExcl"
+                                                       data-action="blur->bo-pse-price-with-tax#onPriceExclBlur">
+                                                <span class="input-group-text">{{ currency.symbol }}</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="default_pse_price_with_tax">{{ 'Product price including taxes'|trans }}</label>
+                                            <div class="input-group">
+                                                <input type="number" step="0.0001" id="default_pse_price_with_tax" name="price_with_tax" value="" class="form-control" placeholder="{{ 'Auto-computed from price + tax rule'|trans }}"
+                                                       data-bo-pse-price-with-tax-target="priceIncl"
+                                                       data-action="blur->bo-pse-price-with-tax#onPriceInclBlur">
+                                                <span class="input-group-text">{{ currency.symbol }}</span>
+                                            </div>
+                                        </div>
+
+                                        {{ safe_hook('product.details-pricing-form', { product: product.id, location: 'product_details_pricing_form' }) }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h2 class="h6 mb-3" data-testid="default-pse-stock-title">{{ 'Stock'|trans }}</h2>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="default_pse_ean">{{ 'EAN Code'|trans }}</label>
+                                            <input type="text" id="default_pse_ean" name="ean_code" value="{{ default_pse.ean_code }}" class="form-control" placeholder="{{ 'Product EAN code'|trans }}">
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="default_pse_weight">{{ 'Weight'|trans }}</label>
+                                            <div class="input-group">
+                                                <input type="number" step="0.0001" id="default_pse_weight" name="weight" value="{{ default_pse.weight }}" class="form-control">
+                                                <span class="input-group-text">{{ 'Kg'|trans }}</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="default_pse_quantity">{{ 'Stock quantity'|trans }}</label>
+                                            <input type="number" step="0.01" id="default_pse_quantity" name="quantity" value="{{ default_pse.quantity }}" class="form-control" required>
+                                        </div>
+
+                                        {{ safe_hook('product.details-details-form', { product: product.id, location: 'product_details_details_form' }) }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h2 class="h6 mb-3" data-testid="default-pse-promo-title">{{ 'Promotion'|trans }}</h2>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="default_pse_sale_price">{{ 'Sale price excluding taxes'|trans }}</label>
+                                            <div class="input-group">
+                                                <input type="number" step="0.0001" id="default_pse_sale_price" name="sale_price" value="{{ default_pse.sale_price }}" class="form-control" required
+                                                       data-bo-pse-price-with-tax-target="salePriceExcl"
+                                                       data-action="blur->bo-pse-price-with-tax#onSalePriceExclBlur">
+                                                <span class="input-group-text">{{ currency.symbol }}</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="default_pse_sale_price_with_tax">{{ 'Sale price including taxes'|trans }}</label>
+                                            <div class="input-group">
+                                                <input type="number" step="0.0001" id="default_pse_sale_price_with_tax" name="sale_price_with_tax" value="" class="form-control" placeholder="{{ 'Auto-computed from sale price + tax rule'|trans }}"
+                                                       data-bo-pse-price-with-tax-target="salePriceIncl"
+                                                       data-action="blur->bo-pse-price-with-tax#onSalePriceInclBlur">
+                                                <span class="input-group-text">{{ currency.symbol }}</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-check mb-2">
+                                            <input type="checkbox" class="form-check-input" id="default_pse_onsale" name="onsale" value="1" {% if default_pse.onsale %}checked{% endif %}>
+                                            <label class="form-check-label" for="default_pse_onsale">{{ 'On sale'|trans }}</label>
+                                        </div>
+
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" id="default_pse_isnew" name="isnew" value="1" {% if default_pse.isnew %}checked{% endif %}>
+                                            <label class="form-check-label" for="default_pse_isnew">{{ 'New product'|trans }}</label>
+                                        </div>
+
+                                        {{ safe_hook('product.details-promotion-form', { product: product.id, location: 'product_details_promotion_form' }) }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-end mt-3">
+                            <button type="submit" class="btn btn-primary" data-testid="default-pse-submit">
+                                <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save'|trans }}
+                            </button>
+                        </div>
+                    </form>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
 
     {% component 'BoConfirmDialog' with {
         id: 'pse-delete-modal',
