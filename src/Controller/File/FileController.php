@@ -18,6 +18,7 @@ use BackOfficeDefaultTwigBundle\Form\File\DocumentMetadataType;
 use BackOfficeDefaultTwigBundle\Form\File\ImageMetadataType;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
+use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -242,6 +243,18 @@ final class FileController
         $form = $this->buildMetadataForm($kind);
         $form->handleRequest($request);
 
+        // Replacing the file goes straight to the update event, so it has to be checked
+        // against the shop upload policy here, like a first upload would be.
+        $replacement = $form->has('file') ? $form->get('file')->getData() : null;
+        if ($replacement instanceof UploadedFile) {
+            try {
+                $this->fileProcessor->validateUpload($replacement, $kind);
+                $this->fileProcessor->sanitizeUpload($replacement);
+            } catch (\Throwable $exception) {
+                $form->get('file')->addError(new FormError($exception->getMessage()));
+            }
+        }
+
         $editUrl = $this->urls->generate($this->editRouteName($kind), [
             'parentType' => $parentType,
             $kind === 'image' ? 'imageId' : 'documentId' => $fileId,
@@ -452,6 +465,7 @@ final class FileController
         }
 
         try {
+            // No constraint argument: the shop upload policy for this object type applies.
             $this->fileProcessor->processFile($this->events, $uploadedFile, $parentId, $parentType, $kind);
         } catch (\Throwable $exception) {
             return new JsonResponse(['error' => $exception->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY);
