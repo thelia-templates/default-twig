@@ -40,12 +40,18 @@
                                     <strong>{{ import.title|e }}</strong>
                                     {% if import.description %}<br><small class="text-muted">{{ import.description|striptags|e }}</small>{% endif %}
                                 {% endset %}
+                                {% set row_actions = [
+                                    row_action('custom', 'Import'|trans, path('import.view', { id: import.id })),
+                                ] %}
+                                {% if import.has_template %}
+                                    {% set row_actions = row_actions|merge([
+                                        row_action('download', 'CSV template'|trans, path('import.template', { id: import.id })),
+                                    ]) %}
+                                {% endif %}
                                 {% set rows = rows|merge([{
                                     'id': import.id,
                                     'title_html': title_html,
-                                    '_actions': [
-                                        row_action('custom', 'Import'|trans, path('import.view', { id: import.id })),
-                                    ],
+                                    '_actions': row_actions,
                                 }]) %}
                             {% endfor %}
 
