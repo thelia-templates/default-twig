@@ -48,9 +48,21 @@
 {%- endfor -%}
 <div class="btn-group btn-group-sm" role="group" aria-label="{{ 'Row actions'|trans }}">
     {% for action in inline %}
-        {% set tag = action.href ? 'a' : 'button' %}
         {% set icon = iconByKind[action.kind]|default(iconByKind['custom']) %}
         {% set btnClass = buttonClassByKind[action.kind]|default(buttonClassByKind['custom']) %}
+        {% if action.isDisabled %}
+            <button type="button"
+                    class="btn btn-sm {{ btnClass }} bo-action bo-action--{{ action.kind }} disabled"
+                    disabled
+                    aria-disabled="true"
+                    title="{{ action.label }}. {{ action.disabledReason }}"
+                    aria-label="{{ action.label }}. {{ action.disabledReason }}"
+                    data-testid="datatable-action-{{ action.kind }}-disabled">
+                <i class="bi {{ icon }}" aria-hidden="true"></i>
+                <span class="visually-hidden">{{ action.label }}. {{ action.disabledReason }}</span>
+            </button>
+        {% else %}
+        {% set tag = action.href ? 'a' : 'button' %}
         <{{ tag }}
             {% if action.href %}href="{{ action.href }}"{% else %}type="button"{% endif %}
             class="btn btn-sm {{ btnClass }} bo-action bo-action--{{ action.kind }}"
@@ -62,6 +74,7 @@
             <i class="bi {{ icon }}" aria-hidden="true"></i>
             <span class="visually-hidden">{{ action.label }}</span>
         </{{ tag }}>
+        {% endif %}
     {% endfor %}
 
     {% if overflow is not empty %}
@@ -89,8 +102,11 @@
                 {% endfor %}
 
                 {% for action in regular %}
-                    {% set tag = action.href ? 'a' : 'button' %}
                     {% set icon = iconByKind[action.kind]|default(iconByKind['custom']) %}
+                    {% if action.isDisabled %}
+                        {% include '@BackOfficeDefaultTwig/components/DataTable/cells/_disabled_action_item.html.twig' with { action: action, icon: icon } only %}
+                    {% else %}
+                    {% set tag = action.href ? 'a' : 'button' %}
                     <li>
                         <{{ tag }}
                             {% if action.href %}href="{{ action.href }}"{% else %}type="button"{% endif %}
@@ -101,6 +117,7 @@
                             <i class="bi {{ icon }} me-2" aria-hidden="true"></i>{{ action.label }}
                         </{{ tag }}>
                     </li>
+                    {% endif %}
                 {% endfor %}
 
                 {% if regular is not empty and destructive is not empty %}
@@ -108,8 +125,11 @@
                 {% endif %}
 
                 {% for action in destructive %}
-                    {% set tag = action.href ? 'a' : 'button' %}
                     {% set icon = iconByKind[action.kind]|default(iconByKind['custom']) %}
+                    {% if action.isDisabled %}
+                        {% include '@BackOfficeDefaultTwig/components/DataTable/cells/_disabled_action_item.html.twig' with { action: action, icon: icon } only %}
+                    {% else %}
+                    {% set tag = action.href ? 'a' : 'button' %}
                     <li>
                         <{{ tag }}
                             {% if action.href %}href="{{ action.href }}"{% else %}type="button"{% endif %}
@@ -120,6 +140,7 @@
                             <i class="bi {{ icon }} me-2" aria-hidden="true"></i>{{ action.label }}
                         </{{ tag }}>
                     </li>
+                    {% endif %}
                 {% endfor %}
             </ul>
         </div>

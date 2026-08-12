@@ -24,6 +24,9 @@ final readonly class RowAction
      * @param string|array<string,mixed>|null $grantedSubject   symfony voter subject (resource code string OR { resource, module } array as supported by AdminVoter)
      * @param array<string, scalar>           $dataAttributes   Extra `data-*` attributes (without the `data-` prefix). Useful to pass `lang-id` etc.
      * @param bool                            $inMenu           if true, the action is hidden inside the row kebab dropdown instead of being rendered inline
+     * @param ?string                         $disabledReason   When set, the action is rendered inert and this sentence says why. Prefer it over
+     *                                                          dropping the action: an admin who expects to be able to act needs to read the reason,
+     *                                                          not to discover the refusal after confirming.
      */
     public function __construct(
         public string $kind,
@@ -34,6 +37,12 @@ final readonly class RowAction
         public string|array|null $grantedSubject = null,
         public array $dataAttributes = [],
         public bool $inMenu = false,
+        public ?string $disabledReason = null,
     ) {
+    }
+
+    public function isDisabled(): bool
+    {
+        return $this->disabledReason !== null;
     }
 }

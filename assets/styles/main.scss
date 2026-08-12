@@ -1184,6 +1184,24 @@ button.btn {
         color: #6c757d;
     }
 
+    // Marks a module past orders were placed with: it can be deactivated, never deleted.
+    &__used {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        gap: .25rem;
+        font-size: .68rem;
+        padding: .05rem .4rem;
+        border-radius: 4px;
+        background: #fdf2ec;
+        color: #a3562f;
+        white-space: nowrap;
+
+        .bi {
+            font-size: .6rem;
+        }
+    }
+
     // Secondary caption (the human title) — discreet, trailing the code name.
     &__caption {
         flex: 1 1 auto;
@@ -1884,6 +1902,23 @@ tr.bo-order-row--urgent {
 .bo-action-row-dropdown {
     min-width: 12rem;
     max-width: max-content;
+}
+
+// A row action that is offered but cannot run: the reason wraps under the label,
+// so it reads without hovering and without opening a second surface. The selector has to
+// out-specify the `white-space: nowrap` the dropdown applies to every other action.
+.dropdown-menu .bo-action.bo-action--disabled {
+    white-space: normal;
+    cursor: default;
+
+    .bo-action__reason {
+        // Bounds the reason, and with it the `max-width: max-content` of the menu itself.
+        max-width: 17rem;
+        white-space: normal;
+        font-size: .75rem;
+        line-height: 1.3;
+        margin-top: .1rem;
+    }
 }
 
 .bo-markdown-body {
