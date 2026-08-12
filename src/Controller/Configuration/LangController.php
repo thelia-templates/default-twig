@@ -242,21 +242,21 @@ final class LangController
     }
 
     #[Route('/domain/activate', name: 'domain.activation', methods: ['GET'])]
-    public function activateDomain(): RedirectResponse
+    public function activateDomain(): Response
     {
         return $this->switchDomainPerLang(true);
     }
 
     #[Route('/domain/deactivate', name: 'domain.deactivation', methods: ['GET'])]
-    public function deactivateDomain(): RedirectResponse
+    public function deactivateDomain(): Response
     {
         return $this->switchDomainPerLang(false);
     }
 
-    private function switchDomainPerLang(bool $activate): RedirectResponse
+    private function switchDomainPerLang(bool $activate): Response
     {
-        if ($this->access->check(self::RESOURCE, [], AccessManager::UPDATE)) {
-            return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
+        if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::UPDATE)) {
+            return $denied;
         }
 
         ConfigQuery::create()
