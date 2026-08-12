@@ -36,6 +36,7 @@ use Thelia\Core\Security\Resource\AdminResources;
 use Thelia\Core\Serializer\SerializerManager;
 use Thelia\Domain\DataTransfer\ExportHandler;
 use Thelia\Domain\DataTransfer\ImportHandler;
+use Thelia\Form\Exception\FormValidationException;
 use Thelia\Model\LangQuery;
 use Thelia\Tools\TokenProvider;
 use Twig\Environment;
@@ -292,23 +293,12 @@ final class ExportImportController
         $locale = $this->defaultLocale();
         $import->setLocale($locale);
 
-        $extensions = [];
-        $mimeTypes = [];
-        foreach ($this->serializerManager->getSerializers() as $serializer) {
-            $extensions[] = $serializer->getExtension();
-            $mimeTypes[] = $serializer->getMimeType();
-        }
-        foreach ($this->archiverManager->getArchivers(true) as $archiver) {
-            $extensions[] = $archiver->getExtension();
-            $mimeTypes[] = $archiver->getMimeType();
-        }
-
         return new Response($this->twig->render('@BackOfficeDefaultTwig/import/edit.html.twig', [
             'import' => $import,
             'import_id' => $id,
             'languages' => $this->languageOptions(),
-            'allowed_extensions' => implode(', ', $extensions),
-            'allowed_mime_types' => implode(', ', $mimeTypes),
+            'allowed_extensions' => implode(', ', $this->importHandler->getAcceptedExtensions()),
+            'allowed_mime_types' => implode(', ', $this->importHandler->getAcceptedMimeTypes()),
         ]));
     }
 
@@ -336,6 +326,16 @@ final class ExportImportController
         $lang = LangQuery::create()->findPk((int) $request->request->get('language', 0));
         if ($lang === null) {
             $this->addFlash('error', $this->translator->trans('Invalid language selected.'));
+
+            return new RedirectResponse($this->urls->generate('import.view', ['id' => $id]));
+        }
+
+        // The page advertises the formats the import handlers can read; enforce them
+        // before anything is written to the import cache directory.
+        try {
+            $this->importHandler->validateUpload($uploaded->getClientOriginalName());
+        } catch (FormValidationException $exception) {
+            $this->addFlash('error', $exception->getMessage());
 
             return new RedirectResponse($this->urls->generate('import.view', ['id' => $id]));
         }
