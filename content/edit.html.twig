@@ -188,18 +188,20 @@
                 <div class="card mb-3">
                     <div class="card-body">
                         <h2 class="h5">{{ 'Folders this content also belongs to'|trans }}</h2>
-                        <form action="{{ path('admin.content.additional-folder.add') }}" method="post" class="d-flex gap-2 mb-3" data-testid="content-additional-folder-form">
+                        <form action="{{ path('admin.content.additional-folder.add') }}" method="post" class="mb-3" data-testid="content-additional-folder-form">
                             <input type="hidden" name="content_id" value="{{ content.id }}">
-                            <select name="additional_folder_id" class="form-select" data-testid="content-additional-folder-select">
-                                {% for folder in available_additional_folders %}
-                                    <option value="{{ folder.id }}">{{ folder.title }}</option>
-                                {% else %}
-                                    <option value="" disabled>{{ 'All folders already linked'|trans }}</option>
-                                {% endfor %}
-                            </select>
-                            <button type="submit" class="btn btn-primary flex-shrink-0" data-testid="content-additional-folder-add" {% if available_additional_folders is empty %}disabled{% endif %}>
-                                <i class="bi bi-plus-lg" aria-hidden="true"></i> {{ 'Add to folder'|trans }}
-                            </button>
+                            <div class="input-group">
+                                <select name="additional_folder_id" class="form-select" data-testid="content-additional-folder-select">
+                                    {% for folder in available_additional_folders %}
+                                        <option value="{{ folder.id }}">{{ folder.title }}</option>
+                                    {% else %}
+                                        <option value="" disabled>{{ 'All folders already linked'|trans }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="submit" class="btn btn-primary" data-testid="content-additional-folder-add" {% if available_additional_folders is empty %}disabled{% endif %}>
+                                    <i class="bi bi-plus-lg" aria-hidden="true"></i> {{ 'Add to folder'|trans }}
+                                </button>
+                            </div>
                         </form>
                         {% set rows = [] %}
                         {% for folder in additional_folders %}

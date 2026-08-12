@@ -175,23 +175,19 @@
                     <input type="hidden" name="product_id" value="{{ product.id }}">
                     <input type="hidden" name="current_tab" value="related">
                     <input type="hidden" name="_token" value="{{ token }}">
-                    <div class="row g-2 align-items-end">
-                        <div class="col-md-9">
-                            <label for="product-additional-category-id" class="form-label">{{ 'Category'|trans }}</label>
-                            <select id="product-additional-category-id" name="category_id" class="form-select" required>
-                                <option value="">{{ 'Select a category...'|trans }}</option>
-                                {% for category in category_tree_for_additional %}
-                                    <option value="{{ category.id }}" {% if category.disabled %}disabled{% endif %} style="padding-left: {{ 3 + category.level * 20 }}px">{{ category.title }}{% if category.id == default_category_id %} {{ '(default)'|trans }}{% endif %}</option>
-                                {% endfor %}
-                            </select>
-                            <small class="form-text text-muted">{{ 'Select a category and click + to add it to the additional category list'|trans }}</small>
-                        </div>
-                        <div class="col-md-3">
-                            <button type="submit" class="btn btn-primary w-100" data-testid="product-additional-category-add">
-                                <i class="bi bi-plus-lg" aria-hidden="true"></i> {{ 'Add'|trans }}
-                            </button>
-                        </div>
+                    <label for="product-additional-category-id" class="form-label">{{ 'Category'|trans }}</label>
+                    <div class="input-group">
+                        <select id="product-additional-category-id" name="category_id" class="form-select" required>
+                            <option value="">{{ 'Select a category...'|trans }}</option>
+                            {% for category in category_tree_for_additional %}
+                                <option value="{{ category.id }}" {% if category.disabled %}disabled{% endif %} style="padding-left: {{ 3 + category.level * 20 }}px">{{ category.title }}{% if category.id == default_category_id %} {{ '(default)'|trans }}{% endif %}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="btn btn-primary" data-testid="product-additional-category-add">
+                            <i class="bi bi-plus-lg" aria-hidden="true"></i> {{ 'Add'|trans }}
+                        </button>
                     </div>
+                    <small class="form-text text-muted">{{ 'Select a category and click + to add it to the additional category list'|trans }}</small>
                 </form>
             {% else %}
                 <div class="alert alert-info">{{ 'No categories found'|trans }}</div>
