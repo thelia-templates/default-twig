@@ -57,6 +57,7 @@ use Thelia\Model\LangQuery;
 use Thelia\Model\MetaData;
 use Thelia\Model\MetaDataQuery;
 use Thelia\Model\Product;
+use Thelia\Model\ProductDocument;
 use Thelia\Model\ProductDocumentQuery;
 use Thelia\Model\ProductImage;
 use Thelia\Model\ProductImageQuery;
@@ -758,8 +759,8 @@ final class ProductAdvancedController
             'pse_id' => $id,
             'items' => match ($type) {
                 'image' => $this->pseImageItems($pse),
-                'document' => $this->pseDocumentItems($pse, includeVisible: true),
-                'virtual' => $this->pseDocumentItems($pse, includeVisible: false),
+                'document' => $this->pseDocumentItems($pse),
+                'virtual' => $this->pseVirtualDocumentItems($pse),
                 default => [],
             },
         ]);
@@ -821,18 +822,12 @@ final class ProductAdvancedController
     /**
      * @return list<array{id: int, title: string, url: string, filename: string, is_associated: bool}>
      */
-    private function pseDocumentItems(ProductSaleElements $pse, bool $includeVisible): array
+    private function pseDocumentItems(ProductSaleElements $pse): array
     {
-        $locale = $this->defaultLocale();
-        $query = ProductDocumentQuery::create()
+        $documents = ProductDocumentQuery::create()
             ->filterByProductId((int) $pse->getProductId())
-            ->orderByPosition();
-
-        if (!$includeVisible) {
-            $query->filterByVisible(0);
-        }
-
-        $documents = $query->find();
+            ->orderByPosition()
+            ->find();
 
         $assoc = ProductSaleElementsProductDocumentQuery::create()
             ->filterByProductSaleElementsId((int) $pse->getId())
@@ -842,19 +837,58 @@ final class ProductAdvancedController
             $assocIds[(int) $a->getProductDocumentId()] = true;
         }
 
+        $locale = $this->defaultLocale();
+
         $items = [];
         foreach ($documents as $document) {
             $document->setLocale($locale);
-            $items[] = [
-                'id' => (int) $document->getId(),
-                'title' => (string) $document->getTitle(),
-                'url' => (string) $document->getFile(),
-                'filename' => (string) $document->getFile(),
-                'is_associated' => isset($assocIds[(int) $document->getId()]),
-            ];
+            $items[] = $this->documentItem($document, isset($assocIds[(int) $document->getId()]));
         }
 
         return $items;
+    }
+
+    /**
+     * Downloadable file of a sale element. The association is a meta_data row (virtual key, pse
+     * element), not the product_sale_elements_product_document join table the documents picker
+     * uses, and it holds a single document: the toggle endpoint writes exactly that storage.
+     *
+     * @return list<array{id: int, title: string, url: string, filename: string, is_associated: bool}>
+     */
+    private function pseVirtualDocumentItems(ProductSaleElements $pse): array
+    {
+        // Only documents hidden from the front office can be sold: a visible one is freely downloadable.
+        $documents = ProductDocumentQuery::create()
+            ->filterByProductId((int) $pse->getProductId())
+            ->filterByVisible(0)
+            ->orderByPosition()
+            ->find();
+
+        $virtualDocumentId = (int) MetaDataQuery::getVal('virtual', MetaData::PSE_KEY, (int) $pse->getId());
+
+        $locale = $this->defaultLocale();
+
+        $items = [];
+        foreach ($documents as $document) {
+            $document->setLocale($locale);
+            $items[] = $this->documentItem($document, (int) $document->getId() === $virtualDocumentId);
+        }
+
+        return $items;
+    }
+
+    /**
+     * @return array{id: int, title: string, url: string, filename: string, is_associated: bool}
+     */
+    private function documentItem(ProductDocument $document, bool $isAssociated): array
+    {
+        return [
+            'id' => (int) $document->getId(),
+            'title' => (string) $document->getTitle(),
+            'url' => (string) $document->getFile(),
+            'filename' => (string) $document->getFile(),
+            'is_associated' => $isAssociated,
+        ];
     }
 
     #[Route('/admin/product/virtual-documents/{productId}/{pseId}', name: 'admin.product.virtual_documents', methods: ['GET'], requirements: ['productId' => '\d+', 'pseId' => '\d+'])]
