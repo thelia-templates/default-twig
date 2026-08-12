@@ -362,6 +362,7 @@ final class LangController
             'url_form' => $urlForm->createView(),
             'lang_url_prefix' => LangUrlType::FIELD_PREFIX,
             'one_domain_per_lang' => (bool) ConfigQuery::isMultiDomainActivated(),
+            'languages_without_url' => $this->frontLanguagesWithoutUrl(),
             'sort_field' => $sort->field,
             'sort_direction' => $sort->direction,
         ];
@@ -428,6 +429,32 @@ final class LangController
         ], [
             'include_id' => true,
         ]);
+    }
+
+    /**
+     * Titles of the languages served in front office (active and visible) that have no domain.
+     * Those are the ones LangService looks up once multi-domain is on, so an empty domain there
+     * means the language keeps being served from whichever domain the visitor arrived on.
+     *
+     * @return list<string>
+     */
+    private function frontLanguagesWithoutUrl(): array
+    {
+        $titles = [];
+
+        $languages = LangQuery::create()
+            ->filterByActive(1)
+            ->filterByVisible(1)
+            ->orderByPosition()
+            ->find();
+
+        foreach ($languages as $lang) {
+            if (trim((string) $lang->getUrl()) === '') {
+                $titles[] = (string) $lang->getTitle();
+            }
+        }
+
+        return $titles;
     }
 
     /**

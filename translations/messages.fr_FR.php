@@ -1437,6 +1437,7 @@ return [
     'This product is online' => 'Ce produit est en ligne',
     'This product template does not contains any attributes' => 'Ce gabarit de produit ne contient aucune déclinaison',
     'This product template does not contains any features' => 'Ce gabarit de produit ne comporte aucune caractéristique',
+    'This setting is active but no domain is defined for: %languages. These languages are served from whichever domain the visitor arrived on.' => 'Ce réglage est actif mais aucun domaine n\'est défini pour : %languages. Ces langues sont servies depuis le domaine par lequel le visiteur est arrivé.',
     'This state is online' => 'Cette région est en ligne',
     'This template is not used by any product.' => 'Ce gabarit n\'est utilisé par aucun produit.',
     'This variable is overridden in an .env file.' => 'Cette variable est remplacée dans un fichier .env.',
