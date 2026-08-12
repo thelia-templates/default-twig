@@ -27,6 +27,7 @@ use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Session\FlashBagAwareSessionInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -242,21 +243,30 @@ final class LangController
     }
 
     #[Route('/domain/activate', name: 'domain.activation', methods: ['GET'])]
-    public function activateDomain(): Response
+    public function activateDomain(Request $request): Response
     {
-        return $this->switchDomainPerLang(true);
+        return $this->switchDomainPerLang(true, $request);
     }
 
     #[Route('/domain/deactivate', name: 'domain.deactivation', methods: ['GET'])]
-    public function deactivateDomain(): Response
+    public function deactivateDomain(Request $request): Response
     {
-        return $this->switchDomainPerLang(false);
+        return $this->switchDomainPerLang(false, $request);
     }
 
-    private function switchDomainPerLang(bool $activate): Response
+    private function switchDomainPerLang(bool $activate, Request $request): Response
     {
         if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::UPDATE)) {
             return $denied;
+        }
+
+        if ($activate && ($missing = $this->frontLanguagesWithoutUrl()) !== []) {
+            $this->flashError($request, $this->translator->trans(
+                'Define a domain for every language served in front office before activating this setting. Missing: %languages.',
+                ['%languages' => implode(', ', $missing)],
+            ));
+
+            return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }
 
         ConfigQuery::create()
@@ -306,6 +316,18 @@ final class LangController
         $lang = $event->getLang();
 
         return [\sprintf('Lang %s (ID %d) modified', $lang->getTitle(), $lang->getId()), $lang->getId()];
+    }
+
+    private function flashError(Request $request, string $message): void
+    {
+        if (!$request->hasSession()) {
+            return;
+        }
+
+        $session = $request->getSession();
+        if ($session instanceof FlashBagAwareSessionInterface) {
+            $session->getFlashBag()->add('danger', $message);
+        }
     }
 
     private function renderListWithError(): Response
