@@ -551,6 +551,18 @@ button.btn {
     }
 }
 
+// Actions column pinned to the right of scrollable tables (DataTable component)
+// so row actions stay reachable without hunting for the end of a wide table.
+.table-responsive {
+    .datatable-sticky-actions {
+        position: sticky;
+        right: 0;
+        z-index: 1;
+        background-color: var(--bs-body-bg);
+        box-shadow: -1px 0 0 0 #e6e8eb;
+    }
+}
+
 // Breadcrumbs - subtle separator and brand primary on links
 .breadcrumb {
     font-size: .85rem;
