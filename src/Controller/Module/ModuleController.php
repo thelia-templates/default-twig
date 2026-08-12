@@ -83,10 +83,10 @@ final class ModuleController
     }
 
     #[Route('/modules/refresh', name: 'module.refresh', methods: ['POST'])]
-    public function refresh(Request $request): RedirectResponse
+    public function refresh(Request $request): Response
     {
-        if ($this->access->check(self::RESOURCE, [], AccessManager::UPDATE)) {
-            return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
+        if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::UPDATE)) {
+            return $denied;
         }
 
         try {
