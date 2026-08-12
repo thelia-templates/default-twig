@@ -35,6 +35,14 @@ final readonly class FolderRepository
         return $folders;
     }
 
+    public function findLocalized(int $folderId, string $locale): ?Folder
+    {
+        $folder = FolderQuery::create()->findPk($folderId);
+        $folder?->setLocale($locale);
+
+        return $folder;
+    }
+
     /**
      * @return ObjectCollection<int, Folder>
      */

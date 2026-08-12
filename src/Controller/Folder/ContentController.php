@@ -102,6 +102,7 @@ final class ContentController
 
         return new Response($this->twig->render(self::EDIT_TEMPLATE, [
             'content' => $content,
+            'parent_folder' => $this->folderRepository->findLocalized($content->getDefaultFolderId(), $locale),
             'preview_url' => $content->getUrl($locale),
             'form' => $this->buildUpdateForm($content, $locale)->createView(),
             'seo_form' => $this->buildSeoForm($content, $locale)->createView(),
