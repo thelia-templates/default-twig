@@ -39,6 +39,7 @@
                                 {% set title_html %}
                                     <strong>{{ import.title|e }}</strong>
                                     {% if import.description %}<br><small class="text-muted">{{ import.description|striptags|e }}</small>{% endif %}
+                                    {% if not import.handler_available %}<br><span class="badge text-bg-warning" data-testid="import-handler-missing">{{ 'Unavailable: the module providing this import has been removed'|trans }}</span>{% endif %}
                                 {% endset %}
                                 {% set row_actions = [
                                     row_action('custom', 'Import'|trans, path('import.view', { id: import.id })),

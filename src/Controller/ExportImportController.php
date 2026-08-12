@@ -189,7 +189,8 @@ final class ExportImportController
             'serializers' => $this->serializerOptions(),
             'archivers' => $this->archiverOptions(),
             'languages' => $this->languageOptions(),
-            'use_range' => $this->exportUseRangeDate($export),
+            'handler_available' => $export->isHandlerAvailable(),
+            'use_range' => $export->useRangeDate(),
             'has_images' => (bool) $export->hasImages(),
             'has_documents' => (bool) $export->hasDocuments(),
             'years' => range((int) date('Y'), (int) date('Y') - 5),
@@ -298,6 +299,7 @@ final class ExportImportController
         return new Response($this->twig->render('@BackOfficeDefaultTwig/import/edit.html.twig', [
             'import' => $import,
             'import_id' => $id,
+            'handler_available' => $import->isHandlerAvailable(),
             'languages' => $this->languageOptions(),
             'allowed_extensions' => implode(', ', $this->importHandler->getAcceptedExtensions()),
             'allowed_mime_types' => implode(', ', $this->importHandler->getAcceptedMimeTypes()),
@@ -451,18 +453,6 @@ final class ExportImportController
         }
 
         return $options;
-    }
-
-    private function exportUseRangeDate(\Thelia\Model\Export $export): bool
-    {
-        $handleClass = (string) $export->getHandleClass();
-        if ($handleClass === '' || !class_exists($handleClass)) {
-            return false;
-        }
-
-        $instance = new $handleClass();
-
-        return method_exists($instance, 'useRangeDate') && $instance->useRangeDate();
     }
 
     private function addFlash(string $type, string $message): void

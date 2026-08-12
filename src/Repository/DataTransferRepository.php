@@ -48,6 +48,7 @@ final readonly class DataTransferRepository
                     'title' => (string) $export->getTitle(),
                     'description' => (string) $export->getDescription(),
                     'position' => (int) $export->getPosition(),
+                    'handler_available' => $export->isHandlerAvailable(),
                 ];
             }
             $categories[] = [
@@ -78,6 +79,7 @@ final readonly class DataTransferRepository
                     'description' => (string) $import->getDescription(),
                     'position' => (int) $import->getPosition(),
                     'has_template' => $this->importTemplateBuilder->columnsFor($import) !== [],
+                    'handler_available' => $import->isHandlerAvailable(),
                 ];
             }
             $categories[] = [
