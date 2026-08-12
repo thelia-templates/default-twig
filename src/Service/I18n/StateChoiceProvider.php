@@ -35,6 +35,18 @@ final readonly class StateChoiceProvider
             ];
         }
 
+        $collator = class_exists(\Collator::class) ? new \Collator($locale ?? 'fr_FR') : null;
+
+        usort($states, static function (array $a, array $b) use ($collator): int {
+            if ($a['country_id'] !== $b['country_id']) {
+                return $a['country_id'] <=> $b['country_id'];
+            }
+
+            return $collator instanceof \Collator
+                ? $collator->compare($a['title'], $b['title'])
+                : strcasecmp($a['title'], $b['title']);
+        });
+
         return $states;
     }
 }
