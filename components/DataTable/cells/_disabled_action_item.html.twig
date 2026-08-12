@@ -1,0 +1,10 @@
+{# A row action the admin cannot run right now. The reason is printed, not hidden behind a
+   tooltip: it is the whole point of showing the entry instead of dropping it. #}
+<li>
+    <span class="dropdown-item disabled bo-action bo-action--{{ action.kind }} bo-action--disabled"
+          aria-disabled="true"
+          data-testid="datatable-action-{{ action.kind }}-disabled">
+        <span class="d-block"><i class="bi {{ icon }} me-2" aria-hidden="true"></i>{{ action.label }}</span>
+        <small class="d-block text-muted bo-action__reason">{{ action.disabledReason }}</small>
+    </span>
+</li>
