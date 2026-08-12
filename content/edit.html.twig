@@ -8,9 +8,9 @@
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{{ path('admin.home') }}">{{ 'Home'|trans }}</a></li>
             <li class="breadcrumb-item"><a href="{{ path('admin.folders.default') }}">{{ 'Folders'|trans }}</a></li>
-            {% if parent_folder %}
-                <li class="breadcrumb-item"><a href="{{ path('admin.folders.default', { folder_id: parent_folder.id }) }}">{{ parent_folder.title }}</a></li>
-            {% endif %}
+            {% for crumb in breadcrumb_path|default([]) %}
+                <li class="breadcrumb-item"><a href="{{ path('admin.folders.default', { folder_id: crumb.id }) }}">{{ crumb.title }}</a></li>
+            {% endfor %}
             <li class="breadcrumb-item active" aria-current="page">{{ content.title }}</li>
         </ol>
     </nav>

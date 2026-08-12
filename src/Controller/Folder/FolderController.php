@@ -123,8 +123,11 @@ final class FolderController
         $locale = $editLang->getLocale() ?? 'en_US';
         $folder->setLocale($locale);
 
+        $uiLocale = $request->getLocale();
+
         return new Response($this->twig->render(self::EDIT_TEMPLATE, [
             'folder' => $folder,
+            'breadcrumb_path' => $this->folderRepository->buildBreadcrumbPath($this->folderRepository->find((int) $folder->getParent(), $uiLocale), $uiLocale),
             'preview_url' => $folder->getUrl($locale),
             'form' => $this->buildUpdateForm($folder, $locale)->createView(),
             'seo_form' => $this->buildSeoForm($folder, $locale)->createView(),
@@ -289,6 +292,7 @@ final class FolderController
         return [
             'rows' => $rows,
             'parent_id' => $parentId,
+            'breadcrumb_path' => $this->folderRepository->buildBreadcrumbPath($this->folderRepository->find($parentId, $locale), $locale),
             'create_form' => $createForm->createView(),
             'content_create_form' => $contentCreateForm->createView(),
             'content_update_position_url' => $this->urls->generate('admin.content.update-position', ['folder_id' => $parentId]),
