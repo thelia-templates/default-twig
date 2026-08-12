@@ -89,17 +89,15 @@
                 <h2 class="h5 mb-2">{{ 'Tax rule for delivery modules'|trans }}</h2>
                 <div class="card">
                     <div class="card-body">
-                        <form method="post" action="{{ path('admin.configuration.taxes-rules.delivery.modules.update') }}?_token={{ assignToken() }}" class="row g-3 align-items-end" data-testid="tax-rule-delivery-form">
-                            <div class="col-md-9">
-                                <label for="delivery-module-tax-rule" class="form-label">{{ 'Select a tax rule'|trans }}</label>
+                        <form method="post" action="{{ path('admin.configuration.taxes-rules.delivery.modules.update') }}?_token={{ assignToken() }}" data-testid="tax-rule-delivery-form">
+                            <label for="delivery-module-tax-rule" class="form-label">{{ 'Select a tax rule'|trans }}</label>
+                            <div class="input-group">
                                 <select id="delivery-module-tax-rule" name="delivery-module-tax-rule" class="form-select">
                                     <option value="">{{ 'Select a tax rule'|trans }}</option>
                                     {% for option in delivery_tax_rules %}
                                         <option value="{{ option.id }}" {{ delivery_tax_rule_selected == option.id ? 'selected' : '' }}>{{ option.title }}</option>
                                     {% endfor %}
                                 </select>
-                            </div>
-                            <div class="col-md-3 text-end">
                                 <button type="submit" class="btn btn-primary" data-testid="tax-rule-delivery-save">
                                     <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save'|trans }}
                                 </button>

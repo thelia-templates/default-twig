@@ -263,15 +263,17 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label" for="order-status-select">{{ 'Order status'|trans }}</label>
-                                <form action="{{ path('admin.order.update.status', { order_id: order.id }) }}?_token={{ token }}" method="post" class="d-flex gap-2" data-testid="order-status-form">
-                                    <select id="order-status-select" name="status_id" class="form-select" data-testid="order-status-select">
-                                        {% for s in available_statuses %}
-                                            {% if s.id > 0 %}
-                                                <option value="{{ s.id }}" {% if s.id == order.statusId %}selected{% endif %}>{{ s.title }}</option>
-                                            {% endif %}
-                                        {% endfor %}
-                                    </select>
-                                    <button type="submit" class="btn btn-primary flex-shrink-0" data-testid="order-status-submit">{{ 'Update'|trans }}</button>
+                                <form action="{{ path('admin.order.update.status', { order_id: order.id }) }}?_token={{ token }}" method="post" data-testid="order-status-form">
+                                    <div class="input-group">
+                                        <select id="order-status-select" name="status_id" class="form-select" data-testid="order-status-select">
+                                            {% for s in available_statuses %}
+                                                {% if s.id > 0 %}
+                                                    <option value="{{ s.id }}" {% if s.id == order.statusId %}selected{% endif %}>{{ s.title }}</option>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </select>
+                                        <button type="submit" class="btn btn-primary" data-testid="order-status-submit">{{ 'Update'|trans }}</button>
+                                    </div>
                                 </form>
                             </div>
                             <div class="col-md-6">
