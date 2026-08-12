@@ -57,6 +57,7 @@ final class ExportImportController
         private readonly TranslatorInterface $translator,
         private readonly RequestStack $requestStack,
         private readonly DataTransferRepository $dataTransferRepository,
+        private readonly ImportTemplateBuilder $importTemplateBuilder,
         private readonly TokenProvider $tokens,
     ) {
     }
