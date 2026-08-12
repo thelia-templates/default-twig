@@ -38,7 +38,7 @@
                             {% for import in category.imports %}
                                 {% set title_html %}
                                     <strong>{{ import.title|e }}</strong>
-                                    {% if import.description %}<br><small class="text-muted">{{ import.description|e }}</small>{% endif %}
+                                    {% if import.description %}<br><small class="text-muted">{{ import.description|striptags|e }}</small>{% endif %}
                                 {% endset %}
                                 {% set rows = rows|merge([{
                                     'id': import.id,
