@@ -20,7 +20,6 @@ use Thelia\Model\Module;
 use Thelia\Model\ModuleConfigQuery;
 use Thelia\Model\ModuleHookQuery;
 use Thelia\Model\ModuleQuery;
-use Thelia\Model\OrderQuery;
 
 final readonly class ModuleRepository
 {
@@ -62,26 +61,6 @@ final readonly class ModuleRepository
         }
 
         return $items;
-    }
-
-    /**
-     * Ids of the modules at least one order was placed with, as a payment or a delivery method.
-     *
-     * `order` keeps a live foreign key to `module` for both, with ON DELETE RESTRICT, so these
-     * modules cannot be deleted. Two grouped reads rather than one count per module: the module
-     * list renders every module on the same page.
-     *
-     * @return list<int>
-     */
-    public function findModuleIdsUsedByOrders(): array
-    {
-        $paymentIds = OrderQuery::create()->select('PaymentModuleId')->distinct()->find()->getData();
-        $deliveryIds = OrderQuery::create()->select('DeliveryModuleId')->distinct()->find()->getData();
-
-        $ids = array_unique(array_map('intval', array_merge($paymentIds, $deliveryIds)));
-        sort($ids);
-
-        return $ids;
     }
 
     /**

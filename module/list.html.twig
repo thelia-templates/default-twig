@@ -175,13 +175,6 @@
                         {% if module.version %}
                             <span class="bo-module-row__version" title="{{ 'Version'|trans }}">{{ module.version }}</span>
                         {% endif %}
-                        {% if module.used_by_orders %}
-                            <span class="bo-module-row__used"
-                                  data-testid="module-used-by-orders-{{ module.code }}"
-                                  title="{{ 'Past orders name this module as their payment or delivery method, so it cannot be deleted.'|trans }}">
-                                <i class="bi bi-lock-fill" aria-hidden="true"></i>{{ 'Used by orders'|trans }}
-                            </span>
-                        {% endif %}
                     </span>
 
                     <span class="bo-module-row__toggle">
@@ -254,6 +247,7 @@
     } %}
         {% block body %}
             <p>{{ 'Do you really want to delete this module?'|trans }}</p>
+            <p class="text-muted small">{{ 'Past orders keep the name this module carried as their payment or delivery method.'|trans }}</p>
             <input type="hidden" name="module_id" value="" data-bo-prefill-modal-target="input">
             <div class="form-check">
                 <input class="form-check-input" type="checkbox" value="1" name="delete-module-data" id="module-delete-data" data-testid="module-delete-data">

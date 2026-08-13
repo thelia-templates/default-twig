@@ -121,9 +121,12 @@ final readonly class OrderDetailContextBuilder
             ],
             'weight' => $weight,
             'customer' => $customer,
+            // A deleted module leaves module_id at 0 and the title on the order, frozen when
+            // the module went away.
             'payment' => [
                 'module_id' => (int) $order->getPaymentModuleId(),
-                'module_title' => $this->moduleTitle((int) $order->getPaymentModuleId(), $locale),
+                'module_title' => $this->moduleTitle((int) $order->getPaymentModuleId(), $locale)
+                    ?: (string) $order->getPaymentModuleTitle(),
                 'transaction_ref' => (string) $order->getTransactionRef(),
                 'invoice_ref' => (string) $order->getInvoiceRef(),
                 'invoice_date' => $invoiceDateString,
@@ -131,7 +134,8 @@ final readonly class OrderDetailContextBuilder
             ],
             'delivery' => [
                 'module_id' => (int) $order->getDeliveryModuleId(),
-                'module_title' => $this->moduleTitle((int) $order->getDeliveryModuleId(), $locale),
+                'module_title' => $this->moduleTitle((int) $order->getDeliveryModuleId(), $locale)
+                    ?: (string) $order->getDeliveryModuleTitle(),
                 'module_description' => $this->moduleDescription((int) $order->getDeliveryModuleId(), $locale),
                 'delivery_ref' => (string) $order->getDeliveryRef(),
             ],

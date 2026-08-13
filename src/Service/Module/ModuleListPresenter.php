@@ -44,10 +44,9 @@ final readonly class ModuleListPresenter
         $labels = $this->typeLabels();
         $modules = [];
         $typeCount = [];
-        $usedByOrders = $this->modules->findModuleIdsUsedByOrders();
 
         foreach ($this->modules->findAllOrderedByPosition($locale) as $module) {
-            $row = $this->moduleToRow($module, \in_array((int) $module->getId(), $usedByOrders, true));
+            $row = $this->moduleToRow($module);
             $modules[] = $row;
             $typeCount[$row['type_slug']] = ($typeCount[$row['type_slug']] ?? 0) + 1;
         }
@@ -104,7 +103,7 @@ final readonly class ModuleListPresenter
     /**
      * @return array<string, mixed>
      */
-    private function moduleToRow(Module $module, bool $usedByOrders): array
+    private function moduleToRow(Module $module): array
     {
         $id = (int) $module->getId();
         $code = (string) $module->getCode();
@@ -140,8 +139,7 @@ final readonly class ModuleListPresenter
                 : $this->urls->generate('admin.module.update', ['module_id' => $id]),
             'toggle_url' => $this->toggleActivationUrl($id, $mandatory, $activated),
             'search' => mb_strtolower(trim($code.' '.$title.' '.$version.' '.$description)),
-            'used_by_orders' => $usedByOrders,
-            'actions' => $this->buildRowActions($module, $id, $code, $type, $activated, $mandatory, $usedByOrders),
+            'actions' => $this->buildRowActions($module, $id, $code, $type, $activated, $mandatory),
         ];
     }
 
@@ -179,7 +177,7 @@ final readonly class ModuleListPresenter
     /**
      * @return list<RowAction>
      */
-    private function buildRowActions(Module $module, int $id, string $code, int $type, bool $activated, bool $mandatory, bool $usedByOrders): array
+    private function buildRowActions(Module $module, int $id, string $code, int $type, bool $activated, bool $mandatory): array
     {
         $actions = [];
 
@@ -246,20 +244,16 @@ final readonly class ModuleListPresenter
         }
 
         if (!$mandatory) {
-            // A module an order was placed with cannot be deleted: `order` points at it through a
-            // foreign key with ON DELETE RESTRICT, so past orders keep naming their payment and
-            // delivery method. Say so here rather than let the refusal appear after confirming.
+            // A module an order was placed with can be deleted: the order keeps the name the
+            // module carried and releases its reference.
             $actions[] = new RowAction(
                 kind: 'delete',
                 label: $this->translator->trans('Delete this module'),
-                modalTarget: $usedByOrders ? null : '#module-delete-modal',
+                modalTarget: '#module-delete-modal',
                 grantedAttribute: AccessManager::DELETE,
                 grantedSubject: AdminResources::MODULE,
-                dataAttributes: $usedByOrders ? [] : ['module-id' => $id, 'module-label' => (string) $module->getTitle()],
+                dataAttributes: ['module-id' => $id, 'module-label' => (string) $module->getTitle()],
                 inMenu: true,
-                disabledReason: $usedByOrders
-                    ? $this->translator->trans('At least one order was placed with this module. Deactivate it to stop offering it.')
-                    : null,
             );
         }
 
