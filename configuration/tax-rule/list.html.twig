@@ -87,7 +87,7 @@
         {% if is_granted('UPDATE', 'admin.configuration.tax') %}
             <section data-testid="tax-rule-delivery-section">
                 <h2 class="h5 mb-2">{{ 'Tax rule for delivery modules'|trans }}</h2>
-                <div class="card">
+                <div class="card mb-3">
                     <div class="card-body">
                         <form method="post" action="{{ path('admin.configuration.taxes-rules.delivery.modules.update') }}?_token={{ assignToken() }}" data-testid="tax-rule-delivery-form">
                             <label for="delivery-module-tax-rule" class="form-label">{{ 'Select a tax rule'|trans }}</label>
@@ -102,7 +102,61 @@
                                     <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save'|trans }}
                                 </button>
                             </div>
+                            <div class="form-text">{{ 'Applied to the postage of every delivery module that has no rule of its own.'|trans }}</div>
                         </form>
+                    </div>
+                </div>
+
+                <div class="card" data-testid="postage-tax-rule-card">
+                    <div class="card-body">
+                        <h3 class="h6">{{ 'Postage tax rule per delivery module'|trans }}</h3>
+
+                        {% if delivery_module_rows is empty %}
+                            <p class="text-muted mb-0">{{ 'No delivery module is activated.'|trans }}</p>
+                        {% else %}
+                            <form method="post" action="{{ path('admin.configuration.taxes-rules.delivery.modules.postage.update') }}?_token={{ assignToken() }}" data-testid="postage-tax-rule-form">
+                                <div class="table-responsive">
+                                    <table class="table align-middle mb-3">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">{{ 'Delivery module'|trans }}</th>
+                                                <th scope="col">{{ 'Tax rule'|trans }}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for row in delivery_module_rows %}
+                                                <tr data-testid="postage-tax-rule-row-{{ row.code }}">
+                                                    <td>
+                                                        {{ row.title }}
+                                                        {% if row.has_own_setting %}
+                                                            <div class="form-text">
+                                                                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                                                {{ 'This module carries its own postage tax rule, which takes precedence.'|trans }}
+                                                                {% if row.configuration_url %}
+                                                                    <a href="{{ row.configuration_url }}">{{ 'Configure'|trans }}</a>
+                                                                {% endif %}
+                                                            </div>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        <label class="visually-hidden" for="postage-tax-rule-{{ row.id }}">{{ 'Tax rule'|trans }}</label>
+                                                        <select id="postage-tax-rule-{{ row.id }}" name="postage-tax-rule[{{ row.id }}]" class="form-select">
+                                                            <option value="">{{ 'Shop default'|trans }}</option>
+                                                            {% for option in delivery_tax_rules %}
+                                                                <option value="{{ option.id }}" {{ row.tax_rule_id == option.id ? 'selected' : '' }}>{{ option.title }}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <button type="submit" class="btn btn-primary" data-testid="postage-tax-rule-save">
+                                    <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save'|trans }}
+                                </button>
+                            </form>
+                        {% endif %}
                     </div>
                 </div>
             </section>
