@@ -1063,6 +1063,7 @@ return [
     'Parent folder' => 'Dossier parent',
     'Parse template' => 'Analyser le template',
     'Partial number' => 'Numéro partiel',
+    'Past orders keep the name this module carried as their payment or delivery method.' => 'Les commandes passées conservent le nom que ce module portait comme moyen de paiement ou de livraison.',
     'Password' => 'Mot de passe',
     'Password must be at least %d characters long.' => 'Le mot de passe doit contenir au moins %d caractères.',
     'Password updated' => 'Mot de passe mis à jour',

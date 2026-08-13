@@ -247,6 +247,7 @@
     } %}
         {% block body %}
             <p>{{ 'Do you really want to delete this module?'|trans }}</p>
+            <p class="text-muted small">{{ 'Past orders keep the name this module carried as their payment or delivery method.'|trans }}</p>
             <input type="hidden" name="module_id" value="" data-bo-prefill-modal-target="input">
             <div class="form-check">
                 <input class="form-check-input" type="checkbox" value="1" name="delete-module-data" id="module-delete-data" data-testid="module-delete-data">
