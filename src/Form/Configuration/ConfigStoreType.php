@@ -15,6 +15,8 @@ declare(strict_types=1);
 namespace BackOfficeDefaultTwigBundle\Form\Configuration;
 
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\CallbackTransformer;
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
@@ -24,12 +26,38 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\Callback;
 use Symfony\Component\Validator\Constraints\Email;
 use Symfony\Component\Validator\Constraints\Image;
+use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints\Regex;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 final class ConfigStoreType extends AbstractType
 {
+    /**
+     * Characters stripped from each company identifier before it is validated and stored,
+     * so that a number copied from an official document is accepted as typed.
+     *
+     * @var array<string, string>
+     */
+    private const IDENTIFIER_SEPARATORS = [
+        'store_siret' => '/[\s.]/',
+        'store_vat_intracom' => '/\s/',
+        'store_ape_code' => '/[\s.-]/',
+        'store_eori' => '/\s/',
+    ];
+
+    private const UPPERCASED_IDENTIFIERS = [
+        'store_vat_intracom',
+        'store_ape_code',
+        'store_eori',
+    ];
+
+    private const BOOLEAN_FIELDS = [
+        'store_vat_exempt',
+        'store_registration_exempt',
+    ];
+
     public function __construct(
         private readonly TranslatorInterface $translator,
     ) {
@@ -47,10 +75,54 @@ final class ConfigStoreType extends AbstractType
                 'required' => false,
                 'label' => $this->translator->trans('Store description'),
             ])
-            ->add('store_business_id', TextType::class, [
+            ->add('store_siret', TextType::class, [
                 'required' => false,
-                'label' => $this->translator->trans('Business ID'),
-                'attr' => ['placeholder' => $this->translator->trans('Store Business Identification Number (SIRET, etc).')],
+                'constraints' => [new Callback($this->checkSiret(...))],
+                'label' => $this->translator->trans('SIRET number'),
+                'help' => $this->translator->trans('14 digits, including the 9 digits of the SIREN number.'),
+            ])
+            ->add('store_vat_intracom', TextType::class, [
+                'required' => false,
+                'constraints' => [new Regex([
+                    'pattern' => '/^[A-Z]{2}[0-9A-Z]{2,13}$/',
+                    'message' => $this->translator->trans('The intra-community VAT number must start with a two letter country code followed by 2 to 13 alphanumeric characters.'),
+                ])],
+                'label' => $this->translator->trans('Intra-community VAT number'),
+                'help' => $this->translator->trans('Country code followed by the national number, without spaces.'),
+            ])
+            ->add('store_ape_code', TextType::class, [
+                'required' => false,
+                'constraints' => [new Regex([
+                    'pattern' => '/^[0-9]{4}[A-Z]$/',
+                    'message' => $this->translator->trans('The APE code must contain 4 digits followed by one letter.'),
+                ])],
+                'label' => $this->translator->trans('APE / NAF code'),
+                'help' => $this->translator->trans('Business activity code, 4 digits and one letter.'),
+            ])
+            ->add('store_eori', TextType::class, [
+                'required' => false,
+                'constraints' => [new Regex([
+                    'pattern' => '/^[A-Z]{2}[0-9A-Z]{1,15}$/',
+                    'message' => $this->translator->trans('The EORI number must start with a two letter country code followed by up to 15 alphanumeric characters.'),
+                ])],
+                'label' => $this->translator->trans('EORI number'),
+                'help' => $this->translator->trans('Required only for customs operations outside the European Union.'),
+            ])
+            ->add('store_vat_exempt', CheckboxType::class, [
+                'required' => false,
+                'label' => $this->translator->trans('VAT exemption (article 293 B of the French tax code)'),
+                'help' => $this->translator->trans('Prints the VAT exemption notice on invoices and disables the intra-community VAT number.'),
+            ])
+            ->add('store_registration_exempt', CheckboxType::class, [
+                'required' => false,
+                'label' => $this->translator->trans('Exempt from trade register registration (RCS and RM)'),
+                'help' => $this->translator->trans('Prints the registration exemption notice on invoices.'),
+            ])
+            ->add('store_legal_mentions', TextareaType::class, [
+                'required' => false,
+                'constraints' => [new Length(max: 500)],
+                'label' => $this->translator->trans('Additional legal notice'),
+                'help' => $this->translator->trans('Printed as is at the bottom of invoices and delivery notes.'),
             ])
             ->add('store_email', TextType::class, [
                 'constraints' => [new NotBlank(), new Email()],
@@ -113,6 +185,26 @@ final class ConfigStoreType extends AbstractType
                 'label' => $this->translator->trans('Banner'),
                 'help' => $this->translator->trans('Banner of the website. Used in e-mails sent to customers.'),
             ]);
+
+        // The model data of every company identifier is the string stored in the config table:
+        // normalizing here, and not in the controller, lets the constraints above run on the
+        // normalized value, so that "fr 40 303 265 045" is accepted and stored as "FR40303265045".
+        foreach (self::IDENTIFIER_SEPARATORS as $field => $separators) {
+            $uppercase = \in_array($field, self::UPPERCASED_IDENTIFIERS, true);
+
+            $builder->get($field)->addModelTransformer(new CallbackTransformer(
+                static fn (mixed $value): string => \is_string($value) ? $value : '',
+                static fn (mixed $value): string => self::normalizeIdentifier($value, $separators, $uppercase),
+            ));
+        }
+
+        // Without this, an unchecked box would reach ConfigQuery::write() as an empty string.
+        foreach (self::BOOLEAN_FIELDS as $field) {
+            $builder->get($field)->addModelTransformer(new CallbackTransformer(
+                static fn (mixed $value): bool => '1' === $value,
+                static fn (mixed $value): string => true === $value ? '1' : '0',
+            ));
+        }
     }
 
     public function configureOptions(OptionsResolver $resolver): void
@@ -122,6 +214,7 @@ final class ConfigStoreType extends AbstractType
             ->setAllowedTypes('country_choices', 'array')
             ->setDefaults([
                 'csrf_token_id' => 'admin.config-store',
+                'constraints' => [new Callback($this->checkVatExemption(...))],
             ]);
     }
 
@@ -135,5 +228,71 @@ final class ConfigStoreType extends AbstractType
         foreach (preg_split('/[,;]/', $value) ?: [] as $email) {
             $context->getValidator()->validate(trim($email), $emailValidator);
         }
+    }
+
+    public function checkSiret(mixed $value, ExecutionContextInterface $context): void
+    {
+        if (!\is_string($value) || $value === '' || self::isValidSiret($value)) {
+            return;
+        }
+
+        $context
+            ->buildViolation($this->translator->trans('The SIRET number must contain 14 digits and its checksum must be valid.'))
+            ->addViolation();
+    }
+
+    public function checkVatExemption(mixed $value, ExecutionContextInterface $context): void
+    {
+        if (!\is_array($value)) {
+            return;
+        }
+
+        if (($value['store_vat_exempt'] ?? '0') !== '1' || ($value['store_vat_intracom'] ?? '') === '') {
+            return;
+        }
+
+        $context
+            ->buildViolation($this->translator->trans('A store under VAT exemption cannot declare an intra-community VAT number.'))
+            ->atPath('children[store_vat_intracom]')
+            ->addViolation();
+    }
+
+    private static function normalizeIdentifier(mixed $value, string $separators, bool $uppercase): string
+    {
+        if (!\is_string($value)) {
+            return '';
+        }
+
+        $normalized = (string) preg_replace($separators, '', $value);
+
+        return $uppercase ? strtoupper($normalized) : $normalized;
+    }
+
+    private static function isValidSiret(string $siret): bool
+    {
+        if (preg_match('/^[0-9]{14}$/', $siret) !== 1) {
+            return false;
+        }
+
+        // La Poste establishments are numbered outside the Luhn scheme, only their length holds.
+        if (str_starts_with($siret, '356000000')) {
+            return true;
+        }
+
+        $checksum = 0;
+        foreach (str_split(strrev($siret)) as $rank => $character) {
+            $digit = (int) $character;
+
+            if ($rank % 2 === 1) {
+                $digit *= 2;
+                if ($digit > 9) {
+                    $digit -= 9;
+                }
+            }
+
+            $checksum += $digit;
+        }
+
+        return $checksum % 10 === 0;
     }
 }
