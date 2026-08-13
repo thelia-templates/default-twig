@@ -160,6 +160,34 @@
                     </div>
                 </div>
             </section>
+
+            <section class="mt-4" data-testid="postage-tax-strategy-section">
+                <h2 class="h5 mb-2">{{ 'Postage tax breakdown'|trans }}</h2>
+                <div class="card">
+                    <div class="card-body">
+                        <form method="post" action="{{ path('admin.configuration.taxes-rules.postage.tax.strategy.update') }}?_token={{ assignToken() }}" data-testid="postage-tax-strategy-form">
+                            <fieldset>
+                                <legend class="form-label">{{ 'How the postage tax is split when a cart mixes several rates'|trans }}</legend>
+                                {% for strategy in postage_tax_strategies %}
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="radio" name="postage-tax-strategy" id="postage-tax-strategy-{{ strategy.value }}" value="{{ strategy.value }}" {{ postage_tax_strategy_selected == strategy.value ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="postage-tax-strategy-{{ strategy.value }}">
+                                            {{ strategy.label }}
+                                            <span class="form-text d-block">{{ strategy.description }}</span>
+                                        </label>
+                                    </div>
+                                {% endfor %}
+                            </fieldset>
+                            <div class="alert alert-warning mt-3">
+                                {{ 'The last two change the VAT the shop declares on mixed carts. They apply to the orders placed from now on; nothing is recomputed.'|trans }}
+                            </div>
+                            <button type="submit" class="btn btn-primary" data-testid="postage-tax-strategy-save">
+                                <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save'|trans }}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </section>
         {% endif %}
     </div>
 

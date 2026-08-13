@@ -41,6 +41,7 @@ use Thelia\Core\Event\TheliaEvents;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Exception\TokenAuthenticationException;
 use Thelia\Core\Security\Resource\AdminResources;
+use Thelia\Domain\Shipping\Enum\PostageTaxStrategy;
 use Thelia\Model\ConfigQuery;
 use Thelia\Model\Country;
 use Thelia\Model\CountryQuery;
@@ -113,6 +114,8 @@ final class TaxRuleController
             'delivery_tax_rules' => $this->deliveryTaxRuleOptions($locale),
             'delivery_tax_rule_selected' => (int) ConfigQuery::read('taxrule_id_delivery_module', 0),
             'delivery_module_rows' => $this->deliveryModuleTaxRules->rows($locale),
+            'postage_tax_strategies' => $this->postageTaxStrategyOptions(),
+            'postage_tax_strategy_selected' => PostageTaxStrategy::fromShopConfiguration()->value,
             'tax_sort_field' => $taxSort->field,
             'tax_sort_direction' => $taxSort->direction,
             'tax_rule_sort_field' => $taxRuleSort->field,
@@ -344,6 +347,61 @@ final class TaxRuleController
         $this->deliveryModuleTaxRules->save($submitted);
 
         return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
+    }
+
+    #[Route('/postage-tax-strategy', name: 'postage.tax.strategy.update', methods: ['POST'])]
+    public function updatePostageTaxStrategy(Request $request): Response
+    {
+        if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::UPDATE)) {
+            return $denied;
+        }
+
+        $this->tokens->checkToken((string) $request->query->get('_token'));
+
+        $strategy = PostageTaxStrategy::tryFrom((string) $request->request->get('postage-tax-strategy'));
+
+        if (null === $strategy) {
+            $this->errorRenderer->setup(
+                $this->translator->trans('Postage tax breakdown'),
+                $this->translator->trans('Unknown postage tax strategy.'),
+            );
+
+            return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
+        }
+
+        ConfigQuery::write(PostageTaxStrategy::CONFIG_KEY, $strategy->value);
+
+        $this->adminLogger->log(
+            self::RESOURCE,
+            AccessManager::UPDATE,
+            \sprintf('Postage tax strategy set to %s', $strategy->value),
+        );
+
+        return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
+    }
+
+    /**
+     * @return list<array{value: string, label: string, description: string}>
+     */
+    private function postageTaxStrategyOptions(): array
+    {
+        return [
+            [
+                'value' => PostageTaxStrategy::SINGLE_RULE->value,
+                'label' => $this->translator->trans('One rule for the whole postage'),
+                'description' => $this->translator->trans('The rule the delivery module resolved is applied to the whole postage. This is what Thelia has always done.'),
+            ],
+            [
+                'value' => PostageTaxStrategy::PRO_RATA->value,
+                'label' => $this->translator->trans('Split over the goods'),
+                'description' => $this->translator->trans('The postage is shared between the tax rules of the cart, in proportion to the untaxed value each one accounts for.'),
+            ],
+            [
+                'value' => PostageTaxStrategy::HIGHEST_RATE->value,
+                'label' => $this->translator->trans('Highest rate of the cart'),
+                'description' => $this->translator->trans('The whole postage follows the highest rate the cart carries.'),
+            ],
+        ];
     }
 
     /**
