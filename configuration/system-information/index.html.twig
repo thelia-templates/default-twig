@@ -1,0 +1,92 @@
+{% extends '@BackOfficeDefaultTwig/base.html.twig' %}
+
+{% block title %}{{ 'System information'|trans }}{% endblock %}
+{% block body_testid %}configuration-system-information{% endblock %}
+
+{% block breadcrumb %}
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ path('admin.home') }}">{{ 'Home'|trans }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ path('admin.configuration.index') }}">{{ 'Configuration'|trans }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ 'System information'|trans }}</li>
+        </ol>
+    </nav>
+{% endblock %}
+
+{% block content %}
+    {{ safe_hook('system-information.top') }}
+
+    {% set badgeClasses = { 'ok': 'success', 'warning': 'warning', 'danger': 'danger', 'none': 'secondary' } %}
+    {# Only these curated status words are translated; technical values (versions, paths, sql_mode, ...) are shown verbatim. #}
+    {% set translatableValues = ['Yes', 'No', 'Writable', 'Not writable', 'Unavailable', 'Not computed'] %}
+
+    <div class="container-fluid" data-testid="system-information-page" data-controller="bo-copy-to-clipboard">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+            <h1 class="h3 mb-0">{{ 'System information'|trans }}</h1>
+            <button type="button"
+                    class="btn btn-outline-primary"
+                    data-testid="system-information-copy"
+                    data-action="bo-copy-to-clipboard#copy"
+                    data-bo-copy-to-clipboard-copied-label-value="{{ 'Copied'|trans }}">
+                <i class="bi bi-clipboard" aria-hidden="true"></i> {{ 'Copy the summary'|trans }}
+            </button>
+        </div>
+
+        <textarea class="visually-hidden" readonly tabindex="-1" data-bo-copy-to-clipboard-target="source">{{ systemInformation.toPlainText() }}</textarea>
+
+        <div class="row g-3">
+            {% for section in systemInformation.sections %}
+                <div class="col-md-6">
+                    <div class="card h-100" data-testid="system-information-section-{{ section.key }}">
+                        <div class="card-header">
+                            <h2 class="h5 mb-0">{{ section.title|trans }}</h2>
+                        </div>
+                        <div class="card-body">
+                            {% if section.key == 'php-extensions' %}
+                                <div class="d-flex flex-wrap gap-2">
+                                    {% for item in section.items %}
+                                        <span class="badge bg-{{ badgeClasses[item.status] }}">{{ item.value }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <table class="table table-sm mb-0 align-middle">
+                                    <tbody>
+                                        {% for item in section.items %}
+                                            <tr>
+                                                <th scope="row" class="fw-normal text-muted">{{ item.label|trans }}</th>
+                                                <td class="text-end">
+                                                    {% if item.badge is not null %}
+                                                        {% if item.value is not empty %}<span class="text-break">{{ item.value in translatableValues ? item.value|trans : item.value }}</span> {% endif %}
+                                                        <span class="badge bg-{{ badgeClasses[item.status] }}">{{ item.badge|trans }}</span>
+                                                    {% elseif item.status != 'none' %}
+                                                        <span class="badge bg-{{ badgeClasses[item.status] }}">{{ item.value in translatableValues ? item.value|trans : item.value }}</span>
+                                                    {% else %}
+                                                        <span class="text-break">{{ item.value in translatableValues ? item.value|trans : item.value }}</span>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            {% endif %}
+
+                            {% if section.key == 'cache-logs' %}
+                                <a href="{{ path('admin.configuration.advanced') }}"
+                                   class="btn btn-outline-secondary btn-sm mt-3"
+                                   data-testid="system-information-advanced-link">
+                                    <i class="bi bi-tools" aria-hidden="true"></i> {{ 'Advanced configuration'|trans }}
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    {{ safe_hook('system-information.bottom') }}
+{% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('system-information.js', { location: 'system-information-js' }) }}
+{% endblock %}
