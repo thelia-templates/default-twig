@@ -29,8 +29,6 @@ use Thelia\Action\Image as ImageAction;
 use Thelia\Core\Event\FeatureProduct\FeatureProductDeleteEvent;
 use Thelia\Core\Event\FeatureProduct\FeatureProductUpdateEvent;
 use Thelia\Core\Event\Image\ImageEvent;
-use Thelia\Core\Event\MetaData\MetaDataCreateOrUpdateEvent;
-use Thelia\Core\Event\MetaData\MetaDataDeleteEvent;
 use Thelia\Core\Event\Product\ProductCombinationGenerationEvent;
 use Thelia\Core\Event\Product\ProductSetTemplateEvent;
 use Thelia\Core\Event\ProductSaleElement\ProductSaleElementCreateEvent;
@@ -54,8 +52,6 @@ use Thelia\Model\FeatureProductQuery;
 use Thelia\Model\FeatureQuery;
 use Thelia\Model\FeatureTemplateQuery;
 use Thelia\Model\LangQuery;
-use Thelia\Model\MetaData;
-use Thelia\Model\MetaDataQuery;
 use Thelia\Model\Product;
 use Thelia\Model\ProductDocument;
 use Thelia\Model\ProductDocumentQuery;
@@ -662,7 +658,7 @@ final class ProductAdvancedController
     }
 
     #[Route('/admin/product_sale_elements/{pseId}/{type}/{typeId}', name: 'admin.product_sale_elements.document_image_assoc', methods: ['GET'], requirements: ['pseId' => '\d+', 'typeId' => '\d+', 'type' => 'image|document|virtual'])]
-    public function pseDocumentImageAssoc(int $pseId, string $type, int $typeId, EventDispatcherInterface $events): JsonResponse
+    public function pseDocumentImageAssoc(int $pseId, string $type, int $typeId): JsonResponse
     {
         if ($this->access->check(self::RESOURCE, [], AccessManager::UPDATE)) {
             return new JsonResponse(['error' => 'forbidden'], Response::HTTP_FORBIDDEN);
@@ -720,18 +716,11 @@ final class ProductAdvancedController
                 return new JsonResponse(['error' => 'document not found'], Response::HTTP_NOT_FOUND);
             }
 
-            $currentId = (int) MetaDataQuery::getVal('virtual', MetaData::PSE_KEY, $pseId);
-            if ($currentId === $typeId) {
-                $events->dispatch(
-                    new MetaDataDeleteEvent('virtual', MetaData::PSE_KEY, $pseId),
-                    TheliaEvents::META_DATA_DELETE,
-                );
+            if ($pse->getVirtualDocument()?->getId() === $typeId) {
+                $pse->setVirtualDocument(null);
                 $response['is_associated'] = 0;
             } else {
-                $events->dispatch(
-                    new MetaDataCreateOrUpdateEvent('virtual', MetaData::PSE_KEY, $pseId, $typeId),
-                    TheliaEvents::META_DATA_UPDATE,
-                );
+                $pse->setVirtualDocument($typeId);
                 $response['is_associated'] = 1;
             }
             $response['product_document_id'] = $typeId;
@@ -849,9 +838,10 @@ final class ProductAdvancedController
     }
 
     /**
-     * Downloadable file of a sale element. The association is a meta_data row (virtual key, pse
-     * element), not the product_sale_elements_product_document join table the documents picker
-     * uses, and it holds a single document: the toggle endpoint writes exactly that storage.
+     * Downloadable file of a sale element. The association lives in
+     * product_sale_elements_virtual_document, not in the product_sale_elements_product_document
+     * join table the documents picker uses, and it holds a single document: the toggle endpoint
+     * writes exactly that storage.
      *
      * @return list<array{id: int, title: string, url: string, filename: string, is_associated: bool}>
      */
@@ -864,7 +854,7 @@ final class ProductAdvancedController
             ->orderByPosition()
             ->find();
 
-        $virtualDocumentId = (int) MetaDataQuery::getVal('virtual', MetaData::PSE_KEY, (int) $pse->getId());
+        $virtualDocumentId = $pse->getVirtualDocument()?->getId();
 
         $locale = $this->defaultLocale();
 
@@ -898,7 +888,7 @@ final class ProductAdvancedController
             return new JsonResponse(['error' => 'forbidden'], Response::HTTP_FORBIDDEN);
         }
 
-        $selectedId = (int) MetaDataQuery::getVal('virtual', MetaData::PSE_KEY, $pseId);
+        $selectedId = ProductSaleElementsQuery::create()->findPk($pseId)?->getVirtualDocument()?->getId();
 
         $documents = ProductDocumentQuery::create()
             ->filterByProductId($productId)
