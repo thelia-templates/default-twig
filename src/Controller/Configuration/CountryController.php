@@ -248,32 +248,34 @@ final class CountryController
         }
         $countriesQuery->joinWithI18n($locale);
 
+        // A shipping zone can hold a state as soon as the country carries one:
+        // country.has_states only says whether an address form may leave the
+        // choice empty, and France carries its 101 departments with the flag off.
+        $statesQuery = StateQuery::create();
+        if ($visible) {
+            $statesQuery->filterByVisible(true);
+        }
+        $statesQuery->joinWithI18n($locale);
+
+        $statesByCountry = [];
+        foreach ($statesQuery->find() as $state) {
+            $statesByCountry[(int) $state->getCountryId()][] = [
+                'id' => (int) $state->getId(),
+                'title' => (string) $state->getTitle(),
+            ];
+        }
+
         $payload = [];
         foreach ($countriesQuery->find() as $country) {
             \assert($country instanceof Country);
-            $entry = [
+            $states = $statesByCountry[(int) $country->getId()] ?? [];
+
+            $payload[] = [
                 'id' => (int) $country->getId(),
                 'title' => (string) $country->getTitle(),
-                'hasStates' => (bool) $country->getHasStates(),
-                'states' => [],
+                'hasStates' => [] !== $states,
+                'states' => $states,
             ];
-
-            if ($entry['hasStates']) {
-                $statesQuery = StateQuery::create()->filterByCountryId($country->getId());
-                if ($visible) {
-                    $statesQuery->filterByVisible(true);
-                }
-                $statesQuery->joinWithI18n($locale);
-
-                foreach ($statesQuery->find() as $state) {
-                    $entry['states'][] = [
-                        'id' => (int) $state->getId(),
-                        'title' => (string) $state->getTitle(),
-                    ];
-                }
-            }
-
-            $payload[] = $entry;
         }
 
         return new JsonResponse($payload);
