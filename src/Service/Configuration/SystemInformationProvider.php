@@ -151,15 +151,17 @@ final readonly class SystemInformationProvider
         try {
             $connection = Propel::getConnection('TheliaMain');
 
-            $charset = $connection->query('SELECT @@character_set_database, @@collation_database')->fetch(\PDO::FETCH_NUM);
+            $row = $connection
+                ->query('SELECT VERSION(), DATABASE(), @@character_set_database, @@collation_database, @@SESSION.sql_mode')
+                ->fetch(\PDO::FETCH_NUM);
 
             $items = [
-                new SystemInformationItem('Server version', (string) $connection->query('SELECT VERSION()')->fetchColumn()),
-                new SystemInformationItem('Database name', (string) $connection->query('SELECT DATABASE()')->fetchColumn()),
+                new SystemInformationItem('Server version', (string) ($row[0] ?? '')),
+                new SystemInformationItem('Database name', (string) ($row[1] ?? '')),
                 new SystemInformationItem('Driver', (string) $connection->getAttribute(\PDO::ATTR_DRIVER_NAME)),
-                new SystemInformationItem('Character set', (string) ($charset[0] ?? '')),
-                new SystemInformationItem('Collation', (string) ($charset[1] ?? '')),
-                new SystemInformationItem('sql_mode', (string) $connection->query('SELECT @@SESSION.sql_mode')->fetchColumn()),
+                new SystemInformationItem('Character set', (string) ($row[2] ?? '')),
+                new SystemInformationItem('Collation', (string) ($row[3] ?? '')),
+                new SystemInformationItem('sql_mode', (string) ($row[4] ?? '')),
             ];
         } catch (\Throwable) {
             $items = array_map(
@@ -180,7 +182,7 @@ final readonly class SystemInformationProvider
             $this->directoryItem('Cache directory', $this->cacheDir, $cacheWritable),
             new SystemInformationItem('Cache size', $this->cacheSize($this->cacheDir)),
             $this->directoryItem('Log directory', $this->logDir, $logWritable),
-            new SystemInformationItem('Thelia log level', $this->logLevelName()),
+            new SystemInformationItem('Thelia log level', $this->safe(fn (): string => $this->logLevelName())),
         ]);
     }
 
@@ -211,8 +213,14 @@ final readonly class SystemInformationProvider
         $base = rtrim($this->projectRoot(), '/\\');
         $real = realpath($path) ?: $path;
 
-        if (str_starts_with($real, $base)) {
-            return ltrim(substr($real, \strlen($base)), '/\\') ?: '.';
+        if ($real === $base) {
+            return '.';
+        }
+
+        foreach (['/', '\\'] as $separator) {
+            if (str_starts_with($real, $base.$separator)) {
+                return substr($real, \strlen($base) + 1);
+            }
         }
 
         return $real;
