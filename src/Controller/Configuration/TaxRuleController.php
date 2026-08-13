@@ -21,6 +21,7 @@ use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormErrorRenderer;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormValidator;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminLogger;
+use BackOfficeDefaultTwigBundle\Service\Configuration\DeliveryModulePostageTaxRules;
 use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\ListSort;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
@@ -79,6 +80,7 @@ final class TaxRuleController
         private readonly TranslatorInterface $translator,
         private readonly TokenProvider $tokens,
         private readonly EditLocaleResolver $editLocale,
+        private readonly DeliveryModulePostageTaxRules $deliveryModuleTaxRules,
     ) {
     }
 
@@ -110,6 +112,7 @@ final class TaxRuleController
             'create_tax_rule_form' => $createTaxRuleForm->createView(),
             'delivery_tax_rules' => $this->deliveryTaxRuleOptions($locale),
             'delivery_tax_rule_selected' => (int) ConfigQuery::read('taxrule_id_delivery_module', 0),
+            'delivery_module_rows' => $this->deliveryModuleTaxRules->rows($locale),
             'tax_sort_field' => $taxSort->field,
             'tax_sort_direction' => $taxSort->direction,
             'tax_rule_sort_field' => $taxRuleSort->field,
@@ -324,6 +327,21 @@ final class TaxRuleController
         $this->tokens->checkToken((string) $request->query->get('_token'));
 
         ConfigQuery::write('taxrule_id_delivery_module', (string) (int) $request->request->get('delivery-module-tax-rule', 0));
+
+        return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
+    }
+
+    #[Route('/delivery-modules/postage', name: 'delivery.modules.postage.update', methods: ['POST'])]
+    public function updatePostageTaxRulePerDeliveryModule(Request $request): Response
+    {
+        if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::UPDATE)) {
+            return $denied;
+        }
+
+        $this->tokens->checkToken((string) $request->query->get('_token'));
+
+        $submitted = $request->request->all('postage-tax-rule');
+        $this->deliveryModuleTaxRules->save($submitted);
 
         return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
     }
