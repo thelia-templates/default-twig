@@ -77,9 +77,10 @@ final readonly class ModuleRepository
         $deliveryIds = OrderQuery::create()->select('DeliveryModuleId')->distinct()->find()->getData();
 
         $ids = array_unique(array_map('intval', array_merge($paymentIds, $deliveryIds)));
+        // sort() reindexes, so the result is already the list the signature promises.
         sort($ids);
 
-        return array_values($ids);
+        return $ids;
     }
 
     public function countHooksForModule(int $moduleId): int
