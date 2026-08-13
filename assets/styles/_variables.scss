@@ -1,10 +1,28 @@
 // Thelia back-office - Bootstrap 5 variable overrides
 // Mirrors the public-facing thelia.net design system (orange / soft slate)
 
-$primary: #f26041;        // Thelia orange (matches thelia.net .bg-primary)
+$primary: #f26041;        // Thelia orange (matches thelia.net .bg-primary) - non-text surfaces only, see $btn-brand
 $primary-dark: #be5a1c;   // Hover / pressed state on primary surfaces
 $secondary: #4f4f4f;      // thelia.net body copy
 $dark: #282828;           // thelia.net deep text / sidebar accent
+
+// Button palette - WCAG AA (4.5:1 text, 3:1 non-text) against both #ffffff
+// and $body-bg. $primary itself only reaches 3.22:1 as text/border, so
+// buttons use darker tokens instead; $primary keeps its brand role
+// elsewhere (surfaces, tiles, table hover tint).
+$btn-brand: #b04f18;              // label/border: 5.28 on card, 4.91 on page
+$btn-brand-dark: #8c3f13;         // hover/active bg: 7.41 with white label
+$btn-info: #087990;                // fallback .btn-info bg: 5.06 with white label
+$btn-info-dark: #055160;           // fallback .btn-info hover bg: 8.93 with white label
+$btn-warning-border: #997404;      // btn-warning border: 4.33 on card, 4.02 on page
+$btn-warning-emphasis: #664d03;    // fallback .btn-outline-warning label: 7.99 on card, 7.43 on page
+$btn-danger-outline: #b02a37;      // .btn-outline-danger label/border: 6.50 on card, 6.04 on page
+$btn-success-outline: #146c43;     // .btn-outline-success label/border: 6.45 on card, 6.00 on page
+
+// Bootstrap defaults $link-color to $primary, which leaves .btn-link at
+// 2.99:1 on the page background. Route links/btn-link through the AA-safe
+// brand token instead.
+$link-color: $btn-brand;
 
 $body-bg: #f4f7fa;        // thelia.net page background
 $body-color: #4f4f4f;

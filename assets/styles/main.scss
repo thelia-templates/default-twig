@@ -290,12 +290,12 @@ $bo-side-nav-hover-bg: rgba(255, 255, 255, .07);
 
         &--success {
             background-color: #5cb85c;
-            color: #ffffff;
+            color: #052e16;
         }
 
         &--info {
             background-color: #5bc0de;
-            color: #ffffff;
+            color: #08303a;
         }
     }
 }
@@ -497,28 +497,113 @@ input[type="color"].form-control {
     color: #3a3a3a;
 }
 
-// Buttons - refined idle/hover states
+// Buttons - refined idle/hover states, all pairs kept above WCAG AA
+// (4.5:1 text, 3:1 non-text) against #ffffff and $body-bg. See
+// assets/styles/_variables.scss for the measured ratios behind each token.
 .btn-primary {
     --bs-btn-color: #fff;
-    --bs-btn-bg: #{$primary};
-    --bs-btn-border-color: #{$primary};
-    --bs-btn-hover-bg: #{$primary-dark};
-    --bs-btn-hover-border-color: #{$primary-dark};
+    --bs-btn-bg: #{$btn-brand};
+    --bs-btn-border-color: #{$btn-brand};
     --bs-btn-hover-color: #fff;
-    --bs-btn-active-bg: #{$primary-dark};
-    --bs-btn-active-border-color: #{$primary-dark};
+    --bs-btn-hover-bg: #{$btn-brand-dark};
+    --bs-btn-hover-border-color: #{$btn-brand-dark};
     --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: #{$btn-brand-dark};
+    --bs-btn-active-border-color: #{$btn-brand-dark};
 }
 
 .btn-outline-primary {
-    --bs-btn-color: #{$primary};
-    --bs-btn-border-color: #{$primary};
-    --bs-btn-hover-bg: #{$primary};
-    --bs-btn-hover-border-color: #{$primary};
+    --bs-btn-color: #{$btn-brand};
+    --bs-btn-border-color: #{$btn-brand};
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: #{$btn-brand};
+    --bs-btn-hover-border-color: #{$btn-brand};
+}
+
+.btn-link {
+    --bs-btn-color: #{$btn-brand};
+    --bs-btn-hover-color: #{$btn-brand-dark};
+}
+
+.btn-outline-danger {
+    --bs-btn-color: #{$btn-danger-outline};
+    --bs-btn-border-color: #{$btn-danger-outline};
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: #{$btn-danger-outline};
+    --bs-btn-hover-border-color: #{$btn-danger-outline};
+}
+
+.btn-outline-success {
+    --bs-btn-color: #{$btn-success-outline};
+    --bs-btn-border-color: #{$btn-success-outline};
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: #{$btn-success-outline};
+    --bs-btn-hover-border-color: #{$btn-success-outline};
+}
+
+// Bootstrap's default #ffc107 bg / #000 label already clears 12.88:1; only
+// the border needs a token so the surface stays perceptible against #ffffff
+// and $body-bg (1.4.11, 3:1 non-text).
+.btn-warning {
+    --bs-btn-border-color: #{$btn-warning-border};
+    --bs-btn-hover-border-color: #{$btn-warning-border};
+}
+
+// Fallback overrides for module templates the theme doesn't control. These
+// variants are proscribed in theme templates (see `btn-outline-secondary`
+// instead) but stay defined here so third-party module markup renders
+// above the AA threshold.
+.btn-info {
+    --bs-btn-color: #fff;
+    --bs-btn-bg: #{$btn-info};
+    --bs-btn-border-color: #{$btn-info};
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: #{$btn-info-dark};
+    --bs-btn-hover-border-color: #{$btn-info-dark};
+}
+
+.btn-outline-info {
+    --bs-btn-color: #{$btn-info};
+    --bs-btn-border-color: #{$btn-info};
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: #{$btn-info};
+    --bs-btn-hover-border-color: #{$btn-info};
+}
+
+.btn-outline-warning {
+    --bs-btn-color: #{$btn-warning-emphasis};
+    --bs-btn-border-color: #{$btn-warning-border};
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: #{$btn-warning-emphasis};
+    --bs-btn-hover-border-color: #{$btn-warning-emphasis};
+}
+
+// Bootstrap 3 leftover still present in some module templates - aliased on
+// .btn-outline-secondary's own render so it always tracks that variant.
+.btn-default {
+    @extend .btn-outline-secondary;
 }
 
 .btn {
     transition: background-color .15s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease;
+}
+
+// Bootstrap's box-shadow focus ring alone doesn't guarantee 3:1 against
+// adjacent surfaces (1.4.11); add an explicit outline in the brand token.
+.btn:focus-visible {
+    outline: 2px solid #{$btn-brand};
+    outline-offset: 2px;
+}
+
+// Replace Bootstrap's opacity: .65 (which drags the disabled label under
+// 3:1) with explicit tokens so disabled buttons stay perceptible without
+// relying on opacity alone.
+.btn:disabled,
+.btn.disabled {
+    --bs-btn-disabled-color: #565e64;
+    --bs-btn-disabled-bg: #e9ecef;
+    --bs-btn-disabled-border-color: #ced4da;
+    opacity: 1;
 }
 
 // `button.btn` (0,1,1) overrides a later reboot rule that resets `<button>` bg to transparent.
