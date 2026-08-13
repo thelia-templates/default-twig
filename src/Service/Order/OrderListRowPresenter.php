@@ -54,10 +54,14 @@ final readonly class OrderListRowPresenter
         $status = OrderStatusQuery::create()->findPk((int) $order->getStatusId());
         $status?->setLocale($locale);
 
+        // The module is gone once it has been deleted; the order then names it with the title
+        // it froze at that moment.
         $paymentModule = $order->getModuleRelatedByPaymentModuleId();
         $paymentModule?->setLocale($locale);
+        $paymentTitle = $paymentModule?->getTitle() ?? $order->getPaymentModuleTitle();
         $deliveryModule = $order->getModuleRelatedByDeliveryModuleId();
         $deliveryModule?->setLocale($locale);
+        $deliveryTitle = $deliveryModule?->getTitle() ?? $order->getDeliveryModuleTitle();
 
         $isUrgent = $this->isUrgent($order, $status?->getCode());
         $cancelStatus = OrderStatusQuery::getCancelledStatus();
@@ -77,8 +81,8 @@ final readonly class OrderListRowPresenter
             'status_color' => (string) ($status?->getColor() ?: self::FALLBACK_STATUS_COLOR),
             'customer_html' => $this->renderCustomer($order),
             'items_html' => $this->renderItems($orderId),
-            'payment_html' => $this->renderModule($paymentModule?->getTitle(), 'bi-credit-card'),
-            'delivery_html' => $this->renderDelivery($order, $deliveryModule?->getTitle()),
+            'payment_html' => $this->renderModule($paymentTitle, 'bi-credit-card'),
+            'delivery_html' => $this->renderDelivery($order, $deliveryTitle),
             'amount' => $this->formatAmount($order),
             'date_html' => $this->renderDate($order),
             'is_urgent' => $isUrgent,

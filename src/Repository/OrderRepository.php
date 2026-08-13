@@ -56,9 +56,12 @@ final readonly class OrderRepository
         $rows = $query
             ->joinWithCustomer()
             ->joinWithOrderAddressRelatedByDeliveryOrderAddressId()
-            ->joinModuleRelatedByPaymentModuleId('PaymentModule')
+            // Left joins: an order whose module has been deleted names it through the frozen
+            // title and no longer points at a module row. An inner join would drop it from
+            // the page without dropping it from the count above.
+            ->joinModuleRelatedByPaymentModuleId('PaymentModule', Criteria::LEFT_JOIN)
             ->with('PaymentModule')
-            ->joinModuleRelatedByDeliveryModuleId('DeliveryModule')
+            ->joinModuleRelatedByDeliveryModuleId('DeliveryModule', Criteria::LEFT_JOIN)
             ->with('DeliveryModule')
             ->orderBy('order.'.$sortColumn, $sortDirection)
             ->offset(($page - 1) * $perPage)
