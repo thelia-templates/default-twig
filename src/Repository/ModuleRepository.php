@@ -81,7 +81,7 @@ final readonly class ModuleRepository
         $ids = array_unique(array_map('intval', array_merge($paymentIds, $deliveryIds)));
         sort($ids);
 
-        return array_values($ids);
+        return $ids;
     }
 
     /**
