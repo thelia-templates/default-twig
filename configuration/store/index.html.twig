@@ -33,7 +33,29 @@
                         <div class="card-body">
                             {{ form_row(form.store_name) }}
                             {{ form_row(form.store_description) }}
-                            {{ form_row(form.store_business_id) }}
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-header">{{ 'Company identifiers'|trans }}</div>
+                        <div class="card-body">
+                            {{ form_row(form.store_siret) }}
+                            {{ form_row(form.store_vat_intracom) }}
+                            {{ form_row(form.store_ape_code) }}
+                            {{ form_row(form.store_eori) }}
+
+                            <div class="form-check mb-2">
+                                {{ form_widget(form.store_vat_exempt, { attr: { class: 'form-check-input' } }) }}
+                                {{ form_label(form.store_vat_exempt, null, { label_attr: { class: 'form-check-label' } }) }}
+                                {{ form_help(form.store_vat_exempt) }}
+                            </div>
+                            <div class="form-check mb-3">
+                                {{ form_widget(form.store_registration_exempt, { attr: { class: 'form-check-input' } }) }}
+                                {{ form_label(form.store_registration_exempt, null, { label_attr: { class: 'form-check-label' } }) }}
+                                {{ form_help(form.store_registration_exempt) }}
+                            </div>
+
+                            {{ form_row(form.store_legal_mentions) }}
                         </div>
                     </div>
 
