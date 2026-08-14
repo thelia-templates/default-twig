@@ -66,6 +66,7 @@ use Thelia\Model\ProductSaleElementsProductImageQuery;
 use Thelia\Model\ProductSaleElementsQuery;
 use Thelia\Model\Template;
 use Thelia\Model\TemplateQuery;
+use Thelia\Tools\TokenProvider;
 use Twig\Environment;
 
 final class ProductAdvancedController
@@ -82,6 +83,7 @@ final class ProductAdvancedController
         private readonly UrlGeneratorInterface $urls,
         private readonly CombinationsTabContextBuilder $combinationsTabContextBuilder,
         private readonly EventDispatcherInterface $imageEvents,
+        private readonly TokenProvider $tokens,
     ) {
     }
 
@@ -356,12 +358,14 @@ final class ProductAdvancedController
         );
     }
 
-    #[Route('/admin/product/{productId}/update-attributes-and-features', name: 'admin.products.update-attributes-and-features', methods: ['POST', 'GET'], requirements: ['productId' => '\d+'])]
+    #[Route('/admin/product/{productId}/update-attributes-and-features', name: 'admin.products.update-attributes-and-features', methods: ['POST'], requirements: ['productId' => '\d+'])]
     public function updateAttributesAndFeatures(int $productId, Request $request, EventDispatcherInterface $events): Response
     {
         if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::UPDATE)) {
             return $denied;
         }
+
+        $this->tokens->checkToken((string) $request->request->get('_token', $request->query->get('_token', '')));
 
         $product = ProductQuery::create()->findPk($productId);
         if ($product !== null) {
