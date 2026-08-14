@@ -1048,8 +1048,12 @@ final class ProductAdvancedController
             }
             $feature = $byId[$featureId];
 
+            // Free-text values are stored by the core as per-product FeatureAvs
+            // (feature_product.is_free_text = 1): they are not selectable choices and
+            // must not turn a free-text feature into a giant select.
             $featureAvs = FeatureAvQuery::create()
                 ->filterByFeatureId($featureId)
+                ->where('feature_av.ID NOT IN (SELECT feature_av_id FROM feature_product WHERE is_free_text = 1 AND feature_av_id IS NOT NULL)')
                 ->orderByPosition()
                 ->find();
             $options = [];
