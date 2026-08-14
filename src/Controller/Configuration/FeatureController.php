@@ -415,7 +415,14 @@ final class FeatureController
     private function avRows(Feature $feature, string $locale): array
     {
         $rows = [];
-        $avs = FeatureAvQuery::create()->filterByFeatureId($feature->getId())->orderByPosition()->find();
+        // Free-text values are stored by the core as per-product FeatureAvs
+        // (feature_product.is_free_text = 1): they are product data, not values managed
+        // here, and must not turn this list into thousands of rows.
+        $avs = FeatureAvQuery::create()
+            ->filterByFeatureId($feature->getId())
+            ->where('feature_av.ID NOT IN (SELECT feature_av_id FROM feature_product WHERE is_free_text = 1 AND feature_av_id IS NOT NULL)')
+            ->orderByPosition()
+            ->find();
         foreach ($avs as $av) {
             $av->setLocale($locale);
             $rows[] = [
