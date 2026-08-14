@@ -54,6 +54,8 @@ use Thelia\Model\CategoryQuery;
 use Thelia\Model\CurrencyQuery;
 use Thelia\Model\LangQuery;
 use Thelia\Model\Map\ProductTableMap;
+use Thelia\Model\MetaData;
+use Thelia\Model\MetaDataQuery;
 use Thelia\Model\Product;
 use Thelia\Model\ProductDocumentQuery;
 use Thelia\Model\ProductQuery;
@@ -708,10 +710,23 @@ final class ProductController
 
     /**
      * Current virtual document of the product's default sale element, if any.
+     * Thelia 3.0.0-beta3 moved the association to its own table; older cores keep it
+     * in a meta_data row, and reading it there keeps the screen usable on those.
      */
     private function currentVirtualDocumentId(Product $product): ?int
     {
-        return $this->defaultSaleElement($product)?->getVirtualDocument()?->getId();
+        $defaultSaleElement = $this->defaultSaleElement($product);
+        if ($defaultSaleElement === null) {
+            return null;
+        }
+
+        if (method_exists($defaultSaleElement, 'getVirtualDocument')) {
+            return $defaultSaleElement->getVirtualDocument()?->getId();
+        }
+
+        $documentId = (int) MetaDataQuery::getVal('virtual', MetaData::PSE_KEY, $defaultSaleElement->getId());
+
+        return $documentId > 0 ? $documentId : null;
     }
 
     private function defaultSaleElement(Product $product): ?ProductSaleElements
