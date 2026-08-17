@@ -20,17 +20,17 @@
                     <div class="card h-100">
                         {% if kind == 'image' %}
                             <a href="{{ path(urls.update, { parentType: parent_type, imageId: item.id }) }}"
-                               class="d-block text-center bg-light py-3" data-testid="bo-file-thumb">
-                                <img src="{{ item.url }}" alt="{{ item.title }}" class="img-fluid" style="max-height: 120px;">
+                               class="d-flex align-items-center justify-content-center bg-light p-2" style="height: 140px;" data-testid="bo-file-thumb">
+                                <img src="{{ item.url }}" alt="{{ item.title }}" class="img-fluid" style="max-height: 100%;">
                             </a>
                         {% else %}
                             <a href="{{ path(urls.update, { parentType: parent_type, documentId: item.id }) }}"
-                               class="d-block text-center bg-light py-4" data-testid="bo-file-thumb">
+                               class="d-flex flex-column align-items-center justify-content-center bg-light p-2 text-center" style="height: 140px;" data-testid="bo-file-thumb">
                                 <i class="bi bi-file-earmark fs-1" aria-hidden="true"></i>
-                                <div class="small text-truncate px-2">{{ item.file }}</div>
+                                <div class="small text-truncate px-2 w-100">{{ item.file }}</div>
                             </a>
                         {% endif %}
-                        <div class="card-body p-2">
+                        <div class="card-body p-2 d-flex flex-column">
                             {% if can_update %}
                                 <form method="post" action="{{ path(urls.update_title, kind == 'image' ? { parentType: parent_type, imageId: item.id } : { parentType: parent_type, documentId: item.id }) }}"
                                       class="input-group input-group-sm mb-2" data-testid="bo-file-title-form-{{ item.id }}">
@@ -44,7 +44,7 @@
                             {% else %}
                                 <div class="small fw-semibold text-truncate mb-2">{{ item.title }}</div>
                             {% endif %}
-                            <div class="d-flex gap-2 justify-content-between align-items-center small text-muted">
+                            <div class="d-flex gap-2 justify-content-between align-items-center small text-muted mt-auto">
                                 <span data-position-label="">#{{ item.position }}</span>
                                 <div class="btn-group btn-group-sm">
                                     {% if can_update %}
