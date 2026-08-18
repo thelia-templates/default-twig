@@ -41,16 +41,17 @@ templates/backOffice/default-twig/
 ├── form/
 │   └── bo_form_theme.html.twig   # custom Bootstrap 5 form theme
 ├── config/packages/twig.yaml      # registers form_themes
-├── assets/                  # SCSS + JS + img + flags
-│   ├── app.js
+├── assets/                  # SCSS + JS + img + flags, served through AssetMapper
+│   ├── app.js               # entry point (loaded as an ES module)
+│   ├── bootstrap.js         # starts Stimulus and registers every controller
 │   ├── controllers/         # Stimulus controllers
 │   ├── styles/
 │   │   ├── main.scss
 │   │   └── _variables.scss   # Bootstrap overrides + Thelia palette
+│   ├── vendor/              # pinned third-party ES modules (see Assets below)
 │   └── img/
 │       ├── logo-thelia-34px.png
 │       └── svgFlags/         # 256 country flags
-├── dist/                    # compiled assets (committed, built by Webpack Encore)
 └── src/
     ├── BackOfficeDefaultTwigBundle.php
     ├── Controller/
@@ -77,32 +78,61 @@ templates/backOffice/default-twig/
 
 - **Bootstrap 5.3** with overrides aligned on the thelia.net public palette (orange `#f26041`, soft slate text).
 - **Bootstrap Icons** (1.13).
-- **Symfony UX** (Stimulus, TwigComponent, LiveComponent).
+- **Symfony UX** (Stimulus, TwigComponent).
 - **HTMX 2** for progressive enhancement.
 - **Symfony forms** with the custom `bo_form_theme.html.twig` theme.
+- **AssetMapper + symfonycasts/sass-bundle** for the assets — no Node.js, no bundler, no committed build.
 
 ## Working on the back-office
 
-### Local dev
+### Assets (AssetMapper, no Node.js)
 
-The compiled assets (`dist/`) are committed, so the template works out of the box when installed through Composer. No build step is needed unless you touch the sources under `assets/`.
+The assets are served by Symfony **AssetMapper**: JavaScript and images are picked up
+as they are from `assets/`, and the stylesheet is compiled by
+[symfonycasts/sass-bundle](https://github.com/SymfonyCasts/sass-bundle), which downloads
+a standalone `dart-sass` binary on first use. There is no `package.json`, no bundler and
+no committed build output.
+
+The bundle registers everything itself (asset paths under the `backoffice` namespace,
+the Sass root file, the Bootstrap load path), so the only command to know is the one
+that (re)builds the stylesheet:
 
 ```bash
-# install the exact dependency tree, then watch SCSS / JS rebuild
-ddev exec bash -c "cd templates/backOffice/default-twig && npm ci && npm run watch"
+# after editing anything under assets/styles/
+ddev exec php bin/console sass:build
 
+# or keep it running while working
+ddev exec php bin/console sass:build --watch
+```
+
+`bin/install` runs it for you on a fresh install. JavaScript and images need no build
+at all: edit the file, reload the page.
+
+The Bootstrap Sass sources and its `bootstrap.esm.min.js` come from the `twbs/bootstrap`
+Composer package (so the CSS and the JS can never drift apart), and the icon font from
+`twbs/bootstrap-icons`. The remaining browser libraries are pinned ES module builds
+committed under `assets/vendor/` and mapped to their bare import names by the importmap
+the theme renders on its pages (`bo_importmap()`, see `src/Twig/ImportMapExtension.php`):
+
+| Import name | File | Origin |
+|---|---|---|
+| `@hotwired/stimulus` | `assets/vendor/stimulus.js` | npm `@hotwired/stimulus@3.2.2`, `dist/stimulus.js` |
+| `@popperjs/core` | `assets/vendor/popper.js` | jsDelivr ESM bundle of `@popperjs/core@2.11.8` |
+| `htmx.org` | `assets/vendor/htmx.esm.js` | npm `htmx.org@2.0.10`, `dist/htmx.esm.js` |
+| `chart.js` | `assets/vendor/chart.js` (+ `chunks/helpers.dataset.js`) | npm `chart.js@4.5.1`, `dist/` |
+| `@kurkle/color` | `assets/vendor/color.esm.js` | npm `@kurkle/color@0.3.4`, `dist/color.esm.js` |
+
+To bump one of them, replace the file with the same artifact from the newer release
+(drop the trailing `//# sourceMappingURL=` line) and update this table.
+
+**Adding a Stimulus controller**: drop the file in `assets/controllers/` and register it
+in `assets/bootstrap.js` — AssetMapper has no build step, so there is no automatic
+controller discovery.
+
+```bash
 # clear cache after editing a Twig template
 ddev exec bin/console cache:clear -e dev
 ```
-
-After changing anything under `assets/` (SCSS, JS, images), rebuild for production and commit the resulting `dist/` together with your change:
-
-```bash
-ddev exec bash -c "cd templates/backOffice/default-twig && npm ci && npm run build"
-git add dist/ && git commit
-```
-
-The production build is deterministic: rebuilding from the same sources and lockfile must leave `dist/` unchanged (`git status` clean).
 
 ### Adding a new admin domain
 
