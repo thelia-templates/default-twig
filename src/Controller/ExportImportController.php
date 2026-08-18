@@ -27,7 +27,6 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Thelia\Core\Archiver\ArchiverManager;
 use Thelia\Core\Event\TheliaEvents;
@@ -52,7 +51,6 @@ final class ExportImportController
         private readonly ImportHandler $importHandler,
         private readonly SerializerManager $serializerManager,
         private readonly ArchiverManager $archiverManager,
-        private readonly EventDispatcherInterface $events,
         private readonly UrlGeneratorInterface $urls,
         private readonly TranslatorInterface $translator,
         private readonly RequestStack $requestStack,
