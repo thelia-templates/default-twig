@@ -16,6 +16,7 @@ namespace BackOfficeDefaultTwigBundle;
 
 use BackOfficeDefaultTwigBundle\DependencyInjection\Compiler\BackOfficeTwigOnlyCompilerPass;
 use BackOfficeDefaultTwigBundle\Hook\Attribute\AsHook;
+use Symfony\Component\AssetMapper\AssetMapperInterface;
 use Symfony\Component\DependencyInjection\ChildDefinition;
 use Symfony\Component\DependencyInjection\Compiler\PassConfig;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -27,14 +28,6 @@ final class BackOfficeDefaultTwigBundle extends AbstractBundle
     public const ACTIVE_TEMPLATE_NAME = 'default-twig';
 
     private const ADMIN_TEMPLATE_PARAMETER = 'thelia_admin_template';
-
-    private const ASSETS_SYMLINK_RELATIVE = 'templates-assets/backOffice/default-twig/dist';
-
-    public function boot(): void
-    {
-        parent::boot();
-        $this->ensureAssetsSymlink();
-    }
 
     public function build(ContainerBuilder $container): void
     {
@@ -116,6 +109,81 @@ final class BackOfficeDefaultTwigBundle extends AbstractBundle
         if (is_dir($packagesPath)) {
             $container->import($packagesPath.'/*.yaml');
         }
+
+        $this->prependConfigAssetMapper($builder);
+        $this->prependConfigSass($builder);
+    }
+
+    /**
+     * Registers the theme assets under the "backoffice" namespace of the single
+     * application asset map. Namespacing keeps the logical paths disjoint from the
+     * front-office theme, which maps its own directories without a namespace; the
+     * application-wide settings (importmap_path, vendor_dir, public_prefix) are
+     * deliberately left untouched so the two themes cannot fight over them.
+     */
+    private function prependConfigAssetMapper(ContainerBuilder $builder): void
+    {
+        if (!$this->isAssetMapperAvailable($builder)) {
+            return;
+        }
+
+        $builder->prependExtensionConfig('framework', [
+            'asset_mapper' => [
+                'paths' => [
+                    \dirname(__DIR__).'/assets' => 'backoffice',
+                    // Bootstrap's own JavaScript, taken from the twbs/bootstrap Composer
+                    // package so it always matches the Sass sources compiled below.
+                    '%kernel.project_dir%/vendor/twbs/bootstrap/dist/js' => 'backoffice-bootstrap',
+                    // The icon font referenced by the compiled stylesheet.
+                    '%kernel.project_dir%/vendor/twbs/bootstrap-icons/font/fonts' => 'backoffice-fonts',
+                ],
+                // Same exclusion the sass-bundle recipe ships: Sass partials are
+                // compile-time inputs, they must not be served as assets.
+                'excluded_patterns' => [
+                    '*/assets/styles/**/_*.scss',
+                ],
+            ],
+        ]);
+    }
+
+    /**
+     * Points symfonycasts/sass-bundle at the theme stylesheet. The bundle compiles
+     * it with a standalone dart-sass binary (bin/console sass:build) and swaps the
+     * compiled CSS in when AssetMapper serves the .scss logical path.
+     */
+    private function prependConfigSass(ContainerBuilder $builder): void
+    {
+        if (!$builder->hasExtension('symfonycasts_sass')) {
+            return;
+        }
+
+        $builder->prependExtensionConfig('symfonycasts_sass', [
+            'root_sass' => [
+                \dirname(__DIR__).'/assets/styles/main.scss',
+            ],
+            'sass_options' => [
+                // Resolves @import "bootstrap/..." and "bootstrap-icons/..." from the
+                // Composer packages instead of a node_modules directory.
+                'load_path' => [
+                    '%kernel.project_dir%/vendor/twbs',
+                ],
+                'quiet_deps' => true,
+            ],
+        ]);
+    }
+
+    private function isAssetMapperAvailable(ContainerBuilder $builder): bool
+    {
+        if (!interface_exists(AssetMapperInterface::class)) {
+            return false;
+        }
+
+        $bundlesMetadata = $builder->getParameter('kernel.bundles_metadata');
+        if (!\is_array($bundlesMetadata) || !isset($bundlesMetadata['FrameworkBundle'])) {
+            return false;
+        }
+
+        return is_file($bundlesMetadata['FrameworkBundle']['path'].'/Resources/config/asset_mapper.php');
     }
 
     private function isActive(ContainerBuilder $builder): bool
@@ -142,31 +210,5 @@ final class BackOfficeDefaultTwigBundle extends AbstractBundle
         // Templates live at the bundle root so the Thelia ParserResolver picks them up
         // automatically (`templates/backOffice/<active>/<name>.html.twig`).
         return \dirname(__DIR__);
-    }
-
-    /**
-     * Mirror the assets dist/ folder into public/templates-assets so encore_entry_*_tags URLs resolve.
-     * The shared EncoreExtension only creates one symlink per request based on a static admin flag,
-     * which is set too late for the BO build, so we replicate it at bundle boot.
-     */
-    private function ensureAssetsSymlink(): void
-    {
-        if (!\defined('THELIA_WEB_DIR')) {
-            return;
-        }
-
-        $source = \dirname(__DIR__).'/dist';
-        $target = THELIA_WEB_DIR.self::ASSETS_SYMLINK_RELATIVE;
-
-        if (!is_dir($source) || is_link($target) || is_dir($target)) {
-            return;
-        }
-
-        $parent = \dirname($target);
-        if (!is_dir($parent) && !mkdir($parent, 0o755, true) && !is_dir($parent)) {
-            return;
-        }
-
-        @symlink($source, $target);
     }
 }

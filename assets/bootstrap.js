@@ -1,7 +1,120 @@
-import { startStimulusApp } from '@symfony/stimulus-bridge';
+// Starts the back-office Stimulus application and registers every controller
+// explicitly. AssetMapper serves these files as-is: there is no build-time
+// controller discovery, so a new controller must be imported and registered here.
+import { Application } from '@hotwired/stimulus';
 
-export const app = startStimulusApp(require.context(
-    '@symfony/stimulus-bridge/lazy-controller-loader!./controllers',
-    true,
-    /\.[jt]sx?$/,
-));
+import BoAceEditorController from './controllers/bo-ace-editor_controller.js';
+import BoAjaxTabController from './controllers/bo-ajax-tab_controller.js';
+import BoAreaEditController from './controllers/bo-area-edit_controller.js';
+import BoAutoOpenModalController from './controllers/bo-auto-open-modal_controller.js';
+import BoBrandLogoPickerController from './controllers/bo-brand-logo-picker_controller.js';
+import BoBulkActionPickerController from './controllers/bo-bulk-action-picker_controller.js';
+import BoBulkSelectController from './controllers/bo-bulk-select_controller.js';
+import BoCategoryProductPickerController from './controllers/bo-category-product-picker_controller.js';
+import BoCategoryTreeController from './controllers/bo-category-tree_controller.js';
+import BoChartController from './controllers/bo-chart_controller.js';
+import BoCombinationBuilderController from './controllers/bo-combination-builder_controller.js';
+import BoCombinationCreationController from './controllers/bo-combination-creation_controller.js';
+import BoCouponAttributePickerController from './controllers/bo-coupon-attribute-picker_controller.js';
+import BoCouponFormController from './controllers/bo-coupon-form_controller.js';
+import BoCouponMultiselectSearchController from './controllers/bo-coupon-multiselect-search_controller.js';
+import BoCouponProductPickerController from './controllers/bo-coupon-product-picker_controller.js';
+import BoDateRangeController from './controllers/bo-date-range_controller.js';
+import BoDefaultRadioController from './controllers/bo-default-radio_controller.js';
+import BoExportFormController from './controllers/bo-export-form_controller.js';
+import BoFileListController from './controllers/bo-file-list_controller.js';
+import BoFileUploadController from './controllers/bo-file-upload_controller.js';
+import BoFolderContentPickerController from './controllers/bo-folder-content-picker_controller.js';
+import BoHooksController from './controllers/bo-hooks_controller.js';
+import BoImagePreviewController from './controllers/bo-image-preview_controller.js';
+import BoInlineEditController from './controllers/bo-inline-edit_controller.js';
+import BoInlineRevertController from './controllers/bo-inline-revert_controller.js';
+import BoListFilterController from './controllers/bo-list-filter_controller.js';
+import BoMailingSystemTestController from './controllers/bo-mailing-system-test_controller.js';
+import BoMessagePreviewController from './controllers/bo-message-preview_controller.js';
+import BoModalFetchController from './controllers/bo-modal-fetch_controller.js';
+import BoModuleHooksController from './controllers/bo-module-hooks_controller.js';
+import BoModulesListController from './controllers/bo-modules-list_controller.js';
+import BoOrderAddressModalController from './controllers/bo-order-address-modal_controller.js';
+import BoOrderCancelModalController from './controllers/bo-order-cancel-modal_controller.js';
+import BoOverflowDropdownController from './controllers/bo-overflow-dropdown_controller.js';
+import BoPermissionMatrixController from './controllers/bo-permission-matrix_controller.js';
+import BoPrefillModalController from './controllers/bo-prefill-modal_controller.js';
+import BoPricePreviewController from './controllers/bo-price-preview_controller.js';
+import BoPrintIframeController from './controllers/bo-print-iframe_controller.js';
+import BoProductFeatureBatchController from './controllers/bo-product-feature-batch_controller.js';
+import BoPseAssocPickerController from './controllers/bo-pse-assoc-picker_controller.js';
+import BoPsePriceWithTaxController from './controllers/bo-pse-price-with-tax_controller.js';
+import BoRangeSliderController from './controllers/bo-range-slider_controller.js';
+import BoSaleProductAttributesController from './controllers/bo-sale-product-attributes_controller.js';
+import BoSaleProductPickerController from './controllers/bo-sale-product-picker_controller.js';
+import BoSortableController from './controllers/bo-sortable_controller.js';
+import BoStateCascadeController from './controllers/bo-state-cascade_controller.js';
+import BoSystemLogsController from './controllers/bo-system-logs_controller.js';
+import BoTaxRuleMatrixController from './controllers/bo-tax-rule-matrix_controller.js';
+import BoTemplateNoticeController from './controllers/bo-template-notice_controller.js';
+import BoTranslationsController from './controllers/bo-translations_controller.js';
+import BoUnsavedChangesController from './controllers/bo-unsaved-changes_controller.js';
+import BoVirtualToggleController from './controllers/bo-virtual-toggle_controller.js';
+import BootstrapBridgeController from './controllers/bootstrap-bridge_controller.js';
+import ConfirmModalController from './controllers/confirm-modal_controller.js';
+
+const app = Application.start();
+
+app.register('bo-ace-editor', BoAceEditorController);
+app.register('bo-ajax-tab', BoAjaxTabController);
+app.register('bo-area-edit', BoAreaEditController);
+app.register('bo-auto-open-modal', BoAutoOpenModalController);
+app.register('bo-brand-logo-picker', BoBrandLogoPickerController);
+app.register('bo-bulk-action-picker', BoBulkActionPickerController);
+app.register('bo-bulk-select', BoBulkSelectController);
+app.register('bo-category-product-picker', BoCategoryProductPickerController);
+app.register('bo-category-tree', BoCategoryTreeController);
+app.register('bo-chart', BoChartController);
+app.register('bo-combination-builder', BoCombinationBuilderController);
+app.register('bo-combination-creation', BoCombinationCreationController);
+app.register('bo-coupon-attribute-picker', BoCouponAttributePickerController);
+app.register('bo-coupon-form', BoCouponFormController);
+app.register('bo-coupon-multiselect-search', BoCouponMultiselectSearchController);
+app.register('bo-coupon-product-picker', BoCouponProductPickerController);
+app.register('bo-date-range', BoDateRangeController);
+app.register('bo-default-radio', BoDefaultRadioController);
+app.register('bo-export-form', BoExportFormController);
+app.register('bo-file-list', BoFileListController);
+app.register('bo-file-upload', BoFileUploadController);
+app.register('bo-folder-content-picker', BoFolderContentPickerController);
+app.register('bo-hooks', BoHooksController);
+app.register('bo-image-preview', BoImagePreviewController);
+app.register('bo-inline-edit', BoInlineEditController);
+app.register('bo-inline-revert', BoInlineRevertController);
+app.register('bo-list-filter', BoListFilterController);
+app.register('bo-mailing-system-test', BoMailingSystemTestController);
+app.register('bo-message-preview', BoMessagePreviewController);
+app.register('bo-modal-fetch', BoModalFetchController);
+app.register('bo-module-hooks', BoModuleHooksController);
+app.register('bo-modules-list', BoModulesListController);
+app.register('bo-order-address-modal', BoOrderAddressModalController);
+app.register('bo-order-cancel-modal', BoOrderCancelModalController);
+app.register('bo-overflow-dropdown', BoOverflowDropdownController);
+app.register('bo-permission-matrix', BoPermissionMatrixController);
+app.register('bo-prefill-modal', BoPrefillModalController);
+app.register('bo-price-preview', BoPricePreviewController);
+app.register('bo-print-iframe', BoPrintIframeController);
+app.register('bo-product-feature-batch', BoProductFeatureBatchController);
+app.register('bo-pse-assoc-picker', BoPseAssocPickerController);
+app.register('bo-pse-price-with-tax', BoPsePriceWithTaxController);
+app.register('bo-range-slider', BoRangeSliderController);
+app.register('bo-sale-product-attributes', BoSaleProductAttributesController);
+app.register('bo-sale-product-picker', BoSaleProductPickerController);
+app.register('bo-sortable', BoSortableController);
+app.register('bo-state-cascade', BoStateCascadeController);
+app.register('bo-system-logs', BoSystemLogsController);
+app.register('bo-tax-rule-matrix', BoTaxRuleMatrixController);
+app.register('bo-template-notice', BoTemplateNoticeController);
+app.register('bo-translations', BoTranslationsController);
+app.register('bo-unsaved-changes', BoUnsavedChangesController);
+app.register('bo-virtual-toggle', BoVirtualToggleController);
+app.register('bootstrap-bridge', BootstrapBridgeController);
+app.register('confirm-modal', ConfirmModalController);
+
+export { app };
