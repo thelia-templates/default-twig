@@ -350,7 +350,7 @@ final class OrderController
             // its edit page (the product may have been deleted: then no link).
             $productRef = (string) $product->getProductRef();
             $productId = $productRef !== ''
-                ? ProductQuery::create()->filterByRef($productRef)->select(['Id'])->findOne()
+                ? ProductQuery::create()->filterByRef($productRef)->findOne()?->getId()
                 : null;
 
             $combinations = [];
@@ -364,7 +364,7 @@ final class OrderController
             $items[] = [
                 'id' => (int) $product->getId(),
                 'ref' => $productRef,
-                'product_id' => $productId !== null ? (int) $productId : null,
+                'product_id' => $productId,
                 'pse_ref' => (string) $product->getProductSaleElementsRef(),
                 'title' => (string) $product->getTitle(),
                 'quantity' => $quantity,
