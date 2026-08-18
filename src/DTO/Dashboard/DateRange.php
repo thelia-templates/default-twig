@@ -56,7 +56,6 @@ final readonly class DateRange
             self::PRESET_NINETY_DAYS => [$now->modify('-89 days')->setTime(0, 0), $endOfDay],
             self::PRESET_THIS_MONTH => [$now->modify('first day of this month')->setTime(0, 0), $endOfDay],
             self::PRESET_THIS_YEAR => [$now->modify('first day of January')->setTime(0, 0), $endOfDay],
-            default => [$now->modify('-29 days')->setTime(0, 0), $endOfDay],
         };
 
         return new self($from, $to, $preset);
