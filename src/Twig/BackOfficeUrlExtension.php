@@ -50,7 +50,7 @@ final class BackOfficeUrlExtension extends AbstractExtension
     public function boLanguages(): array
     {
         return array_values(iterator_to_array(
-            LangQuery::create()->filterByActive(1)->orderByPosition()->find(),
+            LangQuery::create()->filterByActive(true)->orderByPosition()->find(),
         ));
     }
 

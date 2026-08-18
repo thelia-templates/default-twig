@@ -63,7 +63,7 @@ final class NewsletterController
 
         $sort = ListSort::fromRequest($request, ['id', 'email', 'firstname', 'lastname', 'created_at'], 'created_at', 'desc');
         $criteria = strtoupper($sort->direction) === 'DESC' ? Criteria::DESC : Criteria::ASC;
-        $query = NewsletterQuery::create()->filterByUnsubscribed(0);
+        $query = NewsletterQuery::create()->filterByUnsubscribed(false);
         match ($sort->field) {
             'id' => $query->orderById($criteria),
             'email' => $query->orderByEmail($criteria),
