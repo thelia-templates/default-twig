@@ -720,6 +720,9 @@ final class ProductController
             return null;
         }
 
+        // The guard is what keeps an older core working; PHPStan analyses this bundle
+        // against the current core, where the method is always there.
+        // @phpstan-ignore function.alreadyNarrowedType
         if (method_exists($defaultSaleElement, 'getVirtualDocument')) {
             return $defaultSaleElement->getVirtualDocument()?->getId();
         }
