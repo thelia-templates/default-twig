@@ -17,9 +17,6 @@ ddev exec php bin/install \
 # already installed: switch active template
 ddev exec bin/console template:set backOffice default-twig
 ddev exec bin/console cache:warmup -e dev
-
-# build assets
-ddev exec bash -c "cd templates/backOffice/default-twig && npm install && npm run build"
 ```
 
 URL: <https://thelia-3.ddev.site/admin>
@@ -53,6 +50,7 @@ templates/backOffice/default-twig/
 │   └── img/
 │       ├── logo-thelia-34px.png
 │       └── svgFlags/         # 256 country flags
+├── dist/                    # compiled assets (committed, built by Webpack Encore)
 └── src/
     ├── BackOfficeDefaultTwigBundle.php
     ├── Controller/
@@ -87,13 +85,24 @@ templates/backOffice/default-twig/
 
 ### Local dev
 
+The compiled assets (`dist/`) are committed, so the template works out of the box when installed through Composer. No build step is needed unless you touch the sources under `assets/`.
+
 ```bash
-# watch SCSS / JS rebuild
-ddev exec bash -c "cd templates/backOffice/default-twig && npm run watch"
+# install the exact dependency tree, then watch SCSS / JS rebuild
+ddev exec bash -c "cd templates/backOffice/default-twig && npm ci && npm run watch"
 
 # clear cache after editing a Twig template
 ddev exec bin/console cache:clear -e dev
 ```
+
+After changing anything under `assets/` (SCSS, JS, images), rebuild for production and commit the resulting `dist/` together with your change:
+
+```bash
+ddev exec bash -c "cd templates/backOffice/default-twig && npm ci && npm run build"
+git add dist/ && git commit
+```
+
+The production build is deterministic: rebuilding from the same sources and lockfile must leave `dist/` unchanged (`git status` clean).
 
 ### Adding a new admin domain
 

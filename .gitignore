@@ -1,6 +1,4 @@
 /node_modules/
-/dist/
-/package-lock.json
 /test-results/
 /.idea/
 /.vscode/

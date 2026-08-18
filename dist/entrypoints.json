@@ -1,0 +1,14 @@
+{
+  "entrypoints": {
+    "app": {
+      "js": [
+        "/templates-assets/backOffice/default-twig/dist/runtime.a1b2373c.js",
+        "/templates-assets/backOffice/default-twig/dist/500.6c7a8ee8.js",
+        "/templates-assets/backOffice/default-twig/dist/app.aebbaf0a.js"
+      ],
+      "css": [
+        "/templates-assets/backOffice/default-twig/dist/app.ab82d622.css"
+      ]
+    }
+  }
+}
