@@ -10,7 +10,14 @@
             <title>{% block title %}{{ 'Back-office'|trans }}{% endblock %} - Thelia</title>
 
             {% block stylesheets %}
-                {{ encore_entry_link_tags('app', null, 'backoffice') }}
+                <link rel="stylesheet" href="{{ asset('backoffice/styles/main.scss') }}">
+            {% endblock %}
+
+            {# The importmap of the back-office pages, rendered by the theme's
+               ImportMapExtension: it is local to these pages and never touches the
+               application importmap.php, which belongs to the front-office theme. #}
+            {% block importmap %}
+                {{ bo_importmap() }}
             {% endblock %}
 
             {% block head_extra %}{% endblock %}
@@ -53,7 +60,7 @@
         {% endblock %}
 
         {% block scripts %}
-            {{ encore_entry_script_tags('app', null, 'backoffice') }}
+            <script type="module" src="{{ asset('backoffice/app.js') }}"></script>
         {% endblock %}
 
         {% block scripts_extra %}{% endblock %}

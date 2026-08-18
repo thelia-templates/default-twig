@@ -19,7 +19,7 @@ use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\ListSort;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
 use Propel\Runtime\ActiveQuery\Criteria;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Asset\Packages;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -49,8 +49,7 @@ final class NewsletterController
         private readonly UrlGeneratorInterface $urls,
         private readonly TranslatorInterface $translator,
         private readonly TokenProvider $tokens,
-        #[Autowire(param: 'thelia_admin_template')]
-        private readonly string $adminTemplate,
+        private readonly Packages $assetPackages,
     ) {
     }
 
@@ -188,9 +187,8 @@ final class NewsletterController
         }
 
         return \sprintf(
-            '<img src="/templates-assets/backOffice/%s/dist/img/svgFlags/%s.svg" alt="%s" title="%s" width="22" height="14">',
-            $this->adminTemplate,
-            $countryCode,
+            '<img src="%s" alt="%s" title="%s" width="22" height="14">',
+            htmlspecialchars($this->assetPackages->getUrl('backoffice/img/svgFlags/'.$countryCode.'.svg'), \ENT_QUOTES),
             $safeLocale,
             $safeLocale,
         );

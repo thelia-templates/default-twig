@@ -7,7 +7,6 @@
    Hooks (main.before-topbar / main.topbar-top / main.after-topbar) keep
    their legacy names so third-party modules keep working. #}
 
-{% set dist = '/templates-assets/backOffice/default-twig/dist' %}
 {% set current_lang = bo_current_language() %}
 
 {{ safe_hook('main.before-topbar', { location: 'before_topbar' }) }}
@@ -32,14 +31,14 @@
 
             <li class="nav-item dropdown" data-testid="bo-top-nav-langs">
                 <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="{{ 'Interface language'|trans }}">
-                    <img src="{{ dist }}/img/svgFlags/{{ current_lang.code }}.svg" alt="{{ current_lang.title }}" class="bo-top-nav__flag" width="22" height="14">
+                    <img src="{{ asset('backoffice/img/svgFlags/' ~ current_lang.code ~ '.svg') }}" alt="{{ current_lang.title }}" class="bo-top-nav__flag" width="22" height="14">
                     <span class="d-none d-lg-inline ms-1">{{ current_lang.title }}</span>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end shadow-sm">
                     {% for lang in bo_languages() %}
                         <li>
                             <a class="dropdown-item d-flex align-items-center{{ lang.id == current_lang.id ? ' active' : '' }}" href="{{ app.request.pathInfo }}?{{ app.request.query.all|merge({lang: lang.code})|url_encode }}">
-                                <img src="{{ dist }}/img/svgFlags/{{ lang.code }}.svg" alt="" class="bo-top-nav__flag me-2" width="22" height="14">
+                                <img src="{{ asset('backoffice/img/svgFlags/' ~ lang.code ~ '.svg') }}" alt="" class="bo-top-nav__flag me-2" width="22" height="14">
                                 {{ lang.title }}
                             </a>
                         </li>

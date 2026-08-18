@@ -3,12 +3,15 @@
 
 @import "variables";
 
-// Bootstrap 5
-@import "~bootstrap/scss/bootstrap";
+// Bootstrap 5 - Sass sources shipped by the twbs/bootstrap Composer package,
+// resolved through the sass-bundle load path (vendor/twbs).
+@import "bootstrap/scss/bootstrap";
 
-// Bootstrap Icons
-$bootstrap-icons-font-dir: "~bootstrap-icons/font/fonts";
-@import "~bootstrap-icons/font/bootstrap-icons.scss";
+// Bootstrap Icons - the font-dir is the on-disk path from this file to the
+// fonts of the twbs/bootstrap-icons Composer package: AssetMapper resolves
+// url() against the source file location and rewrites it to the public URL.
+$bootstrap-icons-font-dir: "../../../../../vendor/twbs/bootstrap-icons/font/fonts";
+@import "bootstrap-icons/font/bootstrap-icons";
 
 // Back-office layout
 $bo-side-nav-width: 240px;

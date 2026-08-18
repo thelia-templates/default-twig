@@ -10,19 +10,22 @@
     ],
     "require": {
         "php": ">=8.3",
+        "symfony/asset": "^7.4",
+        "symfony/asset-mapper": "^7.4",
         "symfony/framework-bundle": "^7.4",
         "symfony/twig-bundle": "^7.4",
-        "symfony/webpack-encore-bundle": "^2.1",
-        "symfony/stimulus-bundle": "^2.19",
-        "symfony/ux-twig-component": "^2.19 || ^3.0",
         "symfony/ux-icons": "^2.21",
-        "thelia/twig-engine-module": "^1.0",
+        "symfony/ux-twig-component": "^2.19 || ^3.0",
+        "symfonycasts/sass-bundle": "^0.10.0",
+        "thelia/cheque-module": "^3.0",
+        "thelia/custom-delivery-module": "^4.0",
+        "thelia/free-order-module": "^3.0",
         "thelia/tiptap-module": "^1.0",
+        "thelia/twig-engine-module": "^1.0",
         "thelia/virtual-product-control-module": "^2.6",
         "thelia/virtual-product-delivery-module": "^3.0",
-        "thelia/custom-delivery-module": "^4.0",
-        "thelia/cheque-module": "^3.0",
-        "thelia/free-order-module": "^3.0"
+        "twbs/bootstrap": "^5.3.8",
+        "twbs/bootstrap-icons": "^1.13"
     },
     "autoload": {
         "psr-4": {
