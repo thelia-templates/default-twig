@@ -465,7 +465,7 @@ final class LangController
         $titles = [];
 
         $languages = LangQuery::create()
-            ->filterByActive(1)
+            ->filterByActive(true)
             ->filterByVisible(1)
             ->orderByPosition()
             ->find();
