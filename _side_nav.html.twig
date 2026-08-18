@@ -175,7 +175,13 @@
             {% endif %}
 
             {% if is_granted('VIEW', 'admin.module') %}
-                {% set active = nav.is_section(current_path, ['/admin/module', '/admin/module-hook']) %}
+                {# Only the module management pages activate this section. Every module's own
+                   admin pages live under /admin/module/<Code>/… — matching that broad prefix
+                   would highlight “Modules” on top of the module's own menu entry (Dealer,
+                   product hubs, …). A module's configuration page, reached from the modules
+                   list, stays in scope. #}
+                {% set active = nav.is_section(current_path, ['/admin/modules', '/admin/module-hook'])
+                    or current_path matches '#^/admin/module/[^/]+/configure$#' %}
                 {% set hookFragments = hook_block('main.top-menu-modules', { fields: 'id,class,url,title' }) %}
                 <li class="nav-item" data-testid="bo-nav-modules">
                     <a href="#bo-nav-modules-collapse" data-bs-toggle="collapse" aria-expanded="{{ active ? 'true' : 'false' }}" class="nav-link bo-side-nav__toggle {{ active ? 'active' : '' }}">
