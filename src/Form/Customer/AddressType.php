@@ -14,17 +14,21 @@ declare(strict_types=1);
 
 namespace BackOfficeDefaultTwigBundle\Form\Customer;
 
+use BackOfficeDefaultTwigBundle\Form\LegalIdentifierFieldsTrait;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\Callback;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 final class AddressType extends AbstractType
 {
+    use LegalIdentifierFieldsTrait;
+
     public function __construct(
         private readonly TranslatorInterface $translator,
     ) {
@@ -63,7 +67,11 @@ final class AddressType extends AbstractType
             ->add('company', TextType::class, [
                 'required' => false,
                 'label' => $tr->trans('Company'),
-            ])
+            ]);
+
+        $this->addLegalIdentifierFields($builder);
+
+        $builder
             ->add('address1', TextType::class, [
                 'constraints' => [new NotBlank()],
                 'label' => $tr->trans('Street address'),
@@ -128,6 +136,7 @@ final class AddressType extends AbstractType
                 'include_id' => false,
                 'csrf_token_id' => 'admin.address',
                 'states' => [],
+                'constraints' => [new Callback($this->checkLegalIdentifiers(...))],
             ])
             ->setRequired(['title_choices', 'country_choices'])
             ->setAllowedTypes('include_id', 'bool')

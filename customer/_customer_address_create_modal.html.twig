@@ -15,6 +15,12 @@
             <div class="col-md-6">{{ form_row(address_create_form.firstname) }}</div>
             <div class="col-md-6">{{ form_row(address_create_form.lastname) }}</div>
             <div class="col-12">{{ form_row(address_create_form.company) }}</div>
+            {% if address_create_form.siret is defined %}
+                <div class="col-md-6">{{ form_row(address_create_form.siret) }}</div>
+            {% endif %}
+            {% if address_create_form.vat_number is defined %}
+                <div class="col-md-6">{{ form_row(address_create_form.vat_number) }}</div>
+            {% endif %}
             <div class="col-12">{{ form_row(address_create_form.address1) }}</div>
             <div class="col-12">{{ form_row(address_create_form.address2) }}</div>
             <div class="col-12">{{ form_row(address_create_form.address3) }}</div>

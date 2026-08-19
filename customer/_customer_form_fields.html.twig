@@ -8,9 +8,13 @@
     <div class="col-md-6">{{ form_row(form.email) }}</div>
     {% if form.email_confirm is defined %}
         <div class="col-md-6">{{ form_row(form.email_confirm) }}</div>
-        <div class="col-md-6">{{ form_row(form.company) }}</div>
-    {% else %}
-        <div class="col-md-6">{{ form_row(form.company) }}</div>
+    {% endif %}
+    <div class="col-md-6">{{ form_row(form.company) }}</div>
+    {% if form.siret is defined %}
+        <div class="col-md-6">{{ form_row(form.siret) }}</div>
+    {% endif %}
+    {% if form.vat_number is defined %}
+        <div class="col-md-6">{{ form_row(form.vat_number) }}</div>
     {% endif %}
 
     {% if form.password is defined %}

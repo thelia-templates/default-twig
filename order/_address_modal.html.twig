@@ -30,6 +30,21 @@
                         </div>
                     </div>
 
+                    {# Required as soon as a company name is given - the server decides, so these
+                       stay plain optional inputs and the form comes back with the errors. #}
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="order-address-siret" class="form-label">{{ 'Company registration number'|trans }}</label>
+                            <input type="text" id="order-address-siret" name="thelia_order_address[siret]" class="form-control"
+                                   data-bo-order-address-modal-target="siret">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="order-address-vat-number" class="form-label">{{ 'VAT number'|trans }}</label>
+                            <input type="text" id="order-address-vat-number" name="thelia_order_address[vat_number]" class="form-control"
+                                   data-bo-order-address-modal-target="vatNumber">
+                        </div>
+                    </div>
+
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="order-address-firstname" class="form-label">{{ 'First name'|trans }}</label>

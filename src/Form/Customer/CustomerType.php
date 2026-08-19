@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace BackOfficeDefaultTwigBundle\Form\Customer;
 
+use BackOfficeDefaultTwigBundle\Form\LegalIdentifierFieldsTrait;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
@@ -27,6 +28,7 @@ use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\Callback;
 use Symfony\Component\Validator\Constraints\Email;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\Range;
@@ -34,9 +36,12 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 final class CustomerType extends AbstractType
 {
+    use LegalIdentifierFieldsTrait;
+
     private const ADDRESS_FIELDS = [
         'address1', 'address2', 'address3', 'zipcode', 'city',
         'country', 'state', 'phone', 'cellphone', 'company',
+        'siret', 'vat_number',
     ];
 
     public function __construct(
@@ -129,6 +134,8 @@ final class CustomerType extends AbstractType
                     'required' => false,
                     'label' => $tr->trans('Company'),
                 ]);
+
+            $this->addLegalIdentifierFields($builder);
         }
 
         $builder
@@ -208,6 +215,7 @@ final class CustomerType extends AbstractType
                 'require_email_confirm' => false,
                 'csrf_token_id' => 'admin.customer',
                 'states' => [],
+                'constraints' => [new Callback($this->checkLegalIdentifiers(...))],
             ])
             ->setRequired(['title_choices', 'country_choices', 'lang_choices'])
             ->setAllowedTypes('include_id', 'bool')

@@ -14,17 +14,21 @@ declare(strict_types=1);
 
 namespace BackOfficeDefaultTwigBundle\Form\Order;
 
+use BackOfficeDefaultTwigBundle\Form\LegalIdentifierFieldsTrait;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\Callback;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 final class OrderAddressType extends AbstractType
 {
+    use LegalIdentifierFieldsTrait;
+
     public function __construct(
         private readonly TranslatorInterface $translator,
     ) {
@@ -39,7 +43,11 @@ final class OrderAddressType extends AbstractType
             ->add('title', IntegerType::class, ['required' => false, 'label' => $tr->trans('Title')])
             ->add('firstname', TextType::class, ['constraints' => [new NotBlank()], 'label' => $tr->trans('First name')])
             ->add('lastname', TextType::class, ['constraints' => [new NotBlank()], 'label' => $tr->trans('Last name')])
-            ->add('company', TextType::class, ['required' => false, 'label' => $tr->trans('Company')])
+            ->add('company', TextType::class, ['required' => false, 'label' => $tr->trans('Company')]);
+
+        $this->addLegalIdentifierFields($builder);
+
+        $builder
             ->add('address1', TextType::class, ['constraints' => [new NotBlank()], 'label' => $tr->trans('Street address')])
             ->add('address2', TextType::class, ['required' => false, 'label' => $tr->trans('Address line 2')])
             ->add('address3', TextType::class, ['required' => false, 'label' => $tr->trans('Address line 3')])
@@ -53,6 +61,9 @@ final class OrderAddressType extends AbstractType
 
     public function configureOptions(OptionsResolver $resolver): void
     {
-        $resolver->setDefaults(['csrf_token_id' => 'admin.order.address']);
+        $resolver->setDefaults([
+            'csrf_token_id' => 'admin.order.address',
+            'constraints' => [new Callback($this->checkLegalIdentifiers(...))],
+        ]);
     }
 }
