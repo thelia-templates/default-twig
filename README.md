@@ -19,8 +19,6 @@ ddev exec bin/console template:set backOffice default-twig
 ddev exec bin/console cache:warmup -e dev
 ```
 
-URL: <https://thelia-3.ddev.site/admin>
-
 ## Architecture
 
 ```
