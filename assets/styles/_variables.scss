@@ -7,11 +7,16 @@ $secondary: #4f4f4f;      // thelia.net body copy
 $dark: #282828;           // thelia.net deep text / sidebar accent
 
 // Button palette - WCAG AA (4.5:1 text, 3:1 non-text) against both #ffffff
-// and $body-bg. $primary itself only reaches 3.22:1 as text/border, so
-// buttons use darker tokens instead; $primary keeps its brand role
-// elsewhere (surfaces, tiles, table hover tint).
-$btn-brand: #b04f18;              // label/border: 5.28 on card, 4.91 on page
-$btn-brand-dark: #8c3f13;         // hover/active bg: 7.41 with white label
+// and $body-bg. A white label on the brand orange only reaches 3.22:1, so the
+// primary buttons keep the brand as their surface and carry a near-black label
+// instead - the one combination that keeps both the thelia.net orange and AA.
+$btn-brand-surface: #f26041;       // .btn-primary bg = $primary: 5.41 with $btn-brand-label
+$btn-brand-surface-hover: #e5552f; // hover/active bg: 4.70 with $btn-brand-label
+$btn-brand-border: #d94e2f;        // button boundary: 4.13 on card, 3.83 on page ($primary alone is 2.99 on page)
+$btn-brand-label: #1a1a1a;         // label on both surfaces, ratios above
+$btn-brand: #bd4e0a;              // outline idle label/border, links: 4.93 on card, 4.59 on page
+                                  // (the most vivid orange that stays AA as text on both backgrounds)
+$btn-brand-dark: #8c3f13;         // .btn-link hover: 7.41 on card
 $btn-info: #087990;                // fallback .btn-info bg: 5.06 with white label
 $btn-info-dark: #055160;           // fallback .btn-info hover bg: 8.93 with white label
 $btn-warning-border: #997404;      // btn-warning border: 4.33 on card, 4.02 on page

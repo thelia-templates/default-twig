@@ -504,23 +504,23 @@ input[type="color"].form-control {
 // (4.5:1 text, 3:1 non-text) against #ffffff and $body-bg. See
 // assets/styles/_variables.scss for the measured ratios behind each token.
 .btn-primary {
-    --bs-btn-color: #fff;
-    --bs-btn-bg: #{$btn-brand};
-    --bs-btn-border-color: #{$btn-brand};
-    --bs-btn-hover-color: #fff;
-    --bs-btn-hover-bg: #{$btn-brand-dark};
-    --bs-btn-hover-border-color: #{$btn-brand-dark};
-    --bs-btn-active-color: #fff;
-    --bs-btn-active-bg: #{$btn-brand-dark};
-    --bs-btn-active-border-color: #{$btn-brand-dark};
+    --bs-btn-color: #{$btn-brand-label};
+    --bs-btn-bg: #{$btn-brand-surface};
+    --bs-btn-border-color: #{$btn-brand-border};
+    --bs-btn-hover-color: #{$btn-brand-label};
+    --bs-btn-hover-bg: #{$btn-brand-surface-hover};
+    --bs-btn-hover-border-color: #{$btn-brand-border};
+    --bs-btn-active-color: #{$btn-brand-label};
+    --bs-btn-active-bg: #{$btn-brand-surface-hover};
+    --bs-btn-active-border-color: #{$btn-brand-border};
 }
 
 .btn-outline-primary {
     --bs-btn-color: #{$btn-brand};
     --bs-btn-border-color: #{$btn-brand};
-    --bs-btn-hover-color: #fff;
-    --bs-btn-hover-bg: #{$btn-brand};
-    --bs-btn-hover-border-color: #{$btn-brand};
+    --bs-btn-hover-color: #{$btn-brand-label};
+    --bs-btn-hover-bg: #{$btn-brand-surface};
+    --bs-btn-hover-border-color: #{$btn-brand-border};
 }
 
 .btn-link {
