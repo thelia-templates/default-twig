@@ -50,7 +50,13 @@ final readonly class OrderDetailContextBuilder
 
             $ruleTitle = (string) ($orderProduct->getTaxRuleTitle() ?? '');
             if ($lineTax > 0 && $ruleTitle !== '') {
-                $itemsTaxes[$ruleTitle] = ($itemsTaxes[$ruleTitle] ?? 0.0) + $lineTax * $quantity;
+                // Totalled with the rule the order was invoiced with, so the per-rule
+                // breakdown adds up to the tax total read from Order::getTotalAmount().
+                $unitPriceUntaxed = (float) ($wasInPromo ? $orderProduct->getPromoPrice() : $orderProduct->getPrice());
+                $lineTotals = OrderRoundingRule::forOrder((int) $orderProduct->getOrderId())
+                    ->lineTotals($unitPriceUntaxed, $lineTax, $quantity);
+
+                $itemsTaxes[$ruleTitle] = ($itemsTaxes[$ruleTitle] ?? 0.0) + $lineTotals['tax'];
             }
         }
 

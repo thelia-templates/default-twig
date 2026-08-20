@@ -21,6 +21,7 @@ use BackOfficeDefaultTwigBundle\Service\Order\OrderDetailContextBuilder;
 use BackOfficeDefaultTwigBundle\Service\Order\OrderFilterPresenter;
 use BackOfficeDefaultTwigBundle\Service\Order\OrderFilters;
 use BackOfficeDefaultTwigBundle\Service\Order\OrderListRowPresenter;
+use BackOfficeDefaultTwigBundle\Service\Order\OrderRoundingRule;
 use BackOfficeDefaultTwigBundle\Service\Pdf\OrderPdfRenderer;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -346,6 +347,12 @@ final class OrderController
             }
             $quantity = (float) $product->getQuantity();
 
+            // The line has to be totalled with the rule its order was invoiced with,
+            // otherwise the lines shown here do not add up to the items subtotal in
+            // the footer, which comes straight from Order::getTotalAmount().
+            $lineTotals = OrderRoundingRule::forOrder((int) $product->getOrderId())
+                ->lineTotals($unitPriceHt, $unitTax, $quantity);
+
             // Resolve the catalog product by reference so the row can link back to
             // its edit page (the product may have been deleted: then no link).
             $productRef = (string) $product->getProductRef();
@@ -371,9 +378,9 @@ final class OrderController
                 'price' => $unitPriceHt,
                 'tax' => $unitTax,
                 'unit_taxed_price' => $unitPriceHt + $unitTax,
-                'line_ht' => $unitPriceHt * $quantity,
-                'line_tax' => $unitTax * $quantity,
-                'line_ttc' => ($unitPriceHt + $unitTax) * $quantity,
+                'line_ht' => $lineTotals['ht'],
+                'line_tax' => $lineTotals['tax'],
+                'line_ttc' => $lineTotals['ttc'],
                 'virtual' => (bool) $product->getVirtual(),
                 'tax_rule_title' => (string) ($product->getTaxRuleTitle() ?? ''),
                 'combinations' => $combinations,

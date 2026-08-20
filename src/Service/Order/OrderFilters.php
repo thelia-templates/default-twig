@@ -16,7 +16,6 @@ namespace BackOfficeDefaultTwigBundle\Service\Order;
 
 use Propel\Runtime\ActiveQuery\Criteria;
 use Symfony\Component\HttpFoundation\Request;
-use Thelia\Model\ConfigQuery;
 use Thelia\Model\Map\OrderTableMap;
 use Thelia\Model\OrderQuery;
 
@@ -38,17 +37,6 @@ final readonly class OrderFilters
 
     public const TRISTATE_WITH = 'with';
     public const TRISTATE_WITHOUT = 'without';
-
-    /**
-     * The two values of the core `order_rounding_mode` variable, mirrored from
-     * ConfigQuery::ROUNDING_MODE_* (thelia/thelia#3801). The variable is read raw
-     * rather than through ConfigQuery::getOrderRoundingMode(), which answers for one
-     * order at a time and so cannot be consulted from SQL. Reading it raw also keeps
-     * this template working against a core that predates that pull request: the
-     * variable is absent there, and the historical rule applies.
-     */
-    private const ROUNDING_MODE_SUM_OF_ROUNDINGS = 1;
-    private const ROUNDING_MODE_ROUNDING_OF_SUMS = 2;
 
     public const KEY_STATUS_IDS = 'status_ids';
     public const KEY_CREATED_RANGE = 'created_range';
@@ -421,20 +409,17 @@ final readonly class OrderFilters
      * publicly so the Repository can reuse the very same formula when computing
      * adaptive slider bounds.
      *
-     * Which rounding rule applies is a per-order question, so the expression carries
-     * the answer as a CASE on the order id: orders below one of the two pivots keep
-     * the rule they were invoiced with, and the rest follow the rule the shop runs
-     * today. A shop that never switched has no pivot to honour, so it gets a single
-     * formula, the historical one.
+     * Which rounding rule applies is a per-order question — see OrderRoundingRule —
+     * so the expression carries the answer as a CASE on the order id: orders below
+     * one of the two pivots keep the rule they were invoiced with, and the rest
+     * follow the rule the shop runs today. A shop that never switched has no pivot
+     * to honour, so it gets a single formula, the historical one.
      */
     public static function totalAmountSqlExpression(): string
     {
-        $legacyPivot = (int) ConfigQuery::read('last_legacy_rounding_order_id', 0);
-        $sumOfRoundingsPivot = (int) ConfigQuery::read('last_sum_of_roundings_order_id', 0);
-        $roundsLineTotals = self::ROUNDING_MODE_ROUNDING_OF_SUMS === (int) ConfigQuery::read(
-            'order_rounding_mode',
-            self::ROUNDING_MODE_SUM_OF_ROUNDINGS
-        );
+        $legacyPivot = OrderRoundingRule::legacyPivot();
+        $sumOfRoundingsPivot = OrderRoundingRule::sumOfRoundingsPivot();
+        $roundsLineTotals = OrderRoundingRule::RoundingOfSums === OrderRoundingRule::shopRule();
 
         $frozenBranches = [];
 
