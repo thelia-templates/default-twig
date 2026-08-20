@@ -16,6 +16,7 @@ namespace BackOfficeDefaultTwigBundle\Service\Order;
 
 use Propel\Runtime\ActiveQuery\Criteria;
 use Symfony\Component\HttpFoundation\Request;
+use Thelia\Model\ConfigQuery;
 use Thelia\Model\Map\OrderTableMap;
 use Thelia\Model\OrderQuery;
 
@@ -37,6 +38,17 @@ final readonly class OrderFilters
 
     public const TRISTATE_WITH = 'with';
     public const TRISTATE_WITHOUT = 'without';
+
+    /**
+     * The two values of the core `order_rounding_mode` variable, mirrored from
+     * ConfigQuery::ROUNDING_MODE_* (thelia/thelia#3801). The variable is read raw
+     * rather than through ConfigQuery::getOrderRoundingMode(), which answers for one
+     * order at a time and so cannot be consulted from SQL. Reading it raw also keeps
+     * this template working against a core that predates that pull request: the
+     * variable is absent there, and the historical rule applies.
+     */
+    private const ROUNDING_MODE_SUM_OF_ROUNDINGS = 1;
+    private const ROUNDING_MODE_ROUNDING_OF_SUMS = 2;
 
     public const KEY_STATUS_IDS = 'status_ids';
     public const KEY_CREATED_RANGE = 'created_range';
@@ -408,31 +420,101 @@ final readonly class OrderFilters
      * promo-aware). Lets us filter by amount without hydrating any model. Exposed
      * publicly so the Repository can reuse the very same formula when computing
      * adaptive slider bounds.
+     *
+     * Which rounding rule applies is a per-order question, so the expression carries
+     * the answer as a CASE on the order id: orders below one of the two pivots keep
+     * the rule they were invoiced with, and the rest follow the rule the shop runs
+     * today. A shop that never switched has no pivot to honour, so it gets a single
+     * formula, the historical one.
      */
     public static function totalAmountSqlExpression(): string
     {
+        $legacyPivot = (int) ConfigQuery::read('last_legacy_rounding_order_id', 0);
+        $sumOfRoundingsPivot = (int) ConfigQuery::read('last_sum_of_roundings_order_id', 0);
+        $roundsLineTotals = self::ROUNDING_MODE_ROUNDING_OF_SUMS === (int) ConfigQuery::read(
+            'order_rounding_mode',
+            self::ROUNDING_MODE_SUM_OF_ROUNDINGS
+        );
+
+        $frozenBranches = [];
+
+        if ($legacyPivot > 0) {
+            $frozenBranches[] = 'WHEN '.OrderTableMap::COL_ID.' <= '.$legacyPivot
+                .' THEN '.self::legacyItemsTotalSqlExpression();
+        }
+
+        if ($roundsLineTotals && $sumOfRoundingsPivot > 0) {
+            $frozenBranches[] = 'WHEN '.OrderTableMap::COL_ID.' <= '.$sumOfRoundingsPivot
+                .' THEN '.self::itemsTotalSqlExpression(false);
+        }
+
+        $currentRule = self::itemsTotalSqlExpression($roundsLineTotals);
+
+        $itemsTotal = [] === $frozenBranches
+            ? $currentRule
+            : 'CASE '.implode(' ', $frozenBranches).' ELSE '.$currentRule.' END';
+
         return '(
-            COALESCE(
-                (
-                    SELECT SUM(
-                        op.quantity * (
-                            ROUND(IF(op.was_in_promo = 1, op.promo_price, op.price), 2)
-                            + (
-                                SELECT COALESCE(SUM(
-                                    ROUND(IF(op.was_in_promo = 1, opt.promo_amount, opt.amount), 2)
-                                ), 0)
-                                FROM order_product_tax opt
-                                WHERE opt.order_product_id = op.id
-                            )
-                        )
-                    )
-                    FROM order_product op
-                    WHERE op.order_id = '.OrderTableMap::COL_ID.'
-                ),
-                0
-            )
+            COALESCE('.$itemsTotal.', 0)
             + '.OrderTableMap::COL_POSTAGE.'
             - '.OrderTableMap::COL_DISCOUNT.'
+        )';
+    }
+
+    /**
+     * Totals the order lines the way Order::buildTotalAmountQuery() does for a single
+     * order: rounding the unit amounts before multiplying by the quantity is the
+     * historical rule, rounding the line total instead is what a shop selling by
+     * weight or by volume needs.
+     */
+    private static function itemsTotalSqlExpression(bool $roundLineTotals): string
+    {
+        $unitPrice = 'IF(op.was_in_promo = 1, op.promo_price, op.price)';
+        $unitTax = 'IF(op.was_in_promo = 1, opt.promo_amount, opt.amount)';
+
+        if (!$roundLineTotals) {
+            $unitPrice = 'ROUND('.$unitPrice.', 2)';
+            $unitTax = 'ROUND('.$unitTax.', 2)';
+        }
+
+        $lineTotal = 'op.quantity * ('.$unitPrice.' + (
+            SELECT COALESCE(SUM('.$unitTax.'), 0)
+            FROM order_product_tax opt
+            WHERE opt.order_product_id = op.id
+        ))';
+
+        if ($roundLineTotals) {
+            $lineTotal = 'ROUND('.$lineTotal.', 2)';
+        }
+
+        return '(
+            SELECT SUM('.$lineTotal.')
+            FROM order_product op
+            WHERE op.order_id = '.OrderTableMap::COL_ID.'
+        )';
+    }
+
+    /**
+     * Orders placed before Thelia 2.4 were totalled without any rounding at all, and
+     * Order::getTotalAmountLegacy() still reads them that way: untaxed total and tax
+     * summed apart, then added. The shape matters as much as the absence of ROUND —
+     * summing the two apart and summing them per line land on different sides of a
+     * half-cent tie.
+     */
+    private static function legacyItemsTotalSqlExpression(): string
+    {
+        return '(
+            (
+                SELECT SUM(op.quantity * IF(op.was_in_promo = 1, op.promo_price, op.price))
+                FROM order_product op
+                WHERE op.order_id = '.OrderTableMap::COL_ID.'
+            )
+            + (
+                SELECT COALESCE(SUM(op.quantity * IF(op.was_in_promo = 1, opt.promo_amount, opt.amount)), 0)
+                FROM order_product op
+                INNER JOIN order_product_tax opt ON opt.order_product_id = op.id
+                WHERE op.order_id = '.OrderTableMap::COL_ID.'
+            )
         )';
     }
 
