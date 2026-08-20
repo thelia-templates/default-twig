@@ -454,10 +454,12 @@ final readonly class OrderFilters
             ? $currentRule
             : 'CASE '.implode(' ', $frozenBranches).' ELSE '.$currentRule.' END';
 
+        // GREATEST mirrors the clamp in Order::getTotalAmount(): a discount larger
+        // than the items it applies to brings the order down to zero, never below,
+        // and postage is added after the clamp.
         return '(
-            COALESCE('.$itemsTotal.', 0)
+            GREATEST(COALESCE('.$itemsTotal.', 0) - '.OrderTableMap::COL_DISCOUNT.', 0)
             + '.OrderTableMap::COL_POSTAGE.'
-            - '.OrderTableMap::COL_DISCOUNT.'
         )';
     }
 
