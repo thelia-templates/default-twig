@@ -15,7 +15,7 @@
         "symfony/asset-mapper": "^7.4",
         "symfony/framework-bundle": "^7.4",
         "symfony/twig-bundle": "^7.4",
-        "symfony/ux-icons": "^2.21",
+        "symfony/ux-icons": "^2.21 || ^3.0",
         "symfony/ux-twig-component": "^2.19 || ^3.0",
         "symfonycasts/sass-bundle": "^0.10.0",
         "thelia/cheque-module": "^3.0",
