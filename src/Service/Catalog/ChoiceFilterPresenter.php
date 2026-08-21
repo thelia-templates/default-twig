@@ -14,7 +14,6 @@ declare(strict_types=1);
 
 namespace BackOfficeDefaultTwigBundle\Service\Catalog;
 
-use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\Collection\ObjectCollection;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Thelia\Api\Bridge\Propel\Filter\CustomFilters\Filters\Type\CheckboxType;
@@ -76,7 +75,7 @@ final readonly class ChoiceFilterPresenter
         }
 
         $filters = $this->buildFilters($choiceFilters, $features, $attributes, $others);
-        $filters = $this->annotateDisplayType($filters, $categoryId, 'filterByCategoryId');
+        $filters = $this->annotateDisplayType($filters, $choiceFilters);
 
         return [
             'filters' => $filters,
@@ -100,7 +99,7 @@ final readonly class ChoiceFilterPresenter
             ->find();
 
         $filters = $this->buildFilters($choiceFilters, $features, $attributes, $others);
-        $filters = $this->annotateDisplayType($filters, $templateId, 'filterByTemplateId');
+        $filters = $this->annotateDisplayType($filters, $choiceFilters);
 
         return [
             'filters' => $filters,
@@ -189,25 +188,56 @@ final readonly class ChoiceFilterPresenter
     }
 
     /**
+     * The display type shown against each filter comes from the rows in force for the scope being
+     * edited — which, for a category without a configuration of its own, are its template's. Read
+     * from those rows rather than re-queried on the category alone: a category page that showed
+     * the default instead of the inherited value would overwrite the whole inheritance the moment
+     * someone saved it to change one line.
+     *
      * @param list<array<string, mixed>> $filters
+     * @param iterable<mixed>            $choiceFilters
      *
      * @return list<array<string, mixed>>
      */
-    private function annotateDisplayType(array $filters, int $scopeId, string $scopeFilter): array
+    private function annotateDisplayType(array $filters, iterable $choiceFilters): array
     {
+        $features = [];
+        $attributes = [];
+        $others = [];
+
+        foreach ($choiceFilters as $choiceFilter) {
+            $displayType = (string) $choiceFilter->getType();
+
+            if ($displayType === '') {
+                continue;
+            }
+
+            if (($featureId = $choiceFilter->getFeatureId()) !== null) {
+                $features[(int) $featureId] = $displayType;
+
+                continue;
+            }
+
+            if (($attributeId = $choiceFilter->getAttributeId()) !== null) {
+                $attributes[(int) $attributeId] = $displayType;
+
+                continue;
+            }
+
+            if (($otherType = $choiceFilter->getChoiceFilterOther()?->getType()) !== null) {
+                $others[$otherType] = $displayType;
+            }
+        }
+
         foreach ($filters as $index => $filter) {
             $type = (string) ($filter['Type'] ?? '');
-            $filterByType = 'filterBy'.ucfirst($type).'Id';
-            $query = ChoiceFilterQuery::create();
-            $query->{$scopeFilter}($scopeId);
-            if ($type === 'category' || !method_exists($query, $filterByType)) {
-                $query->useChoiceFilterOtherQuery()->filterByType($type)->endUse();
-            }
-            if ($type !== 'category' && method_exists($query, $filterByType)) {
-                $query->{$filterByType}((int) ($filter['Id'] ?? 0), Criteria::EQUAL);
-            }
-            $persisted = $query->findOne();
-            $filters[$index]['DisplayType'] = $persisted?->getType() ?? CheckboxType::getName();
+            $id = (int) ($filter['Id'] ?? 0);
+
+            $filters[$index]['DisplayType'] = match ($type) {
+                'feature' => $features[$id] ?? null,
+                'attribute' => $attributes[$id] ?? null,
+                default => $others[$type] ?? null,
+            } ?? CheckboxType::getName();
         }
 
         return $filters;
