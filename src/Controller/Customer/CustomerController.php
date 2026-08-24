@@ -440,6 +440,8 @@ final class CustomerController
             company: $this->stringOrNull($data['company'] ?? null),
             ref: null,
             state: isset($data['state']) && $data['state'] !== '' ? (int) $data['state'] : null,
+            siret: $this->stringOrNull($data['siret'] ?? null),
+            vatNumber: $this->stringOrNull($data['vat_number'] ?? null),
         );
     }
 
@@ -534,6 +536,8 @@ final class CustomerController
 
         return array_merge($data, [
             'company' => $address->getCompany(),
+            'siret' => $address->getSiret(),
+            'vat_number' => $address->getVatNumber(),
             'address1' => $address->getAddress1(),
             'address2' => $address->getAddress2(),
             'address3' => $address->getAddress3(),

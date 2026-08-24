@@ -34,6 +34,24 @@
                         <div class="col-md-4">{{ form_row(form.firstname) }}</div>
                         <div class="col-md-5">{{ form_row(form.lastname) }}</div>
                         <div class="col-md-12">{{ form_row(form.company) }}</div>
+                        {% if form.siret is defined %}
+                            <div class="col-md-6">{{ form_row(form.siret) }}</div>
+                        {% endif %}
+                        {% if form.vat_number is defined %}
+                            <div class="col-md-6">{{ form_row(form.vat_number) }}</div>
+                        {% endif %}
+                        {# A warning and not a block: an address saved before these columns
+                           existed is legitimate, and only a submit has to be complete. #}
+                        {% if form.company.vars.value|default('')|trim is not empty
+                            and form.siret is defined and form.vat_number is defined
+                            and (form.siret.vars.value|default('')|trim is empty
+                                 or form.vat_number.vars.value|default('')|trim is empty) %}
+                            <div class="col-12">
+                                <div class="alert alert-warning mb-0" data-testid="address-legal-identifiers-incomplete">
+                                    {{ 'This address has a company name but is missing a registration number or a VAT number. An invoice for a business buyer requires both.'|trans }}
+                                </div>
+                            </div>
+                        {% endif %}
                         <div class="col-md-12">{{ form_row(form.address1) }}</div>
                         <div class="col-md-6">{{ form_row(form.address2) }}</div>
                         <div class="col-md-6">{{ form_row(form.address3) }}</div>

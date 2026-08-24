@@ -266,9 +266,19 @@ final class OrderController
                 ['csrf_protection' => false],
             );
             $form->handleRequest($request);
-            $data = ($form->isSubmitted() && $form->isValid())
-                ? ($form->getData() ?? [])
-                : (array) $request->request->all('thelia_order_address');
+
+            // An invalid form used to fall through to the raw request payload, which left every
+            // constraint on OrderAddressType decorative - a forged post went straight to the
+            // database. Refuse the submission and report what is wrong instead.
+            if (!$form->isSubmitted() || !$form->isValid()) {
+                foreach ($form->getErrors(true) as $error) {
+                    $request->getSession()->getFlashBag()->add('error', $error->getMessage());
+                }
+
+                return new RedirectResponse($this->urls->generate(self::DETAIL_ROUTE, ['order_id' => $order_id]));
+            }
+
+            $data = $form->getData() ?? [];
 
             $addressId = (int) ($data['id'] ?? 0);
             $orderAddress = $addressId > 0 ? OrderAddressQuery::create()->findPk($addressId) : null;
@@ -298,6 +308,8 @@ final class OrderController
                 company: $data['company'] ?? null,
                 cellphone: $data['cellphone'] ?? null,
                 state: $data['state'] ?? null,
+                siret: $data['siret'] ?? null,
+                vatNumber: $data['vat_number'] ?? null,
             );
             $event->setOrderAddress($orderAddress);
             $event->setOrder($order);
@@ -446,6 +458,8 @@ final class OrderController
             'firstname' => (string) $address->getFirstname(),
             'lastname' => (string) $address->getLastname(),
             'company' => (string) $address->getCompany(),
+            'siret' => (string) $address->getSiret(),
+            'vat_number' => (string) $address->getVatNumber(),
             'address1' => (string) $address->getAddress1(),
             'address2' => (string) $address->getAddress2(),
             'address3' => (string) $address->getAddress3(),

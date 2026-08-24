@@ -31,6 +31,7 @@ use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\Regex;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
+use Thelia\Domain\Legal\CompanyIdentifier;
 
 final class ConfigStoreType extends AbstractType
 {
@@ -232,7 +233,7 @@ final class ConfigStoreType extends AbstractType
 
     public function checkSiret(mixed $value, ExecutionContextInterface $context): void
     {
-        if (!\is_string($value) || $value === '' || self::isValidSiret($value)) {
+        if (!\is_string($value) || $value === '' || CompanyIdentifier::isValidFrenchSiret($value)) {
             return;
         }
 
@@ -266,33 +267,5 @@ final class ConfigStoreType extends AbstractType
         $normalized = (string) preg_replace($separators, '', $value);
 
         return $uppercase ? strtoupper($normalized) : $normalized;
-    }
-
-    private static function isValidSiret(string $siret): bool
-    {
-        if (preg_match('/^[0-9]{14}$/', $siret) !== 1) {
-            return false;
-        }
-
-        // La Poste establishments are numbered outside the Luhn scheme, only their length holds.
-        if (str_starts_with($siret, '356000000')) {
-            return true;
-        }
-
-        $checksum = 0;
-        foreach (str_split(strrev($siret)) as $rank => $character) {
-            $digit = (int) $character;
-
-            if ($rank % 2 === 1) {
-                $digit *= 2;
-                if ($digit > 9) {
-                    $digit -= 9;
-                }
-            }
-
-            $checksum += $digit;
-        }
-
-        return $checksum % 10 === 0;
     }
 }
