@@ -26,6 +26,7 @@ use BackOfficeDefaultTwigBundle\Service\Pdf\OrderPdfRenderer;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Session\FlashBagAwareSessionInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -271,8 +272,11 @@ final class OrderController
             // constraint on OrderAddressType decorative - a forged post went straight to the
             // database. Refuse the submission and report what is wrong instead.
             if (!$form->isSubmitted() || !$form->isValid()) {
-                foreach ($form->getErrors(true) as $error) {
-                    $request->getSession()->getFlashBag()->add('error', $error->getMessage());
+                $session = $request->getSession();
+                if ($session instanceof FlashBagAwareSessionInterface) {
+                    foreach ($form->getErrors(true) as $error) {
+                        $session->getFlashBag()->add('error', $error->getMessage());
+                    }
                 }
 
                 return new RedirectResponse($this->urls->generate(self::DETAIL_ROUTE, ['order_id' => $order_id]));
