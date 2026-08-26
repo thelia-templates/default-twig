@@ -10,7 +10,7 @@
 // Bootstrap Icons - the font-dir is the on-disk path from this file to the
 // fonts of the twbs/bootstrap-icons Composer package: AssetMapper resolves
 // url() against the source file location and rewrites it to the public URL.
-$bootstrap-icons-font-dir: "../../../../../vendor/twbs/bootstrap-icons/font/fonts";
+$bootstrap-icons-font-dir: "../../../../vendor/twbs/bootstrap-icons/font/fonts";
 @import "bootstrap-icons/font/bootstrap-icons";
 
 // Back-office layout
