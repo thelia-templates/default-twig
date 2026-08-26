@@ -89,4 +89,31 @@ final readonly class Column
 
         return $max;
     }
+
+    /**
+     * Largest breakpoint declared among $columns that are sortable (sortKey set), or null if none
+     * of the sortable columns ever hides (i.e. every sortable <th> - and its sort link - stays
+     * reachable, so no mobile sort fallback is needed).
+     *
+     * @param list<self> $columns
+     */
+    public static function maxSortableBreakpoint(array $columns): ?string
+    {
+        $maxRank = 0;
+        $max = null;
+
+        foreach ($columns as $column) {
+            if ($column->sortKey === null) {
+                continue;
+            }
+
+            $rank = self::breakpointRank($column->visibleFrom);
+            if ($rank > $maxRank) {
+                $maxRank = $rank;
+                $max = $column->visibleFrom;
+            }
+        }
+
+        return $max;
+    }
 }

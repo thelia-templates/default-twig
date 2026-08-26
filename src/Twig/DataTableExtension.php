@@ -36,6 +36,7 @@ final class DataTableExtension extends AbstractExtension
             new TwigFunction('row_action', $this->rowAction(...)),
             new TwigFunction('datatable_max_breakpoint', Column::maxVisibleFromBreakpoint(...)),
             new TwigFunction('datatable_max_collapse_breakpoint', RowAction::maxCollapseBelowBreakpoint(...)),
+            new TwigFunction('datatable_sort_breakpoint', Column::maxSortableBreakpoint(...)),
         ];
     }
 
