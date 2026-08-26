@@ -685,20 +685,21 @@ td.bo-datatable__details-col {
     background-color: var(--bs-tertiary-bg);
 }
 
-// Two-column grid of label/value blocks (label above value) instead of
+// Wrapping row of label/value blocks (label above value) instead of
 // Bootstrap's row/col-*, which left a wide, fixed-width gap between a short
-// label and its value regardless of the label's actual length.
+// label and its value regardless of the label's actual length. A flex row
+// (not a grid with 1fr tracks) so each block is only as wide as its own
+// content instead of stretching to share the row equally - which is exactly
+// what left a gap after a short value like "Cheque".
 .bo-datatable__details-grid {
-    display: grid;
-    // auto-fit: as many 140px+ columns as fit in the available width, so a
-    // very narrow viewport (e.g. a folded phone) drops to a single column on
-    // its own, no media query needed.
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    column-gap: .5rem;
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: 1.5rem;
     row-gap: .5rem;
 }
 
 .bo-datatable__details-item {
+    flex: 0 0 auto;
     dt {
         font-size: .8rem;
         font-weight: 600;
