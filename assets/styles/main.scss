@@ -667,14 +667,31 @@ button.btn {
 
 .bo-datatable__details {
     background-color: var(--bs-tertiary-bg);
+}
 
+// Two-column grid of label/value blocks (label above value) instead of
+// Bootstrap's row/col-*, which left a wide, fixed-width gap between a short
+// label and its value regardless of the label's actual length.
+.bo-datatable__details-grid {
+    display: grid;
+    // auto-fit: as many 140px+ columns as fit in the available width, so a
+    // very narrow viewport (e.g. a folded phone) drops to a single column on
+    // its own, no media query needed.
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    column-gap: 1rem;
+    row-gap: .5rem;
+}
+
+.bo-datatable__details-item {
     dt {
+        font-size: .8rem;
         font-weight: 600;
         color: #6c757d;
+        margin-bottom: .15rem;
     }
 
     dd {
-        margin-bottom: .5rem;
+        margin-bottom: 0;
     }
 }
 

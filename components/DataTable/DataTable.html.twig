@@ -85,17 +85,19 @@
                     {% if maxBp %}
                         <tr class="bo-datatable__details" hidden id="{{ detail_id }}" data-testid="datatable-{{ id }}-details">
                             <td colspan="{{ colCount }}">
-                                <dl class="row mb-0">
+                                <dl class="bo-datatable__details-grid mb-0">
                                     {% for column in columns %}
                                         {% if column.visibleFrom != 'always' %}
-                                            <dt class="col-5 col-sm-4 d-{{ column.visibleFrom }}-none">{{ column.label }}</dt>
-                                            <dd class="col-7 col-sm-8 d-{{ column.visibleFrom }}-none">
-                                                {% include '@BackOfficeDefaultTwig/components/DataTable/cells/' ~ column.kind.value ~ '.html.twig' with {
-                                                    column: column,
-                                                    row: row,
-                                                    value: row[column.key]|default(null),
-                                                } only %}
-                                            </dd>
+                                            <div class="bo-datatable__details-item d-{{ column.visibleFrom }}-none">
+                                                <dt>{{ column.label }}</dt>
+                                                <dd>
+                                                    {% include '@BackOfficeDefaultTwig/components/DataTable/cells/' ~ column.kind.value ~ '.html.twig' with {
+                                                        column: column,
+                                                        row: row,
+                                                        value: row[column.key]|default(null),
+                                                    } only %}
+                                                </dd>
+                                            </div>
                                         {% endif %}
                                     {% endfor %}
                                 </dl>
