@@ -655,29 +655,34 @@ button.btn {
 
 // Detail row revealed on narrow viewports by the DataTable component's toggle button
 // (columns hidden below their visibleFrom breakpoint move here instead of off-screen).
-// Narrow the cell's own right padding, and the next column's left padding,
-// down to nothing: this cell holds only a small chevron, so Bootstrap's
-// default cell padding on both sides otherwise leaves a wide, empty gap
-// before the next column. `th, td` beats Bootstrap's `.table > :not(caption)
-// > * > *` on specificity, which a bare class selector can't.
+// Narrow the cell's own right padding, and the next column's left padding:
+// this cell holds only a small chevron, so Bootstrap's default cell padding
+// on both sides otherwise leaves a wide, empty gap before the next column.
+// `th, td` beats Bootstrap's `.table > :not(caption) > * > *` on
+// specificity, which a bare class selector can't. min-width keeps a minimum
+// gap even if the icon itself fails to render (e.g. icon font unavailable).
 th.bo-datatable__details-col,
 td.bo-datatable__details-col {
+    min-width: 1.5rem;
     // margin is a no-op on table cells, hence padding here instead.
     padding-right: 5px;
 
     + th,
     + td {
-        padding-left: 0;
+        padding-left: 8px;
     }
 }
 
 .bo-datatable__details-toggle {
+    // Base icon is bi-chevron-down; rotated 180deg it points up (closed).
+    // A half turn back to 0deg on expand points it back down.
     .bi-chevron-down {
-        transition: transform .15s ease-in-out;
+        transition: transform .2s ease-in-out;
+        transform: rotate(180deg);
     }
 
     &[aria-expanded="true"] .bi-chevron-down {
-        transform: rotate(180deg);
+        transform: rotate(0deg);
     }
 }
 
