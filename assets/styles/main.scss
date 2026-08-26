@@ -653,6 +653,31 @@ button.btn {
     }
 }
 
+// Detail row revealed on narrow viewports by the DataTable component's toggle button
+// (columns hidden below their visibleFrom breakpoint move here instead of off-screen).
+.bo-datatable__details-toggle {
+    .bi-chevron-down {
+        transition: transform .15s ease-in-out;
+    }
+
+    &[aria-expanded="true"] .bi-chevron-down {
+        transform: rotate(180deg);
+    }
+}
+
+.bo-datatable__details {
+    background-color: var(--bs-tertiary-bg);
+
+    dt {
+        font-weight: 600;
+        color: #6c757d;
+    }
+
+    dd {
+        margin-bottom: .5rem;
+    }
+}
+
 // Breadcrumbs - subtle separator and brand primary on links
 .breadcrumb {
     font-size: .85rem;

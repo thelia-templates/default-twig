@@ -324,12 +324,12 @@
                 columns: [
                     column_html('ref_html', 'Reference'|trans, 'start', 'ref'),
                     column_html('customer_html', 'Customer'|trans),
-                    column_html('items_html', 'Items'|trans, 'center'),
+                    column_html('items_html', 'Items'|trans, 'center', visibleFrom: 'lg'),
                     column_badge('status_code', 'Status'|trans, {}, 'start', 'status', 'status_color'),
-                    column_html('payment_html', 'Payment'|trans),
-                    column_html('delivery_html', 'Delivery'|trans),
+                    column_html('payment_html', 'Payment'|trans, visibleFrom: 'lg'),
+                    column_html('delivery_html', 'Delivery'|trans, visibleFrom: 'lg'),
                     column_text('amount', 'Total'|trans, 'end', 'amount'),
-                    column_html('date_html', 'Date'|trans, 'start', 'created_at'),
+                    column_html('date_html', 'Date'|trans, 'start', 'created_at', visibleFrom: 'md'),
                     column_actions('_actions', 'Actions'|trans),
                 ],
                 rows: rows,
@@ -339,6 +339,7 @@
                 sortParam: 'order',
                 sortDirectionParam: 'direction',
                 sortKeepParams: query_params,
+                rowIdentifierKey: 'ref',
             }) }}
 
             {{ component('BoPagination', {

@@ -34,17 +34,18 @@ final class DataTableExtension extends AbstractExtension
             new TwigFunction('column_radio', $this->radioColumn(...)),
             new TwigFunction('column_select', $this->selectColumn(...)),
             new TwigFunction('row_action', $this->rowAction(...)),
+            new TwigFunction('datatable_max_breakpoint', Column::maxVisibleFromBreakpoint(...)),
         ];
     }
 
-    public function textColumn(string $key, string $label, string $cellAlign = 'start', ?string $sortKey = null): Column
+    public function textColumn(string $key, string $label, string $cellAlign = 'start', ?string $sortKey = null, string $visibleFrom = 'always'): Column
     {
-        return new Column($key, $label, ColumnKind::TEXT, $cellAlign, sortKey: $sortKey);
+        return new Column($key, $label, ColumnKind::TEXT, $cellAlign, sortKey: $sortKey, visibleFrom: $visibleFrom);
     }
 
-    public function htmlColumn(string $key, string $label, string $cellAlign = 'start', ?string $sortKey = null): Column
+    public function htmlColumn(string $key, string $label, string $cellAlign = 'start', ?string $sortKey = null, string $visibleFrom = 'always'): Column
     {
-        return new Column($key, $label, ColumnKind::HTML, $cellAlign, sortKey: $sortKey);
+        return new Column($key, $label, ColumnKind::HTML, $cellAlign, sortKey: $sortKey, visibleFrom: $visibleFrom);
     }
 
     /**
@@ -56,6 +57,7 @@ final class DataTableExtension extends AbstractExtension
         string $label = 'Select',
         string $valueKey = 'id',
         ?string $labelKey = null,
+        string $visibleFrom = 'always',
     ): Column {
         return new Column(
             $key,
@@ -63,6 +65,7 @@ final class DataTableExtension extends AbstractExtension
             ColumnKind::SELECT,
             'center',
             ['value_key' => $valueKey, 'label_key' => $labelKey],
+            visibleFrom: $visibleFrom,
         );
     }
 
@@ -74,6 +77,7 @@ final class DataTableExtension extends AbstractExtension
         string $iconOn = 'bi-check-circle-fill text-success',
         string $iconOff = 'bi-circle text-secondary',
         ?string $sortKey = null,
+        string $visibleFrom = 'always',
     ): Column {
         return new Column(
             $key,
@@ -82,13 +86,14 @@ final class DataTableExtension extends AbstractExtension
             $cellAlign,
             ['url_key' => $urlKey, 'icon_on' => $iconOn, 'icon_off' => $iconOff],
             $sortKey,
+            $visibleFrom,
         );
     }
 
     /**
      * @param array<scalar, string> $variants
      */
-    public function badgeColumn(string $key, string $label, array $variants = [], string $cellAlign = 'start', ?string $labelKey = null, ?string $colorKey = null, ?string $sortKey = null): Column
+    public function badgeColumn(string $key, string $label, array $variants = [], string $cellAlign = 'start', ?string $labelKey = null, ?string $colorKey = null, ?string $sortKey = null, string $visibleFrom = 'always'): Column
     {
         return new Column(
             $key,
@@ -97,12 +102,13 @@ final class DataTableExtension extends AbstractExtension
             $cellAlign,
             ['variants' => $variants, 'label_key' => $labelKey, 'color_key' => $colorKey],
             $sortKey,
+            $visibleFrom,
         );
     }
 
-    public function actionsColumn(string $key = '_actions', string $label = 'Actions', string $cellAlign = 'end'): Column
+    public function actionsColumn(string $key = '_actions', string $label = 'Actions', string $cellAlign = 'end', string $visibleFrom = 'always'): Column
     {
-        return new Column($key, $label, ColumnKind::ACTIONS, $cellAlign);
+        return new Column($key, $label, ColumnKind::ACTIONS, $cellAlign, visibleFrom: $visibleFrom);
     }
 
     public function radioColumn(
@@ -114,6 +120,7 @@ final class DataTableExtension extends AbstractExtension
         ?string $labelKey = null,
         ?string $urlKey = null,
         string $cellAlign = 'center',
+        string $visibleFrom = 'always',
     ): Column {
         return new Column(
             $key,
@@ -121,6 +128,7 @@ final class DataTableExtension extends AbstractExtension
             ColumnKind::RADIO,
             $cellAlign,
             ['name' => $name, 'value_key' => $valueKey, 'checked_when_key' => $checkedWhenKey, 'label_key' => $labelKey, 'url_key' => $urlKey],
+            visibleFrom: $visibleFrom,
         );
     }
 
@@ -136,6 +144,7 @@ final class DataTableExtension extends AbstractExtension
         ?string $grantedAttribute = null,
         string|array|null $grantedSubject = null,
         array $dataAttributes = [],
+        bool $inMenu = false,
     ): RowAction {
         return new RowAction(
             kind: $kind,
@@ -145,6 +154,7 @@ final class DataTableExtension extends AbstractExtension
             grantedAttribute: $grantedAttribute,
             grantedSubject: $grantedSubject,
             dataAttributes: $dataAttributes,
+            inMenu: $inMenu,
         );
     }
 }
