@@ -18,7 +18,7 @@
     <div class="container-fluid" data-testid="import-edit-page">
         <h1 class="h3 mb-3">{{ 'Import'|trans }} : {{ import.title }}</h1>
 
-        {% for type, messages in app.flashes(['thelia.import.error', 'thelia.import.success', 'error', 'success']) %}
+        {% for type, messages in bo_flashes(['thelia.import.error', 'thelia.import.success', 'error', 'success']) %}
             {% for message in messages %}
                 {% set variant = type ends with 'success' ? 'success' : 'danger' %}
                 <div class="alert alert-{{ variant }}">{{ message|raw }}</div>

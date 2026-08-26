@@ -10,7 +10,7 @@
         {% endif %}
     </h2>
 
-    {% for flash in app.flashes('choice-filter-success') %}
+    {% for flash in bo_flashes('choice-filter-success') %}
         <div class="alert alert-success" role="alert" data-testid="choice-filter-flash">{{ flash }}</div>
     {% endfor %}
 
