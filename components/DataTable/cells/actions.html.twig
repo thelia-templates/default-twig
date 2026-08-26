@@ -36,16 +36,21 @@
 } -%}
 {%- set actions = value|default([]) -%}
 {%- set inline = [] -%}
-{%- set overflow = [] -%}
+{%- set collapsible = [] -%}
+{%- set overflowAlways = [] -%}
 {%- for action in actions -%}
     {%- if action.grantedAttribute is null or is_granted(action.grantedAttribute, action.grantedSubject) -%}
         {%- if action.inMenu -%}
-            {%- set overflow = overflow|merge([action]) -%}
+            {%- set overflowAlways = overflowAlways|merge([action]) -%}
+        {%- elseif action.inlineFrom is not null -%}
+            {%- set collapsible = collapsible|merge([action]) -%}
         {%- else -%}
             {%- set inline = inline|merge([action]) -%}
         {%- endif -%}
     {%- endif -%}
 {%- endfor -%}
+{%- set overflow = collapsible|merge(overflowAlways) -%}
+{%- set kebabMaxBp = overflowAlways is empty ? datatable_max_collapse_breakpoint(collapsible) : null -%}
 <div class="btn-group btn-group-sm" role="group" aria-label="{{ 'Row actions'|trans }}">
     {% for action in inline %}
         {% set icon = iconByKind[action.kind]|default(iconByKind['custom']) %}
@@ -77,8 +82,38 @@
         {% endif %}
     {% endfor %}
 
+    {% for action in collapsible %}
+        {% set icon = iconByKind[action.kind]|default(iconByKind['custom']) %}
+        {% set btnClass = buttonClassByKind[action.kind]|default(buttonClassByKind['custom']) %}
+        {% if action.isDisabled %}
+            <button type="button"
+                    class="btn btn-sm {{ btnClass }} bo-action bo-action--{{ action.kind }} disabled d-none d-{{ action.inlineFrom }}-inline-flex"
+                    disabled
+                    aria-disabled="true"
+                    title="{{ action.label }}. {{ action.disabledReason }}"
+                    aria-label="{{ action.label }}. {{ action.disabledReason }}"
+                    data-testid="datatable-action-{{ action.kind }}-disabled">
+                <i class="bi {{ icon }}" aria-hidden="true"></i>
+                <span class="visually-hidden">{{ action.label }}. {{ action.disabledReason }}</span>
+            </button>
+        {% else %}
+        {% set tag = action.href ? 'a' : 'button' %}
+        <{{ tag }}
+            {% if action.href %}href="{{ action.href }}"{% else %}type="button"{% endif %}
+            class="btn btn-sm {{ btnClass }} bo-action bo-action--{{ action.kind }} d-none d-{{ action.inlineFrom }}-inline-flex"
+            title="{{ action.label }}"
+            aria-label="{{ action.label }}"
+            data-testid="datatable-action-{{ action.kind }}-inline"
+            {% if action.modalTarget %}data-bs-toggle="modal" data-bs-target="{{ action.modalTarget }}"{% endif %}
+            {% for dataKey, dataValue in action.dataAttributes %}data-{{ dataKey }}="{{ dataValue }}" {% endfor %}>
+            <i class="bi {{ icon }}" aria-hidden="true"></i>
+            <span class="visually-hidden">{{ action.label }}</span>
+        </{{ tag }}>
+        {% endif %}
+    {% endfor %}
+
     {% if overflow is not empty %}
-        <div class="btn-group btn-group-sm" role="group" data-controller="bo-overflow-dropdown">
+        <div class="btn-group btn-group-sm{{ kebabMaxBp ? ' d-' ~ kebabMaxBp ~ '-none' : '' }}" role="group" data-controller="bo-overflow-dropdown">
             <button type="button"
                     class="btn btn-sm btn-outline-secondary"
                     data-bs-toggle="dropdown"
@@ -103,15 +138,17 @@
 
                 {% for action in regular %}
                     {% set icon = iconByKind[action.kind]|default(iconByKind['custom']) %}
+                    {% set hideClass = action.inlineFrom ? ' d-' ~ action.inlineFrom ~ '-none' : '' %}
+                    {% set testid = action.inlineFrom ? 'datatable-action-' ~ action.kind ~ '-menu' : 'datatable-action-' ~ action.kind %}
                     {% if action.isDisabled %}
-                        {% include '@BackOfficeDefaultTwig/components/DataTable/cells/_disabled_action_item.html.twig' with { action: action, icon: icon } only %}
+                        {% include '@BackOfficeDefaultTwig/components/DataTable/cells/_disabled_action_item.html.twig' with { action: action, icon: icon, hideClass: hideClass } only %}
                     {% else %}
                     {% set tag = action.href ? 'a' : 'button' %}
-                    <li>
+                    <li class="{{ hideClass|trim }}">
                         <{{ tag }}
                             {% if action.href %}href="{{ action.href }}"{% else %}type="button"{% endif %}
                             class="dropdown-item bo-action bo-action--{{ action.kind }}"
-                            data-testid="datatable-action-{{ action.kind }}"
+                            data-testid="{{ testid }}"
                             {% if action.modalTarget %}data-bs-toggle="modal" data-bs-target="{{ action.modalTarget }}"{% endif %}
                             {% for dataKey, dataValue in action.dataAttributes %}data-{{ dataKey }}="{{ dataValue }}" {% endfor %}>
                             <i class="bi {{ icon }} me-2" aria-hidden="true"></i>{{ action.label }}
@@ -126,15 +163,17 @@
 
                 {% for action in destructive %}
                     {% set icon = iconByKind[action.kind]|default(iconByKind['custom']) %}
+                    {% set hideClass = action.inlineFrom ? ' d-' ~ action.inlineFrom ~ '-none' : '' %}
+                    {% set testid = action.inlineFrom ? 'datatable-action-' ~ action.kind ~ '-menu' : 'datatable-action-' ~ action.kind %}
                     {% if action.isDisabled %}
-                        {% include '@BackOfficeDefaultTwig/components/DataTable/cells/_disabled_action_item.html.twig' with { action: action, icon: icon } only %}
+                        {% include '@BackOfficeDefaultTwig/components/DataTable/cells/_disabled_action_item.html.twig' with { action: action, icon: icon, hideClass: hideClass } only %}
                     {% else %}
                     {% set tag = action.href ? 'a' : 'button' %}
-                    <li>
+                    <li class="{{ hideClass|trim }}">
                         <{{ tag }}
                             {% if action.href %}href="{{ action.href }}"{% else %}type="button"{% endif %}
                             class="dropdown-item text-danger bo-action bo-action--{{ action.kind }}"
-                            data-testid="datatable-action-{{ action.kind }}"
+                            data-testid="{{ testid }}"
                             {% if action.modalTarget %}data-bs-toggle="modal" data-bs-target="{{ action.modalTarget }}"{% endif %}
                             {% for dataKey, dataValue in action.dataAttributes %}data-{{ dataKey }}="{{ dataValue }}" {% endfor %}>
                             <i class="bi {{ icon }} me-2" aria-hidden="true"></i>{{ action.label }}

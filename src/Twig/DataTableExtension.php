@@ -35,6 +35,7 @@ final class DataTableExtension extends AbstractExtension
             new TwigFunction('column_select', $this->selectColumn(...)),
             new TwigFunction('row_action', $this->rowAction(...)),
             new TwigFunction('datatable_max_breakpoint', Column::maxVisibleFromBreakpoint(...)),
+            new TwigFunction('datatable_max_collapse_breakpoint', RowAction::maxCollapseBelowBreakpoint(...)),
         ];
     }
 
@@ -145,6 +146,7 @@ final class DataTableExtension extends AbstractExtension
         string|array|null $grantedSubject = null,
         array $dataAttributes = [],
         bool $inMenu = false,
+        ?string $inlineFrom = null,
     ): RowAction {
         return new RowAction(
             kind: $kind,
@@ -155,6 +157,7 @@ final class DataTableExtension extends AbstractExtension
             grantedSubject: $grantedSubject,
             dataAttributes: $dataAttributes,
             inMenu: $inMenu,
+            inlineFrom: $inlineFrom,
         );
     }
 }
