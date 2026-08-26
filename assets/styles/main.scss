@@ -674,15 +674,15 @@ td.bo-datatable__details-col {
 }
 
 .bo-datatable__details-toggle {
-    // Base icon is bi-chevron-down; rotated 180deg it points up (closed).
-    // A half turn back to 0deg on expand points it back down.
+    // Same pattern as .bo-order-filters__toggle: bi-chevron-down points down
+    // at rest (closed), and rotates 180deg to point up once expanded.
     .bi-chevron-down {
-        transition: transform .2s ease-in-out;
-        transform: rotate(180deg);
+        display: inline-block;
+        transition: transform .15s ease;
     }
 
     &[aria-expanded="true"] .bi-chevron-down {
-        transform: rotate(0deg);
+        transform: rotate(180deg);
     }
 }
 
