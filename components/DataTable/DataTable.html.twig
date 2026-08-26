@@ -19,7 +19,7 @@
             <thead class="table-light">
                 <tr>
                     {% if maxBp %}
-                        <th scope="col" class="d-{{ maxBp }}-none">
+                        <th scope="col" class="bo-datatable__details-col d-{{ maxBp }}-none">
                             <span class="visually-hidden">{{ 'Details'|trans }}</span>
                         </th>
                     {% endif %}
@@ -54,7 +54,7 @@
                     {% set detail_id = 'datatable-' ~ id ~ '-details-' ~ row.id|default(loop.index) %}
                     <tr data-testid="datatable-{{ id }}-row" data-row-id="{{ row.id|default('') }}"{% if row._row_class is defined and row._row_class %} class="{{ row._row_class }}"{% endif %}{% for attrName, attrValue in row._attrs|default({}) %} {{ attrName }}="{{ attrValue }}"{% endfor %}>
                         {% if maxBp %}
-                            <td class="d-{{ maxBp }}-none">
+                            <td class="bo-datatable__details-col d-{{ maxBp }}-none">
                                 <button type="button"
                                         class="btn btn-sm btn-link p-0 bo-datatable__details-toggle"
                                         data-controller="bo-datatable-details"
