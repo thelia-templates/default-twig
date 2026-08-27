@@ -56,8 +56,8 @@ $bo-side-nav-hover-bg: rgba(255, 255, 255, .07);
 }
 
 .bo-side-nav {
-    // Bootstrap's responsive offcanvas-md helper applies
-    // `background-color: transparent !important` on >= md (when the element
+    // Bootstrap's responsive offcanvas-lg helper applies
+    // `background-color: transparent !important` on >= lg (when the element
     // collapses back to a static block). Override the offcanvas CSS variables
     // and force the dark theme with !important so the sidebar keeps its
     // theme in both modes.

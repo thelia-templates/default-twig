@@ -15,8 +15,10 @@
 {% endmacro %}
 {% import _self as nav %}
 
-<aside class="bo-side-nav offcanvas-md offcanvas-start d-md-flex flex-column" id="bo-side-nav-offcanvas" tabindex="-1" data-testid="bo-main-nav" aria-label="{{ 'Main navigation'|trans }}">
-    <div class="offcanvas-header d-md-none">
+{# Off-canvas up to `lg`: a 240px static sidebar would eat a third of a 768px
+   tablet in portrait, so the nav only docks once there is room for it. #}
+<aside class="bo-side-nav offcanvas-lg offcanvas-start d-lg-flex flex-column" id="bo-side-nav-offcanvas" tabindex="-1" data-testid="bo-main-nav" aria-label="{{ 'Main navigation'|trans }}">
+    <div class="offcanvas-header d-lg-none">
         <h2 class="h5 offcanvas-title text-white mb-0">{{ 'Menu'|trans }}</h2>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="{{ 'Close'|trans }}"></button>
     </div>
