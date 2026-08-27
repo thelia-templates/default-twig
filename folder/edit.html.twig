@@ -24,9 +24,9 @@
     {% set extra_tabs = hook_block('folder.tab', { folder: folder.id, id: folder.id }) %}
 
     <div class="container-fluid" data-testid="folder-edit-page">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
             <h1 class="h3 mb-0">{{ 'Folder'|trans }} <small class="text-muted">#{{ folder.id }}</small></h1>
-            <div class="d-flex gap-2">
+            <div class="d-flex flex-wrap gap-2">
                 {% if preview_url is defined and preview_url %}
                     <a href="{{ preview_url }}" target="_blank" rel="noopener" class="btn btn-outline-secondary flex-shrink-0" title="{{ 'Preview folder page'|trans }}" data-testid="folder-preview-btn">
                         <i class="bi bi-eye" aria-hidden="true"></i> {{ 'Preview'|trans }}

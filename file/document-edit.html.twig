@@ -17,7 +17,7 @@
     {{ safe_hook('document-edit.top', { document_id: file_id, type: parent_type }) }}
 
     <div class="container-fluid" data-testid="document-edit-page">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
             <h1 class="h3 mb-0">{{ 'Edit document "%name"'|trans({ '%name': file_title }) }} <small class="text-muted">#{{ file_id }}</small></h1>
             <div class="btn-group">
                 <a class="btn btn-outline-secondary" href="{{ previous_url ?: '#' }}" {% if not previous_url %}aria-disabled="true" tabindex="-1"{% endif %} title="{{ 'Edit previous document'|trans }}" data-testid="bo-document-edit-previous">

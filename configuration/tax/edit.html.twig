@@ -56,14 +56,14 @@
                         {% endfor %}
                     </div>
                 </div>
-                <div class="card-footer d-flex justify-content-between align-items-center">
+                <div class="card-footer d-flex flex-wrap gap-2 justify-content-between align-items-center">
                     <small class="text-muted">
                         {{ 'Tax created on %date_create. Last modification: %date_change'|trans({
                             '%date_create': tax.createdAt ? tax.createdAt|format_datetime('medium', 'short') : '-',
                             '%date_change': tax.updatedAt ? tax.updatedAt|format_datetime('medium', 'short') : '-',
                         }) }}
                     </small>
-                    <div class="d-flex gap-2">
+                    <div class="d-flex flex-wrap gap-2">
                         <a href="{{ path('admin.configuration.taxes-rules.list') }}" class="btn btn-outline-secondary" data-testid="tax-edit-cancel">
                             {{ 'Cancel'|trans }}
                         </a>

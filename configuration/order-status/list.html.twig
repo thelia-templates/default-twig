@@ -17,7 +17,7 @@
     {{ safe_hook('order-status.top') }}
 
     <div class="container-fluid" data-testid="order-statuses-page">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
             <h1 class="h3 mb-0">{{ 'Order statuses management'|trans }}</h1>
             {% if is_granted('CREATE', 'admin.configuration.order-status') %}
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#order-status-create-modal" data-testid="order-status-create-button">

@@ -41,7 +41,7 @@
          data-bo-coupon-form-everyone-confirm-value="{{ 'This will make the coupon available to everyone. Continue?'|trans }}"
          {% endif %}
     >
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
             <h1 class="h3 mb-0">{{ page_title }} {% if is_update %}<small class="text-muted">#{{ coupon_id }}</small>{% endif %}</h1>
             <a href="{{ path('admin.coupon.default') }}" class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-left" aria-hidden="true"></i> {{ 'Back'|trans }}

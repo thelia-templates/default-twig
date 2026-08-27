@@ -17,7 +17,7 @@
     {{ safe_hook('features.top') }}
 
     <div class="container-fluid" data-testid="features-page">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
             <h1 class="h3 mb-0">{{ 'Features management'|trans }}</h1>
             {% if is_granted('CREATE', 'admin.configuration.feature') %}
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#feature-create-modal" data-testid="feature-create-button">

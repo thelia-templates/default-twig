@@ -42,7 +42,7 @@
                             {% for field, label in {'range_date_start': 'Range date Start'|trans, 'range_date_end': 'Range date End'|trans} %}
                                 <div class="col-md-6">
                                     <label class="form-label">{{ label }}</label>
-                                    <div class="d-flex gap-2">
+                                    <div class="d-flex flex-wrap gap-2">
                                         <select class="form-select form-select-sm" name="{{ field }}[year]">
                                             {% for year in years %}
                                                 <option value="{{ year }}"{% if year == "now"|date('Y') %} selected{% endif %}>{{ year }}</option>
