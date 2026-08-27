@@ -21,7 +21,7 @@
         wrapperClass     extra classes on the toolbar container (default: mt-3)
         testid           base data-testid: appends -cancel / -save-stay / -save-close (default: none)
 #}
-<div class="d-flex justify-content-{{ align }} gap-2{% if wrapperClass %} {{ wrapperClass }}{% endif %}">
+<div class="d-flex flex-wrap justify-content-{{ align }} gap-2{% if wrapperClass %} {{ wrapperClass }}{% endif %}">
     {% if closeUrl %}
         <a href="{{ closeUrl }}" class="btn btn-{{ closeVariant }}"{% if testid %} data-testid="{{ testid }}-cancel"{% endif %}>{{ closeLabel|trans }}</a>
     {% endif %}
