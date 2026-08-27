@@ -78,10 +78,14 @@ final class ProductPricingPresenter
 
     private function amountPair(float $untaxed, float $taxed): string
     {
+        // The tax wording only shows from md up: on a phone the amounts alone keep the
+        // cell narrow enough to stay clear of the pinned actions column.
         return \sprintf(
-            '<div class="bo-product-price"><div class="fw-semibold">%s</div><div class="text-muted small">%s</div></div>',
-            htmlspecialchars($this->format($untaxed).' '.$this->translator->trans('excl. tax')),
-            htmlspecialchars($this->format($taxed).' '.$this->translator->trans('incl. tax')),
+            '<div class="bo-product-price"><div class="fw-semibold">%s<span class="d-none d-md-inline"> %s</span></div><div class="text-muted small">%s<span class="d-none d-md-inline"> %s</span></div></div>',
+            htmlspecialchars($this->format($untaxed)),
+            htmlspecialchars($this->translator->trans('excl. tax')),
+            htmlspecialchars($this->format($taxed)),
+            htmlspecialchars($this->translator->trans('incl. tax')),
         );
     }
 
