@@ -675,15 +675,6 @@ button.btn {
     -webkit-overflow-scrolling: touch;
 }
 
-// Third-party module hooks render their own wide `.btn-group` strips inside the
-// theme's cards, where `overflow: hidden` would cut off the trailing buttons
-// with no way to reach them. Capping the strip lets Bootstrap's `flex: 1 1 auto`
-// buttons shrink instead. Scoped to direct card-body children so it never
-// reaches the row-action groups inside a table.
-.card-body > .btn-group,
-.card-body > div > .btn-group {
-    max-width: 100%;
-}
 
 // Breadcrumbs - subtle separator and brand primary on links
 .breadcrumb {
@@ -2097,6 +2088,18 @@ tr.bo-order-row--urgent {
         display: inline-flex;
         align-items: center;
         justify-content: center;
+    }
+
+    // Third-party module hooks render their own wide `.btn-group` strips inside
+    // the theme's cards, where `overflow: hidden` cuts off the trailing buttons
+    // with no way to reach them. Capping and wrapping the strip keeps every
+    // button on screen. Scoped to direct card-body children so it never reaches
+    // the row-action groups inside a table, and to widths where the strip
+    // actually overflows.
+    .card-body > .btn-group,
+    .card-body > div > .btn-group {
+        max-width: 100%;
+        flex-wrap: wrap;
     }
 
     // Sortable column headers: the anchor fills its cell so the whole header
