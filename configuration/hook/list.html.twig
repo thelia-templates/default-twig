@@ -60,9 +60,9 @@
         {{ component('BoDataTable', {
             id: 'hooks',
             columns: [
-                column('id', 'ID'|trans, 'start', 'id'),
+                column('id', 'ID'|trans, 'start', 'id', hideBelow: 'md'),
                 column('code', 'Code'|trans, 'start', 'code'),
-                column('title', 'Title'|trans, 'start', 'title'),
+                column('title', 'Title'|trans, 'start', 'title', hideBelow: 'lg'),
                 column_toggle('native', 'Official'|trans, is_granted('UPDATE', 'admin.hook') ? 'toggle_native_url' : null, 'center', 'bi-star-fill text-warning', 'bi-star text-secondary', 'native'),
                 column_toggle('active', 'Active'|trans, is_granted('UPDATE', 'admin.hook') ? 'toggle_active_url' : null, 'center', 'bi-check-circle-fill text-success', 'bi-circle text-secondary', 'active'),
                 column_actions('_actions', 'Actions'|trans),

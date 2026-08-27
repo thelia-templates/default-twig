@@ -178,7 +178,7 @@
                     columns: [
                         column_html('title_html', 'Title'|trans),
                         column_html('visible_html', 'Online'|trans, 'center'),
-                        column('position', 'Position'|trans, 'center'),
+                        column('position', 'Position'|trans, 'center', hideBelow: 'lg'),
                         column_actions(),
                     ],
                     rows: subcategories_rows,
@@ -248,7 +248,7 @@
                         {{ component('BoDataTable', {
                             id: 'related-content',
                             columns: [
-                                column('id', 'ID'|trans),
+                                column('id', 'ID'|trans, hideBelow: 'md'),
                                 column_html('title_html', 'Content title'|trans),
                                 column_actions(),
                             ],

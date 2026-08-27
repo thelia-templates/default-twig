@@ -59,9 +59,9 @@
                     {{ component('BoDataTable', {
                         id: 'product-related-content',
                         columns: [
-                            column('id', 'ID'|trans),
+                            column('id', 'ID'|trans, hideBelow: 'md'),
                             column_html('title_html', 'Content title'|trans),
-                            column('position', 'Position'|trans, 'center'),
+                            column('position', 'Position'|trans, 'center', hideBelow: 'lg'),
                             column_actions(),
                         ],
                         rows: contents_rows,
@@ -141,9 +141,9 @@
                     {{ component('BoDataTable', {
                         id: 'product-accessory',
                         columns: [
-                            column('id', 'ID'|trans),
+                            column('id', 'ID'|trans, hideBelow: 'md'),
                             column('title', 'Accessory title'|trans),
-                            column('position', 'Position'|trans, 'center'),
+                            column('position', 'Position'|trans, 'center', hideBelow: 'lg'),
                             column_actions(),
                         ],
                         rows: accessories_rows,
@@ -207,7 +207,7 @@
             {{ component('BoDataTable', {
                 id: 'product-additional-category',
                 columns: [
-                    column('id', 'ID'|trans),
+                    column('id', 'ID'|trans, hideBelow: 'md'),
                     column('title', 'Category title'|trans),
                     column_actions(),
                 ],

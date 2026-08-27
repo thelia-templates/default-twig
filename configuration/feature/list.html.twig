@@ -30,9 +30,9 @@
         {{ component('BoDataTable', {
             id: 'features',
             columns: [
-                column('id', 'ID'|trans, 'start', 'id'),
+                column('id', 'ID'|trans, 'start', 'id', hideBelow: 'md'),
                 column('title', 'Title'|trans, 'start', 'title'),
-                column('position', 'Position'|trans, 'center', 'position'),
+                column('position', 'Position'|trans, 'center', 'position', hideBelow: 'lg'),
                 column_actions('_actions', 'Actions'|trans),
             ],
             rows: rows,

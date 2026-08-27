@@ -29,10 +29,10 @@
         {{ component('BoDataTable', {
             id: 'shipping-configuration',
             columns: [
-                column('id', 'ID'|trans, 'start', 'id'),
+                column('id', 'ID'|trans, 'start', 'id', hideBelow: 'md'),
                 column('name', 'Zone name'|trans, 'start', 'name'),
-                column('countries', 'Included countries'|trans),
-                column('modules', 'Assigned modules'|trans),
+                column('countries', 'Included countries'|trans, hideBelow: 'lg'),
+                column('modules', 'Assigned modules'|trans, hideBelow: 'lg'),
                 column_actions('_actions', 'Actions'|trans),
             ],
             rows: rows,

@@ -26,6 +26,10 @@ final readonly class Column
      *                                        - TEXT / HTML / ACTIONS: empty
      * @param ?string              $sortKey   Sort field this column maps to. When set, the header becomes a sortable link.
      *                                        Use the same string the consuming controller expects in its order query param.
+     * @param ?string              $hideBelow Bootstrap breakpoint under which the column is dropped from the render,
+     *                                        one of: 'sm', 'md', 'lg', 'xl', 'xxl'. Use it on secondary columns so a
+     *                                        phone or a tablet shows the ones that identify the row first, instead of
+     *                                        pushing them out of the horizontal scroll.
      */
     public function __construct(
         public string $key,
@@ -34,6 +38,15 @@ final readonly class Column
         public string $cellAlign = 'start',
         public array $options = [],
         public ?string $sortKey = null,
+        public ?string $hideBelow = null,
     ) {
+    }
+
+    /**
+     * Bootstrap display utilities hiding the cell below `$hideBelow`.
+     */
+    public function responsiveClass(): string
+    {
+        return null === $this->hideBelow ? '' : ' d-none d-'.$this->hideBelow.'-table-cell';
     }
 }

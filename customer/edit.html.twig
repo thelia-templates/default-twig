@@ -233,7 +233,7 @@
                 columns: [
                     column_html('label_html', 'Label'|trans),
                     column('name', 'Name'|trans),
-                    column('address', 'Address'|trans),
+                    column('address', 'Address'|trans, hideBelow: 'lg'),
                     column_actions(),
                 ],
                 rows: addresses_rows,
@@ -270,7 +270,7 @@
                 caption: ('Orders for this customer'|trans) ~ ' (' ~ orders_total|default(0) ~ ')',
                 columns: [
                     column_html('ref_html', 'Reference'|trans),
-                    column('created_at', 'Date'|trans),
+                    column('created_at', 'Date'|trans, hideBelow: 'lg'),
                     column_html('status_html', 'Status'|trans),
                     column('total', 'Total'|trans, 'end'),
                     column_actions(),

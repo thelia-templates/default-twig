@@ -44,11 +44,11 @@
         {{ component('BoDataTable', {
             id: 'folders',
             columns: [
-                column('id', 'ID'|trans, 'start', 'id'),
-                column_html('thumbnail_html', 'Image'|trans, 'center'),
+                column('id', 'ID'|trans, 'start', 'id', hideBelow: 'md'),
+                column_html('thumbnail_html', 'Image'|trans, 'center', hideBelow: 'md'),
                 column_html('title_html', 'Title'|trans, 'start', 'title'),
                 column_toggle('visible', 'Online'|trans, 'toggle_visible_url', 'center', 'bi-check-circle-fill text-success', 'bi-circle text-secondary', 'visible'),
-                column('position', 'Position'|trans, 'center', 'position'),
+                column('position', 'Position'|trans, 'center', 'position', hideBelow: 'lg'),
                 column_actions('_actions', 'Actions'|trans),
             ],
             rows: rows,
@@ -85,11 +85,11 @@
                 {{ component('BoDataTable', {
                     id: 'folder-contents',
                     columns: [
-                        column('id', 'ID'|trans, 'start'),
-                        column_html('thumbnail_html', 'Image'|trans, 'center'),
+                        column('id', 'ID'|trans, 'start', hideBelow: 'md'),
+                        column_html('thumbnail_html', 'Image'|trans, 'center', hideBelow: 'md'),
                         column_html('title_html', 'Title'|trans, 'start'),
                         column_toggle('visible', 'Online'|trans, 'toggle_visible_url', 'center', 'bi-check-circle-fill text-success', 'bi-circle text-secondary', 'visible'),
-                        column('position', 'Position'|trans, 'center'),
+                        column('position', 'Position'|trans, 'center', hideBelow: 'lg'),
                         column_actions('_actions', 'Actions'|trans),
                     ],
                     rows: content_rows,

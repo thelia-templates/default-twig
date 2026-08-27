@@ -36,12 +36,12 @@
         {{ component('BoDataTable', {
             id: 'countries',
             columns: [
-                column('id', 'ID'|trans, 'start', 'id'),
+                column('id', 'ID'|trans, 'start', 'id', hideBelow: 'md'),
                 column('title', 'Country'|trans, 'start', 'title'),
                 column('isoalpha2', 'ISO-2'|trans, 'center', 'iso_alpha2'),
-                column('isoalpha3', 'ISO-3'|trans, 'center', 'iso_alpha3'),
-                column('isocode', 'Numeric'|trans, 'center', 'iso_code'),
-                column_html('shipping_zones_html', 'Shipping zone'|trans, 'start'),
+                column('isoalpha3', 'ISO-3'|trans, 'center', 'iso_alpha3', hideBelow: 'lg'),
+                column('isocode', 'Numeric'|trans, 'center', 'iso_code', hideBelow: 'xl'),
+                column_html('shipping_zones_html', 'Shipping zone'|trans, 'start', hideBelow: 'xl'),
                 column_toggle('visible', 'Online'|trans, 'toggle_visible_url'),
                 column_radio('default', 'Default'|trans, 'country_default', 'id', 'default', null, 'toggle_default_url'),
                 column_actions('_actions', 'Actions'|trans),

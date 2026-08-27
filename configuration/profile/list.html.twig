@@ -30,8 +30,8 @@
         {{ component('BoDataTable', {
             id: 'profiles',
             columns: [
-                column('id', 'ID'|trans, 'start', 'id'),
-                column('code', 'Code'|trans, 'start', 'code'),
+                column('id', 'ID'|trans, 'start', 'id', hideBelow: 'md'),
+                column('code', 'Code'|trans, 'start', 'code', hideBelow: 'lg'),
                 column('title', 'Title'|trans, 'start', 'title'),
                 column_actions('_actions', 'Actions'|trans),
             ],

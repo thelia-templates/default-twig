@@ -120,7 +120,7 @@
                     {{ component('BoDataTable', {
                         id: 'products-using',
                         columns: [
-                            column('id', 'ID'|trans),
+                            column('id', 'ID'|trans, hideBelow: 'md'),
                             column('ref', 'Reference'|trans),
                             column('title', 'Title'|trans),
                             column_actions(),
@@ -148,7 +148,7 @@
                     {{ component('BoDataTable', {
                         id: 'categories-defaulting',
                         columns: [
-                            column('id', 'ID'|trans),
+                            column('id', 'ID'|trans, hideBelow: 'md'),
                             column('title', 'Title'|trans),
                             column_actions(),
                         ],

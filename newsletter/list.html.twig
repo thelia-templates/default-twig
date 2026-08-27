@@ -26,12 +26,12 @@
         {{ component('BoDataTable', {
             id: 'newsletter',
             columns: [
-                column('id', 'ID'|trans, 'start', 'id'),
+                column('id', 'ID'|trans, 'start', 'id', hideBelow: 'md'),
                 column('email', 'Email'|trans, 'start', 'email'),
-                column('firstname', 'First name'|trans, 'start', 'firstname'),
-                column('lastname', 'Last name'|trans, 'start', 'lastname'),
-                column_html('locale', 'Locale'|trans, 'center'),
-                column('created_at', 'Subscribed on'|trans, 'start', 'created_at'),
+                column('firstname', 'First name'|trans, 'start', 'firstname', hideBelow: 'xl'),
+                column('lastname', 'Last name'|trans, 'start', 'lastname', hideBelow: 'lg'),
+                column_html('locale', 'Locale'|trans, 'center', hideBelow: 'lg'),
+                column('created_at', 'Subscribed on'|trans, 'start', 'created_at', hideBelow: 'lg'),
                 column_actions('_actions', 'Actions'|trans),
             ],
             rows: rows,

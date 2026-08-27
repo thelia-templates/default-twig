@@ -27,11 +27,11 @@
         {{ component('BoDataTable', {
             id: 'customer-titles',
             columns: [
-                column('id', 'ID'|trans, 'start', 'id'),
+                column('id', 'ID'|trans, 'start', 'id', hideBelow: 'md'),
                 column('short', 'Short'|trans, 'start', 'short'),
                 column('long', 'Long'|trans, 'start', 'long'),
                 column_badge('default', 'Default'|trans, { yes: 'success' }, 'start', 'default_label'),
-                column('position', 'Position'|trans, 'center', 'position'),
+                column('position', 'Position'|trans, 'center', 'position', hideBelow: 'lg'),
                 column_actions('_actions', 'Actions'|trans),
             ],
             rows: rows,

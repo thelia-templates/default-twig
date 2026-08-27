@@ -8,8 +8,8 @@
     </div>
     {% set columns = [
         column_html('date',     'Date'|trans),
-        column('admin',         'Admin'|trans),
-        column_html('resource', 'Resource'|trans),
+        column('admin',         'Admin'|trans, hideBelow: 'lg'),
+        column_html('resource', 'Resource'|trans, hideBelow: 'lg'),
         column('message',       'Message'|trans),
     ] %}
     {% set rows = [] %}

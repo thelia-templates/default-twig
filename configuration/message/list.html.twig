@@ -29,9 +29,9 @@
         {{ component('BoDataTable', {
             id: 'messages',
             columns: [
-                column('id', 'ID'|trans, 'start', 'id'),
+                column('id', 'ID'|trans, 'start', 'id', hideBelow: 'md'),
                 column('title', 'Purpose'|trans, 'start', 'title'),
-                column('name', 'Name'|trans, 'start', 'name'),
+                column('name', 'Name'|trans, 'start', 'name', hideBelow: 'lg'),
                 column_badge('secured_label', 'Type'|trans, { System: 'warning', User: 'info' }, 'start', null, null, 'secured'),
                 column_actions('_actions', 'Actions'|trans),
             ],

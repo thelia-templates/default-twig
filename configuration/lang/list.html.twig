@@ -30,10 +30,10 @@
         {{ component('BoDataTable', {
             id: 'languages',
             columns: [
-                column('id', 'ID'|trans, 'start', 'id'),
+                column('id', 'ID'|trans, 'start', 'id', hideBelow: 'md'),
                 column('title', 'Language name'|trans, 'start', 'title'),
                 column('code', 'ISO 639 Code'|trans, 'start', 'code'),
-                column('locale', 'Locale'|trans, 'start', 'locale'),
+                column('locale', 'Locale'|trans, 'start', 'locale', hideBelow: 'lg'),
                 column_toggle('visible', 'Visible in front'|trans, 'toggle_visible_url'),
                 column_toggle('active', 'Active'|trans, 'toggle_active_url'),
                 column_radio('default', 'Default'|trans, 'lang_default', 'id', 'default', null, 'toggle_default_url'),
@@ -80,7 +80,7 @@
 
                         {% form_theme url_form with bo_form_themes only %}
                         {{ form_start(url_form, { action: path('admin.configuration.languages.updateUrl'), method: 'post', attr: { 'data-testid': 'lang-url-form' } }) }}
-                            <table class="table table-sm align-middle">
+                            <table class="table table-sm bo-table-wrap align-middle">
                                 <tbody>
                                     {% for field in url_form|filter(field => field.vars.name starts with lang_url_prefix) %}
                                         <tr>

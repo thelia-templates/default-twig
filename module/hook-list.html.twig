@@ -184,9 +184,9 @@
                     id: 'hook-modules-' ~ group.id,
                     columns: [
                         column_html('module_html', 'Module'|trans),
-                        column_html('class_html', 'Class'|trans ~ ' / ' ~ 'Method'|trans),
+                        column_html('class_html', 'Class'|trans ~ ' / ' ~ 'Method'|trans, hideBelow: 'lg'),
                         column_html('active_html', 'Active'|trans, 'center'),
-                        column('position', 'Position'|trans, 'center'),
+                        column('position', 'Position'|trans, 'center', hideBelow: 'lg'),
                         column_actions('_actions', 'Actions'|trans),
                     ],
                     rows: hook_rows,

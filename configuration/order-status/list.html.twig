@@ -29,12 +29,12 @@
         {{ component('BoDataTable', {
             id: 'order-statuses',
             columns: [
-                column('id', 'ID'|trans, 'start', 'id'),
+                column('id', 'ID'|trans, 'start', 'id', hideBelow: 'md'),
                 column('title', 'Title'|trans, 'start', 'title'),
-                column('code', 'Code'|trans, 'start', 'code'),
+                column('code', 'Code'|trans, 'start', 'code', hideBelow: 'lg'),
                 column_html('color_html', 'Color'|trans, 'center'),
-                column_html('orders_html', 'Orders'|trans, 'center'),
-                column('position', 'Position'|trans, 'center', 'position'),
+                column_html('orders_html', 'Orders'|trans, 'center', hideBelow: 'lg'),
+                column('position', 'Position'|trans, 'center', 'position', hideBelow: 'lg'),
                 column_actions('_actions', 'Actions'|trans),
             ],
             rows: rows,

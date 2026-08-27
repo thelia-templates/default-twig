@@ -44,10 +44,10 @@
         {{ component('BoDataTable', {
             id: 'states',
             columns: [
-                column('id', 'ID'|trans, 'start', 'id'),
+                column('id', 'ID'|trans, 'start', 'id', hideBelow: 'md'),
                 column('title', 'State'|trans, 'start', 'title'),
-                column('isocode', 'ISO'|trans, 'center', 'iso_code'),
-                column('country', 'Country'|trans),
+                column('isocode', 'ISO'|trans, 'center', 'iso_code', hideBelow: 'lg'),
+                column('country', 'Country'|trans, hideBelow: 'lg'),
                 column_toggle('visible', 'Online'|trans, 'toggle_visible_url'),
                 column_actions('_actions', 'Actions'|trans),
             ],
