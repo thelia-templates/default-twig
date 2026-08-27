@@ -44,6 +44,12 @@
 
             {{ safe_hook('main.topbar-top') }}
 
+            {# The running Thelia version, readable from every back-office page.
+               Hidden below md, where the bar has no room left for it. #}
+            <li class="nav-item d-none d-md-flex align-items-center">
+                <span class="bo-top-nav__version" title="{{ 'Version'|trans }}" data-testid="bo-thelia-version">v{{ thelia_version }}</span>
+            </li>
+
             <li class="nav-item dropdown" data-testid="bo-top-nav-langs">
                 <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="{{ 'Interface language'|trans }}">
                     <img src="{{ asset('backoffice/img/svgFlags/' ~ current_lang.code ~ '.svg') }}" alt="{{ current_lang.title }}" class="bo-top-nav__flag" width="22" height="14">

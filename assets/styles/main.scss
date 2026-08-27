@@ -38,6 +38,14 @@ $bo-side-nav-hover-bg: rgba(255, 255, 255, .07);
         width: auto;
     }
 
+    &__version {
+        padding-inline: .5rem;
+        color: var(--bs-tertiary-color);
+        font-size: .75rem;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+
     &__flag {
         object-fit: cover;
         border-radius: 2px;
@@ -1014,6 +1022,15 @@ button.btn {
 .bo-auth__subtitle {
     margin-bottom: 0;
     color: var(--bs-secondary-color);
+}
+
+// The login page has no top bar, so it carries the running version itself.
+.bo-auth__version {
+    margin: 1.5rem 0 0;
+    color: var(--bs-tertiary-color);
+    font-size: .75rem;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
 }
 
 // Sortable rows (drag-and-drop reorder)
