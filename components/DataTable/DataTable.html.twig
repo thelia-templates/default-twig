@@ -17,30 +17,42 @@
 
     {% if sortBp %}
         {# Mirrors the per-column <th> sort links below: below sortBp, a sortable column's <th> may
-           be hidden (visibleFrom), taking its sort link down with it - this <select> is the only
-           way left to change the sort. Lists every sortable column (not just the hidden ones) so
-           the control's content stays stable across widths instead of changing on resize. #}
-        <div class="bo-datatable__sort-fallback d-{{ sortBp }}-none p-2 border-bottom" data-testid="datatable-{{ id }}-sort-fallback">
-            <label for="datatable-{{ id }}-sort-select" class="visually-hidden">{{ 'Sort by'|trans }}</label>
-            <select id="datatable-{{ id }}-sort-select"
-                    class="form-select form-select-sm"
-                    data-controller="bo-datatable-sort"
-                    data-action="change->bo-datatable-sort#navigate"
-                    data-testid="datatable-{{ id }}-sort-select">
-                {% for column in columns %}
-                    {% if column.sortKey %}
-                        {% set ascParams = sortKeepParams|merge({ (sortParam): column.sortKey, (sortDirectionParam): 'asc' }) %}
-                        {% set descParams = sortKeepParams|merge({ (sortParam): column.sortKey, (sortDirectionParam): 'desc' }) %}
-                        <option value="{{ sort_base_url }}?{{ ascParams|url_encode }}"{{ sortField == column.sortKey and sortDirection == 'asc' ? ' selected' : '' }}>
-                            {{ 'Sort by %column% (ascending)'|trans({ '%column%': column.label }) }}
-                        </option>
-                        <option value="{{ sort_base_url }}?{{ descParams|url_encode }}"{{ sortField == column.sortKey and sortDirection == 'desc' ? ' selected' : '' }}>
-                            {{ 'Sort by %column% (descending)'|trans({ '%column%': column.label }) }}
-                        </option>
+           be hidden (visibleFrom), taking its sort link down with it - this form is the only way
+           left to change the sort. Lists every sortable column (not just the hidden ones) so the
+           control's content stays stable across widths instead of changing on resize. A plain GET
+           form (no JS navigation on change) so it works identically to the <th> links it replaces:
+           other query params (filters, current sort) are carried as hidden inputs. #}
+        <form method="get" action="{{ sort_base_url }}" class="bo-datatable__sort-fallback d-{{ sortBp }}-none p-2 border-bottom d-flex flex-wrap align-items-end gap-2" data-testid="datatable-{{ id }}-sort-fallback">
+            {% for param, value in sortKeepParams %}
+                {% if param != sortParam and param != sortDirectionParam and value is not null and value != '' %}
+                    {% if value is iterable %}
+                        {% for v in value %}
+                            <input type="hidden" name="{{ param }}[]" value="{{ v }}">
+                        {% endfor %}
+                    {% else %}
+                        <input type="hidden" name="{{ param }}" value="{{ value }}">
                     {% endif %}
-                {% endfor %}
-            </select>
-        </div>
+                {% endif %}
+            {% endfor %}
+            <div>
+                <label for="datatable-{{ id }}-sort-column" class="visually-hidden">{{ 'Sort by'|trans }}</label>
+                <select id="datatable-{{ id }}-sort-column" name="{{ sortParam }}" class="form-select form-select-sm" data-testid="datatable-{{ id }}-sort-column">
+                    {% for column in columns %}
+                        {% if column.sortKey %}
+                            <option value="{{ column.sortKey }}"{{ sortField == column.sortKey ? ' selected' : '' }}>{{ column.label }}</option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="datatable-{{ id }}-sort-direction" class="visually-hidden">{{ 'Direction'|trans }}</label>
+                <select id="datatable-{{ id }}-sort-direction" name="{{ sortDirectionParam }}" class="form-select form-select-sm" data-testid="datatable-{{ id }}-sort-direction">
+                    <option value="asc"{{ sortDirection == 'asc' ? ' selected' : '' }}>{{ 'Ascending'|trans }}</option>
+                    <option value="desc"{{ sortDirection == 'desc' ? ' selected' : '' }}>{{ 'Descending'|trans }}</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-outline-secondary btn-sm" data-testid="datatable-{{ id }}-sort-submit">{{ 'Sort'|trans }}</button>
+        </form>
     {% endif %}
 
     <div class="table-responsive" role="region" tabindex="0"{% if caption %} aria-label="{{ caption }}"{% endif %}>
