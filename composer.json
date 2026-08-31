@@ -23,7 +23,6 @@
         "thelia/free-order-module": "^3.0",
         "thelia/tiptap-module": "^1.0",
         "thelia/twig-engine-module": "^1.0",
-        "thelia/virtual-product-control-module": "^2.6",
         "thelia/virtual-product-delivery-module": "^3.0",
         "twbs/bootstrap": "^5.3.8",
         "twbs/bootstrap-icons": "^1.13"
