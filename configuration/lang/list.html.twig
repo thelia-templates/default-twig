@@ -30,12 +30,12 @@
         {{ component('BoDataTable', {
             id: 'languages',
             columns: [
-                column('id', 'ID'|trans, 'start', 'id'),
+                column('id', 'ID'|trans, 'start', 'id', visibleFrom: 'lg'),
                 column('title', 'Language name'|trans, 'start', 'title'),
                 column('code', 'ISO 639 Code'|trans, 'start', 'code'),
-                column('locale', 'Locale'|trans, 'start', 'locale'),
-                column_toggle('visible', 'Visible in front'|trans, 'toggle_visible_url'),
-                column_toggle('active', 'Active'|trans, 'toggle_active_url'),
+                column('locale', 'Locale'|trans, 'start', 'locale', visibleFrom: 'lg'),
+                column_toggle('visible', 'Visible in front'|trans, 'toggle_visible_url', visibleFrom: 'md'),
+                column_toggle('active', 'Active'|trans, 'toggle_active_url', visibleFrom: 'md'),
                 column_radio('default', 'Default'|trans, 'lang_default', 'id', 'default', null, 'toggle_default_url'),
                 column_actions('_actions', 'Actions'|trans),
             ],

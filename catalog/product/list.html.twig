@@ -259,19 +259,22 @@
 
         {{ safe_hook('products.caption', { location: 'product_list_caption' }) }}
 
+        {#- id/position aren't in the ticket's column table for this screen (absent from its
+            9-column list); kept at the same 'lg' tier the ticket gives id/position on every other
+            screen that has them, per dev decision. -#}
         {{ component('BoDataTable', {
             id: 'products',
             columns: [
                 column_select('_select', 'Select this product'|trans, 'id', 'ref'),
-                column('id', 'ID'|trans),
+                column('id', 'ID'|trans, visibleFrom: 'lg'),
                 column_html('thumbnail_html', 'Image'|trans, 'center'),
-                column_html('ref_html', 'Reference'|trans, 'start', 'ref'),
+                column_html('ref_html', 'Reference'|trans, 'start', 'ref', visibleFrom: 'md'),
                 column_html('title_html', 'Title'|trans, 'start', 'title'),
                 column_html('price_html', 'Price'|trans, 'end', 'price'),
-                column_html('promo_price_html', 'Sale price'|trans, 'end'),
-                column_html('stock_html', 'Stock'|trans, 'center', 'quantity'),
-                column_toggle('visible', 'Online'|trans, 'toggle_visible_url'),
-                column('position', 'Position'|trans, 'center'),
+                column_html('promo_price_html', 'Sale price'|trans, 'end', visibleFrom: 'lg'),
+                column_html('stock_html', 'Stock'|trans, 'center', 'quantity', visibleFrom: 'lg'),
+                column_toggle('visible', 'Online'|trans, 'toggle_visible_url', visibleFrom: 'md'),
+                column('position', 'Position'|trans, 'center', visibleFrom: 'lg'),
                 column_actions('_actions', 'Actions'|trans),
             ],
             rows: rows,
