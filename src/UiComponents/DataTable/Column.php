@@ -35,6 +35,8 @@ final readonly class Column
      * @param string               $visibleFrom Smallest Bootstrap breakpoint at which this column is shown in the main
      *                                          table, one of self::BREAKPOINT_ORDER. 'always' (default) never hides it;
      *                                          below its breakpoint the column moves into the row's detail line instead.
+     *                                          Do not use on an ACTIONS column: the detail line renders it inside a
+     *                                          <dl> definition, where its button group has no room to sit correctly.
      *
      * @throws \InvalidArgumentException if $visibleFrom is not one of self::BREAKPOINT_ORDER
      */
