@@ -1708,6 +1708,7 @@ tr.bo-order-row--urgent {
     color: var(--bs-body-color);
     font-size: 0.85rem;
     line-height: 1.4;
+    white-space: nowrap;
     transition: all 0.12s ease;
 
     &:hover {
@@ -1835,6 +1836,7 @@ tr.bo-order-row--urgent {
     color: var(--bs-body-color);
     font-size: 0.85rem;
     line-height: 1.4;
+    white-space: nowrap;
     transition: all 0.12s ease;
 
     &:hover {
