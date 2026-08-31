@@ -28,10 +28,14 @@
                 {% endif %}
             </li>
             {% for n in this.pages %}
+                {#- Entries two pages away from the current one only exist because of the
+                    default window of 2; below md they collapse to a window of 1 by hiding
+                    them in CSS rather than duplicating the bar or changing the window. -#}
+                {% set farFromCurrent = n is not null and (n - currentPage)|abs == 2 %}
                 {% if n is null %}
-                    <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+                    <li class="page-item disabled{% if farFromCurrent %} d-none d-md-inline-block{% endif %}"><span class="page-link">&hellip;</span></li>
                 {% else %}
-                    <li class="page-item{% if n == currentPage %} active{% endif %}"{% if n == currentPage %} aria-current="page"{% endif %}>
+                    <li class="page-item{% if n == currentPage %} active{% endif %}{% if farFromCurrent %} d-none d-md-inline-block{% endif %}"{% if n == currentPage %} aria-current="page"{% endif %}>
                         <a class="page-link" href="{{ path(route, this.linkParams(n)) }}">{{ n }}</a>
                     </li>
                 {% endif %}
