@@ -84,7 +84,10 @@ final class AdministratorController
             access: AccessManager::CREATE,
             form: $form,
             eventName: TheliaEvents::ADMINISTRATOR_CREATE,
-            eventFactory: static function (FormInterface $validated): AdministratorEvent {
+            eventFactory: function (FormInterface $validated): AdministratorEvent {
+                $profileId = $validated->get('profile')->getData() ?: null;
+                $this->assertProfileAssignable($profileId);
+
                 $event = new AdministratorEvent();
                 $event
                     ->setLogin((string) $validated->get('login')->getData())
@@ -92,7 +95,7 @@ final class AdministratorController
                     ->setLastname((string) $validated->get('lastname')->getData())
                     ->setEmail((string) $validated->get('email')->getData())
                     ->setPassword((string) $validated->get('password')->getData())
-                    ->setProfile($validated->get('profile')->getData() ?: null)
+                    ->setProfile($profileId)
                     ->setLocale((string) $validated->get('locale')->getData());
 
                 return $event;
@@ -126,16 +129,20 @@ final class AdministratorController
             access: AccessManager::UPDATE,
             form: $form,
             eventName: TheliaEvents::ADMINISTRATOR_UPDATE,
-            eventFactory: static function (FormInterface $validated): AdministratorEvent {
+            eventFactory: function (FormInterface $validated): AdministratorEvent {
+                $administratorId = (int) $validated->get('id')->getData();
+                $profileId = $validated->get('profile')->getData() ?: null;
+                $this->assertProfileAssignable($profileId, AdminQuery::create()->findPk($administratorId));
+
                 $event = new AdministratorEvent();
                 $event
-                    ->setId((int) $validated->get('id')->getData())
+                    ->setId($administratorId)
                     ->setLogin((string) $validated->get('login')->getData())
                     ->setFirstname((string) $validated->get('firstname')->getData())
                     ->setLastname((string) $validated->get('lastname')->getData())
                     ->setEmail((string) $validated->get('email')->getData())
                     ->setPassword((string) ($validated->get('password')->getData() ?? ''))
-                    ->setProfile($validated->get('profile')->getData() ?: null)
+                    ->setProfile($profileId)
                     ->setLocale((string) $validated->get('locale')->getData());
 
                 return $event;
@@ -347,6 +354,37 @@ final class AdministratorController
         $defaultLang = \Thelia\Model\LangQuery::create()->findOneByByDefault(1);
 
         return $defaultLang?->getLocale() ?? 'en_US';
+    }
+
+    /**
+     * A profile is a ceiling: an administrator who has one manages accounts within it.
+     * The superadministrator profile (no profile row) is above every ceiling, so only a
+     * superadministrator may grant it, edit an account that holds it, or move their own
+     * account to another profile.
+     */
+    private function assertProfileAssignable(?int $profileId, ?Admin $target = null): void
+    {
+        $current = $this->securityContext->getAdminUser();
+
+        if (!$current instanceof Admin || null === $current->getProfileId()) {
+            return;
+        }
+
+        if (null === $profileId) {
+            throw new \RuntimeException($this->translator->trans('Only a superadministrator can grant the superadministrator profile.'));
+        }
+
+        if (!$target instanceof Admin) {
+            return;
+        }
+
+        if (null === $target->getProfileId()) {
+            throw new \RuntimeException($this->translator->trans('Only a superadministrator can edit a superadministrator account.'));
+        }
+
+        if ((int) $target->getId() === (int) $current->getId() && $profileId !== (int) $current->getProfileId()) {
+            throw new \RuntimeException($this->translator->trans('You cannot change the profile of your own account.'));
+        }
     }
 
     private function currentAdminId(): ?int
