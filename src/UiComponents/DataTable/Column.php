@@ -38,7 +38,7 @@ final readonly class Column
      *                                          Do not use on an ACTIONS column: the detail line renders it inside a
      *                                          <dl> definition, where its button group has no room to sit correctly.
      *
-     * @throws \InvalidArgumentException if $visibleFrom is not one of self::BREAKPOINT_ORDER
+     * @throws \InvalidArgumentException if $visibleFrom is not one of self::BREAKPOINT_ORDER, or is combined with ColumnKind::ACTIONS
      */
     public function __construct(
         public string $key,
@@ -50,6 +50,13 @@ final readonly class Column
         public string $visibleFrom = 'always',
     ) {
         self::breakpointRank($this->visibleFrom);
+
+        if ($this->kind === ColumnKind::ACTIONS && $this->visibleFrom !== 'always') {
+            throw new \InvalidArgumentException(sprintf(
+                'Column "%s" is ACTIONS: visibleFrom must stay "always", the detail row cannot host an action button group.',
+                $this->key,
+            ));
+        }
     }
 
     /**

@@ -53,6 +53,7 @@
             sortField: sort_field,
             sortDirection: sort_direction,
             sortKeepParams: { page: current_page > 1 ? current_page : null },
+            rowIdentifierKey: 'code',
         }) }}
 
         {{ component('BoPagination', {

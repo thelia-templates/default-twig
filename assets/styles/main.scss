@@ -690,6 +690,26 @@ td.bo-datatable__details-col {
     background-color: var(--bs-tertiary-bg);
 }
 
+// Bootstrap's own .table-striped rule (imported above, can't touch it) counts every <tr> by
+// raw position, including the (hidden-by-default) detail row the toggle reveals - a data row's
+// position is always odd regardless of its own record number (record, detail, record, detail,
+// ...), so Bootstrap's rule alone stripes every data row, flattening the alternation. Both
+// rules below share its specificity pattern (one extra class from the ":not(...)" argument of
+// "of S" beats Bootstrap's plain :nth-of-type(2n+1)), so together they override it in both
+// directions: stripe the data rows whose *record* number is odd, and explicitly reset the ones
+// Bootstrap's rule wrongly still stripes. The "of S" filter (CSS Selectors 4) only exists on
+// :nth-child(), not :nth-of-type() - inside <tbody> every child is already a <tr>, so both count
+// the same set of siblings here.
+.table-striped > tbody > tr:nth-child(odd of :not(.bo-datatable__details)) > * {
+    --bs-table-color-type: var(--bs-table-striped-color);
+    --bs-table-bg-type: var(--bs-table-striped-bg);
+}
+
+.table-striped > tbody > tr:nth-child(even of :not(.bo-datatable__details)) > * {
+    --bs-table-color-type: initial;
+    --bs-table-bg-type: initial;
+}
+
 // Wrapping row of label/value blocks (label above value) instead of
 // Bootstrap's row/col-*, which left a wide, fixed-width gap between a short
 // label and its value regardless of the label's actual length. A flex row
@@ -705,6 +725,12 @@ td.bo-datatable__details-col {
 
 .bo-datatable__details-item {
     flex: 0 0 auto;
+    // Overrides the .table > tbody > tr > td nowrap rule above: that rule exists to keep a
+    // normal row's cells on one line, but it also reaches this row's <dl> through its
+    // colspan'd <td>, and a long value (an address, a customer name) can't wrap - overflowing
+    // the grid the toggle controller pins to the viewport's width, exactly the horizontal
+    // scroll this row exists to avoid.
+    min-width: 0;
     dt {
         font-size: .8rem;
         font-weight: 600;
@@ -714,6 +740,8 @@ td.bo-datatable__details-col {
 
     dd {
         margin-bottom: 0;
+        white-space: normal;
+        overflow-wrap: anywhere;
     }
 }
 

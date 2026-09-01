@@ -6,7 +6,7 @@
 {% if href %}
     <a href="{{ href }}"
        class="bo-toggle"
-       data-testid="datatable-{{ column.key }}-toggle"
+       data-testid="datatable-{{ column.key }}-toggle{{ idSuffix|default('') }}"
        data-state="{{ state }}"
        aria-pressed="{{ value ? 'true' : 'false' }}"
        aria-label="{{ column.label }}">

@@ -124,7 +124,10 @@
                         {{ safe_hook(extraColumnsHook ?? ((hook ?: id) ~ '.table-row'), row_hook_context) }}
                     </tr>
                     {% if maxBp %}
-                        <tr class="bo-datatable__details" hidden id="{{ detail_id }}" data-testid="datatable-{{ id }}-details">
+                        {#- d-{{ maxBp }}-none mirrors the toggle button/cell above: without it, a
+                            row expanded below maxBp stays expanded (and unclosable, its toggle
+                            being hidden) once the viewport grows past maxBp. -#}
+                        <tr class="bo-datatable__details d-{{ maxBp }}-none" hidden id="{{ detail_id }}" data-testid="datatable-{{ id }}-details">
                             <td colspan="{{ colCount }}">
                                 <dl class="bo-datatable__details-grid mb-0">
                                     {% for column in columns %}
@@ -132,10 +135,13 @@
                                             <div class="bo-datatable__details-item d-{{ column.visibleFrom }}-none">
                                                 <dt>{{ column.label }}</dt>
                                                 <dd>
+                                                    {# idSuffix keeps ids/data-testid unique: this cell is a second
+                                                       rendering of the same column/row pair as the one above. #}
                                                     {% include '@BackOfficeDefaultTwig/components/DataTable/cells/' ~ column.kind.value ~ '.html.twig' with {
                                                         column: column,
                                                         row: row,
                                                         value: row[column.key]|default(null),
+                                                        idSuffix: '-detail',
                                                     } only %}
                                                 </dd>
                                             </div>
