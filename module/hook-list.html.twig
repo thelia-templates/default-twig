@@ -19,7 +19,7 @@
          data-bo-module-hooks-methods-url-value="{{ methods_url_template }}">
     <div class="container-fluid" data-testid="module-hooks-page">
 
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
             <h1 class="h3 mb-0">{{ 'Module hooks management'|trans }}</h1>
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#module-hook-create-modal" data-testid="module-hook-add-btn">
                 <i class="bi bi-plus-circle" aria-hidden="true"></i> {{ 'Add a module to a hook'|trans }}
@@ -88,7 +88,7 @@
                         {% if group.block %}<span class="badge bg-info">{{ 'Block'|trans }}</span>{% endif %}
                         {% if group.by_module %}<span class="badge bg-light text-dark border">{{ 'By module'|trans }}</span>{% endif %}
                     </div>
-                    <div class="d-flex gap-1">
+                    <div class="d-flex flex-wrap gap-1">
                         {% if not group.by_module %}
                             <button type="button" class="btn btn-sm btn-outline-primary"
                                     data-bs-toggle="modal" data-bs-target="#module-hook-create-modal"
@@ -184,9 +184,9 @@
                     id: 'hook-modules-' ~ group.id,
                     columns: [
                         column_html('module_html', 'Module'|trans),
-                        column_html('class_html', 'Class'|trans ~ ' / ' ~ 'Method'|trans),
+                        column_html('class_html', 'Class'|trans ~ ' / ' ~ 'Method'|trans, hideBelow: 'lg'),
                         column_html('active_html', 'Active'|trans, 'center'),
-                        column('position', 'Position'|trans, 'center'),
+                        column('position', 'Position'|trans, 'center', hideBelow: 'lg'),
                         column_actions('_actions', 'Actions'|trans),
                     ],
                     rows: hook_rows,

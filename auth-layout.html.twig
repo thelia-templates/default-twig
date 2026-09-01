@@ -48,6 +48,8 @@
                     {% block flash %}{{ parent() }}{% endblock %}
 
                     {% block auth_content %}{% endblock %}
+
+                    <p class="bo-auth__version" title="{{ 'Version'|trans }}" data-testid="bo-thelia-version">Thelia {{ thelia_version }}</p>
                 </div>
             </section>
         </div>

@@ -18,9 +18,9 @@
     {{ safe_hook('attribute-edit.top', { attribute_id: attribute.id }) }}
 
     <div class="container-fluid" data-testid="attribute-edit-page">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
             <h1 class="h3 mb-0">{{ 'Attribute'|trans }} <small class="text-muted">#{{ attribute.id }}</small></h1>
-            <div class="d-flex gap-2">
+            <div class="d-flex flex-wrap gap-2">
                 <a href="{{ path('admin.configuration.attributes.add-to-all', { attribute_id: attribute.id }) }}?_token={{ assignToken() }}" class="btn btn-outline-secondary" data-testid="attribute-add-to-all">
                     <i class="bi bi-plus-square" aria-hidden="true"></i> {{ 'Add to all templates'|trans }}
                 </a>
@@ -77,12 +77,13 @@
 
             <div class="col-md-5">
                 <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="card-header d-flex flex-wrap gap-2 justify-content-between align-items-center">
                         <span>{{ 'Values'|trans }}</span>
                         <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#attribute-av-create-modal" data-testid="attributeav-create-button">
                             <i class="bi bi-plus" aria-hidden="true"></i> {{ 'Add'|trans }}
                         </button>
                     </div>
+                    <div class="table-responsive">
                     <table class="table mb-0" data-testid="attributeav-table">
                         <thead>
                             <tr>
@@ -123,6 +124,7 @@
                             {% endfor %}
                         </tbody>
                     </table>
+                    </div>
                 </div>
             </div>
         </div>

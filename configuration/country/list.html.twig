@@ -17,7 +17,7 @@
     {{ safe_hook('countries.top') }}
 
     <div class="container-fluid" data-testid="countries-page">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
             <h1 class="h3 mb-0">{{ 'Countries'|trans }}</h1>
             {% if is_granted('CREATE', 'admin.configuration.country') %}
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#country-create-modal" data-testid="country-create-button">
@@ -36,12 +36,12 @@
         {{ component('BoDataTable', {
             id: 'countries',
             columns: [
-                column('id', 'ID'|trans, 'start', 'id', visibleFrom: 'lg'),
+                column('id', 'ID'|trans, 'start', 'id', visibleFrom: 'md'),
                 column('title', 'Country'|trans, 'start', 'title'),
                 column('isoalpha2', 'ISO-2'|trans, 'center', 'iso_alpha2'),
                 column('isoalpha3', 'ISO-3'|trans, 'center', 'iso_alpha3', visibleFrom: 'lg'),
-                column('isocode', 'Numeric'|trans, 'center', 'iso_code', visibleFrom: 'lg'),
-                column_html('shipping_zones_html', 'Shipping zone'|trans, 'start', visibleFrom: 'md'),
+                column('isocode', 'Numeric'|trans, 'center', 'iso_code', visibleFrom: 'xl'),
+                column_html('shipping_zones_html', 'Shipping zone'|trans, 'start', visibleFrom: 'lg'),
                 column_toggle('visible', 'Online'|trans, 'toggle_visible_url'),
                 column_radio('default', 'Default'|trans, 'country_default', 'id', 'default', null, 'toggle_default_url', visibleFrom: 'md'),
                 column_actions('_actions', 'Actions'|trans),

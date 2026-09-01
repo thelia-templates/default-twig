@@ -31,11 +31,11 @@
         {{ component('BoDataTable', {
             id: 'brands',
             columns: [
-                column('id', 'ID'|trans, 'start', 'id'),
-                column_html('thumbnail_html', 'Image'|trans, 'center'),
+                column('id', 'ID'|trans, 'start', 'id', hideBelow: 'md'),
+                column_html('thumbnail_html', 'Image'|trans, 'center', hideBelow: 'md'),
                 column('title', 'Title'|trans, 'start', 'title'),
                 column_toggle('visible', 'Online'|trans, 'toggle_visible_url', 'center', 'bi-check-circle-fill text-success', 'bi-circle text-secondary', 'visible'),
-                column('position', 'Position'|trans, 'center', 'position'),
+                column('position', 'Position'|trans, 'center', 'position', hideBelow: 'lg'),
                 column_actions('_actions', 'Actions'|trans),
             ],
             rows: rows,

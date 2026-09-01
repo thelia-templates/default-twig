@@ -40,14 +40,14 @@ final class DataTableExtension extends AbstractExtension
         ];
     }
 
-    public function textColumn(string $key, string $label, string $cellAlign = 'start', ?string $sortKey = null, string $visibleFrom = 'always'): Column
+    public function textColumn(string $key, string $label, string $cellAlign = 'start', ?string $sortKey = null, ?string $hideBelow = null, string $visibleFrom = 'always'): Column
     {
-        return new Column($key, $label, ColumnKind::TEXT, $cellAlign, sortKey: $sortKey, visibleFrom: $visibleFrom);
+        return new Column($key, $label, ColumnKind::TEXT, $cellAlign, sortKey: $sortKey, hideBelow: $hideBelow, visibleFrom: $visibleFrom);
     }
 
-    public function htmlColumn(string $key, string $label, string $cellAlign = 'start', ?string $sortKey = null, string $visibleFrom = 'always'): Column
+    public function htmlColumn(string $key, string $label, string $cellAlign = 'start', ?string $sortKey = null, ?string $hideBelow = null, string $visibleFrom = 'always'): Column
     {
-        return new Column($key, $label, ColumnKind::HTML, $cellAlign, sortKey: $sortKey, visibleFrom: $visibleFrom);
+        return new Column($key, $label, ColumnKind::HTML, $cellAlign, sortKey: $sortKey, hideBelow: $hideBelow, visibleFrom: $visibleFrom);
     }
 
     /**
@@ -59,6 +59,7 @@ final class DataTableExtension extends AbstractExtension
         string $label = 'Select',
         string $valueKey = 'id',
         ?string $labelKey = null,
+        ?string $hideBelow = null,
         string $visibleFrom = 'always',
     ): Column {
         return new Column(
@@ -67,6 +68,7 @@ final class DataTableExtension extends AbstractExtension
             ColumnKind::SELECT,
             'center',
             ['value_key' => $valueKey, 'label_key' => $labelKey],
+            hideBelow: $hideBelow,
             visibleFrom: $visibleFrom,
         );
     }
@@ -79,6 +81,7 @@ final class DataTableExtension extends AbstractExtension
         string $iconOn = 'bi-check-circle-fill text-success',
         string $iconOff = 'bi-circle text-secondary',
         ?string $sortKey = null,
+        ?string $hideBelow = null,
         string $visibleFrom = 'always',
     ): Column {
         return new Column(
@@ -88,6 +91,7 @@ final class DataTableExtension extends AbstractExtension
             $cellAlign,
             ['url_key' => $urlKey, 'icon_on' => $iconOn, 'icon_off' => $iconOff],
             $sortKey,
+            $hideBelow,
             $visibleFrom,
         );
     }
@@ -95,7 +99,7 @@ final class DataTableExtension extends AbstractExtension
     /**
      * @param array<scalar, string> $variants
      */
-    public function badgeColumn(string $key, string $label, array $variants = [], string $cellAlign = 'start', ?string $labelKey = null, ?string $colorKey = null, ?string $sortKey = null, string $visibleFrom = 'always'): Column
+    public function badgeColumn(string $key, string $label, array $variants = [], string $cellAlign = 'start', ?string $labelKey = null, ?string $colorKey = null, ?string $sortKey = null, ?string $hideBelow = null, string $visibleFrom = 'always'): Column
     {
         return new Column(
             $key,
@@ -104,6 +108,7 @@ final class DataTableExtension extends AbstractExtension
             $cellAlign,
             ['variants' => $variants, 'label_key' => $labelKey, 'color_key' => $colorKey],
             $sortKey,
+            $hideBelow,
             $visibleFrom,
         );
     }
@@ -122,6 +127,7 @@ final class DataTableExtension extends AbstractExtension
         ?string $labelKey = null,
         ?string $urlKey = null,
         string $cellAlign = 'center',
+        ?string $hideBelow = null,
         string $visibleFrom = 'always',
     ): Column {
         return new Column(
@@ -130,6 +136,7 @@ final class DataTableExtension extends AbstractExtension
             ColumnKind::RADIO,
             $cellAlign,
             ['name' => $name, 'value_key' => $valueKey, 'checked_when_key' => $checkedWhenKey, 'label_key' => $labelKey, 'url_key' => $urlKey],
+            hideBelow: $hideBelow,
             visibleFrom: $visibleFrom,
         );
     }

@@ -18,7 +18,7 @@
     {{ safe_hook('shipping-zones-edit.top', { delivery_module_id: delivery_module_id }) }}
 
     <div class="container-fluid" data-testid="shipping-zones-edit-page">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
             <h1 class="h3 mb-0">{{ 'Shipping configuration of delivery module "%title"'|trans({ '%title': module.title }) }}</h1>
             <a href="{{ path('admin.configuration.shipping-zones.default') }}" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-x-lg me-1" aria-hidden="true"></i>{{ 'Close'|trans }}

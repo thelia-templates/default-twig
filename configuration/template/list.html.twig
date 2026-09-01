@@ -17,7 +17,7 @@
     {{ safe_hook('templates.top') }}
 
     <div class="container-fluid" data-testid="templates-page">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
             <h1 class="h3 mb-0">{{ 'Product templates'|trans }}</h1>
             {% if is_granted('CREATE', 'admin.configuration.template') %}
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#template-create-modal" data-testid="template-create-button">
@@ -30,7 +30,7 @@
         {{ component('BoDataTable', {
             id: 'templates',
             columns: [
-                column('id', 'ID'|trans, 'start', 'id'),
+                column('id', 'ID'|trans, 'start', 'id', hideBelow: 'md'),
                 column('name', 'Name'|trans, 'start', 'name'),
                 column_actions('_actions', 'Actions'|trans),
             ],

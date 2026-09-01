@@ -11,9 +11,14 @@
 
 {{ safe_hook('main.before-topbar', { location: 'before_topbar' }) }}
 
-<nav class="bo-top-nav navbar navbar-expand-md bg-body border-bottom shadow-sm" data-testid="bo-top-nav">
-    <div class="container-fluid">
-        <button class="navbar-toggler border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#bo-side-nav-offcanvas" aria-controls="bo-side-nav-offcanvas" aria-label="{{ 'Toggle navigation'|trans }}">
+{# `navbar-expand` (no breakpoint) keeps the bar horizontal at every width: there
+   is no `.navbar-collapse` here, so a breakpoint-scoped expand class would only
+   stack the items into a column below that breakpoint. The sidebar toggler is
+   re-shown with `d-inline-flex`, which out-weighs the `display: none` that
+   `.navbar-expand` puts on `.navbar-toggler`. #}
+<nav class="bo-top-nav navbar navbar-expand bg-body border-bottom shadow-sm" data-testid="bo-top-nav">
+    <div class="container-fluid flex-nowrap">
+        <button class="navbar-toggler border-0 d-inline-flex d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#bo-side-nav-offcanvas" aria-controls="bo-side-nav-offcanvas" aria-label="{{ 'Toggle navigation'|trans }}">
             <i class="bi bi-list fs-3" aria-hidden="true"></i>
         </button>
 
@@ -26,8 +31,24 @@
             </form>
         {% endif %}
 
-        <ul class="navbar-nav ms-auto align-items-md-center">
+        <ul class="navbar-nav flex-row ms-auto align-items-center">
+            {% if is_granted('VIEW', 'admin.search') %}
+                {# Below md the search field is hidden, so the search page keeps its own entry point. #}
+                <li class="nav-item d-md-none">
+                    <a class="nav-link" href="/admin/search" title="{{ 'Search'|trans }}" data-testid="bo-top-nav-search">
+                        <i class="bi bi-search" aria-hidden="true"></i>
+                        <span class="visually-hidden">{{ 'Search'|trans }}</span>
+                    </a>
+                </li>
+            {% endif %}
+
             {{ safe_hook('main.topbar-top') }}
+
+            {# The running Thelia version, readable from every back-office page.
+               Hidden below md, where the bar has no room left for it. #}
+            <li class="nav-item d-none d-md-flex align-items-center">
+                <span class="bo-top-nav__version" title="{{ 'Version'|trans }}" data-testid="bo-thelia-version">v{{ thelia_version }}</span>
+            </li>
 
             <li class="nav-item dropdown" data-testid="bo-top-nav-langs">
                 <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="{{ 'Interface language'|trans }}">
@@ -49,7 +70,7 @@
             <li class="nav-item">
                 <a class="nav-link" href="/" title="{{ 'View site'|trans }}" target="_blank" rel="noopener" data-testid="bo-top-nav-view-site">
                     <i class="bi bi-eye" aria-hidden="true"></i>
-                    <span class="d-md-none ms-1">{{ 'View site'|trans }}</span>
+                    <span class="visually-hidden">{{ 'View site'|trans }}</span>
                 </a>
             </li>
             <li class="nav-item">
@@ -61,7 +82,7 @@
             <li class="nav-item">
                 <a class="nav-link text-danger" href="/admin/logout" title="{{ 'Logout'|trans }}" data-testid="bo-top-nav-logout">
                     <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
-                    <span class="d-md-none ms-1">{{ 'Logout'|trans }}</span>
+                    <span class="visually-hidden">{{ 'Logout'|trans }}</span>
                 </a>
             </li>
         </ul>

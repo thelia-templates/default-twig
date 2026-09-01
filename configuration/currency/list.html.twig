@@ -17,9 +17,9 @@
     {{ safe_hook('currencies.top') }}
 
     <div class="container-fluid" data-testid="currencies-page">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
             <h1 class="h3 mb-0">{{ 'Currencies management'|trans }}</h1>
-            <div class="d-flex gap-2">
+            <div class="d-flex flex-wrap gap-2">
                 {% if is_granted('UPDATE', 'admin.configuration.currency') %}
                     <form action="{{ path('admin.configuration.currencies.update-rates') }}" method="post" class="d-inline">
                         <button type="submit" class="btn btn-outline-secondary" data-testid="currency-update-rates-button">
@@ -47,12 +47,12 @@
         {{ component('BoDataTable', {
             id: 'currencies',
             columns: [
-                column('id', 'ID'|trans, 'start', 'id', visibleFrom: 'lg'),
+                column('id', 'ID'|trans, 'start', 'id', visibleFrom: 'md'),
                 column('name', 'Name'|trans, 'start', 'name'),
                 column('code', 'ISO 4217'|trans, 'start', 'code'),
                 column('symbol', 'Symbol'|trans, 'center', 'symbol', visibleFrom: 'lg'),
-                column('rate', 'Exchange rate'|trans, 'center', 'rate', visibleFrom: 'md'),
-                column_toggle('visible', 'Visible'|trans, 'toggle_visible_url', visibleFrom: 'md'),
+                column('rate', 'Exchange rate'|trans, 'center', 'rate', visibleFrom: 'lg'),
+                column_toggle('visible', 'Visible'|trans, 'toggle_visible_url'),
                 column_radio('default', 'Default'|trans, 'currency_default', 'id', 'default', null, 'toggle_default_url'),
                 column('position', 'Position'|trans, 'center', 'position', visibleFrom: 'lg'),
                 column_actions('_actions', 'Actions'|trans),

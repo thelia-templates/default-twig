@@ -39,7 +39,7 @@
                 id: 'taxes',
                 columns: [
                     column('title', 'Name'|trans, 'start', 'title'),
-                    column_html('description', 'Description'|trans),
+                    column_html('description', 'Description'|trans, hideBelow: 'lg'),
                     column_actions('_actions', 'Actions'|trans),
                 ],
                 rows: tax_rows,

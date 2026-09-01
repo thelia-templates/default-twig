@@ -17,7 +17,7 @@
     {{ safe_hook('shipping-configuration.top', { location: 'shipping_configuration_top' }) }}
 
     <div class="container-fluid" data-testid="shipping-configuration-page">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
             <h1 class="h3 mb-0">{{ 'Shipping zones management'|trans }}</h1>
             {% if is_granted('CREATE', 'admin.configuration.shipping-configuration') %}
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#shipping-configuration-create-modal" data-testid="shipping-configuration-create-btn">
@@ -29,10 +29,10 @@
         {{ component('BoDataTable', {
             id: 'shipping-configuration',
             columns: [
-                column('id', 'ID'|trans, 'start', 'id'),
+                column('id', 'ID'|trans, 'start', 'id', hideBelow: 'md'),
                 column('name', 'Zone name'|trans, 'start', 'name'),
-                column('countries', 'Included countries'|trans),
-                column('modules', 'Assigned modules'|trans),
+                column('countries', 'Included countries'|trans, hideBelow: 'lg'),
+                column('modules', 'Assigned modules'|trans, hideBelow: 'lg'),
                 column_actions('_actions', 'Actions'|trans),
             ],
             rows: rows,

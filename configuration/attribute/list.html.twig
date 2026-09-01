@@ -17,7 +17,7 @@
     {{ safe_hook('attributes.top') }}
 
     <div class="container-fluid" data-testid="attributes-page">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
             <h1 class="h3 mb-0">{{ 'Attributes management'|trans }}</h1>
             {% if is_granted('CREATE', 'admin.configuration.attribute') %}
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#attribute-create-modal" data-testid="attribute-create-button">
@@ -30,9 +30,9 @@
         {{ component('BoDataTable', {
             id: 'attributes',
             columns: [
-                column('id', 'ID'|trans, 'start', 'id'),
+                column('id', 'ID'|trans, 'start', 'id', hideBelow: 'md'),
                 column('title', 'Title'|trans, 'start', 'title'),
-                column('position', 'Position'|trans, 'center', 'position'),
+                column('position', 'Position'|trans, 'center', 'position', hideBelow: 'lg'),
                 column_actions('_actions', 'Actions'|trans),
             ],
             rows: rows,

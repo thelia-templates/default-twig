@@ -18,7 +18,7 @@
     {{ safe_hook('template-edit.top', { template_id: template.id }) }}
 
     <div class="container-fluid" data-testid="template-edit-page">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
             <h1 class="h3 mb-0">{{ 'Template'|trans }} <small class="text-muted">#{{ template.id }}</small></h1>
             <a href="{{ path('admin.configuration.templates.default') }}" class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-left" aria-hidden="true"></i> {{ 'Back to list'|trans }}
@@ -56,7 +56,7 @@
 
             <div class="col-md-7">
                 <div class="card mb-3">
-                    <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="card-header d-flex flex-wrap gap-2 justify-content-between align-items-center">
                         <span>{{ 'Features'|trans }}</span>
                         {% if available_features|length > 0 %}
                             <form action="{{ path('admin.configuration.templates.features.add') }}?_token={{ assignToken() }}" method="post" data-testid="template-add-feature-form">
@@ -76,7 +76,7 @@
                 </div>
 
                 <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="card-header d-flex flex-wrap gap-2 justify-content-between align-items-center">
                         <span>{{ 'Attributes'|trans }}</span>
                         {% if available_attributes|length > 0 %}
                             <form action="{{ path('admin.configuration.templates.attributes.add') }}?_token={{ assignToken() }}" method="post" data-testid="template-add-attribute-form">
@@ -104,7 +104,7 @@
         <div class="row mt-4">
             <div class="col-md-6">
                 <div class="card" data-testid="template-products-using">
-                    <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="card-header d-flex flex-wrap gap-2 justify-content-between align-items-center">
                         <span>{{ 'Products using this template'|trans }}</span>
                         <span class="badge bg-secondary" data-testid="template-products-using-count">{{ products_using|length }}</span>
                     </div>
@@ -120,7 +120,7 @@
                     {{ component('BoDataTable', {
                         id: 'products-using',
                         columns: [
-                            column('id', 'ID'|trans),
+                            column('id', 'ID'|trans, hideBelow: 'md'),
                             column('ref', 'Reference'|trans),
                             column('title', 'Title'|trans),
                             column_actions(),
@@ -133,7 +133,7 @@
 
             <div class="col-md-6">
                 <div class="card" data-testid="template-categories-defaulting">
-                    <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="card-header d-flex flex-wrap gap-2 justify-content-between align-items-center">
                         <span>{{ 'Default template for categories'|trans }}</span>
                         <span class="badge bg-secondary" data-testid="template-categories-defaulting-count">{{ categories_defaulting|length }}</span>
                     </div>
@@ -148,7 +148,7 @@
                     {{ component('BoDataTable', {
                         id: 'categories-defaulting',
                         columns: [
-                            column('id', 'ID'|trans),
+                            column('id', 'ID'|trans, hideBelow: 'md'),
                             column('title', 'Title'|trans),
                             column_actions(),
                         ],

@@ -32,6 +32,10 @@ final readonly class Column
      *                                          - TEXT / HTML / ACTIONS: empty
      * @param ?string              $sortKey     Sort field this column maps to. When set, the header becomes a sortable link.
      *                                          Use the same string the consuming controller expects in its order query param.
+     * @param ?string              $hideBelow   Bootstrap breakpoint under which the column is dropped from the render entirely,
+     *                                          one of: 'sm', 'md', 'lg', 'xl', 'xxl'. The older, simpler mechanism: no recovery
+     *                                          path for the value below that breakpoint. Kept as-is for the screens already on
+     *                                          it; new screens needing a recovery path should use $visibleFrom instead.
      * @param string               $visibleFrom Smallest Bootstrap breakpoint at which this column is shown in the main
      *                                          table, one of self::BREAKPOINT_ORDER. 'always' (default) never hides it;
      *                                          below its breakpoint the column moves into the row's detail line instead.
@@ -47,6 +51,7 @@ final readonly class Column
         public string $cellAlign = 'start',
         public array $options = [],
         public ?string $sortKey = null,
+        public ?string $hideBelow = null,
         public string $visibleFrom = 'always',
     ) {
         self::breakpointRank($this->visibleFrom);
@@ -124,5 +129,13 @@ final readonly class Column
         }
 
         return $max;
+    }
+
+    /**
+     * Bootstrap display utilities hiding the cell below `$hideBelow`.
+     */
+    public function responsiveClass(): string
+    {
+        return null === $this->hideBelow ? '' : ' d-none d-'.$this->hideBelow.'-table-cell';
     }
 }

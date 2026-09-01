@@ -142,6 +142,34 @@ The recipe used for each domain so far (Folder → Content → CustomerTitle →
 4. **Events**: `$this->action->submit(form: ..., eventFactory: ..., eventName: TheliaEvents::X_CREATE)` for forms; `$this->action->tokenAction(event: ..., eventName: ...)` for single-shot actions.
 5. **Templates**: `list.html.twig` (DataTable + create modal), `edit.html.twig` (form_start + form_end).
 
+### Responsive (phone and tablet)
+
+The admin is usable from 375px up. Four rules hold the layout together:
+
+- **Navigation**: the sidebar is `offcanvas-lg`, so it docks from `lg` (992px) and is a burger-driven
+  drawer below that — a 768px tablet in portrait gets the full width for its content. The top bar uses
+  `navbar-expand` (no breakpoint) so its items stay on one row at every width.
+- **Lists**: every `BoDataTable` scrolls horizontally inside `.table-responsive`, with the actions
+  column pinned right. Secondary columns are dropped below a breakpoint instead of being pushed out of
+  view, via `hideBelow` on the column factories:
+
+  ```twig
+  column('id', 'ID'|trans, hideBelow: 'md'),                        {# phone #}
+  column('position', 'Position'|trans, 'center', hideBelow: 'lg'),  {# phone + tablet portrait #}
+  ```
+
+  Convention: `md` for identifiers and thumbnails, `lg` for dates, positions and counts, `xl` for
+  columns whose value is already readable elsewhere on the row or on the record's own page. The column
+  that names the record is never hidden.
+- **Key/value tables** (plain `<table>`, not `BoDataTable`) carry `.bo-table-wrap`: their cells wrap
+  rather than being clipped, because they have nothing to scroll to.
+- **Header rows** (`d-flex justify-content-between`) always carry `flex-wrap gap-2` so a title plus its
+  action buttons reflow instead of overflowing. Control strips wider than the viewport go inside
+  `.bo-scroll-x`.
+
+Touch targets are enlarged below `lg` (row toggles, checkboxes, sortable headers, tree controls). Keep
+new controls at 24px minimum in both dimensions.
+
 ### ACL
 
 Resources live in `core/lib/Thelia/Core/Security/Resource/AdminResources.php`. Check with `is_granted('VIEW', 'admin.foo')` or `$this->access->check(self::RESOURCE, [], AccessManager::VIEW)`.

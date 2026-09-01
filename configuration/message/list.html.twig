@@ -17,7 +17,7 @@
     {{ safe_hook('messages.top', { location: 'messages_top' }) }}
 
     <div class="container-fluid" data-testid="messages-page">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
             <h1 class="h3 mb-0">{{ 'Mail messages'|trans }}</h1>
             {% if is_granted('CREATE', 'admin.configuration.message') %}
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#message-create-modal" data-testid="message-create-button">
@@ -29,9 +29,9 @@
         {{ component('BoDataTable', {
             id: 'messages',
             columns: [
-                column('id', 'ID'|trans, 'start', 'id'),
+                column('id', 'ID'|trans, 'start', 'id', hideBelow: 'md'),
                 column('title', 'Purpose'|trans, 'start', 'title'),
-                column('name', 'Name'|trans, 'start', 'name'),
+                column('name', 'Name'|trans, 'start', 'name', hideBelow: 'lg'),
                 column_badge('secured_label', 'Type'|trans, { System: 'warning', User: 'info' }, 'start', null, null, 'secured'),
                 column_actions('_actions', 'Actions'|trans),
             ],

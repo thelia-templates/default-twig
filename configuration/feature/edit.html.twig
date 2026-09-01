@@ -18,7 +18,7 @@
     {{ safe_hook('feature-edit.top', { feature_id: feature.id }) }}
 
     <div class="container-fluid" data-testid="feature-edit-page">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
             <h1 class="h3 mb-0">{{ 'Feature'|trans }} <small class="text-muted">#{{ feature.id }}</small></h1>
             <div class="btn-group" role="group" aria-label="{{ 'Feature actions'|trans }}">
                 <a href="{{ path('admin.configuration.features.add-to-all', { feature_id: feature.id }) }}?_token={{ assignToken() }}" class="btn btn-outline-secondary" data-testid="feature-add-to-all">
@@ -71,12 +71,13 @@
 
             <div class="col-md-5">
                 <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="card-header d-flex flex-wrap gap-2 justify-content-between align-items-center">
                         <span>{{ 'Values'|trans }}</span>
                         <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#feature-av-create-modal" data-testid="featureav-create-button">
                             <i class="bi bi-plus" aria-hidden="true"></i> {{ 'Add'|trans }}
                         </button>
                     </div>
+                    <div class="table-responsive">
                     <table class="table mb-0" data-testid="featureav-table">
                         <thead>
                             <tr>
@@ -108,6 +109,7 @@
                             {% endfor %}
                         </tbody>
                     </table>
+                    </div>
                 </div>
             </div>
         </div>

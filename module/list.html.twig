@@ -82,7 +82,10 @@
             </div>
 
             <div class="bo-modules__toolbar-row bo-modules__toolbar-row--split">
-                {# Type segmented control — replaces the former stacked tables #}
+                {# Type segmented control — replaces the former stacked tables.
+                   The scroller keeps the trailing types reachable on a phone,
+                   where the strip is wider than the toolbar card. #}
+                <div class="bo-scroll-x">
                 <div class="btn-group bo-segmented" role="group" aria-label="{{ 'Filter by type'|trans }}">
                     {% set type_filters = [{ slug: '', label: 'All'|trans }]|merge(type_groups) %}
                     {% for type in type_filters %}
@@ -98,8 +101,10 @@
                         </label>
                     {% endfor %}
                 </div>
+                </div>
 
                 {# Status segmented control — defaults to Active #}
+                <div class="bo-scroll-x">
                 <div class="btn-group bo-segmented" role="group" aria-label="{{ 'Filter by status'|trans }}">
                     {% for value, label in { '': 'All'|trans, '1': 'Active'|trans, '0': 'Inactive'|trans } %}
                         {% set sid = 'modules-status-' ~ (value == '' ? 'all' : value) %}
@@ -110,6 +115,7 @@
                                data-testid="{{ sid }}">
                         <label class="btn btn-outline-secondary" for="{{ sid }}">{{ label }}</label>
                     {% endfor %}
+                </div>
                 </div>
             </div>
         </div>

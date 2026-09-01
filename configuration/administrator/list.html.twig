@@ -26,7 +26,7 @@
             </div>
         {% endif %}
 
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
             <h1 class="h3 mb-0">{{ 'Administrators management'|trans }}</h1>
             {% if is_granted('CREATE', 'admin.configuration.administrator') %}
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#administrator-create-modal" data-testid="administrator-create-button">
@@ -39,11 +39,11 @@
         {{ component('BoDataTable', {
             id: 'administrators',
             columns: [
-                column('id', 'ID'|trans, 'start', 'id'),
+                column('id', 'ID'|trans, 'start', 'id', hideBelow: 'md'),
                 column('login', 'Login'|trans, 'start', 'login'),
                 column('name', 'Name'|trans, 'start', 'lastname'),
-                column('email', 'Email'|trans, 'start', 'email'),
-                column('profile', 'Profile'|trans),
+                column('email', 'Email'|trans, 'start', 'email', hideBelow: 'lg'),
+                column('profile', 'Profile'|trans, hideBelow: 'lg'),
                 column_actions('_actions', 'Actions'|trans),
             ],
             rows: rows,

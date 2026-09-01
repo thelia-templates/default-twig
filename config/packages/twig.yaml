@@ -9,3 +9,6 @@ twig:
     bo_form_themes:
       - "bootstrap_5_layout.html.twig"
       - "@BackOfficeDefaultTwigForm/bo_form_theme.html.twig"
+    # Rendered by the top bar and the login card so the running Thelia version
+    # is readable from any back-office page.
+    thelia_version: !php/const Thelia\Core\TheliaKernel::THELIA_VERSION

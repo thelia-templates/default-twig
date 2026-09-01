@@ -17,7 +17,7 @@
     {{ safe_hook('variables.top') }}
 
     <div class="container-fluid" data-testid="variables-page">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
             <h1 class="h3 mb-0">{{ 'System variables'|trans }}</h1>
             {% if is_granted('CREATE', 'admin.configuration.variable') %}
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#variable-create-modal" data-testid="variable-create-button">

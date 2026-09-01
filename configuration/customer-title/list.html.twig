@@ -15,7 +15,7 @@
 
 {% block content %}
     <div class="container-fluid" data-testid="customer-titles-page">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
             <h1 class="h3 mb-0">{{ 'Customer titles'|trans }}</h1>
             {% if is_granted('CREATE', 'admin.customer.title') %}
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#customer-title-create-modal" data-testid="customer-title-create-button">
@@ -27,11 +27,11 @@
         {{ component('BoDataTable', {
             id: 'customer-titles',
             columns: [
-                column('id', 'ID'|trans, 'start', 'id'),
+                column('id', 'ID'|trans, 'start', 'id', hideBelow: 'md'),
                 column('short', 'Short'|trans, 'start', 'short'),
                 column('long', 'Long'|trans, 'start', 'long'),
                 column_badge('default', 'Default'|trans, { yes: 'success' }, 'start', 'default_label'),
-                column('position', 'Position'|trans, 'center', 'position'),
+                column('position', 'Position'|trans, 'center', 'position', hideBelow: 'lg'),
                 column_actions('_actions', 'Actions'|trans),
             ],
             rows: rows,

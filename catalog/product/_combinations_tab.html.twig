@@ -19,7 +19,7 @@
             {% endif %}
 
             {% if template_attributes is not empty %}
-                <div class="d-flex gap-2" data-testid="combinations-toolbar">
+                <div class="d-flex flex-wrap gap-2" data-testid="combinations-toolbar">
                     <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#combination-creation-modal" data-testid="combination-create-btn">
                         <i class="bi bi-plus-circle" aria-hidden="true"></i> {{ 'Add a combination'|trans }}
                     </button>
