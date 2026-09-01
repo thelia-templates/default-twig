@@ -15,7 +15,7 @@ declare(strict_types=1);
 namespace BackOfficeDefaultTwigBundle\Twig;
 
 use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\HttpFoundation\Session\Flash\FlashBagAwareSessionInterface;
+use Symfony\Component\HttpFoundation\Session\FlashBagAwareSessionInterface;
 use Thelia\Core\Security\SecurityContext;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
