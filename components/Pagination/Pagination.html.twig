@@ -36,12 +36,25 @@
                     one (e.g. currentPage=1, lastPage=3). -#}
                 {% set isEdge = n == 1 or n == lastPage %}
                 {% set farFromCurrent = n is not null and not isEdge and (n - currentPage)|abs == 2 %}
+                {% if loop.last and this.hasCollapsedTrailingGap %}
+                    {#- Symmetric trailing case: the page right before the last one collapses
+                        away below md without a native ellipsis to signal it - inserted right
+                        before that last page so it lands where the gap actually is. -#}
+                    <li class="page-item disabled d-md-none"><span class="page-link">&hellip;</span></li>
+                {% endif %}
                 {% if n is null %}
                     <li class="page-item disabled{% if farFromCurrent %} d-none d-md-inline-block{% endif %}"><span class="page-link">&hellip;</span></li>
                 {% else %}
                     <li class="page-item{% if n == currentPage %} active{% endif %}{% if farFromCurrent %} d-none d-md-inline-block{% endif %}"{% if n == currentPage %} aria-current="page"{% endif %}>
                         <a class="page-link" href="{{ path(route, this.linkParams(n)) }}">{{ n }}</a>
                     </li>
+                {% endif %}
+                {% if loop.first and this.hasCollapsedLeadingGap %}
+                    {#- getPages() has no null between the first page and the next one, but
+                        collapsing to a window of 1 below md hides that next page anyway:
+                        without this, "1" and "3" would sit next to each other with nothing
+                        marking the skipped page. Shown only below md, where the gap exists. -#}
+                    <li class="page-item disabled d-md-none"><span class="page-link">&hellip;</span></li>
                 {% endif %}
             {% endfor %}
             <li class="page-item{% if currentPage >= lastPage %} disabled{% endif %}">
