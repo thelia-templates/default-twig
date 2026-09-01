@@ -30,8 +30,12 @@
             {% for n in this.pages %}
                 {#- Entries two pages away from the current one only exist because of the
                     default window of 2; below md they collapse to a window of 1 by hiding
-                    them in CSS rather than duplicating the bar or changing the window. -#}
-                {% set farFromCurrent = n is not null and (n - currentPage)|abs == 2 %}
+                    them in CSS rather than duplicating the bar or changing the window. The
+                    first/last page shortcuts getPages() always keeps must never be hidden by
+                    this rule, even when they happen to land exactly two pages from the current
+                    one (e.g. currentPage=1, lastPage=3). -#}
+                {% set isEdge = n == 1 or n == lastPage %}
+                {% set farFromCurrent = n is not null and not isEdge and (n - currentPage)|abs == 2 %}
                 {% if n is null %}
                     <li class="page-item disabled{% if farFromCurrent %} d-none d-md-inline-block{% endif %}"><span class="page-link">&hellip;</span></li>
                 {% else %}
