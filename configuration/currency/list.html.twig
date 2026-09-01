@@ -47,14 +47,14 @@
         {{ component('BoDataTable', {
             id: 'currencies',
             columns: [
-                column('id', 'ID'|trans, 'start', 'id', hideBelow: 'md'),
+                column('id', 'ID'|trans, 'start', 'id', visibleFrom: 'md'),
                 column('name', 'Name'|trans, 'start', 'name'),
                 column('code', 'ISO 4217'|trans, 'start', 'code'),
-                column('symbol', 'Symbol'|trans, 'center', 'symbol', hideBelow: 'lg'),
-                column('rate', 'Exchange rate'|trans, 'center', 'rate', hideBelow: 'lg'),
+                column('symbol', 'Symbol'|trans, 'center', 'symbol', visibleFrom: 'lg'),
+                column('rate', 'Exchange rate'|trans, 'center', 'rate', visibleFrom: 'lg'),
                 column_toggle('visible', 'Visible'|trans, 'toggle_visible_url'),
                 column_radio('default', 'Default'|trans, 'currency_default', 'id', 'default', null, 'toggle_default_url'),
-                column('position', 'Position'|trans, 'center', 'position', hideBelow: 'lg'),
+                column('position', 'Position'|trans, 'center', 'position', visibleFrom: 'lg'),
                 column_actions('_actions', 'Actions'|trans),
             ],
             rows: rows,
@@ -67,6 +67,7 @@
                 'data-bo-sortable-token-value': update_position_token,
                 'data-bo-sortable-param-name-value': 'currency_id',
             },
+            rowIdentifierKey: 'code',
         }) }}
     </div>
 

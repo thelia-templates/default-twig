@@ -176,6 +176,7 @@ final readonly class CategoryListPresenter
                 href: $this->urls->generate('admin.categories.update', ['category_id' => $id]),
                 grantedAttribute: AccessManager::UPDATE,
                 grantedSubject: AdminResources::CATEGORY,
+                inlineFrom: 'md',
             ),
             new RowAction(
                 kind: 'delete',
@@ -187,6 +188,7 @@ final readonly class CategoryListPresenter
                     'category-id' => $id,
                     'category-label' => $title,
                 ],
+                inlineFrom: 'md',
             ),
         ];
     }

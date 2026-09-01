@@ -36,20 +36,21 @@
         {{ component('BoDataTable', {
             id: 'countries',
             columns: [
-                column('id', 'ID'|trans, 'start', 'id', hideBelow: 'md'),
+                column('id', 'ID'|trans, 'start', 'id', visibleFrom: 'md'),
                 column('title', 'Country'|trans, 'start', 'title'),
                 column('isoalpha2', 'ISO-2'|trans, 'center', 'iso_alpha2'),
-                column('isoalpha3', 'ISO-3'|trans, 'center', 'iso_alpha3', hideBelow: 'lg'),
-                column('isocode', 'Numeric'|trans, 'center', 'iso_code', hideBelow: 'xl'),
-                column_html('shipping_zones_html', 'Shipping zone'|trans, 'start', hideBelow: 'lg'),
+                column('isoalpha3', 'ISO-3'|trans, 'center', 'iso_alpha3', visibleFrom: 'lg'),
+                column('isocode', 'Numeric'|trans, 'center', 'iso_code', visibleFrom: 'xl'),
+                column_html('shipping_zones_html', 'Shipping zone'|trans, 'start', visibleFrom: 'lg'),
                 column_toggle('visible', 'Online'|trans, 'toggle_visible_url'),
-                column_radio('default', 'Default'|trans, 'country_default', 'id', 'default', null, 'toggle_default_url'),
+                column_radio('default', 'Default'|trans, 'country_default', 'id', 'default', null, 'toggle_default_url', visibleFrom: 'md'),
                 column_actions('_actions', 'Actions'|trans),
             ],
             rows: rows,
             emptyMessage: 'No country defined.'|trans,
             sortField: sort_field,
             sortDirection: sort_direction,
+            rowIdentifierKey: 'title',
         }) }}
     </div>
 

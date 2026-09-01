@@ -30,10 +30,10 @@
         {{ component('BoDataTable', {
             id: 'languages',
             columns: [
-                column('id', 'ID'|trans, 'start', 'id', hideBelow: 'md'),
+                column('id', 'ID'|trans, 'start', 'id', visibleFrom: 'md'),
                 column('title', 'Language name'|trans, 'start', 'title'),
                 column('code', 'ISO 639 Code'|trans, 'start', 'code'),
-                column('locale', 'Locale'|trans, 'start', 'locale', hideBelow: 'lg'),
+                column('locale', 'Locale'|trans, 'start', 'locale', visibleFrom: 'lg'),
                 column_toggle('visible', 'Visible in front'|trans, 'toggle_visible_url'),
                 column_toggle('active', 'Active'|trans, 'toggle_active_url'),
                 column_radio('default', 'Default'|trans, 'lang_default', 'id', 'default', null, 'toggle_default_url'),
@@ -43,6 +43,7 @@
             emptyMessage: 'No language defined yet.'|trans,
             sortField: sort_field,
             sortDirection: sort_direction,
+            rowIdentifierKey: 'code',
         }) }}
 
         <div class="row g-4 mt-3">

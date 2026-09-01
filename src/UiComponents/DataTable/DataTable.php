@@ -95,4 +95,10 @@ final class DataTable
      * @var array<string, mixed>
      */
     public array $rowHookContext = [];
+
+    /**
+     * Row key holding a human-readable identifier (reference, name...), used in the detail-toggle
+     * button's accessible name ("View details for <value>"). Falls back to the row id when null.
+     */
+    public ?string $rowIdentifierKey = null;
 }

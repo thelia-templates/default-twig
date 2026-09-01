@@ -32,15 +32,15 @@
         {{ component('BoDataTable', {
             id: 'coupons',
             columns: [
-                column('id', 'ID'|trans, 'start', 'id', hideBelow: 'md'),
+                column('id', 'ID'|trans, 'start', 'id', visibleFrom: 'md'),
                 column('code', 'Code'|trans, 'start', 'code'),
                 column('title', 'Title'|trans, 'start', 'title'),
-                column('type', 'Type'|trans, hideBelow: 'xl'),
+                column('type', 'Type'|trans, visibleFrom: 'xl'),
                 column_badge('enabled_label', 'Status'|trans, { Enabled: 'success', Disabled: 'secondary' }, 'start', null, null, 'is_enabled'),
-                column('start_date', 'Start date'|trans, hideBelow: 'xl'),
-                column('expiration_date', 'Expiration date'|trans, 'start', 'expiration_date', hideBelow: 'lg'),
-                column('days_left', 'Days left'|trans, 'center', hideBelow: 'xl'),
-                column('usages_left', 'Usages left'|trans, 'center', hideBelow: 'lg'),
+                column('start_date', 'Start date'|trans, visibleFrom: 'xl'),
+                column('expiration_date', 'Expiration date'|trans, 'start', 'expiration_date', visibleFrom: 'lg'),
+                column('days_left', 'Days left'|trans, 'center', visibleFrom: 'xl'),
+                column('usages_left', 'Usages left'|trans, 'center', visibleFrom: 'lg'),
                 column_actions('_actions', 'Actions'|trans),
             ],
             rows: rows,
@@ -53,6 +53,7 @@
             sortField: sort_field,
             sortDirection: sort_direction,
             sortKeepParams: { page: current_page > 1 ? current_page : null },
+            rowIdentifierKey: 'code',
         }) }}
 
         {{ component('BoPagination', {

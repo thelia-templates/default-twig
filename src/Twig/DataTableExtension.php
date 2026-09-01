@@ -34,17 +34,20 @@ final class DataTableExtension extends AbstractExtension
             new TwigFunction('column_radio', $this->radioColumn(...)),
             new TwigFunction('column_select', $this->selectColumn(...)),
             new TwigFunction('row_action', $this->rowAction(...)),
+            new TwigFunction('datatable_max_breakpoint', Column::maxVisibleFromBreakpoint(...)),
+            new TwigFunction('datatable_max_collapse_breakpoint', RowAction::maxCollapseBelowBreakpoint(...)),
+            new TwigFunction('datatable_sort_breakpoint', Column::maxSortableBreakpoint(...)),
         ];
     }
 
-    public function textColumn(string $key, string $label, string $cellAlign = 'start', ?string $sortKey = null, ?string $hideBelow = null): Column
+    public function textColumn(string $key, string $label, string $cellAlign = 'start', ?string $sortKey = null, ?string $hideBelow = null, string $visibleFrom = 'always'): Column
     {
-        return new Column($key, $label, ColumnKind::TEXT, $cellAlign, sortKey: $sortKey, hideBelow: $hideBelow);
+        return new Column($key, $label, ColumnKind::TEXT, $cellAlign, sortKey: $sortKey, hideBelow: $hideBelow, visibleFrom: $visibleFrom);
     }
 
-    public function htmlColumn(string $key, string $label, string $cellAlign = 'start', ?string $sortKey = null, ?string $hideBelow = null): Column
+    public function htmlColumn(string $key, string $label, string $cellAlign = 'start', ?string $sortKey = null, ?string $hideBelow = null, string $visibleFrom = 'always'): Column
     {
-        return new Column($key, $label, ColumnKind::HTML, $cellAlign, sortKey: $sortKey, hideBelow: $hideBelow);
+        return new Column($key, $label, ColumnKind::HTML, $cellAlign, sortKey: $sortKey, hideBelow: $hideBelow, visibleFrom: $visibleFrom);
     }
 
     /**
@@ -57,6 +60,7 @@ final class DataTableExtension extends AbstractExtension
         string $valueKey = 'id',
         ?string $labelKey = null,
         ?string $hideBelow = null,
+        string $visibleFrom = 'always',
     ): Column {
         return new Column(
             $key,
@@ -65,6 +69,7 @@ final class DataTableExtension extends AbstractExtension
             'center',
             ['value_key' => $valueKey, 'label_key' => $labelKey],
             hideBelow: $hideBelow,
+            visibleFrom: $visibleFrom,
         );
     }
 
@@ -77,6 +82,7 @@ final class DataTableExtension extends AbstractExtension
         string $iconOff = 'bi-circle text-secondary',
         ?string $sortKey = null,
         ?string $hideBelow = null,
+        string $visibleFrom = 'always',
     ): Column {
         return new Column(
             $key,
@@ -86,13 +92,14 @@ final class DataTableExtension extends AbstractExtension
             ['url_key' => $urlKey, 'icon_on' => $iconOn, 'icon_off' => $iconOff],
             $sortKey,
             $hideBelow,
+            $visibleFrom,
         );
     }
 
     /**
      * @param array<scalar, string> $variants
      */
-    public function badgeColumn(string $key, string $label, array $variants = [], string $cellAlign = 'start', ?string $labelKey = null, ?string $colorKey = null, ?string $sortKey = null, ?string $hideBelow = null): Column
+    public function badgeColumn(string $key, string $label, array $variants = [], string $cellAlign = 'start', ?string $labelKey = null, ?string $colorKey = null, ?string $sortKey = null, ?string $hideBelow = null, string $visibleFrom = 'always'): Column
     {
         return new Column(
             $key,
@@ -102,12 +109,13 @@ final class DataTableExtension extends AbstractExtension
             ['variants' => $variants, 'label_key' => $labelKey, 'color_key' => $colorKey],
             $sortKey,
             $hideBelow,
+            $visibleFrom,
         );
     }
 
-    public function actionsColumn(string $key = '_actions', string $label = 'Actions', string $cellAlign = 'end'): Column
+    public function actionsColumn(string $key = '_actions', string $label = 'Actions', string $cellAlign = 'end', string $visibleFrom = 'always'): Column
     {
-        return new Column($key, $label, ColumnKind::ACTIONS, $cellAlign);
+        return new Column($key, $label, ColumnKind::ACTIONS, $cellAlign, visibleFrom: $visibleFrom);
     }
 
     public function radioColumn(
@@ -120,6 +128,7 @@ final class DataTableExtension extends AbstractExtension
         ?string $urlKey = null,
         string $cellAlign = 'center',
         ?string $hideBelow = null,
+        string $visibleFrom = 'always',
     ): Column {
         return new Column(
             $key,
@@ -128,6 +137,7 @@ final class DataTableExtension extends AbstractExtension
             $cellAlign,
             ['name' => $name, 'value_key' => $valueKey, 'checked_when_key' => $checkedWhenKey, 'label_key' => $labelKey, 'url_key' => $urlKey],
             hideBelow: $hideBelow,
+            visibleFrom: $visibleFrom,
         );
     }
 
@@ -143,6 +153,8 @@ final class DataTableExtension extends AbstractExtension
         ?string $grantedAttribute = null,
         string|array|null $grantedSubject = null,
         array $dataAttributes = [],
+        bool $inMenu = false,
+        ?string $inlineFrom = null,
     ): RowAction {
         return new RowAction(
             kind: $kind,
@@ -152,6 +164,8 @@ final class DataTableExtension extends AbstractExtension
             grantedAttribute: $grantedAttribute,
             grantedSubject: $grantedSubject,
             dataAttributes: $dataAttributes,
+            inMenu: $inMenu,
+            inlineFrom: $inlineFrom,
         );
     }
 }

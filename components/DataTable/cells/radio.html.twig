@@ -6,7 +6,7 @@
 {% set labelKey = column.options.label_key|default(null) %}
 {% set urlKey = column.options.url_key|default(null) %}
 {% set href = urlKey ? row[urlKey]|default(null) : null %}
-{% set inputId = ('datatable-' ~ column.key ~ '-' ~ row[valueKey])|replace({'.': '-', '_': '-'}) %}
+{% set inputId = ('datatable-' ~ column.key ~ '-' ~ row[valueKey] ~ idSuffix|default(''))|replace({'.': '-', '_': '-'}) %}
 {% set checked = checkedWhenKey ? row[checkedWhenKey]|default(false) : false %}
 <div class="form-check {{ column.cellAlign == 'center' ? 'd-inline-flex justify-content-center' : '' }} mb-0"{% if href %} data-controller="bo-default-radio"{% endif %}>
     <input class="form-check-input" type="radio"

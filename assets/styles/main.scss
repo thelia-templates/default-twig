@@ -668,6 +668,98 @@ button.btn {
     }
 }
 
+// Detail row revealed on narrow viewports by the DataTable component's toggle button
+// (columns hidden below their visibleFrom breakpoint move here instead of off-screen).
+// Narrow the cell's own right padding, and the next column's left padding:
+// this cell holds only a small chevron, so Bootstrap's default cell padding
+// on both sides otherwise leaves a wide, empty gap before the next column.
+// `th, td` beats Bootstrap's `.table > :not(caption) > * > *` on
+// specificity, which a bare class selector can't. min-width keeps a minimum
+// gap even if the icon itself fails to render (e.g. icon font unavailable).
+th.bo-datatable__details-col,
+td.bo-datatable__details-col {
+    min-width: 1.5rem;
+    // margin is a no-op on table cells, hence padding here instead.
+    padding-right: 5px;
+
+    + th,
+    + td {
+        padding-left: 8px;
+    }
+}
+
+.bo-datatable__details-toggle {
+    // Same pattern as .bo-order-filters__toggle: bi-chevron-down points down
+    // at rest (closed), and rotates 180deg to point up once expanded.
+    .bi-chevron-down {
+        display: inline-block;
+        transition: transform .15s ease;
+    }
+
+    &[aria-expanded="true"] .bi-chevron-down {
+        transform: rotate(180deg);
+    }
+}
+
+.bo-datatable__details {
+    background-color: var(--bs-tertiary-bg);
+}
+
+// Bootstrap's own .table-striped rule (imported above, can't touch it) counts every <tr> by
+// raw position, including the (hidden-by-default) detail row the toggle reveals - a data row's
+// position is always odd regardless of its own record number (record, detail, record, detail,
+// ...), so Bootstrap's rule alone stripes every data row, flattening the alternation. Both
+// rules below share its specificity pattern (one extra class from the ":not(...)" argument of
+// "of S" beats Bootstrap's plain :nth-of-type(2n+1)), so together they override it in both
+// directions: stripe the data rows whose *record* number is odd, and explicitly reset the ones
+// Bootstrap's rule wrongly still stripes. The "of S" filter (CSS Selectors 4) only exists on
+// :nth-child(), not :nth-of-type() - inside <tbody> every child is already a <tr>, so both count
+// the same set of siblings here.
+.table-striped > tbody > tr:nth-child(odd of :not(.bo-datatable__details)) > * {
+    --bs-table-color-type: var(--bs-table-striped-color);
+    --bs-table-bg-type: var(--bs-table-striped-bg);
+}
+
+.table-striped > tbody > tr:nth-child(even of :not(.bo-datatable__details)) > * {
+    --bs-table-color-type: initial;
+    --bs-table-bg-type: initial;
+}
+
+// Wrapping row of label/value blocks (label above value) instead of
+// Bootstrap's row/col-*, which left a wide, fixed-width gap between a short
+// label and its value regardless of the label's actual length. A flex row
+// (not a grid with 1fr tracks) so each block is only as wide as its own
+// content instead of stretching to share the row equally - which is exactly
+// what left a gap after a short value like "Cheque".
+.bo-datatable__details-grid {
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: 1.5rem;
+    row-gap: .5rem;
+}
+
+.bo-datatable__details-item {
+    flex: 0 0 auto;
+    // Overrides the .table > tbody > tr > td nowrap rule above: that rule exists to keep a
+    // normal row's cells on one line, but it also reaches this row's <dl> through its
+    // colspan'd <td>, and a long value (an address, a customer name) can't wrap - overflowing
+    // the grid the toggle controller pins to the viewport's width, exactly the horizontal
+    // scroll this row exists to avoid.
+    min-width: 0;
+    dt {
+        font-size: .8rem;
+        font-weight: 600;
+        color: #6c757d;
+        margin-bottom: .15rem;
+    }
+
+    dd {
+        margin-bottom: 0;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+}
+
 // Key/value and form tables. The `white-space: nowrap` above targets data grids,
 // which scroll horizontally inside `.table-responsive`; a definition-style table
 // has nowhere to scroll to, so it is clipped by the card instead. These wrap.
@@ -682,7 +774,6 @@ button.btn {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
 }
-
 
 // Breadcrumbs - subtle separator and brand primary on links
 .breadcrumb {
@@ -1697,6 +1788,7 @@ tr.bo-order-row--urgent {
     color: var(--bs-body-color);
     font-size: 0.85rem;
     line-height: 1.4;
+    white-space: nowrap;
     transition: all 0.12s ease;
 
     &:hover {
@@ -1824,6 +1916,7 @@ tr.bo-order-row--urgent {
     color: var(--bs-body-color);
     font-size: 0.85rem;
     line-height: 1.4;
+    white-space: nowrap;
     transition: all 0.12s ease;
 
     &:hover {

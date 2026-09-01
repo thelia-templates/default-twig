@@ -445,6 +445,7 @@ final class TemplateController
                 grantedAttribute: AccessManager::CREATE,
                 grantedSubject: self::RESOURCE,
                 dataAttributes: ['template-id' => $id, 'template-name' => (string) $template->getName()],
+                inlineFrom: 'md',
             ),
             new RowAction(
                 kind: 'delete',
@@ -456,6 +457,7 @@ final class TemplateController
                     'template-id' => $id,
                     'template-label' => (string) $template->getName(),
                 ],
+                inlineFrom: 'md',
             ),
         ];
 

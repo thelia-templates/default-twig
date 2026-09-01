@@ -538,6 +538,7 @@ final class TaxRuleController
                     ).'?_token='.$this->tokens->assignToken(),
                     grantedAttribute: AccessManager::UPDATE,
                     grantedSubject: 'admin.configuration.tax',
+                    inlineFrom: 'md',
                 );
                 $actions[] = new RowAction(
                     kind: 'delete',
@@ -546,6 +547,7 @@ final class TaxRuleController
                     grantedAttribute: AccessManager::DELETE,
                     grantedSubject: 'admin.configuration.tax',
                     dataAttributes: ['tax-rule-id' => $id, 'tax-rule-title' => $taxRule->getTitle() ?? ''],
+                    inlineFrom: 'md',
                 );
             }
 

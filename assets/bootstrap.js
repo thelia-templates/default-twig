@@ -20,6 +20,7 @@ import BoCouponAttributePickerController from './controllers/bo-coupon-attribute
 import BoCouponFormController from './controllers/bo-coupon-form_controller.js';
 import BoCouponMultiselectSearchController from './controllers/bo-coupon-multiselect-search_controller.js';
 import BoCouponProductPickerController from './controllers/bo-coupon-product-picker_controller.js';
+import BoDatatableDetailsController from './controllers/bo-datatable-details_controller.js';
 import BoDateRangeController from './controllers/bo-date-range_controller.js';
 import BoDefaultRadioController from './controllers/bo-default-radio_controller.js';
 import BoExportFormController from './controllers/bo-export-form_controller.js';
@@ -79,6 +80,7 @@ app.register('bo-coupon-attribute-picker', BoCouponAttributePickerController);
 app.register('bo-coupon-form', BoCouponFormController);
 app.register('bo-coupon-multiselect-search', BoCouponMultiselectSearchController);
 app.register('bo-coupon-product-picker', BoCouponProductPickerController);
+app.register('bo-datatable-details', BoDatatableDetailsController);
 app.register('bo-date-range', BoDateRangeController);
 app.register('bo-default-radio', BoDefaultRadioController);
 app.register('bo-export-form', BoExportFormController);

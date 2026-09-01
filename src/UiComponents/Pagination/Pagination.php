@@ -72,6 +72,32 @@ final class Pagination
     }
 
     /**
+     * True when collapsing to a window of 1 below md hides the page right after the first
+     * page without a native ellipsis to signal the gap. getPages() only emits a null before
+     * its own window (e.g. page 4 of 21, window 2: [1, 2, 3, 4, 5, 6, null, 21]) - collapsing
+     * "2" away in CSS then leaves "1  3" with nothing marking the skipped page.
+     */
+    public function hasCollapsedLeadingGap(): bool
+    {
+        $start = max(1, $this->currentPage - $this->window);
+        $mobileStart = max(1, $this->currentPage - max(0, $this->window - 1));
+
+        return $start <= 2 && $mobileStart > 2;
+    }
+
+    /**
+     * Symmetric trailing case: the page right before the last page collapses away below md
+     * without a native ellipsis.
+     */
+    public function hasCollapsedTrailingGap(): bool
+    {
+        $end = min($this->lastPage, $this->currentPage + $this->window);
+        $mobileEnd = min($this->lastPage, $this->currentPage + max(0, $this->window - 1));
+
+        return $end >= $this->lastPage - 1 && $mobileEnd < $this->lastPage - 1;
+    }
+
+    /**
      * Route parameters for a given page, dropping empty filters so the URL stays clean.
      *
      * @return array<string, scalar>

@@ -276,6 +276,7 @@ final readonly class OrderListRowPresenter
                 href: $this->urls->generate(self::INVOICE_PDF_ROUTE, ['order_id' => $orderId, 'browser' => 1]),
                 grantedAttribute: AccessManager::VIEW,
                 grantedSubject: self::RESOURCE,
+                inlineFrom: 'md',
             ),
             new RowAction(
                 kind: 'delivery-slip',
@@ -283,6 +284,7 @@ final readonly class OrderListRowPresenter
                 href: $this->urls->generate(self::DELIVERY_PDF_ROUTE, ['order_id' => $orderId, 'browser' => 1]),
                 grantedAttribute: AccessManager::VIEW,
                 grantedSubject: self::RESOURCE,
+                inlineFrom: 'md',
             ),
         ];
 
@@ -298,6 +300,7 @@ final readonly class OrderListRowPresenter
                     'order-ref' => $orderRef,
                     'order-cancel-url' => $this->urls->generate(self::CANCEL_FROM_LIST_ROUTE, ['order_id' => $orderId]),
                 ],
+                inlineFrom: 'md',
             );
         }
 
