@@ -168,7 +168,7 @@ final readonly class DashboardStatsProvider
             $alerts[] = [
                 'label' => $this->translator->trans('%count% unpaid orders over 48h', ['%count%' => $unpaid]),
                 'count' => $unpaid,
-                'href' => $this->urls->generate('admin.order.list', ['status_ids' => [1]]),
+                'href' => $this->urls->generate('admin.order.list', ['status_ids' => $this->orders->unpaidStatusIds()]),
                 'icon' => 'bi-exclamation-triangle-fill',
                 'level' => 'danger',
             ];
@@ -179,7 +179,7 @@ final readonly class DashboardStatsProvider
             $alerts[] = [
                 'label' => $this->translator->trans('%count% orders awaiting shipment', ['%count%' => $awaiting]),
                 'count' => $awaiting,
-                'href' => $this->urls->generate('admin.order.list', ['status_ids' => [2, 3]]),
+                'href' => $this->urls->generate('admin.order.list', ['status_ids' => $this->orders->awaitingShipmentStatusIds()]),
                 'icon' => 'bi-truck',
                 'level' => 'info',
             ];
