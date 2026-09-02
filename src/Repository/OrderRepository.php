@@ -39,6 +39,15 @@ final readonly class OrderRepository
     ];
 
     /**
+     * What "the shop earned it" means: the money is in, whatever is left to do with the
+     * parcel. A cancelled or refunded order is not revenue, and one still waiting for its
+     * payment is not revenue yet.
+     */
+    private const REVENUE_STATUS_CODES = [OrderStatus::CODE_PAID, OrderStatus::CODE_PROCESSING, OrderStatus::CODE_SENT];
+
+    private const AWAITING_SHIPMENT_STATUS_CODES = [OrderStatus::CODE_PAID, OrderStatus::CODE_PROCESSING];
+
+    /**
      * @return array{rows: ObjectCollection<int, Order>, total: int, lastPage: int}
      */
     public function findPaginated(OrderFilters $filters, int $page, int $perPage): array
@@ -234,8 +243,8 @@ final readonly class OrderRepository
     }
 
     /**
-     * Sum of computed totals on orders created in $range. Used by the dashboard
-     * revenue KPI.
+     * Sum of computed totals on the orders created in $range the shop has been paid for.
+     * Used by the dashboard revenue KPI.
      */
     public function getRevenue(DateRange $range): float
     {
@@ -243,6 +252,7 @@ final readonly class OrderRepository
             SELECT '.OrderFilters::totalAmountSqlExpression().' AS computed
             FROM `order`
             WHERE created_at BETWEEN :from AND :to
+              AND status_id IN ('.$this->statusIdListSql(self::REVENUE_STATUS_CODES).')
         ) AS sub';
 
         $statement = Propel::getConnection()->prepare($sql);
@@ -269,7 +279,8 @@ final readonly class OrderRepository
     public function getDailyBuckets(DateRange $range): array
     {
         $sql = 'SELECT DATE(`order`.created_at) AS day, COUNT(*) AS orders_count,
-                COALESCE(SUM('.OrderFilters::totalAmountSqlExpression().'), 0) AS revenue
+                COALESCE(SUM(IF(`order`.status_id IN ('.$this->statusIdListSql(self::REVENUE_STATUS_CODES).'),
+                    '.OrderFilters::totalAmountSqlExpression().', 0)), 0) AS revenue
                 FROM `order`
                 WHERE created_at BETWEEN :from AND :to
                 GROUP BY DATE(`order`.created_at)';
@@ -310,23 +321,50 @@ final readonly class OrderRepository
 
     public function countUnpaidOlderThan(int $hours): int
     {
+        $statusIds = $this->unpaidStatusIds();
+
+        if ([] === $statusIds) {
+            return 0;
+        }
+
         $threshold = (new \DateTimeImmutable())->modify('-'.$hours.' hours')->format('Y-m-d H:i:s');
 
         return (int) OrderQuery::create()
-            ->useOrderStatusQuery()
-                ->filterByCode(OrderStatus::CODE_NOT_PAID)
-            ->endUse()
+            ->filterByStatusId($statusIds, Criteria::IN)
             ->filterByCreatedAt($threshold, Criteria::LESS_EQUAL)
             ->count();
     }
 
     public function countAwaitingShipment(): int
     {
+        $statusIds = $this->awaitingShipmentStatusIds();
+
+        if ([] === $statusIds) {
+            return 0;
+        }
+
         return (int) OrderQuery::create()
-            ->useOrderStatusQuery()
-                ->filterByCode([OrderStatus::CODE_PAID, OrderStatus::CODE_PROCESSING], Criteria::IN)
-            ->endUse()
+            ->filterByStatusId($statusIds, Criteria::IN)
             ->count();
+    }
+
+    /**
+     * The statuses an order still waiting for its payment sits in. Exposed so that the
+     * dashboard alert and the order list it links to select the same orders.
+     *
+     * @return list<int>
+     */
+    public function unpaidStatusIds(): array
+    {
+        return $this->statusIdsAnsweringFor([OrderStatus::CODE_NOT_PAID]);
+    }
+
+    /**
+     * @return list<int>
+     */
+    public function awaitingShipmentStatusIds(): array
+    {
+        return $this->statusIdsAnsweringFor(self::AWAITING_SHIPMENT_STATUS_CODES);
     }
 
     /**
@@ -401,6 +439,43 @@ final readonly class OrderRepository
         $niceMax = max(10, (int) (ceil(max(1, $rawMax) / 5) * 5));
 
         return ['min' => 0, 'max' => $niceMax, 'step' => 1];
+    }
+
+    /**
+     * Ids of the statuses that answer for one of these canonical codes. A shop adds
+     * statuses of its own and says which native one each of them stands for, so a status
+     * is matched on the code it answers for and never on the code it is named by.
+     *
+     * @param list<string> $codes
+     *
+     * @return list<int>
+     */
+    private function statusIdsAnsweringFor(array $codes): array
+    {
+        $ids = [];
+
+        /** @var OrderStatus $status */
+        foreach (OrderStatusQuery::create()->find() as $status) {
+            if ($status->hasStatusHelper($codes)) {
+                $ids[] = (int) $status->getId();
+            }
+        }
+
+        return $ids;
+    }
+
+    /**
+     * The same ids as a SQL list, for the two dashboard queries written in raw SQL. Every
+     * value comes from a primary key read back from the database and is cast to an integer
+     * here; an empty list becomes `0`, which no primary key matches.
+     *
+     * @param list<string> $codes
+     */
+    private function statusIdListSql(array $codes): string
+    {
+        $ids = $this->statusIdsAnsweringFor($codes);
+
+        return [] === $ids ? '0' : implode(', ', $ids);
     }
 
     private function buildFilteredQuery(OrderFilters $filters): OrderQuery
