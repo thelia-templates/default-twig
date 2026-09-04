@@ -69,6 +69,7 @@ final readonly class CustomerListRowPresenter
             'total_spent_html' => $this->renderTotalSpent($totalSpent, $orderCount),
             'last_order_html' => $this->renderLastOrder($lastOrderAt),
             'created_html' => $this->renderCreatedAt($createdAt),
+            'guest_html' => $this->renderGuest($customer->isGuest()),
             'firstname' => $firstname,
             'lastname' => $lastname,
             'email' => $email,
@@ -198,6 +199,29 @@ final readonly class CustomerListRowPresenter
         );
     }
 
+
+    private function renderGuest(bool $isGuest): string
+    {
+        if ($isGuest) {
+            // is_guest stays 1 until the account is activated (not merely converted),
+            // so this also covers a customer who chose a password but never answered
+            // the activation email.
+            $tooltip = $this->translator->trans('Guest order, or account not yet activated');
+
+            return \sprintf(
+                '<span class="badge text-bg-warning-subtle text-warning-emphasis bo-customer-guest" data-bs-toggle="tooltip" title="%s"><i class="bi bi-person-vcard" aria-hidden="true"></i> %s</span>',
+                htmlspecialchars($tooltip),
+                htmlspecialchars($this->translator->trans('Guest')),
+            );
+        }
+
+        $tooltip = $this->translator->trans('Registered account');
+
+        return \sprintf(
+            '<span class="badge text-bg-light text-muted bo-customer-guest" data-bs-toggle="tooltip" title="%s"><i class="bi bi-person-check" aria-hidden="true"></i></span>',
+            htmlspecialchars($tooltip),
+        );
+    }
 
     private function relativeTime(\DateTimeInterface $createdAt): string
     {

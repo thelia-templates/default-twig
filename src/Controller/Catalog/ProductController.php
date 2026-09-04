@@ -384,6 +384,7 @@ final class ProductController
             'template_id' => $product->getTemplateId(),
             'brand_id' => $product->getBrandId(),
             'virtual_document_id' => $this->currentVirtualDocumentId($product),
+            'guest_checkout_forbidden' => (bool) $product->getGuestCheckoutForbidden(),
         ], [
             'include_id' => true,
         ]);
@@ -426,8 +427,9 @@ final class ProductController
     private function updateEvent(FormInterface $validated): ProductUpdateEvent
     {
         $data = $validated->getData() ?? [];
+        $productId = (int) ($data['id'] ?? 0);
 
-        $event = new ProductUpdateEvent((int) ($data['id'] ?? 0));
+        $event = new ProductUpdateEvent($productId);
         $event
             ->setLocale((string) ($data['locale'] ?? $this->defaultLocale()))
             ->setRef((string) ($data['ref'] ?? ''))
@@ -441,7 +443,8 @@ final class ProductController
             ->setTemplateId($this->intOrNull($data['template_id'] ?? null))
             ->setBrandId($this->intOrNull($data['brand_id'] ?? null))
             // 0 clears the association, -1 leaves it untouched (product with several combinations).
-            ->setVirtualDocumentId(isset($data['virtual_document_id']) ? (int) $data['virtual_document_id'] : -1);
+            ->setVirtualDocumentId(isset($data['virtual_document_id']) ? (int) $data['virtual_document_id'] : -1)
+            ->setGuestCheckoutForbidden((bool) ($data['guest_checkout_forbidden'] ?? false));
 
         return $event;
     }

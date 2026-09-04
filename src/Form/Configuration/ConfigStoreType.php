@@ -31,6 +31,7 @@ use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\Regex;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
+use Thelia\Domain\Checkout\Enum\GuestCheckoutMode;
 use Thelia\Domain\Legal\CompanyIdentifier;
 
 final class ConfigStoreType extends AbstractType
@@ -167,6 +168,17 @@ final class ConfigStoreType extends AbstractType
                 'constraints' => [new NotBlank()],
                 'label' => $this->translator->trans('Country'),
                 'choices' => $options['country_choices'],
+                'placeholder' => false,
+            ])
+            ->add('guest_checkout_mode', ChoiceType::class, [
+                'constraints' => [new NotBlank()],
+                'label' => $this->translator->trans('Guest checkout'),
+                'help' => $this->translator->trans('How far a visitor can go without creating an account.'),
+                'choices' => [
+                    $this->translator->trans('Disabled — an account is always required to order') => GuestCheckoutMode::Disabled->value,
+                    $this->translator->trans('Enabled — any cart may be ordered without an account') => GuestCheckoutMode::Enabled->value,
+                    $this->translator->trans('Enabled, except for products that require an account') => GuestCheckoutMode::EnabledUnlessProductForbids->value,
+                ],
                 'placeholder' => false,
             ])
             ->add('favicon_file', FileType::class, [
