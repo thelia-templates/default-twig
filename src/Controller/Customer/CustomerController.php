@@ -27,6 +27,7 @@ use BackOfficeDefaultTwigBundle\Service\Admin\AdminLogger;
 use BackOfficeDefaultTwigBundle\Service\Customer\CustomerFilterPresenter;
 use BackOfficeDefaultTwigBundle\Service\Customer\CustomerFilters;
 use BackOfficeDefaultTwigBundle\Service\Customer\CustomerListRowPresenter;
+use BackOfficeDefaultTwigBundle\Service\I18n\CountryStateProvider;
 use BackOfficeDefaultTwigBundle\Service\I18n\StateChoiceProvider;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
@@ -44,7 +45,6 @@ use Thelia\Core\Security\Resource\AdminResources;
 use Thelia\Domain\Customer\Service\CustomerTitleService;
 use Thelia\Mailer\MailerFactory;
 use Thelia\Model\ConfigQuery;
-use Thelia\Model\CountryQuery;
 use Thelia\Model\Customer;
 use Thelia\Model\CustomerQuery;
 use Thelia\Model\Event\CustomerEvent;
@@ -83,6 +83,7 @@ final class CustomerController
         private readonly CustomerListRowPresenter $rowPresenter,
         private readonly OrderRepository $orderRepository,
         private readonly StateChoiceProvider $stateChoices,
+        private readonly CountryStateProvider $countryStates,
         private readonly MailerFactory $mailer,
     ) {
     }
@@ -556,13 +557,11 @@ final class CustomerController
     private function countryChoices(string $locale): array
     {
         $choices = [];
-        foreach (CountryQuery::create()->find() as $country) {
-            $country->setLocale($locale);
-            $title = $country->getTitle();
-            if (!\is_string($title) || $title === '') {
+        foreach ($this->countryStates->countries($locale) as $country) {
+            if ($country['title'] === '') {
                 continue;
             }
-            $choices[$title] = (int) $country->getId();
+            $choices[$country['title']] = $country['id'];
         }
         ksort($choices);
 
