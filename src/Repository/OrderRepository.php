@@ -28,8 +28,13 @@ use Thelia\Model\OrderStatusQuery;
 
 /**
  * Centralised Propel queries for the order back-office screens.
+ *
+ * Not readonly: the reads every page pays for — the status list with its titles,
+ * the order count per status, the ids a canonical status code answers for — are
+ * memoised for the request. The sidebar asks for them on every screen and the
+ * dashboard asks for the same figures again.
  */
-final readonly class OrderRepository
+final class OrderRepository
 {
     public const SORT_FIELDS = [
         'id' => 'id',
@@ -46,6 +51,11 @@ final readonly class OrderRepository
     private const REVENUE_STATUS_CODES = [OrderStatus::CODE_PAID, OrderStatus::CODE_PROCESSING, OrderStatus::CODE_SENT];
 
     private const AWAITING_SHIPMENT_STATUS_CODES = [OrderStatus::CODE_PAID, OrderStatus::CODE_PROCESSING];
+
+    private const FALLBACK_STATUS_COLOR = '#6c757d';
+
+    /** @var array<string, list<array{id: int, code: string, title: string, color: string, count: int}>> */
+    private array $statusesWithCounts = [];
 
     /**
      * @return array{rows: ObjectCollection<int, Order>, total: int, lastPage: int}
@@ -173,7 +183,12 @@ final readonly class OrderRepository
     {
         $items = [['id' => 0, 'title' => $allLabel, 'code' => '']];
 
-        foreach (OrderStatusQuery::create()->orderByPosition()->find() as $status) {
+        $statuses = OrderStatusQuery::create()
+            ->orderByPosition()
+            ->joinWithI18n($locale, Criteria::LEFT_JOIN)
+            ->find();
+
+        foreach ($statuses as $status) {
             $status->setLocale($locale);
             $items[] = [
                 'id' => (int) $status->getId(),
@@ -193,13 +208,18 @@ final readonly class OrderRepository
     public function findStatusesLocalized(string $locale): array
     {
         $items = [];
-        foreach (OrderStatusQuery::create()->orderByPosition()->find() as $status) {
+        $statuses = OrderStatusQuery::create()
+            ->orderByPosition()
+            ->joinWithI18n($locale, Criteria::LEFT_JOIN)
+            ->find();
+
+        foreach ($statuses as $status) {
             $status->setLocale($locale);
             $items[] = [
                 'id' => (int) $status->getId(),
                 'title' => (string) $status->getTitle(),
                 'code' => (string) $status->getCode(),
-                'color' => (string) ($status->getColor() ?: '#6c757d'),
+                'color' => (string) ($status->getColor() ?: self::FALLBACK_STATUS_COLOR),
             ];
         }
 
@@ -213,13 +233,38 @@ final readonly class OrderRepository
      */
     public function findStatusesWithCounts(string $locale): array
     {
+        return $this->statusesWithCounts[$locale] ??= $this->readStatusesWithCounts($locale);
+    }
+
+    /**
+     * One order count per status and one read of the statuses with their titles,
+     * against one count query per status plus one title query per status.
+     *
+     * @return list<array{id: int, code: string, title: string, color: string, count: int}>
+     */
+    private function readStatusesWithCounts(string $locale): array
+    {
+        $counts = [];
+        $grouped = OrderQuery::create()
+            ->withColumn('COUNT(*)', 'order_count')
+            ->groupByStatusId()
+            ->select(['StatusId', 'order_count'])
+            ->find();
+
+        foreach ($grouped as $row) {
+            $counts[(int) $row['StatusId']] = (int) $row['order_count'];
+        }
+
+        $statuses = OrderStatusQuery::create()
+            ->orderById()
+            ->joinWithI18n($locale, Criteria::LEFT_JOIN)
+            ->find();
+
         $items = [];
-
-        foreach ($this->findAllStatuses() as $status) {
+        foreach ($statuses as $status) {
             $statusId = (int) $status->getId();
-            $count = OrderQuery::create()->filterByStatusId($statusId)->count();
-
-            if ($count === 0) {
+            // A status currently hosting no order stays off the sidebar.
+            if (($counts[$statusId] ?? 0) === 0) {
                 continue;
             }
 
@@ -229,8 +274,8 @@ final readonly class OrderRepository
                 'id' => $statusId,
                 'code' => (string) $status->getCode(),
                 'title' => (string) $status->getTitle(),
-                'color' => (string) ($status->getColor() ?: '#6c757d'),
-                'count' => $count,
+                'color' => (string) ($status->getColor() ?: self::FALLBACK_STATUS_COLOR),
+                'count' => $counts[$statusId],
             ];
         }
 
@@ -452,6 +497,9 @@ final readonly class OrderRepository
      */
     private function statusIdsAnsweringFor(array $codes): array
     {
+        // Deliberately not memoised: a caller holding this repository across a
+        // status being created expects the next read to see it, and the dashboard
+        // integration tests do exactly that.
         $ids = [];
 
         /** @var OrderStatus $status */
