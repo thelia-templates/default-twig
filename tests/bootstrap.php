@@ -18,7 +18,7 @@ use Composer\Autoload\ClassLoader;
 // root: templates/backOffice/default-twig/tests. The project owns the autoloader,
 // the environment and the test database, so the suite boots on its bootstrap and
 // only adds the namespace of its own test helpers.
-$projectDir = \dirname(__DIR__, 4);
+$projectDir = dirname(__DIR__, 4);
 
 require $projectDir.'/tests/bootstrap.php';
 

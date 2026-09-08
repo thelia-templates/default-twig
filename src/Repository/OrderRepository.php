@@ -19,6 +19,7 @@ use BackOfficeDefaultTwigBundle\Service\Order\OrderFilters;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\Collection\ObjectCollection;
 use Propel\Runtime\Propel;
+use Thelia\Model\Map\OrderTableMap;
 use Thelia\Model\Order;
 use Thelia\Model\OrderProduct;
 use Thelia\Model\OrderProductQuery;
@@ -98,6 +99,82 @@ final class OrderRepository
     public function countItemsForOrder(int $orderId): int
     {
         return OrderProductQuery::create()->filterByOrderId($orderId)->count();
+    }
+
+    /**
+     * How many lines each of these orders holds, in one grouped query. An order
+     * with no line is absent from the result, as a count of zero.
+     *
+     * @param list<int> $orderIds
+     *
+     * @return array<int, int>
+     */
+    public function countItemsByOrder(array $orderIds): array
+    {
+        if ($orderIds === []) {
+            return [];
+        }
+
+        $counts = [];
+        $rows = OrderProductQuery::create()
+            ->filterByOrderId($orderIds, Criteria::IN)
+            ->withColumn('COUNT(*)', 'item_count')
+            ->groupByOrderId()
+            ->select(['OrderId', 'item_count'])
+            ->find();
+
+        foreach ($rows as $row) {
+            $counts[(int) $row['OrderId']] = (int) $row['item_count'];
+        }
+
+        return $counts;
+    }
+
+    /**
+     * The amount each of these orders is worth, in one query instead of one per
+     * order, and to the cent what Order::getTotalAmount() answers.
+     *
+     * Only the taxed total of the lines is read in SQL — the very figure the model
+     * reads back — and the discount, its clamp at zero and the postage are then
+     * applied here in the same order and the same arithmetic as the model applies
+     * them. Doing the whole sum in SQL would settle a half-cent tie on DECIMAL
+     * rather than on the float the model rounds, and the two can land on different
+     * cents.
+     *
+     * @param list<int> $orderIds
+     *
+     * @return array<int, float>
+     */
+    public function findTotalAmountByOrder(array $orderIds): array
+    {
+        if ($orderIds === []) {
+            return [];
+        }
+
+        $placeholders = implode(', ', array_fill(0, \count($orderIds), '?'));
+
+        $sql = 'SELECT '.OrderTableMap::COL_ID.' AS order_id,
+                       '.OrderFilters::taxedItemsTotalSqlExpression().' AS items_total,
+                       '.OrderTableMap::COL_DISCOUNT.' AS discount,
+                       '.OrderTableMap::COL_POSTAGE.' AS postage
+                FROM `order`
+                WHERE '.OrderTableMap::COL_ID.' IN ('.$placeholders.')';
+
+        $statement = Propel::getConnection()->prepare($sql);
+        $statement->execute($orderIds);
+
+        $totals = [];
+        while (($row = $statement->fetch(\PDO::FETCH_ASSOC)) !== false) {
+            $total = (float) $row['items_total'] - (float) $row['discount'];
+
+            if ($total < 0) {
+                $total = 0.0;
+            }
+
+            $totals[(int) $row['order_id']] = $total + (float) $row['postage'];
+        }
+
+        return $totals;
     }
 
     public function countByCustomer(int $customerId): int

@@ -49,6 +49,7 @@ use Thelia\Model\Customer;
 use Thelia\Model\CustomerQuery;
 use Thelia\Model\Event\CustomerEvent;
 use Thelia\Model\LangQuery;
+use Thelia\Model\Order;
 use Thelia\Model\OrderQuery;
 use Thelia\Tools\Password;
 use Twig\Environment;
@@ -478,8 +479,13 @@ final class CustomerController
      */
     private function customerOrdersPage(int $customerId, int $page, int $perPage): array
     {
+        $orders = $this->orderRepository->findByCustomerPage($customerId, $page, $perPage);
+        $amounts = $this->orderRepository->findTotalAmountByOrder(
+            array_map(static fn (Order $order): int => (int) $order->getId(), iterator_to_array($orders)),
+        );
+
         $rows = [];
-        foreach ($this->orderRepository->findByCustomerPage($customerId, $page, $perPage) as $order) {
+        foreach ($orders as $order) {
             $status = $order->getOrderStatus();
             $currency = $order->getCurrency();
             $rows[] = [
@@ -488,7 +494,7 @@ final class CustomerController
                 'created_at' => $order->getCreatedAt(),
                 'status_title' => $status !== null ? (string) $status->getTitle() : '',
                 'status_color' => $status !== null ? (string) $status->getColor() : '#6c757d',
-                'amount' => (float) $order->getTotalAmount(),
+                'amount' => $amounts[(int) $order->getId()] ?? (float) $order->getTotalAmount(),
                 'currency_symbol' => $currency !== null ? (string) $currency->getSymbol() : '',
                 'edit_url' => $this->urls->generate('admin.order.update.view', ['order_id' => (int) $order->getId()]),
             ];

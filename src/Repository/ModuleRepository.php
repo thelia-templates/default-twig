@@ -34,6 +34,9 @@ final class ModuleRepository
     /** @var array<int, array<int, int>> */
     private array $configurationHookCounts = [];
 
+    /** @var array<string, array<int, ?string>> */
+    private array $titles = [];
+
     /**
      * @return ObjectCollection<int, Module>
      */
@@ -136,6 +139,32 @@ final class ModuleRepository
         }
 
         return $entries;
+    }
+
+    /**
+     * Module titles indexed by id, for the lists naming a module per row. A module
+     * with no title in that locale answers null, the way getTitle() does, so a
+     * caller can fall back on what it froze at the time.
+     *
+     * @return array<int, ?string>
+     */
+    public function findLocalizedTitles(string $locale): array
+    {
+        if (isset($this->titles[$locale])) {
+            return $this->titles[$locale];
+        }
+
+        $titles = [];
+        $modules = ModuleQuery::create()
+            ->joinWithI18n($locale, Criteria::LEFT_JOIN)
+            ->find();
+
+        foreach ($modules as $module) {
+            $module->setLocale($locale);
+            $titles[(int) $module->getId()] = $module->getTitle();
+        }
+
+        return $this->titles[$locale] = $titles;
     }
 
     /**

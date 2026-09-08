@@ -89,13 +89,8 @@ final class OrderController
 
         $paginated = $this->orderRepository->findPaginated($filters, $page, self::PAGE_SIZE);
 
-        $rows = [];
-        foreach ($paginated['rows'] as $order) {
-            $rows[] = $this->rowPresenter->present($order, $locale);
-        }
-
         return new Response($this->twig->render(self::LIST_TEMPLATE, [
-            'rows' => $rows,
+            'rows' => $this->rowPresenter->presentAll($paginated['rows'], $locale),
             'total' => $paginated['total'],
             'pages' => $paginated['lastPage'],
             'current_page' => min($page, $paginated['lastPage']),
