@@ -21,15 +21,29 @@ use Thelia\Model\ModuleConfigQuery;
 use Thelia\Model\ModuleHookQuery;
 use Thelia\Model\ModuleQuery;
 
-final readonly class ModuleRepository
+/**
+ * Not readonly: the hook counts of the whole module list are read once and kept
+ * for the request. The module list asks whether a module is configurable and
+ * whether it is hookable for every row, twice over for the first question.
+ */
+final class ModuleRepository
 {
+    /** @var array<int, int>|null */
+    private ?array $hookCounts = null;
+
+    /** @var array<int, array<int, int>> */
+    private array $configurationHookCounts = [];
+
     /**
      * @return ObjectCollection<int, Module>
      */
     public function findAllOrderedByPosition(string $locale): ObjectCollection
     {
         /** @var ObjectCollection<int, Module> $modules */
-        $modules = ModuleQuery::create()->orderByPosition()->find();
+        $modules = ModuleQuery::create()
+            ->orderByPosition()
+            ->joinWithI18n($locale, Criteria::LEFT_JOIN)
+            ->find();
 
         foreach ($modules as $module) {
             $module->setLocale($locale);
@@ -48,6 +62,7 @@ final readonly class ModuleRepository
             ->filterByType($type)
             ->filterByActivate(1)
             ->orderByPosition()
+            ->joinWithI18n($locale, Criteria::LEFT_JOIN)
             ->find();
 
         $items = [];
@@ -73,6 +88,7 @@ final readonly class ModuleRepository
             ->filterByType($type)
             ->filterByActivate(1)
             ->orderByPosition()
+            ->joinWithI18n($locale, Criteria::LEFT_JOIN)
             ->find();
 
         foreach ($modules as $module) {
@@ -122,22 +138,50 @@ final readonly class ModuleRepository
         return $entries;
     }
 
-    public function countHooksForModule(int $moduleId): int
+    /**
+     * How many hooks each module registers, all modules in one query.
+     *
+     * @return array<int, int>
+     */
+    public function countHooksByModule(): array
     {
-        return ModuleHookQuery::create()
-            ->filterByModuleId($moduleId)
-            ->count();
+        return $this->hookCounts ??= $this->groupedCounts(ModuleHookQuery::create());
     }
 
-    public function countActiveConfigurationHooksForModule(int $moduleId, int $hookType): int
+    /**
+     * How many active configuration hooks of that template type each module
+     * registers, all modules in one query.
+     *
+     * @return array<int, int>
+     */
+    public function countActiveConfigurationHooksByModule(int $hookType): array
     {
-        return ModuleHookQuery::create()
-            ->filterByModuleId($moduleId)
-            ->filterByActive(true)
-            ->useHookQuery()
-                ->filterByCode('module.configuration')
-                ->filterByType($hookType)
-            ->endUse()
-            ->count();
+        return $this->configurationHookCounts[$hookType] ??= $this->groupedCounts(
+            ModuleHookQuery::create()
+                ->filterByActive(true)
+                ->useHookQuery()
+                    ->filterByCode('module.configuration')
+                    ->filterByType($hookType)
+                ->endUse(),
+        );
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    private function groupedCounts(ModuleHookQuery $query): array
+    {
+        $counts = [];
+        $rows = $query
+            ->withColumn('COUNT(*)', 'hook_count')
+            ->groupByModuleId()
+            ->select(['ModuleId', 'hook_count'])
+            ->find();
+
+        foreach ($rows as $row) {
+            $counts[(int) $row['ModuleId']] = (int) $row['hook_count'];
+        }
+
+        return $counts;
     }
 }
