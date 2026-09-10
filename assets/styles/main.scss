@@ -2306,6 +2306,45 @@ tr.bo-order-row--urgent {
     color: var(--bs-secondary-color);
 }
 
+// Tag badges in a list cell. Same dot as the picker, read-only and tighter: a
+// customer can carry several, and the cell must not push the row taller.
+//
+// No min-width on purpose: this table already fills its container at a laptop
+// width and scrolls horizontally past it, so a floor here buys nothing and
+// pushes the columns after it out of sight.
+
+.bo-tag-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .25rem;
+}
+
+.bo-tag-badge__swatch {
+    flex: 0 0 auto;
+    width: .5rem;
+    height: .5rem;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 0, 0, .15);
+}
+
+.bo-tag-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .25rem;
+    padding: .0625rem .375rem;
+    font-size: .75rem;
+    line-height: 1.4;
+    max-width: 100%;
+    background-color: var(--bs-secondary-bg);
+    border: 1px solid var(--bs-border-color);
+    border-radius: 999px;
+    // Wraps rather than widening its column: a long label would otherwise
+    // claim the whole width it needs and push the table further past its
+    // container.
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
 // ---------- Small screens (phone and tablet portrait) ----------
 // The back-office is used from a tablet, sometimes from a phone. Everything
 // below trades density for reach: nothing is hidden that cannot be reached

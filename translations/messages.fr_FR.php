@@ -199,6 +199,7 @@ return [
     'No return matches the current filters.' => 'Aucun retour ne correspond aux filtres.',
     'No return on this order.' => 'Aucun retour sur cette commande.',
     'No return reason yet.' => 'Aucun motif de retour.',
+    'No tag available' => 'Aucune étiquette disponible',
     'No tag yet.' => 'Aucune étiquette pour le moment.',
     'Not resellable' => 'Non revendable',
     'of the cheapest item(s) of the lot' => 'des article(s) les moins chers du lot',
