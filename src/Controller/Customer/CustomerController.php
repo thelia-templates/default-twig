@@ -29,6 +29,7 @@ use BackOfficeDefaultTwigBundle\Service\Customer\CustomerFilters;
 use BackOfficeDefaultTwigBundle\Service\Customer\CustomerListRowPresenter;
 use BackOfficeDefaultTwigBundle\Service\I18n\CountryStateProvider;
 use BackOfficeDefaultTwigBundle\Service\I18n\StateChoiceProvider;
+use Propel\Runtime\ActiveQuery\Criteria;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -43,6 +44,7 @@ use Thelia\Core\Event\TheliaEvents;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
 use Thelia\Domain\Customer\Service\CustomerTitleService;
+use Thelia\Domain\Tagging\Service\TagService;
 use Thelia\Mailer\MailerFactory;
 use Thelia\Model\ConfigQuery;
 use Thelia\Model\Customer;
@@ -51,6 +53,9 @@ use Thelia\Model\Event\CustomerEvent;
 use Thelia\Model\LangQuery;
 use Thelia\Model\Order;
 use Thelia\Model\OrderQuery;
+use Thelia\Model\Tag;
+use Thelia\Model\TagElement;
+use Thelia\Model\TagQuery;
 use Thelia\Tools\Password;
 use Twig\Environment;
 
@@ -86,6 +91,7 @@ final class CustomerController
         private readonly StateChoiceProvider $stateChoices,
         private readonly CountryStateProvider $countryStates,
         private readonly MailerFactory $mailer,
+        private readonly TagService $tags,
     ) {
     }
 
@@ -295,7 +301,23 @@ final class CustomerController
                 );
             }
 
-            return new RedirectResponse($this->urls->generate(self::EDIT_ROUTE, ['customer_id' => $updated?->getId() ?? $customerId]));
+            // Outside the customer save on purpose, and it cannot be folded into it: the
+            // update travels through the event dispatcher, which opens no transaction this
+            // call could join. The customer is already written when we get here, so a
+            // failure has to say so rather than read as "nothing was saved".
+            $savedCustomerId = (int) ($updated?->getId() ?? $customerId);
+
+            $tagFailure = $this->applySubmittedTags($savedCustomerId, $data);
+            if ($tagFailure !== null) {
+                $this->errorRenderer->setup(
+                    $this->translator->trans('Customer update'),
+                    $this->translator->trans('The customer was saved, but its tags could not be updated.'),
+                    $form,
+                    $tagFailure,
+                );
+            }
+
+            return new RedirectResponse($this->urls->generate(self::EDIT_ROUTE, ['customer_id' => $savedCustomerId]));
         } catch (\Throwable $exception) {
             $this->errorRenderer->setup(
                 $this->translator->trans('Customer update'),
@@ -368,6 +390,8 @@ final class CustomerController
             'include_password' => true,
             'password_required' => false,
             'include_address' => $includeAddress,
+            'include_tags' => true,
+            'tag_choices' => $this->tagChoices(),
         ]));
     }
 
@@ -523,6 +547,55 @@ final class CustomerController
     /**
      * @return array<string, mixed>
      */
+    /**
+     * @return list<string>
+     */
+    private function tagChoices(): array
+    {
+        $labels = [];
+
+        foreach (TagQuery::create()->orderByLabel(Criteria::ASC)->find() as $tag) {
+            $labels[] = (string) $tag->getLabel();
+        }
+
+        return $labels;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function currentTagLabels(int $customerId): array
+    {
+        return array_map(
+            static fn (Tag $tag): string => (string) $tag->getLabel(),
+            $this->tags->findTagsFor(TagElement::ELEMENT_KEY_CUSTOMER, $customerId),
+        );
+    }
+
+    /**
+     * Writes the submitted tags and hands back what stopped it, or null on success.
+     *
+     * @param array<string, mixed> $data
+     */
+    private function applySubmittedTags(int $customerId, array $data): ?\Throwable
+    {
+        $picked = \is_array($data['tags'] ?? null) ? $data['tags'] : [];
+        $typed = explode(',', (string) ($data['new_tags'] ?? ''));
+
+        // Passed on as typed: setLabelsFor() normalises every label and drops the
+        // ones that reduce to nothing, so a second pass here would be a guard no
+        // test can tell apart from the one the service already holds.
+        $labels = array_map(static fn (mixed $label): string => (string) $label, [...$picked, ...$typed]);
+
+        try {
+            $this->tags->setLabelsFor(TagElement::ELEMENT_KEY_CUSTOMER, $customerId, $labels);
+        } catch (\Throwable $exception) {
+            return $exception;
+        }
+
+        return null;
+    }
+
     private function customerToFormData(Customer $customer): array
     {
         $data = [
@@ -534,6 +607,8 @@ final class CustomerController
             'lang_id' => $customer->getLangId(),
             'discount' => $customer->getDiscount(),
             'reseller' => (bool) $customer->getReseller(),
+            'tags' => $this->currentTagLabels((int) $customer->getId()),
+            'new_tags' => '',
         ];
 
         $address = $customer->getDefaultAddress();
