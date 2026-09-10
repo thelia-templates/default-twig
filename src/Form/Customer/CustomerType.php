@@ -160,10 +160,16 @@ final class CustomerType extends AbstractType
             // label to its tag and creates the missing ones, so the free-text field and the
             // picked options travel the same way and the screen owes no identifier look-up.
             $tagChoices = array_combine($options['tag_choices'], $options['tag_choices']);
+            $tagColors = $options['tag_colors'];
 
             $builder
                 ->add('tags', ChoiceType::class, [
                     'choices' => $tagChoices,
+                    'choice_attr' => static function (string $label) use ($tagColors): array {
+                        // Carried on the option so the picker can draw the swatch from the
+                        // markup it already has, without a second trip for the colours.
+                        return isset($tagColors[$label]) ? ['data-color' => $tagColors[$label]] : [];
+                    },
                     'multiple' => true,
                     'expanded' => false,
                     'required' => false,
@@ -171,13 +177,18 @@ final class CustomerType extends AbstractType
                     'attr' => [
                         'size' => 8,
                         'data-bo-multiselect-search-target' => 'select',
+                        'data-bo-tag-picker-target' => 'select',
+                        'data-action' => 'change->bo-tag-picker#render',
                         'data-testid' => 'customer-tags-select',
                     ],
                 ])
                 ->add('new_tags', TextType::class, [
                     'required' => false,
                     'label' => $tr->trans('New tags, separated by commas'),
-                    'attr' => ['data-testid' => 'customer-new-tags'],
+                    'attr' => [
+                        'data-bo-tag-picker-target' => 'newTags',
+                        'data-testid' => 'customer-new-tags',
+                    ],
                 ]);
         }
 
@@ -237,6 +248,7 @@ final class CustomerType extends AbstractType
                 'include_id' => false,
                 'include_tags' => false,
                 'tag_choices' => [],
+                'tag_colors' => [],
                 'include_password' => false,
                 'include_address' => true,
                 'password_required' => false,
@@ -249,6 +261,7 @@ final class CustomerType extends AbstractType
             ->setAllowedTypes('include_id', 'bool')
             ->setAllowedTypes('include_tags', 'bool')
             ->setAllowedTypes('tag_choices', 'array')
+            ->setAllowedTypes('tag_colors', 'array')
             ->setAllowedTypes('include_address', 'bool')
             ->setAllowedTypes('include_password', 'bool')
             ->setAllowedTypes('password_required', 'bool')
