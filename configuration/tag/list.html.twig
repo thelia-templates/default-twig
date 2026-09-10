@@ -33,9 +33,11 @@
                 column_actions('_actions', 'Actions'|trans),
             ],
             rows: rows,
-            emptyMessage: 'No tag yet. A tag is created from a customer record.'|trans,
+            emptyMessage: 'No tag yet.'|trans,
             sortField: sort_field,
             sortDirection: sort_direction,
         }) }}
     </div>
+
+    {% include '@BackOfficeDefaultTwig/configuration/tag/_delete_modal.html.twig' %}
 {% endblock %}
