@@ -35,6 +35,7 @@ use Thelia\Core\Security\Resource\AdminResources;
 use Thelia\Domain\Tagging\Service\TagService;
 use Thelia\Model\Tag;
 use Thelia\Model\TagQuery;
+use Thelia\Tools\TokenProvider;
 use Twig\Environment;
 
 /**
@@ -53,6 +54,7 @@ final class TagController
     private const FORM_NAME = 'thelia_tag_update';
     private const LIST_TEMPLATE = '@BackOfficeDefaultTwig/configuration/tag/list.html.twig';
     private const EDIT_TEMPLATE = '@BackOfficeDefaultTwig/configuration/tag/edit.html.twig';
+    private const DELETE_MODAL_ID = '#tag-delete-modal';
 
     /**
      * The same shape the API resource validates a colour against.
@@ -73,6 +75,7 @@ final class TagController
         private readonly AdminLogger $adminLogger,
         private readonly UrlGeneratorInterface $urls,
         private readonly TranslatorInterface $translator,
+        private readonly TokenProvider $tokens,
     ) {
     }
 
@@ -112,6 +115,14 @@ final class TagController
                         href: $this->urls->generate(self::EDIT_ROUTE, ['tag_id' => (int) $tag->getId()]),
                         grantedAttribute: AccessManager::UPDATE,
                         grantedSubject: self::RESOURCE,
+                    ),
+                    new RowAction(
+                        kind: 'delete',
+                        label: $this->translator->trans('Delete'),
+                        modalTarget: self::DELETE_MODAL_ID,
+                        grantedAttribute: AccessManager::DELETE,
+                        grantedSubject: self::RESOURCE,
+                        dataAttributes: ['tag-id' => (int) $tag->getId()],
                     ),
                 ],
             ];
@@ -190,6 +201,45 @@ final class TagController
                 Response::HTTP_BAD_REQUEST,
             );
         }
+    }
+
+    #[Route('/delete', name: 'delete', methods: ['POST', 'GET'])]
+    public function delete(Request $request): Response
+    {
+        if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::DELETE)) {
+            return $denied;
+        }
+
+        try {
+            // The confirmation dialog carries the token in the query string, a
+            // posted form carries it in the body: accept either, refuse neither
+            // silently. Deleting a tag takes it off every customer at once, so an
+            // unguarded GET would be a one-click forgery.
+            $this->tokens->checkToken(
+                (string) ($request->request->get('_token') ?? $request->query->get('_token') ?? ''),
+            );
+        } catch (\Throwable $exception) {
+            $this->errorRenderer->setup(
+                $this->translator->trans('Tag deletion'),
+                $exception->getMessage(),
+                null,
+                $exception,
+            );
+
+            return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
+        }
+
+        $tagId = (int) ($request->request->get('tag_id') ?? $request->query->get('tag_id') ?? 0);
+        $tag = TagQuery::create()->findPk($tagId);
+
+        if ($tag instanceof Tag) {
+            // The foreign key on tag_element.tag_id cascades, so the attachments
+            // go with it and no customer is left pointing at a tag that is gone.
+            $tag->delete();
+            $this->adminLogger->log(self::RESOURCE, AccessManager::DELETE, 'Tag deleted', $tagId);
+        }
+
+        return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
     }
 
     private function buildForm(?Tag $tag = null): FormInterface
