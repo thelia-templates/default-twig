@@ -55,6 +55,7 @@ final class TagController
     private const LIST_TEMPLATE = '@BackOfficeDefaultTwig/configuration/tag/list.html.twig';
     private const EDIT_TEMPLATE = '@BackOfficeDefaultTwig/configuration/tag/edit.html.twig';
     private const DELETE_MODAL_ID = '#tag-delete-modal';
+    private const MERGE_TEMPLATE = '@BackOfficeDefaultTwig/configuration/tag/merge.html.twig';
 
     /**
      * The same shape the API resource validates a colour against.
@@ -155,6 +156,7 @@ final class TagController
                 'label' => (string) $tag->getLabel(),
                 'customer_count' => $this->tags->countCustomersByTag()[$tag->getId()] ?? 0,
             ],
+            'merge_targets' => $this->mergeTargets($tag),
         ]));
     }
 
@@ -197,10 +199,69 @@ final class TagController
                 $this->twig->render(self::EDIT_TEMPLATE, [
                     'form' => $form->createView(),
                     'tag' => ['id' => 0, 'label' => '', 'customer_count' => 0],
+                    'merge_targets' => [],
                 ]),
                 Response::HTTP_BAD_REQUEST,
             );
         }
+    }
+
+    /**
+     * Asks for the confirmation of a merge, and performs it once confirmed.
+     *
+     * A separate page rather than a dialog on the list: the confirmation has to
+     * announce how many customers will carry the surviving tag, and that number
+     * is not the sum of the two counts — a customer carrying both is one
+     * customer. A shared dialog cannot render a figure that depends on the pair.
+     */
+    #[Route('/merge', name: 'merge', methods: ['GET', 'POST'])]
+    public function merge(Request $request): Response
+    {
+        if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::UPDATE)) {
+            return $denied;
+        }
+
+        $absorbed = TagQuery::create()->findPk((int) ($request->request->get('tag_id') ?? $request->query->get('tag_id') ?? 0));
+        $surviving = TagQuery::create()->findPk((int) ($request->request->get('into') ?? $request->query->get('into') ?? 0));
+
+        if (!$absorbed instanceof Tag || !$surviving instanceof Tag || $absorbed->getId() === $surviving->getId()) {
+            return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
+        }
+
+        if ($request->isMethod('GET')) {
+            return new Response($this->twig->render(self::MERGE_TEMPLATE, [
+                'absorbed' => ['id' => (int) $absorbed->getId(), 'label' => (string) $absorbed->getLabel()],
+                'surviving' => ['id' => (int) $surviving->getId(), 'label' => (string) $surviving->getLabel()],
+                'resulting_customer_count' => $this->tags->countCustomersCarryingEither($absorbed, $surviving),
+            ]));
+        }
+
+        try {
+            // Irreversible, so the same guard as the deletion: a merge strips one
+            // tag from the vocabulary and rewrites the attachments of every
+            // customer carrying it.
+            $this->tokens->checkToken(
+                (string) ($request->request->get('_token') ?? $request->query->get('_token') ?? ''),
+            );
+
+            $this->tags->merge($absorbed, $surviving);
+
+            $this->adminLogger->log(
+                self::RESOURCE,
+                AccessManager::UPDATE,
+                \sprintf('Tag "%s" merged into "%s"', (string) $absorbed->getLabel(), (string) $surviving->getLabel()),
+                (int) $surviving->getId(),
+            );
+        } catch (\Throwable $exception) {
+            $this->errorRenderer->setup(
+                $this->translator->trans('Tag merge'),
+                $exception->getMessage(),
+                null,
+                $exception,
+            );
+        }
+
+        return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
     }
 
     #[Route('/delete', name: 'delete', methods: ['POST', 'GET'])]
@@ -240,6 +301,29 @@ final class TagController
         }
 
         return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
+    }
+
+    /**
+     * Every other tag, so the screen never offers a tag as its own target: the
+     * service refuses that, and an option that can only fail is a trap.
+     *
+     * @return list<array{id: int, label: string}>
+     */
+    private function mergeTargets(Tag $absorbed): array
+    {
+        $targets = [];
+
+        foreach (TagQuery::create()->orderByLabel()->find() as $candidate) {
+            \assert($candidate instanceof Tag);
+
+            if ($candidate->getId() === $absorbed->getId()) {
+                continue;
+            }
+
+            $targets[] = ['id' => (int) $candidate->getId(), 'label' => (string) $candidate->getLabel()];
+        }
+
+        return $targets;
     }
 
     private function buildForm(?Tag $tag = null): FormInterface
