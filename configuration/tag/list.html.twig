@@ -1,0 +1,40 @@
+{% extends '@BackOfficeDefaultTwig/base.html.twig' %}
+
+{% block title %}{{ 'Customer tags'|trans }}{% endblock %}
+{% block body_testid %}tags-list{% endblock %}
+
+{% block breadcrumb %}
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ path('admin.home') }}">{{ 'Home'|trans }}</a></li>
+            <li class="breadcrumb-item"><a href="/admin/configuration">{{ 'Configuration'|trans }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ 'Customer tags'|trans }}</li>
+        </ol>
+    </nav>
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid" data-testid="tags-page">
+        <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
+            <h1 class="h3 mb-0">{{ 'Customer tags'|trans }}</h1>
+        </div>
+
+        <p class="text-muted">
+            {{ 'Tags are internal markers. They never appear on the shop front, in an e-mail, on an invoice, nor in the data export handed to a customer.'|trans }}
+        </p>
+
+        {{ component('BoDataTable', {
+            id: 'tags',
+            columns: [
+                column('id', 'ID'|trans, 'start', 'id', hideBelow: 'md'),
+                column_html('color_swatch', 'Colour'|trans, 'center'),
+                column('label', 'Label'|trans, 'start', 'label'),
+                column('customer_count', 'Customers'|trans, 'center', hideBelow: 'sm'),
+            ],
+            rows: rows,
+            emptyMessage: 'No tag yet. A tag is created from a customer record.'|trans,
+            sortField: sort_field,
+            sortDirection: sort_direction,
+        }) }}
+    </div>
+{% endblock %}
