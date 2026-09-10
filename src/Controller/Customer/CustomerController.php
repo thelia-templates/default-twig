@@ -71,6 +71,12 @@ final class CustomerController
     private const UPDATE_FORM_NAME = 'thelia_customer_update';
     private const PAGE_SIZE = 25;
 
+    /**
+     * The same shape the API resource and the configuration screen check a colour
+     * against: a value that is not a colour never reaches a style attribute.
+     */
+    private const COLOR_CODE_SHAPE = '/^#[0-9A-Fa-f]{6}$/';
+
     public function __construct(
         private readonly AdminFormAction $action,
         private readonly AdminAccessChecker $access,
@@ -385,13 +391,16 @@ final class CustomerController
      */
     private function buildUpdateForm(string $locale, ?array $data, bool $includeAddress): FormInterface
     {
+        $tagChoices = $this->tagChoices();
+
         return $this->formFactory->createNamed(self::UPDATE_FORM_NAME, CustomerType::class, $data, array_merge($this->formOptions($locale), [
             'include_id' => true,
             'include_password' => true,
             'password_required' => false,
             'include_address' => $includeAddress,
             'include_tags' => true,
-            'tag_choices' => $this->tagChoices(),
+            'tag_choices' => array_keys($tagChoices),
+            'tag_colors' => array_filter($tagChoices),
         ]));
     }
 
@@ -548,17 +557,24 @@ final class CustomerController
      * @return array<string, mixed>
      */
     /**
-     * @return list<string>
+     * The whole tag vocabulary, label => colour, in label order.
+     *
+     * The colour is re-checked on the way out, as the configuration screen does:
+     * it ends up in a style attribute, and a row written by an import, a module
+     * or a hand-run SQL statement never passed the API validator.
+     *
+     * @return array<string, string|null>
      */
     private function tagChoices(): array
     {
-        $labels = [];
+        $choices = [];
 
         foreach (TagQuery::create()->orderByLabel(Criteria::ASC)->find() as $tag) {
-            $labels[] = (string) $tag->getLabel();
+            $color = (string) $tag->getColorCode();
+            $choices[(string) $tag->getLabel()] = preg_match(self::COLOR_CODE_SHAPE, $color) === 1 ? $color : null;
         }
 
-        return $labels;
+        return $choices;
     }
 
     /**
