@@ -144,6 +144,31 @@
                         </div>
                     {% endif %}
 
+                    {% if form.tags is defined %}
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <i class="bi bi-tags" aria-hidden="true"></i> {{ 'Tags'|trans }}
+                            </div>
+                            <div class="card-body">
+                                {# Same picker as the coupon and sale audiences: the search box hides
+                                   the non-matching options client-side, so the operator finds an
+                                   existing tag instead of typing a near-duplicate of it. #}
+                                <div data-controller="bo-multiselect-search">
+                                    <input type="search"
+                                           class="form-control mb-2"
+                                           placeholder="{{ 'Filter the tags…'|trans }}"
+                                           aria-label="{{ 'Filter the tags…'|trans }}"
+                                           data-bo-multiselect-search-target="input"
+                                           data-action="input->bo-multiselect-search#filter"
+                                           data-testid="customer-tags-filter">
+                                    {{ form_row(form.tags) }}
+                                </div>
+                                {{ form_row(form.new_tags) }}
+                                <span class="form-text small">{{ 'A tag typed here is created if the shop does not know it yet.'|trans }}</span>
+                            </div>
+                        </div>
+                    {% endif %}
+
                     <div class="card mb-3">
                         <div class="card-header">
                             <i class="bi bi-sliders" aria-hidden="true"></i> {{ 'Preferences'|trans }}
