@@ -132,6 +132,7 @@ return [
     'No colour' => 'Aucune couleur',
     'No countdown' => 'Aucun compte à rebours',
     'No matching tag.' => 'Aucune étiquette correspondante.',
+    'No tag available' => 'Aucune étiquette disponible',
     'No tag yet.' => 'Aucune étiquette pour le moment.',
     'Only a superadministrator can edit a superadministrator account.' => 'Seul un superadministrateur peut modifier un compte superadministrateur.',
     'Only a superadministrator can grant the superadministrator profile.' => 'Seul un superadministrateur peut attribuer le profil superadministrateur.',

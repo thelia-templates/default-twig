@@ -166,9 +166,10 @@ final class CustomerType extends AbstractType
                 ->add('tags', ChoiceType::class, [
                     'choices' => $tagChoices,
                     'choice_attr' => static function (string $label) use ($tagColors): array {
-                        // Carried on the option so the picker can draw the swatch from the
-                        // markup it already has, without a second trip for the colours.
-                        return isset($tagColors[$label]) ? ['data-color' => $tagColors[$label]] : [];
+                        // Carried on the option so the picker can draw the dot from the
+                        // markup it already has, and so the colour is checked once
+                        // server-side rather than trusted in JavaScript.
+                        return ($tagColors[$label] ?? '') === '' ? [] : ['data-color' => $tagColors[$label]];
                     },
                     'multiple' => true,
                     'expanded' => false,

@@ -73,6 +73,8 @@ export default class extends Controller {
         });
 
         this.typedLabels.forEach((label) => {
+            // No colour: a tag being typed does not exist yet, so it has none
+            // until it is saved.
             this.chipsTarget.append(this.buildChip(label, '', true));
         });
     }
@@ -85,8 +87,8 @@ export default class extends Controller {
         if (color !== '') {
             const swatch = document.createElement('span');
             swatch.className = 'bo-tag-picker__swatch';
-            // Assigned rather than interpolated into a style string, and the value
-            // was already checked against the colour shape server-side.
+            // Assigned rather than interpolated into a style string, and the
+            // value was already checked by TagSwatch server-side.
             swatch.style.backgroundColor = color;
             chip.append(swatch);
         }

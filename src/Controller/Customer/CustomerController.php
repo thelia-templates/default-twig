@@ -29,6 +29,7 @@ use BackOfficeDefaultTwigBundle\Service\Customer\CustomerFilters;
 use BackOfficeDefaultTwigBundle\Service\Customer\CustomerListRowPresenter;
 use BackOfficeDefaultTwigBundle\Service\I18n\CountryStateProvider;
 use BackOfficeDefaultTwigBundle\Service\I18n\StateChoiceProvider;
+use BackOfficeDefaultTwigBundle\Service\Tag\TagSwatch;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
@@ -71,12 +72,6 @@ final class CustomerController
     private const UPDATE_FORM_NAME = 'thelia_customer_update';
     private const PAGE_SIZE = 25;
 
-    /**
-     * The same shape the API resource and the configuration screen check a colour
-     * against: a value that is not a colour never reaches a style attribute.
-     */
-    private const COLOR_CODE_SHAPE = '/^#[0-9A-Fa-f]{6}$/';
-
     public function __construct(
         private readonly AdminFormAction $action,
         private readonly AdminAccessChecker $access,
@@ -98,6 +93,7 @@ final class CustomerController
         private readonly CountryStateProvider $countryStates,
         private readonly MailerFactory $mailer,
         private readonly TagService $tags,
+        private readonly TagSwatch $swatch,
     ) {
     }
 
@@ -125,6 +121,7 @@ final class CustomerController
         $phones = $this->customerRepository->findPrimaryPhones($customerIds);
         $primaryCountryIds = $this->customerRepository->findPrimaryCountryIds($customerIds);
         $countriesIndex = $this->buildCountriesIndex($primaryCountryIds, $locale);
+        $tagsByCustomer = $this->tags->findTagsForMany(TagElement::ELEMENT_KEY_CUSTOMER, $customerIds);
 
         $rows = [];
         foreach ($paginated['rows'] as $customer) {
@@ -141,6 +138,7 @@ final class CustomerController
                 phone: $phones[$customerId] ?? '',
                 countryFlag: $country['flag'],
                 countryTitle: $country['title'],
+                tags: $tagsByCustomer[$customerId] ?? [],
             );
         }
 
@@ -559,19 +557,17 @@ final class CustomerController
     /**
      * The whole tag vocabulary, label => colour, in label order.
      *
-     * The colour is re-checked on the way out, as the configuration screen does:
-     * it ends up in a style attribute, and a row written by an import, a module
-     * or a hand-run SQL statement never passed the API validator.
+     * The colour is checked by TagSwatch and not by the template: it is the one
+     * place that decides whether a tag colour may reach a style attribute.
      *
-     * @return array<string, string|null>
+     * @return array<string, string>
      */
     private function tagChoices(): array
     {
         $choices = [];
 
         foreach (TagQuery::create()->orderByLabel(Criteria::ASC)->find() as $tag) {
-            $color = (string) $tag->getColorCode();
-            $choices[(string) $tag->getLabel()] = preg_match(self::COLOR_CODE_SHAPE, $color) === 1 ? $color : null;
+            $choices[(string) $tag->getLabel()] = $this->swatch->color($tag->getColorCode()) ?? '';
         }
 
         return $choices;
