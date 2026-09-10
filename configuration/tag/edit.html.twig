@@ -35,7 +35,16 @@
                     {{ form_row(form.noColor) }}
                     {{ form_row(form.colorCode) }}
                     {{ form_widget(form.id) }}
-                    <div class="d-flex justify-content-end gap-2 mt-3">
+                    <div class="d-flex flex-wrap justify-content-end gap-2 mt-3">
+                        {# Outside the submit pair on the left: this leaves the screen
+                           without saving, and sitting next to Save it would read as
+                           part of the same action. #}
+                        {% if tag.customers_url is defined and tag.customers_url and is_granted('VIEW', 'admin.customer') %}
+                            <a href="{{ tag.customers_url }}" class="btn btn-outline-secondary me-auto" data-testid="tag-edit-customers-link">
+                                <i class="bi bi-eye" aria-hidden="true"></i>
+                                {{ 'View customers (%count%)'|trans({'%count%': tag.customer_count}) }}
+                            </a>
+                        {% endif %}
                         <a href="{{ path('admin.configuration.tags.default') }}" class="btn btn-outline-secondary">{{ 'Cancel'|trans }}</a>
                         <button type="submit" class="btn btn-primary" data-testid="tag-save-button"><i class="bi bi-check2"></i> {{ 'Save'|trans }}</button>
                     </div>

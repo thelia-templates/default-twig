@@ -66,13 +66,24 @@ final class TagType extends AbstractType
                 'required' => false,
                 'label' => $this->translator->trans('No colour'),
             ])
-            ->add('id', HiddenType::class, [
+        ;
+
+        // Absent from the creation form: there is no tag to point at yet, and a
+        // required identifier would refuse every submission.
+        if ($options['include_id']) {
+            $builder->add('id', HiddenType::class, [
                 'constraints' => [new NotBlank(), new GreaterThan(0)],
             ]);
+        }
     }
 
     public function configureOptions(OptionsResolver $resolver): void
     {
-        $resolver->setDefaults(['csrf_token_id' => 'admin.tag']);
+        $resolver
+            ->setDefaults([
+                'csrf_token_id' => 'admin.tag',
+                'include_id' => true,
+            ])
+            ->setAllowedTypes('include_id', 'bool');
     }
 }
