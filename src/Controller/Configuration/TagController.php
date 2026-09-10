@@ -16,6 +16,7 @@ namespace BackOfficeDefaultTwigBundle\Controller\Configuration;
 
 use BackOfficeDefaultTwigBundle\Form\Configuration\TagType;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
+use BackOfficeDefaultTwigBundle\Service\Customer\CustomerFilters;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormValidator;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminLogger;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormErrorRenderer;
@@ -52,6 +53,8 @@ final class TagController
     private const LIST_ROUTE = 'admin.configuration.tags.default';
     private const EDIT_ROUTE = 'admin.configuration.tags.update';
     private const FORM_NAME = 'thelia_tag_update';
+    private const CREATE_FORM_NAME = 'thelia_tag_create';
+    private const CUSTOMER_LIST_ROUTE = 'admin.customers';
     private const LIST_TEMPLATE = '@BackOfficeDefaultTwig/configuration/tag/list.html.twig';
     private const EDIT_TEMPLATE = '@BackOfficeDefaultTwig/configuration/tag/edit.html.twig';
     private const DELETE_MODAL_ID = '#tag-delete-modal';
@@ -109,6 +112,7 @@ final class TagController
                 'color_code' => (string) $tag->getColorCode(),
                 'color_swatch' => $this->colorSwatch((string) $tag->getColorCode()),
                 'customer_count' => $customerCounts[$tag->getId()] ?? 0,
+                'customers_html' => $this->customersLink((int) $tag->getId(), $customerCounts[$tag->getId()] ?? 0),
                 '_actions' => [
                     new RowAction(
                         kind: 'edit',
@@ -133,7 +137,43 @@ final class TagController
             'rows' => $rows,
             'sort_field' => $sort->field,
             'sort_direction' => $sort->direction,
+            'create_form' => $this->buildCreateForm()->createView(),
         ]));
+    }
+
+    #[Route('/create', name: 'create', methods: ['POST'])]
+    public function create(Request $request): Response
+    {
+        if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::CREATE)) {
+            return $denied;
+        }
+
+        $form = $this->buildCreateForm();
+
+        try {
+            $data = $this->validator->validate($form)->getData();
+
+            // The checkbox is what expresses "no colour": a native colour input has
+            // no empty state and always posts a value, black by default.
+            $colorCode = ($data['noColor'] ?? false) === true
+                ? null
+                : (($data['colorCode'] ?? '') === '' ? null : (string) $data['colorCode']);
+
+            $tag = $this->tags->create((string) $data['label'], $colorCode);
+
+            $this->adminLogger->log(self::RESOURCE, AccessManager::CREATE, 'Tag created', (int) $tag->getId());
+
+            return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
+        } catch (\Throwable $exception) {
+            $this->errorRenderer->setup(
+                $this->translator->trans('Tag creation failed.'),
+                $exception->getMessage(),
+                $form,
+                $exception,
+            );
+
+            return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
+        }
     }
 
     #[Route('/update', name: 'update', methods: ['GET'])]
@@ -155,6 +195,7 @@ final class TagController
                 'id' => (int) $tag->getId(),
                 'label' => (string) $tag->getLabel(),
                 'customer_count' => $this->tags->countCustomersByTag()[$tag->getId()] ?? 0,
+                'customers_url' => $this->customersCarryingUrl((int) $tag->getId()),
             ],
             'merge_targets' => $this->mergeTargets($tag),
         ]));
@@ -198,7 +239,7 @@ final class TagController
             return new Response(
                 $this->twig->render(self::EDIT_TEMPLATE, [
                     'form' => $form->createView(),
-                    'tag' => ['id' => 0, 'label' => '', 'customer_count' => 0],
+                    'tag' => ['id' => 0, 'label' => '', 'customer_count' => 0, 'customers_url' => ''],
                     'merge_targets' => [],
                 ]),
                 Response::HTTP_BAD_REQUEST,
@@ -324,6 +365,52 @@ final class TagController
         }
 
         return $targets;
+    }
+
+    private function buildCreateForm(): FormInterface
+    {
+        // noColor ticked by default: a native colour input has no empty state and
+        // posts black, so a tag created without touching the picker would come
+        // out black rather than colourless — the same trap the edit screen
+        // already handles by ticking the box for a tag that has no colour.
+        return $this->formFactory->createNamed(
+            self::CREATE_FORM_NAME,
+            TagType::class,
+            ['noColor' => true],
+            ['include_id' => false],
+        );
+    }
+
+    /**
+     * A link to the customers carrying this tag, or the bare count when the
+     * profile cannot open the customer list: a link that answers 403 is worse
+     * than no link.
+     */
+    private function customersLink(int $tagId, int $customerCount): string
+    {
+        $label = $this->translator->trans('View customers (%count%)', ['%count%' => $customerCount]);
+
+        if ($this->access->check(AdminResources::CUSTOMER, [], AccessManager::VIEW) !== null) {
+            return \sprintf('<span class="text-muted">%d</span>', $customerCount);
+        }
+
+        return \sprintf(
+            '<a class="btn btn-sm btn-outline-secondary" href="%s" data-testid="tag-customers-link"><i class="bi bi-eye" aria-hidden="true"></i> %s</a>',
+            htmlspecialchars($this->customersCarryingUrl($tagId)),
+            htmlspecialchars($label),
+        );
+    }
+
+    /**
+     * The customer list, pre-filtered on this tag.
+     *
+     * Built here and not in the template: the filter key belongs to the customer
+     * screen, and a hand-written query string in Twig would drift from it the
+     * day that key changes.
+     */
+    private function customersCarryingUrl(int $tagId): string
+    {
+        return $this->urls->generate(self::CUSTOMER_LIST_ROUTE, [CustomerFilters::KEY_TAG_IDS => [$tagId]]);
     }
 
     private function buildForm(?Tag $tag = null): FormInterface
