@@ -237,11 +237,26 @@ final class TagController
                 $exception,
             );
 
+            // Re-read from the posted identifier rather than rendering an empty
+            // stub: the screen comes back with the refusal on it, and a header
+            // reading "#0, 0 customers" would tell the administrator their tag
+            // had been emptied when nothing was written at all.
+            $edited = TagQuery::create()->findPk((int) ($request->request->all(self::FORM_NAME)['id'] ?? 0));
+
+            if (!$edited instanceof Tag) {
+                return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
+            }
+
             return new Response(
                 $this->twig->render(self::EDIT_TEMPLATE, [
                     'form' => $form->createView(),
-                    'tag' => ['id' => 0, 'label' => '', 'customer_count' => 0, 'customers_url' => ''],
-                    'merge_targets' => [],
+                    'tag' => [
+                        'id' => (int) $edited->getId(),
+                        'label' => (string) $edited->getLabel(),
+                        'customer_count' => $this->tags->countCustomersByTag()[$edited->getId()] ?? 0,
+                        'customers_url' => $this->customersCarryingUrl((int) $edited->getId()),
+                    ],
+                    'merge_targets' => $this->mergeTargets($edited),
                 ]),
                 Response::HTTP_BAD_REQUEST,
             );
