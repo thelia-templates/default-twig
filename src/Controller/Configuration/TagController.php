@@ -33,6 +33,7 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
+use Thelia\Domain\Tagging\Exception\TagLabelAlreadyUsedException;
 use Thelia\Domain\Tagging\Service\TagService;
 use Thelia\Model\Tag;
 use Thelia\Model\TagQuery;
@@ -167,7 +168,7 @@ final class TagController
         } catch (\Throwable $exception) {
             $this->errorRenderer->setup(
                 $this->translator->trans('Tag creation failed.'),
-                $exception->getMessage(),
+                $this->refusalMessage($exception),
                 $form,
                 $exception,
             );
@@ -231,7 +232,7 @@ final class TagController
         } catch (\Throwable $exception) {
             $this->errorRenderer->setup(
                 $this->translator->trans('Tag update failed.'),
-                $exception->getMessage(),
+                $this->refusalMessage($exception, suggestMerge: true),
                 $form,
                 $exception,
             );
@@ -365,6 +366,38 @@ final class TagController
         }
 
         return $targets;
+    }
+
+    /**
+     * What the administrator reads when a write was refused.
+     *
+     * Only the collision is translated here: it is the one refusal an
+     * administrator can actually trigger from these screens, the others being
+     * caught by the form validator or made unreachable by the screen itself.
+     * Anything else keeps the raw exception message, which is what the rest of
+     * this back-office does.
+     */
+    private function refusalMessage(\Throwable $exception, bool $suggestMerge = false): string
+    {
+        if (!$exception instanceof TagLabelAlreadyUsedException) {
+            return $exception->getMessage();
+        }
+
+        // Two sentences rather than one: when the collision is on the very same
+        // spelling, naming the other tag would print the label twice and read as
+        // nonsense.
+        $message = $exception->isSameSpelling()
+            ? $this->translator->trans('A tag named "%label%" already exists.', ['%label%' => $exception->existingLabel])
+            : $this->translator->trans(
+                'The label "%label%" is already carried by the tag "%existing%".',
+                ['%label%' => $exception->requestedLabel, '%existing%' => $exception->existingLabel],
+            );
+
+        if (!$suggestMerge) {
+            return $message;
+        }
+
+        return $message.' '.$this->translator->trans('Merge the two tags instead of renaming this one.');
     }
 
     private function buildCreateForm(): FormInterface
