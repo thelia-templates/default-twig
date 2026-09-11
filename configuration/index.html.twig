@@ -44,6 +44,7 @@
         items: [
             { route: 'admin.order-status.default', label: 'Order status'|trans, icon: 'bi-list-check', resource: 'admin.configuration.order-status' },
             { route: 'admin.consent.default', label: 'Checkout consents'|trans, icon: 'bi-check2-square', resource: 'admin.configuration.consent' },
+            { route: 'admin.order-return-reason.default', label: 'Return reasons'|trans, icon: 'bi-arrow-return-left', resource: 'admin.configuration.order-return-reason', enabled: thelia_config('order_return_enabled', '0') == '1' },
         ],
     },
     {
@@ -76,7 +77,7 @@
         <h1 class="h3 mb-4">{{ 'Configuration'|trans }}</h1>
 
         {% for section in sections %}
-            {% set visible_items = section.items|filter((item) => is_granted('VIEW', item.resource)) %}
+            {% set visible_items = section.items|filter((item) => item.enabled|default(true) and is_granted('VIEW', item.resource)) %}
             {% if visible_items|length > 0 or section.hookTop is defined %}
                 <h2 class="h5 text-muted mb-3">{{ section.title }}</h2>
                 <div class="row g-3 mb-4" data-testid="configuration-section">
