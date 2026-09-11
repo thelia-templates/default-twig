@@ -19,6 +19,7 @@ use BackOfficeDefaultTwigBundle\DTO\Dashboard\DateRange;
 use BackOfficeDefaultTwigBundle\DTO\Dashboard\Kpi;
 use BackOfficeDefaultTwigBundle\Repository\CustomerRepository;
 use BackOfficeDefaultTwigBundle\Repository\OrderRepository;
+use BackOfficeDefaultTwigBundle\Repository\OrderReturnRepository;
 use BackOfficeDefaultTwigBundle\Repository\ProductRepository;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -26,6 +27,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
 use Thelia\Core\Security\SecurityContext;
+use Thelia\Domain\OrderReturn\Service\ReturnEligibilityChecker;
 use Thelia\Model\Order;
 use Thelia\Model\OrderQuery;
 
@@ -41,6 +43,12 @@ use Thelia\Model\OrderQuery;
 final readonly class DashboardStatsProvider
 {
     private const UNPAID_FOLLOWUP_HOURS = 48;
+    /**
+     * How long a return request may wait for an answer before the dashboard says
+     * so. A merchant who leaves a customer without a word for two days has an
+     * angry customer, whatever the eventual answer is.
+     */
+    private const RETURN_FOLLOWUP_HOURS = 48;
     private const RECENT_ORDERS_LIMIT = 8;
     private const TOP_PRODUCTS_LIMIT = 5;
     private const LOW_STOCK_LIMIT = 5;
@@ -48,6 +56,8 @@ final readonly class DashboardStatsProvider
 
     public function __construct(
         private OrderRepository $orders,
+        private OrderReturnRepository $returns,
+        private ReturnEligibilityChecker $returnEligibility,
         private CustomerRepository $customers,
         private ProductRepository $products,
         private UrlGeneratorInterface $urls,
@@ -132,7 +142,7 @@ final readonly class DashboardStatsProvider
             topProducts: $canViewOrders ? $this->products->findTopSellers($range, self::TOP_PRODUCTS_LIMIT, $locale) : [],
             lowStockProducts: $canViewProducts ? $this->products->findLowStock(self::LOW_STOCK_THRESHOLD, self::LOW_STOCK_LIMIT, $locale) : [],
             lowStockThreshold: self::LOW_STOCK_THRESHOLD,
-            alerts: $canViewOrders ? $this->buildAlerts() : [],
+            alerts: $this->buildAlerts($canViewOrders),
             periodOptions: $this->buildPeriodOptions($range),
             locale: $locale,
             showRevenueChart: $canViewOrders,
@@ -165,9 +175,13 @@ final readonly class DashboardStatsProvider
     /**
      * @return list<array{label: string, count: int, href: ?string, icon: string, level: string}>
      */
-    private function buildAlerts(): array
+    private function buildAlerts(bool $canViewOrders): array
     {
         $alerts = [];
+
+        if (!$canViewOrders) {
+            return $this->appendReturnAlert($alerts);
+        }
 
         $unpaid = $this->orders->countUnpaidOlderThan(self::UNPAID_FOLLOWUP_HOURS);
         if ($unpaid > 0) {
@@ -190,6 +204,40 @@ final readonly class DashboardStatsProvider
                 'level' => 'info',
             ];
         }
+
+        return $this->appendReturnAlert($alerts);
+    }
+
+    /**
+     * The requests waiting for an answer, when the shop runs returns and the
+     * administrator is allowed to see them. One indexed count query.
+     *
+     * @param list<array{label: string, count: int, href: ?string, icon: string, level: string}> $alerts
+     *
+     * @return list<array{label: string, count: int, href: ?string, icon: string, level: string}>
+     */
+    private function appendReturnAlert(array $alerts): array
+    {
+        if (!$this->returnEligibility->isFeatureEnabled() || !$this->canView(AdminResources::ORDER_RETURN)) {
+            return $alerts;
+        }
+
+        $pending = $this->returns->countPendingOlderThan(self::RETURN_FOLLOWUP_HOURS);
+
+        if ($pending === 0) {
+            return $alerts;
+        }
+
+        $alerts[] = [
+            'label' => $this->translator->trans(
+                $pending === 1 ? '%count% return request waiting for over 48h' : '%count% return requests waiting for over 48h',
+                ['%count%' => $pending],
+            ),
+            'count' => $pending,
+            'href' => $this->urls->generate('admin.order-return.list', ['status_ids' => $this->returns->pendingStatusIds()]),
+            'icon' => 'bi-arrow-return-left',
+            'level' => 'warning',
+        ];
 
         return $alerts;
     }

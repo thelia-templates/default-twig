@@ -38,6 +38,8 @@ return [
     '%count% products put online' => '%count% produit(s) mis en ligne',
     '%count% products taken offline' => '%count% produit(s) mis hors ligne',
     '%count% product(s) selected' => '%count% produit(s) sélectionné(s)',
+    '%count% return request waiting for over 48h' => '%count% demande de retour en attente depuis plus de 48 h',
+    '%count% return requests waiting for over 48h' => '%count% demandes de retour en attente depuis plus de 48 h',
     '%count% shown by the filter' => '%count% affiché(s) par le filtre',
     '%count% sub-categories' => '%count% sous-catégories',
     '%count% sub-category' => '%count% sous-catégorie',
