@@ -20,13 +20,13 @@
         <div class="d-flex flex-wrap gap-2 justify-content-between align-items-start mb-3">
             <div>
                 <h1 class="h3 mb-1">{{ 'Return'|trans }} <small class="text-muted">#{{ return.ref }}</small></h1>
-                <div class="d-flex gap-2 align-items-center small text-muted flex-wrap">
+                <div class="d-flex gap-2 align-items-center flex-wrap">
                     <span class="badge" style="background-color: {{ status_color }}; color: #fff;" data-testid="order-return-status-badge">{{ status_title }}</span>
                     {% if return.createdAt %}
-                        <span data-testid="order-return-created-at"><i class="bi bi-calendar3" aria-hidden="true"></i> {{ return.createdAt|date('d/m/Y H:i') }}</span>
+                        <span class="text-muted" data-testid="order-return-created-at"><i class="bi bi-calendar3" aria-hidden="true"></i> {{ return.createdAt|date('d/m/Y H:i') }}</span>
                     {% endif %}
                     {% if return.createdByAdmin %}
-                        <span><i class="bi bi-shop" aria-hidden="true"></i> {{ 'Opened by the merchant'|trans }}</span>
+                        <span class="text-muted"><i class="bi bi-shop" aria-hidden="true"></i> {{ 'Opened by the merchant'|trans }}</span>
                     {% endif %}
                 </div>
             </div>
@@ -191,12 +191,12 @@
     </div>
 
     {% for action in actions|filter(a => a.code == 'refused') %}
-        <div class="modal fade" id="order-return-refuse-modal" tabindex="-1" aria-hidden="true" data-testid="order-return-refuse-modal">
+        <div class="modal fade" id="order-return-refuse-modal" tabindex="-1" aria-labelledby="order-return-refuse-modal-title" aria-hidden="true" data-testid="order-return-refuse-modal">
             <div class="modal-dialog">
                 <form method="post" action="{{ path('admin.order-return.transition', { order_return_id: return.id }) }}">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h2 class="modal-title h5">{{ 'Refuse the return'|trans }}</h2>
+                            <h2 class="modal-title h5" id="order-return-refuse-modal-title">{{ 'Refuse the return'|trans }}</h2>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'Close'|trans }}"></button>
                         </div>
                         <div class="modal-body">
