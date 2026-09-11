@@ -464,9 +464,28 @@
                     </div>
                 </div>
 
+                {% if returns_enabled %}
+                    {% include '@BackOfficeDefaultTwig/order/_returns_card.html.twig' with {
+                        order: order,
+                        order_returns: order_returns,
+                        returnable_lines: returnable_lines,
+                        can_create: can_create_return,
+                        token: token,
+                    } only %}
+                {% endif %}
+
             </div>
         </div>
     </div>
+
+    {% if returns_enabled and can_create_return and returnable_lines is not empty %}
+        {% include '@BackOfficeDefaultTwig/order/_return_open_modal.html.twig' with {
+            order: order,
+            returnable_lines: returnable_lines,
+            return_reasons: return_reasons,
+            token: token,
+        } only %}
+    {% endif %}
 
     {% if order_addresses.invoice or order_addresses.delivery %}
         {% include '@BackOfficeDefaultTwig/order/_address_modal.html.twig' with {

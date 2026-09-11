@@ -23,6 +23,7 @@ use BackOfficeDefaultTwigBundle\Service\Order\OrderFilterPresenter;
 use BackOfficeDefaultTwigBundle\Service\Order\OrderFilters;
 use BackOfficeDefaultTwigBundle\Service\Order\OrderListRowPresenter;
 use BackOfficeDefaultTwigBundle\Service\Order\OrderRoundingRule;
+use BackOfficeDefaultTwigBundle\Service\OrderReturn\OrderReturnContextBuilder;
 use BackOfficeDefaultTwigBundle\Service\Pdf\OrderPdfRenderer;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -73,6 +74,7 @@ final class OrderController
         private readonly OrderListRowPresenter $rowPresenter,
         private readonly OrderFilterPresenter $filterPresenter,
         private readonly CountryStateProvider $countryStates,
+        private readonly OrderReturnContextBuilder $returnContextBuilder,
     ) {
     }
 
@@ -120,6 +122,7 @@ final class OrderController
 
         return new Response($this->twig->render(self::DETAIL_TEMPLATE, array_merge(
             $this->detailContextBuilder->build($order, $locale),
+            $this->returnContextBuilder->build($order, $locale),
             [
                 'order' => $order,
                 'order_items' => $this->orderItemsPage($order_id, $itemsPage, $itemsPerPage),

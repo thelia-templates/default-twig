@@ -1,0 +1,83 @@
+{#
+    The form the merchant fills to open a return himself, for a parcel announced
+    by phone. Lives outside every Stimulus controller: a plain Bootstrap modal,
+    so it opens wherever the card that triggers it sits.
+
+    Expects: order, returnable_lines, return_reasons, token
+#}
+<div class="modal fade" id="order-return-open-modal" tabindex="-1" aria-hidden="true" data-testid="order-return-open-modal">
+    <div class="modal-dialog modal-lg">
+        <form method="post" action="{{ path('admin.order-return.open', { order_id: order.id }) }}"
+              data-testid="order-return-open-form">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title h5">{{ 'Open a return'|trans }}</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'Close'|trans }}"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="_token" value="{{ token }}">
+
+                    <div class="table-responsive mb-3">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th scope="col">{{ 'Product'|trans }}</th>
+                                    <th scope="col" class="text-center">{{ 'Still returnable'|trans }}</th>
+                                    <th scope="col" class="text-center">{{ 'Quantity'|trans }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for line in returnable_lines %}
+                                    <tr>
+                                        <td>
+                                            <div class="fw-semibold">{{ line.title }}</div>
+                                            {% if line.ref %}<div class="text-muted small"><code>{{ line.ref }}</code></div>{% endif %}
+                                        </td>
+                                        <td class="text-center">{{ line.remaining|number_format(0) }}</td>
+                                        <td class="text-center" style="max-width: 8rem;">
+                                            <label class="visually-hidden" for="return-quantity-{{ line.order_product_id }}">{{ 'Quantity'|trans }}</label>
+                                            <input type="number" class="form-control form-control-sm text-center"
+                                                   id="return-quantity-{{ line.order_product_id }}"
+                                                   name="quantity[{{ line.order_product_id }}]"
+                                                   value="0" min="0" max="{{ line.remaining|number_format(0) }}" step="1"
+                                                   data-testid="order-return-open-quantity-{{ line.order_product_id }}">
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="order-return-open-reason">{{ 'Reason'|trans }}</label>
+                        <select class="form-select" id="order-return-open-reason" name="reason_id"
+                                data-testid="order-return-open-reason">
+                            <option value="0">{{ 'No reason given'|trans }}</option>
+                            {% for reason in return_reasons %}
+                                <option value="{{ reason.id }}">{{ reason.title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="order-return-open-comment">{{ 'Comment'|trans }}</label>
+                        <textarea class="form-control" id="order-return-open-comment" name="comment" rows="3"
+                                  data-testid="order-return-open-comment"></textarea>
+                    </div>
+
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" value="1" id="order-return-open-postage" name="include_postage"
+                               data-testid="order-return-open-postage">
+                        <label class="form-check-label" for="order-return-open-postage">{{ 'Refund the postage too'|trans }}</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'Close'|trans }}</button>
+                    <button type="submit" class="btn btn-primary" data-testid="order-return-open-submit">
+                        <i class="bi bi-arrow-return-left me-1" aria-hidden="true"></i>{{ 'Open the return'|trans }}
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
