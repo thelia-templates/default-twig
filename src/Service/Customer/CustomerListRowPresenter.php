@@ -224,8 +224,12 @@ final readonly class CustomerListRowPresenter
                 ? ''
                 : \sprintf('<span class="bo-tag-badge__swatch" style="background-color:%s"></span>', htmlspecialchars($color));
 
+            // The title carries the whole label: the cell truncates it, and a
+            // truncated tag with no way to read it in full would be worse than
+            // no column at all.
             $badges .= \sprintf(
-                '<span class="bo-tag-badge">%s%s</span>',
+                '<span class="bo-tag-badge" title="%s">%s<span class="bo-tag-badge__label">%s</span></span>',
+                htmlspecialchars((string) $tag->getLabel()),
                 $dot,
                 htmlspecialchars((string) $tag->getLabel()),
             );

@@ -2338,11 +2338,26 @@ tr.bo-order-row--urgent {
     background-color: var(--bs-secondary-bg);
     border: 1px solid var(--bs-border-color);
     border-radius: 999px;
-    // Wraps rather than widening its column: a long label would otherwise
-    // claim the whole width it needs and push the table further past its
-    // container.
+}
+
+// One line, cut with an ellipsis, inside a table cell only. A pill is a pill:
+// wrapped over three lines it reads as a balloon, and it made the row grow from
+// 60 to 154 pixels. The whole label stays reachable through the title attribute
+// the presenter writes, and the details panel below undoes the cut where there
+// is room for it.
+.bo-tag-badge__label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 11rem;
+}
+
+// The details panel is the full width of the table: nothing to gain from
+// cutting a label there, and the operator opened it precisely to read.
+.bo-datatable__details .bo-tag-badge__label {
+    overflow: visible;
     white-space: normal;
-    overflow-wrap: anywhere;
+    max-width: none;
 }
 
 // ---------- Small screens (phone and tablet portrait) ----------
