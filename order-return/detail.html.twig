@@ -1,0 +1,222 @@
+{% extends '@BackOfficeDefaultTwig/base.html.twig' %}
+
+{% block title %}{{ 'Return'|trans }} #{{ return.ref }}{% endblock %}
+{% block body_testid %}order-return-detail{% endblock %}
+
+{% block breadcrumb %}
+    <nav aria-label="breadcrumb" class="mb-1">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="{{ path('admin.home') }}">{{ 'Home'|trans }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ path('admin.order-return.list') }}">{{ 'Returns'|trans }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ return.ref }}</li>
+        </ol>
+    </nav>
+{% endblock %}
+
+{% block content %}
+    {{ safe_hook('order-return-edit.top', { order_return_id: return.id }) }}
+
+    <div class="container-fluid" data-testid="order-return-detail-page">
+        <div class="d-flex flex-wrap gap-2 justify-content-between align-items-start mb-3">
+            <div>
+                <h1 class="h3 mb-1">{{ 'Return'|trans }} <small class="text-muted">#{{ return.ref }}</small></h1>
+                <div class="d-flex gap-2 align-items-center small text-muted flex-wrap">
+                    <span class="badge" style="background-color: {{ status_color }}; color: #fff;" data-testid="order-return-status-badge">{{ status_title }}</span>
+                    {% if return.createdAt %}
+                        <span data-testid="order-return-created-at"><i class="bi bi-calendar3" aria-hidden="true"></i> {{ return.createdAt|date('d/m/Y H:i') }}</span>
+                    {% endif %}
+                    {% if return.createdByAdmin %}
+                        <span><i class="bi bi-shop" aria-hidden="true"></i> {{ 'Opened by the merchant'|trans }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="d-flex gap-2 flex-wrap" data-testid="order-return-navigation">
+                {% include '@BackOfficeDefaultTwig/_prev_next_buttons.html.twig' with {
+                    prev_url: prev_url|default(null),
+                    next_url: next_url|default(null),
+                    prev_label: 'Previous return'|trans,
+                    next_label: 'Next return'|trans,
+                    testid: 'order-return',
+                } only %}
+                {% if order_url %}
+                    <a href="{{ order_url }}" class="btn btn-outline-secondary" data-testid="order-return-order-link">
+                        <i class="bi bi-cart3" aria-hidden="true"></i> {{ 'View the order'|trans }}
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if actions is not empty %}
+            <div class="card mb-3" data-testid="order-return-actions">
+                <div class="card-header">{{ 'What happens next'|trans }}</div>
+                <div class="card-body d-flex flex-wrap gap-2">
+                    {% for action in actions %}
+                        {% if action.code == 'refused' %}
+                            <button type="button" class="btn btn-{{ action.variant }}"
+                                    data-bs-toggle="modal" data-bs-target="#order-return-refuse-modal"
+                                    data-testid="order-return-action-{{ action.code }}">
+                                <i class="bi {{ action.icon }} me-1" aria-hidden="true"></i>{{ action.label }}
+                            </button>
+                        {% elseif action.code == 'received' %}
+                            <a href="{{ reception_url }}" class="btn btn-{{ action.variant }}"
+                               data-testid="order-return-action-{{ action.code }}">
+                                <i class="bi {{ action.icon }} me-1" aria-hidden="true"></i>{{ action.label }}
+                            </a>
+                        {% else %}
+                            <form method="post" action="{{ path('admin.order-return.transition', { order_return_id: return.id }) }}" class="d-inline">
+                                <input type="hidden" name="_token" value="{{ token }}">
+                                <input type="hidden" name="status_id" value="{{ action.status_id }}">
+                                <button type="submit" class="btn btn-{{ action.variant }}" data-testid="order-return-action-{{ action.code }}">
+                                    <i class="bi {{ action.icon }} me-1" aria-hidden="true"></i>{{ action.label }}
+                                </button>
+                            </form>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        {% elseif is_terminal %}
+            <div class="alert alert-secondary" data-testid="order-return-terminal">
+                <i class="bi bi-check2-all me-1" aria-hidden="true"></i>{{ 'This return has reached its final state.'|trans }}
+            </div>
+        {% endif %}
+
+        <div class="row g-3">
+            <div class="col-lg-8">
+                <div class="card mb-3" data-testid="order-return-lines">
+                    <div class="card-header">{{ 'Returned items'|trans }}</div>
+                    <div class="table-responsive">
+                        <table class="table table-sm mb-0 align-middle">
+                            <thead>
+                                <tr>
+                                    <th scope="col">{{ 'Product'|trans }}</th>
+                                    <th scope="col" class="text-center">{{ 'Requested'|trans }}</th>
+                                    <th scope="col" class="text-center">{{ 'Received'|trans }}</th>
+                                    <th scope="col" class="text-end">{{ 'Unit price'|trans }}</th>
+                                    <th scope="col" class="text-end">{{ 'Refundable'|trans }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for line in lines %}
+                                    <tr data-testid="order-return-line-{{ line.id }}">
+                                        <td>
+                                            <div class="fw-semibold">{{ line.title }}</div>
+                                            {% if line.ref %}<div class="text-muted small"><code>{{ line.ref }}</code></div>{% endif %}
+                                        </td>
+                                        <td class="text-center">{{ line.quantity|number_format(0) }}</td>
+                                        <td class="text-center">
+                                            {{ line.quantity_received|number_format(0) }}
+                                            {% if line.quantity_received > 0 %}
+                                                {% if line.resellable %}
+                                                    <span class="badge text-bg-success ms-1">{{ 'Back in stock'|trans }}</span>
+                                                {% else %}
+                                                    <span class="badge text-bg-secondary ms-1">{{ 'Not resellable'|trans }}</span>
+                                                {% endif %}
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-end">{{ line.unit_price|number_format(2, ',', ' ') }} €</td>
+                                        <td class="text-end">{{ line.refund_amount|number_format(2, ',', ' ') }} €</td>
+                                    </tr>
+                                {% else %}
+                                    <tr><td colspan="5" class="text-muted text-center py-3">{{ 'This return holds no line.'|trans }}</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card mb-3" data-testid="order-return-request">
+                    <div class="card-header">{{ 'The customer request'|trans }}</div>
+                    <div class="card-body">
+                        <dl class="row mb-0 small">
+                            <dt class="col-sm-3">{{ 'Reason'|trans }}</dt>
+                            <dd class="col-sm-9" data-testid="order-return-reason">{{ reason_title ?: '-' }}</dd>
+
+                            {% if resolution_label %}
+                                <dt class="col-sm-3">{{ 'Expected'|trans }}</dt>
+                                <dd class="col-sm-9" data-testid="order-return-resolution">{{ resolution_label }}</dd>
+                            {% endif %}
+
+                            <dt class="col-sm-3">{{ 'Comment'|trans }}</dt>
+                            <dd class="col-sm-9" data-testid="order-return-comment">
+                                {%- if return.customerComment -%}
+                                    <span class="text-break">{{ return.customerComment|nl2br }}</span>
+                                {%- else -%}
+                                    <span class="text-muted">{{ 'No comment'|trans }}</span>
+                                {%- endif -%}
+                            </dd>
+
+                            {% if return.refusalReason %}
+                                <dt class="col-sm-3">{{ 'Refusal motive'|trans }}</dt>
+                                <dd class="col-sm-9 text-break" data-testid="order-return-refusal">{{ return.refusalReason }}</dd>
+                            {% endif %}
+                        </dl>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card mb-3" data-testid="order-return-amounts">
+                    <div class="card-header">{{ 'Refundable amount'|trans }}</div>
+                    <ul class="list-group list-group-flush small">
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>{{ 'Recorded on the return'|trans }}</span>
+                            <strong data-testid="order-return-refund-amount">{{ return.refundAmount|number_format(2, ',', ' ') }} €</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>{{ 'On the requested quantities'|trans }}</span>
+                            <span data-testid="order-return-computed-refund">{{ computed_refund|number_format(2, ',', ' ') }} €</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>{{ 'On the received quantities'|trans }}</span>
+                            <span data-testid="order-return-received-refund">{{ received_refund|number_format(2, ',', ' ') }} €</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>{{ 'Postage included'|trans }}</span>
+                            <span>{{ return.includePostage ? 'Yes'|trans : 'No'|trans }}</span>
+                        </li>
+                    </ul>
+                </div>
+
+                {% if return.customer %}
+                    <div class="card mb-3" data-testid="order-return-customer">
+                        <div class="card-header">{{ 'Customer'|trans }}</div>
+                        <div class="card-body small">
+                            <p class="mb-1 fw-semibold">{{ return.customer.firstname }} {{ return.customer.lastname }}</p>
+                            <p class="mb-0 text-muted text-break">{{ return.customer.email }}</p>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% for action in actions|filter(a => a.code == 'refused') %}
+        <div class="modal fade" id="order-return-refuse-modal" tabindex="-1" aria-hidden="true" data-testid="order-return-refuse-modal">
+            <div class="modal-dialog">
+                <form method="post" action="{{ path('admin.order-return.transition', { order_return_id: return.id }) }}">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2 class="modal-title h5">{{ 'Refuse the return'|trans }}</h2>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'Close'|trans }}"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" name="_token" value="{{ token }}">
+                            <input type="hidden" name="status_id" value="{{ action.status_id }}">
+                            <label class="form-label" for="order-return-refusal-reason">{{ 'Motive sent to the customer'|trans }}</label>
+                            <textarea class="form-control" id="order-return-refusal-reason" name="refusal_reason" rows="4"
+                                      data-testid="order-return-refusal-input"></textarea>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ 'Close'|trans }}</button>
+                            <button type="submit" class="btn btn-danger" data-testid="order-return-refuse-submit">
+                                <i class="bi bi-x-circle" aria-hidden="true"></i> {{ 'Refuse the return'|trans }}
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    {% endfor %}
+
+    {{ safe_hook('order-return-edit.bottom', { order_return_id: return.id }) }}
+{% endblock %}

@@ -100,6 +100,18 @@
                 </li>
             {% endif %}
 
+            {#- The returns entry only exists once the shop has turned the feature on,
+                exactly as the return screens and the return API do. -#}
+            {% if is_granted('VIEW', 'admin.order-return') and thelia_config('order_return_enabled', '0') == '1' %}
+                {% set active = nav.is_section(current_path, ['/admin/returns', '/admin/return/']) %}
+                <li class="nav-item" data-testid="bo-nav-order-return">
+                    <a href="{{ path('admin.order-return.list') }}" class="nav-link {{ active ? 'active' : '' }}">
+                        <i class="bi bi-arrow-return-left me-2" aria-hidden="true"></i>
+                        {{ 'Returns'|trans }}
+                    </a>
+                </li>
+            {% endif %}
+
             {% if is_granted('VIEW', 'admin.category') %}
                 {% set active = nav.is_section(current_path, ['/admin/catalog', '/admin/categories', '/admin/products']) %}
                 {% set hookFragments = hook_block('main.top-menu-catalog', { fields: 'id,class,url,title' }) %}

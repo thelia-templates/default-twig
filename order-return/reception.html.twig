@@ -1,0 +1,113 @@
+{% extends '@BackOfficeDefaultTwig/base.html.twig' %}
+
+{% block title %}{{ 'Record the reception'|trans }} - {{ return.ref }}{% endblock %}
+{% block body_testid %}order-return-reception{% endblock %}
+
+{% block breadcrumb %}
+    <nav aria-label="breadcrumb" class="mb-1">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="{{ path('admin.home') }}">{{ 'Home'|trans }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ path('admin.order-return.list') }}">{{ 'Returns'|trans }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ detail_url }}">{{ return.ref }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ 'Reception'|trans }}</li>
+        </ol>
+    </nav>
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid" data-testid="order-return-reception-page">
+        {% embed '@BackOfficeDefaultTwig/_page_header.html.twig' with { title: 'Record the reception'|trans } %}
+            {% block actions %}
+                <a href="{{ detail_url }}" class="btn btn-outline-secondary" data-testid="order-return-reception-back">
+                    <i class="bi bi-arrow-left" aria-hidden="true"></i> {{ 'Back to the return'|trans }}
+                </a>
+            {% endblock %}
+        {% endembed %}
+
+        {% if not restock.editable %}
+            <div class="alert alert-info" data-testid="order-return-restock-notice">
+                {% if restock.checked %}
+                    {{ 'The shop restocks every received item: the choice is not offered line by line.'|trans }}
+                {% else %}
+                    {{ 'The shop never restocks a returned item automatically.'|trans }}
+                {% endif %}
+            </div>
+        {% endif %}
+
+        <form method="post" action="{{ path('admin.order-return.reception.save', { order_return_id: return.id }) }}"
+              data-testid="order-return-reception-form">
+            <input type="hidden" name="_token" value="{{ token }}">
+
+            <div class="card mb-3">
+                <div class="card-header">{{ 'What came back'|trans }}</div>
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0 align-middle">
+                        <thead>
+                            <tr>
+                                <th scope="col">{{ 'Product'|trans }}</th>
+                                <th scope="col" class="text-center">{{ 'Requested'|trans }}</th>
+                                <th scope="col" class="text-center">{{ 'Received'|trans }}</th>
+                                <th scope="col">{{ 'Condition'|trans }}</th>
+                                <th scope="col" class="text-center">{{ 'Put back in stock'|trans }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for line in lines %}
+                                <tr data-testid="order-return-reception-line-{{ line.id }}">
+                                    <td>
+                                        <div class="fw-semibold">{{ line.title }}</div>
+                                        {% if line.ref %}<div class="text-muted small"><code>{{ line.ref }}</code></div>{% endif %}
+                                    </td>
+                                    <td class="text-center">{{ line.quantity|number_format(0) }}</td>
+                                    <td class="text-center" style="max-width: 8rem;">
+                                        <label class="visually-hidden" for="quantity-received-{{ line.id }}">{{ 'Received'|trans }}</label>
+                                        <input type="number" class="form-control form-control-sm text-center"
+                                               id="quantity-received-{{ line.id }}"
+                                               name="quantity_received[{{ line.id }}]"
+                                               value="{{ line.quantity_received > 0 ? line.quantity_received|number_format(0) : line.quantity|number_format(0) }}"
+                                               min="0" max="{{ line.quantity|number_format(0) }}" step="1"
+                                               data-testid="order-return-reception-quantity-{{ line.id }}">
+                                    </td>
+                                    <td>
+                                        <label class="visually-hidden" for="received-condition-{{ line.id }}">{{ 'Condition'|trans }}</label>
+                                        <select class="form-select form-select-sm" id="received-condition-{{ line.id }}"
+                                                name="received_condition[{{ line.id }}]"
+                                                data-testid="order-return-reception-condition-{{ line.id }}">
+                                            {% for condition in conditions %}
+                                                <option value="{{ condition }}" {{ line.received_condition == condition ? 'selected' : '' }}>
+                                                    {{ condition == 'good' ? 'Good condition'|trans : 'Damaged'|trans }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="form-check d-inline-block">
+                                            <input type="checkbox" class="form-check-input" value="1"
+                                                   id="resellable-{{ line.id }}"
+                                                   name="resellable[{{ line.id }}]"
+                                                   {{ restock.checked ? 'checked' : '' }}
+                                                   {{ restock.editable ? '' : 'disabled' }}
+                                                   data-testid="order-return-reception-resellable-{{ line.id }}">
+                                            <label class="form-check-label visually-hidden" for="resellable-{{ line.id }}">
+                                                {{ 'Put back in stock'|trans }}
+                                            </label>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr><td colspan="5" class="text-muted text-center py-3">{{ 'This return holds no line.'|trans }}</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary" data-testid="order-return-reception-submit">
+                    <i class="bi bi-box-arrow-in-down me-1" aria-hidden="true"></i>{{ 'Record the reception'|trans }}
+                </button>
+                <a href="{{ detail_url }}" class="btn btn-outline-secondary">{{ 'Cancel'|trans }}</a>
+            </div>
+        </form>
+    </div>
+{% endblock %}

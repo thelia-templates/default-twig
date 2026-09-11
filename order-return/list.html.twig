@@ -1,0 +1,194 @@
+{% extends '@BackOfficeDefaultTwig/base.html.twig' %}
+
+{% block title %}{{ 'Returns'|trans }}{% endblock %}
+{% block body_testid %}order-return-list{% endblock %}
+
+{% block breadcrumb %}
+    <nav aria-label="breadcrumb" class="mb-1">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="{{ path('admin.home') }}">{{ 'Home'|trans }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ 'Returns'|trans }}</li>
+        </ol>
+    </nav>
+{% endblock %}
+
+{% block content %}
+    {{ safe_hook('order-returns.top') }}
+
+    <div class="container-fluid" data-testid="order-returns-page">
+        {% embed '@BackOfficeDefaultTwig/_page_header.html.twig' with { title: 'Returns management'|trans } %}
+            {% block actions %}
+                <div class="d-flex flex-wrap align-items-center gap-2" data-testid="order-return-quick-filters">
+                    {% for chip in filters.quick_chips %}
+                        <a class="btn btn-sm {{ chip.active ? 'btn-primary' : 'btn-outline-secondary' }}"
+                           href="{{ chip.url }}"
+                           data-testid="order-return-quick-filter-{{ chip.code }}">
+                            <i class="bi {{ chip.icon }} me-1" aria-hidden="true"></i>{{ chip.label }}
+                        </a>
+                    {% endfor %}
+                </div>
+            {% endblock %}
+        {% endembed %}
+
+        <form method="get" action="{{ path('admin.order-return.list') }}" class="bo-order-filters" data-testid="order-return-search-form">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-9">
+                    <label class="form-label" for="order-return-search-q">{{ 'Search'|trans }}</label>
+                    <input type="search" id="order-return-search-q" name="q" value="{{ filters.search_input }}"
+                           class="form-control"
+                           placeholder="{{ 'Return or order reference, customer name or email'|trans }}"
+                           data-testid="order-return-search-input">
+                </div>
+                <div class="col-md-3 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-primary flex-grow-1" data-testid="order-return-search-submit">
+                        <i class="bi bi-funnel me-1" aria-hidden="true"></i>{{ 'Apply'|trans }}
+                    </button>
+                    <a href="{{ filters.clear_all_url }}" class="btn btn-outline-secondary" data-testid="order-return-reset">{{ 'Reset'|trans }}</a>
+                </div>
+            </div>
+
+            <div class="mt-3">
+                <button type="button" class="btn btn-link p-0 bo-order-filters__toggle" data-bs-toggle="collapse"
+                        data-bs-target="#bo-order-return-advanced" aria-controls="bo-order-return-advanced"
+                        aria-expanded="false"
+                        data-testid="order-return-advanced-toggle">
+                    <i class="bi bi-sliders me-1" aria-hidden="true"></i>
+                    <span class="bo-order-filters__toggle-label">{{ 'Advanced filters'|trans }}</span>
+                    {% if filters.advanced_count > 0 %}
+                        <span class="badge bg-primary ms-1">{{ filters.advanced_count }}</span>
+                    {% endif %}
+                    <i class="bi bi-chevron-down ms-1 bo-order-filters__toggle-caret" aria-hidden="true"></i>
+                </button>
+            </div>
+
+            <div id="bo-order-return-advanced" class="bo-order-filters__panel collapse"
+                 data-testid="order-return-advanced-panel">
+                <div class="row g-2 pt-2">
+                    <div class="col-md-6 col-lg-4">
+                        <fieldset>
+                            <legend class="form-label">{{ 'Status'|trans }}</legend>
+                            <div class="d-flex flex-wrap gap-2">
+                                {% for option in filters.status_options %}
+                                    {% set checked = option.id in filters.selected_status_ids %}
+                                    <label class="bo-order-filters__pill" data-checked="{{ checked ? 'true' : 'false' }}"
+                                           style="--pill-color: {{ option.color }};">
+                                        <input type="checkbox" class="visually-hidden" name="status_ids[]"
+                                               value="{{ option.id }}" {{ checked ? 'checked' : '' }}
+                                               data-testid="order-return-filter-status-{{ option.code }}">
+                                        <span class="bo-order-filters__pill-dot" aria-hidden="true"></span>
+                                        {{ option.title }}
+                                    </label>
+                                {% endfor %}
+                            </div>
+                        </fieldset>
+                    </div>
+
+                    <div class="col-md-6 col-lg-4">
+                        <fieldset>
+                            <legend class="form-label">{{ 'Created between'|trans }}</legend>
+                            <div class="row g-2">
+                                <div class="col">
+                                    <input type="date" name="created_from" value="{{ filters.created_from_input }}"
+                                           class="form-control form-control-sm" aria-label="{{ 'From'|trans }}"
+                                           data-testid="order-return-filter-created-from">
+                                </div>
+                                <div class="col">
+                                    <input type="date" name="created_to" value="{{ filters.created_to_input }}"
+                                           class="form-control form-control-sm" aria-label="{{ 'To'|trans }}"
+                                           data-testid="order-return-filter-created-to">
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+
+                    <div class="col-md-6 col-lg-4">
+                        <fieldset>
+                            <legend class="form-label">{{ 'Customer'|trans }}</legend>
+                            <input type="number" min="1" name="customer_id" value="{{ filters.customer_id_input }}"
+                                   class="form-control form-control-sm"
+                                   placeholder="{{ 'Customer number'|trans }}"
+                                   aria-label="{{ 'Customer'|trans }}"
+                                   data-testid="order-return-filter-customer">
+                        </fieldset>
+                    </div>
+
+                    <div class="col-md-6 col-lg-4">
+                        <fieldset>
+                            <legend class="form-label">{{ 'Order'|trans }}</legend>
+                            <input type="number" min="1" name="order_id" value="{{ filters.order_id_input }}"
+                                   class="form-control form-control-sm"
+                                   placeholder="{{ 'Order number'|trans }}"
+                                   aria-label="{{ 'Order'|trans }}"
+                                   data-testid="order-return-filter-order">
+                        </fieldset>
+                    </div>
+                </div>
+            </div>
+
+            <input type="hidden" name="order" value="{{ filters.sort_field }}">
+            <input type="hidden" name="direction" value="{{ filters.sort_direction }}">
+        </form>
+
+        {% if filters.active_chips %}
+            <div class="bo-order-filters__active-chips d-flex align-items-center gap-2 mt-3" data-testid="order-return-active-chips">
+                <span class="text-muted small flex-shrink-0">{{ 'Active filters:'|trans }}</span>
+                <div class="d-flex flex-nowrap align-items-center gap-2 overflow-x-auto" role="region" tabindex="0" aria-label="{{ 'Active filters:'|trans }}">
+                    {% for chip in filters.active_chips %}
+                        <a class="bo-order-filters__chip d-inline-flex align-items-center gap-1 text-decoration-none flex-shrink-0"
+                           href="{{ chip.remove_url }}"
+                           data-testid="order-return-active-chip-{{ chip.key }}"
+                           title="{{ 'Remove this filter'|trans }}">
+                            <span class="bo-order-filters__chip-label">{{ chip.label }}:</span>
+                            <strong class="bo-order-filters__chip-value">{{ chip.value }}</strong>
+                            <i class="bi bi-x-lg" aria-hidden="true"></i>
+                        </a>
+                    {% endfor %}
+                </div>
+                <a class="bo-order-filters__clear-all small text-decoration-none ms-1 flex-shrink-0"
+                   href="{{ filters.clear_all_url }}"
+                   data-testid="order-return-clear-all">
+                    <i class="bi bi-eraser me-1" aria-hidden="true"></i>{{ 'Clear all'|trans }}
+                </a>
+            </div>
+        {% endif %}
+
+        <div class="mt-3">
+            {{ component('BoDataTable', {
+                id: 'order-returns',
+                columns: [
+                    column_html('ref_html', 'Return'|trans, 'start', 'ref'),
+                    column_html('order_html', 'Order'|trans, 'start', visibleFrom: 'md'),
+                    column_html('customer_html', 'Customer'|trans, visibleFrom: 'lg'),
+                    column_html('lines_html', 'Lines'|trans, 'center', visibleFrom: 'lg'),
+                    column_badge('status_code', 'Status'|trans, {}, 'start', 'status', 'status_color'),
+                    column_text('refund_amount', 'Refundable'|trans, 'end', 'refund_amount'),
+                    column_html('date_html', 'Requested on'|trans, 'start', 'created_at', visibleFrom: 'lg'),
+                    column_actions('_actions', 'Actions'|trans),
+                ],
+                rows: rows,
+                emptyMessage: 'No return matches the current filters.'|trans,
+                sortField: filters.sort_field,
+                sortDirection: filters.sort_direction,
+                sortParam: 'order',
+                sortDirectionParam: 'direction',
+                sortKeepParams: query_params,
+                rowIdentifierKey: 'ref',
+            }) }}
+
+            {{ component('BoPagination', {
+                route: 'admin.order-return.list',
+                currentPage: current_page,
+                lastPage: pages,
+                routeParams: query_params,
+                ariaLabel: 'Return pagination',
+                testid: 'order-return-pagination',
+            }) }}
+        </div>
+    </div>
+
+    {{ safe_hook('order-returns.bottom') }}
+{% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('order-returns.js', { location: 'order-returns-js' }) }}
+{% endblock %}

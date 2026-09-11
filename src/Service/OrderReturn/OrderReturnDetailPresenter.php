@@ -1,0 +1,190 @@
+<?php
+
+declare(strict_types=1);
+
+/*
+ * This file is part of the Thelia package.
+ * http://www.thelia.net
+ *
+ * (c) OpenStudio <info@thelia.net>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace BackOfficeDefaultTwigBundle\Service\OrderReturn;
+
+use BackOfficeDefaultTwigBundle\Repository\OrderReturnRepository;
+use Symfony\Contracts\Translation\TranslatorInterface;
+use Thelia\Domain\OrderReturn\OrderReturnStateMachine;
+use Thelia\Domain\OrderReturn\Service\RefundAmountCalculator;
+use Thelia\Model\OrderReturn;
+use Thelia\Model\OrderReturnStatus;
+
+/**
+ * Composes the return sheet: the requested lines with what each of them is
+ * worth, the customer's own words, and the cycle actions the merchant may take
+ * right now.
+ *
+ * The actions are read from the state machine, never from a list written here:
+ * a status the shop added with an equivalence follows the transitions of the
+ * canonical code it stands for, and a graph change in the core reaches the
+ * screen without touching it.
+ */
+final readonly class OrderReturnDetailPresenter
+{
+    private const FALLBACK_STATUS_COLOR = '#6c757d';
+
+    /**
+     * How each reachable status is offered to the merchant: the wording of the
+     * button, its Bootstrap variant and its icon. A status the shop added on top
+     * of the canonical ones falls back to its own title and a neutral button.
+     *
+     * @var array<string, array{label: string, variant: string, icon: string}>
+     */
+    private const ACTION_STYLES = [
+        OrderReturnStatus::CODE_ACCEPTED => ['label' => 'Accept the return', 'variant' => 'success', 'icon' => 'bi-check2-circle'],
+        OrderReturnStatus::CODE_REFUSED => ['label' => 'Refuse the return', 'variant' => 'danger', 'icon' => 'bi-x-circle'],
+        OrderReturnStatus::CODE_INFO_AWAITED => ['label' => 'Ask for more information', 'variant' => 'warning', 'icon' => 'bi-question-circle'],
+        OrderReturnStatus::CODE_REQUESTED => ['label' => 'Put back in the queue', 'variant' => 'secondary', 'icon' => 'bi-arrow-counterclockwise'],
+        OrderReturnStatus::CODE_RECEIVED => ['label' => 'Record the reception', 'variant' => 'primary', 'icon' => 'bi-box-arrow-in-down'],
+        OrderReturnStatus::CODE_EXPIRED => ['label' => 'Mark as expired', 'variant' => 'outline-secondary', 'icon' => 'bi-hourglass-bottom'],
+        OrderReturnStatus::CODE_SETTLED => ['label' => 'Mark as settled', 'variant' => 'success', 'icon' => 'bi-cash-coin'],
+    ];
+
+    public function __construct(
+        private OrderReturnRepository $returns,
+        private OrderReturnStateMachine $stateMachine,
+        private RefundAmountCalculator $refundCalculator,
+        private TranslatorInterface $translator,
+    ) {
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function present(OrderReturn $orderReturn, string $locale): array
+    {
+        // status_id is a required column behind a RESTRICT foreign key: a return
+        // always carries its status.
+        $status = $orderReturn->getOrderReturnStatus();
+        $status->setLocale($locale);
+        $currentCode = $status->getEffectiveCode();
+
+        return [
+            'return' => $orderReturn,
+            'status_title' => (string) $status->getTitle(),
+            'status_code' => $currentCode,
+            'status_color' => (string) ($status->getColor() ?: self::FALLBACK_STATUS_COLOR),
+            'is_terminal' => $this->stateMachine->isTerminal($currentCode),
+            'lines' => $this->presentLines($orderReturn),
+            'reason_title' => $this->reasonTitle($orderReturn, $locale),
+            'actions' => $this->buildActions($currentCode, $locale),
+            'computed_refund' => $this->refundCalculator->compute($orderReturn),
+            'received_refund' => $this->refundCalculator->compute($orderReturn, true),
+            'resolution_label' => $this->resolutionLabel((string) $orderReturn->getExpectedResolution()),
+        ];
+    }
+
+    /**
+     * @return list<array{
+     *     id: int,
+     *     title: string,
+     *     ref: string,
+     *     quantity: float,
+     *     quantity_received: float,
+     *     resellable: bool,
+     *     received_condition: ?string,
+     *     unit_price: float,
+     *     refund_amount: float
+     * }>
+     */
+    public function presentLines(OrderReturn $orderReturn): array
+    {
+        $lines = [];
+
+        foreach ($this->returns->findLines((int) $orderReturn->getId()) as $line) {
+            // order_product_id is a required column behind a RESTRICT foreign key.
+            $orderProduct = $line->getOrderProduct();
+
+            $lines[] = [
+                'id' => (int) $line->getId(),
+                'title' => (string) $orderProduct->getTitle(),
+                'ref' => (string) $orderProduct->getProductRef(),
+                'quantity' => (float) $line->getQuantity(),
+                'quantity_received' => (float) $line->getQuantityReceived(),
+                'resellable' => (bool) $line->getResellable(),
+                'received_condition' => $line->getReceivedCondition(),
+                'unit_price' => $this->refundCalculator->unitTaxedPrice($orderProduct),
+                'refund_amount' => (float) $line->getRefundAmount(),
+            ];
+        }
+
+        return $lines;
+    }
+
+    /**
+     * The cycle actions available from the current status, each carrying the id
+     * of the status it moves to.
+     *
+     * @return list<array{code: string, status_id: int, label: string, variant: string, icon: string}>
+     */
+    public function buildActions(string $currentCode, string $locale): array
+    {
+        $statusesByCode = [];
+        foreach ($this->returns->findStatusesLocalized($locale) as $status) {
+            // A shop may hold several statuses standing for the same canonical code;
+            // the first one in position order is the one the button moves to.
+            $statusesByCode[$status['effective_code']] ??= $status;
+        }
+
+        $actions = [];
+        foreach ($this->stateMachine->allowedTargets($currentCode) as $targetCode) {
+            $status = $statusesByCode[$targetCode] ?? null;
+
+            if ($status === null) {
+                continue;
+            }
+
+            $style = self::ACTION_STYLES[$targetCode] ?? null;
+
+            $actions[] = [
+                'code' => $targetCode,
+                'status_id' => $status['id'],
+                'label' => $style !== null ? $this->translator->trans($style['label']) : $status['title'],
+                'variant' => $style['variant'] ?? 'outline-primary',
+                'icon' => $style['icon'] ?? 'bi-arrow-right-circle',
+            ];
+        }
+
+        return $actions;
+    }
+
+    private function reasonTitle(OrderReturn $orderReturn, string $locale): string
+    {
+        $reason = $orderReturn->getOrderReturnReason();
+
+        if ($reason !== null) {
+            $reason->setLocale($locale);
+            $title = (string) $reason->getTitle();
+
+            if ($title !== '') {
+                return $title;
+            }
+        }
+
+        // The reason may have been deleted since: the return keeps the label it
+        // was opened with.
+        return (string) $orderReturn->getReasonTitle();
+    }
+
+    private function resolutionLabel(string $resolution): string
+    {
+        return match ($resolution) {
+            OrderReturn::RESOLUTION_REFUND => $this->translator->trans('Refund'),
+            OrderReturn::RESOLUTION_CREDIT => $this->translator->trans('Credit note'),
+            OrderReturn::RESOLUTION_EXCHANGE => $this->translator->trans('Exchange'),
+            default => '',
+        };
+    }
+}
