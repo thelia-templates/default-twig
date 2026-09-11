@@ -16,8 +16,10 @@ namespace BackOfficeDefaultTwigBundle\Service\OrderReturn;
 
 use BackOfficeDefaultTwigBundle\Repository\OrderReturnRepository;
 use Symfony\Contracts\Translation\TranslatorInterface;
+use Thelia\Action\OrderReturn as OrderReturnAction;
 use Thelia\Domain\OrderReturn\OrderReturnStateMachine;
 use Thelia\Domain\OrderReturn\Service\RefundAmountCalculator;
+use Thelia\Model\ConfigQuery;
 use Thelia\Model\OrderReturn;
 use Thelia\Model\OrderReturnStatus;
 
@@ -158,6 +160,28 @@ final readonly class OrderReturnDetailPresenter
         }
 
         return $actions;
+    }
+
+    /**
+     * The state the "put back in stock" box starts in, according to the shop
+     * setting: always on when the shop restocks everything, always off when it
+     * never restocks, and on by default when it follows the resellable flag —
+     * the merchant unticks what came back damaged.
+     *
+     * @return array{checked: bool, editable: bool}
+     */
+    public function restockDefault(): array
+    {
+        $mode = (string) ConfigQuery::read(
+            OrderReturnAction::RESTOCK_MODE_CONFIG_KEY,
+            OrderReturnAction::RESTOCK_MODE_RESELLABLE,
+        );
+
+        return match ($mode) {
+            OrderReturnAction::RESTOCK_MODE_AUTO => ['checked' => true, 'editable' => false],
+            OrderReturnAction::RESTOCK_MODE_NEVER => ['checked' => false, 'editable' => false],
+            default => ['checked' => true, 'editable' => true],
+        };
     }
 
     private function reasonTitle(OrderReturn $orderReturn, string $locale): string

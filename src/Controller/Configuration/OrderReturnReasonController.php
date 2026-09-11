@@ -16,11 +16,8 @@ namespace BackOfficeDefaultTwigBundle\Controller\Configuration;
 
 use BackOfficeDefaultTwigBundle\Form\OrderReturn\OrderReturnReasonType;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
-use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormErrorRenderer;
-use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormValidator;
-use BackOfficeDefaultTwigBundle\Service\Admin\AdminLogger;
+use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
-use BackOfficeDefaultTwigBundle\Service\OrderReturn\OrderReturnReasonManager;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\ListSort;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
 use Propel\Runtime\ActiveQuery\Criteria;
@@ -33,6 +30,11 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
+use Thelia\Core\Event\OrderReturnReason\OrderReturnReasonCreateEvent;
+use Thelia\Core\Event\OrderReturnReason\OrderReturnReasonDeleteEvent;
+use Thelia\Core\Event\OrderReturnReason\OrderReturnReasonEvent;
+use Thelia\Core\Event\OrderReturnReason\OrderReturnReasonUpdateEvent;
+use Thelia\Core\Event\TheliaEvents;
 use Thelia\Core\Event\UpdatePositionEvent;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
@@ -57,10 +59,8 @@ final class OrderReturnReasonController
     private const EDIT_TEMPLATE = '@BackOfficeDefaultTwig/configuration/order-return-reason/edit.html.twig';
 
     public function __construct(
+        private readonly AdminFormAction $action,
         private readonly AdminAccessChecker $access,
-        private readonly AdminLogger $adminLogger,
-        private readonly AdminFormValidator $validator,
-        private readonly AdminFormErrorRenderer $errorRenderer,
         private readonly Environment $twig,
         private readonly FormFactoryInterface $formFactory,
         private readonly UrlGeneratorInterface $urls,
@@ -68,7 +68,6 @@ final class OrderReturnReasonController
         private readonly TranslatorInterface $translator,
         private readonly EditLocaleResolver $editLocale,
         private readonly ReturnEligibilityChecker $eligibility,
-        private readonly OrderReturnReasonManager $reasons,
     ) {
     }
 
@@ -89,36 +88,22 @@ final class OrderReturnReasonController
     {
         $this->assertFeatureEnabled();
 
-        if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::CREATE)) {
-            return $denied;
-        }
-
         $form = $this->formFactory->createNamed('thelia_order_return_reason_creation', OrderReturnReasonType::class, [
             'locale' => $request->getLocale(),
             'visible' => true,
         ]);
 
-        try {
-            $data = $this->validator->validate($form)->getData() ?? [];
-
-            $reason = $this->reasons->create(
-                (string) ($data['locale'] ?? $request->getLocale()),
-                (string) ($data['title'] ?? ''),
-                (string) ($data['code'] ?? ''),
-                (bool) ($data['visible'] ?? false),
-            );
-
-            $this->adminLogger->log(
-                self::RESOURCE,
-                AccessManager::CREATE,
-                \sprintf('Return reason "%s" created', (string) $reason->getTitle()),
-                (int) $reason->getId(),
-            );
-        } catch (\Throwable $exception) {
-            $this->errorRenderer->setup('Return reason creation', $exception->getMessage(), $form, $exception);
-        }
-
-        return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
+        return $this->action->submit(
+            resource: self::RESOURCE,
+            access: AccessManager::CREATE,
+            form: $form,
+            eventName: TheliaEvents::ORDER_RETURN_REASON_CREATE,
+            eventFactory: $this->createEvent(...),
+            actionLabel: 'Return reason creation',
+            successRoute: self::LIST_ROUTE,
+            renderError: fn (): RedirectResponse => new RedirectResponse($this->urls->generate(self::LIST_ROUTE)),
+            describeForLog: self::describeForLog('Return reason "%s" created'),
+        );
     }
 
     #[Route('/update/{order_return_reason_id}', name: 'update', methods: ['GET'], requirements: ['order_return_reason_id' => '\d+'])]
@@ -152,40 +137,23 @@ final class OrderReturnReasonController
     {
         $this->assertFeatureEnabled();
 
-        if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::UPDATE)) {
-            return $denied;
-        }
-
         $form = $this->formFactory->createNamed('thelia_order_return_reason_modification', OrderReturnReasonType::class, null, [
             'include_id' => true,
             'include_description' => true,
         ]);
 
-        try {
-            $data = $this->validator->validate($form)->getData() ?? [];
-
-            $reason = $this->reasons->update(
-                (int) ($data['id'] ?? 0),
-                (string) ($data['locale'] ?? 'en_US'),
-                (string) ($data['title'] ?? ''),
-                (string) ($data['code'] ?? ''),
-                (bool) ($data['visible'] ?? false),
-                (string) ($data['description'] ?? ''),
-            );
-
-            if ($reason !== null) {
-                $this->adminLogger->log(
-                    self::RESOURCE,
-                    AccessManager::UPDATE,
-                    \sprintf('Return reason "%s" updated', (string) $reason->getTitle()),
-                    (int) $reason->getId(),
-                );
-            }
-        } catch (\Throwable $exception) {
-            $this->errorRenderer->setup('Return reason update', $exception->getMessage(), $form, $exception);
-        }
-
-        return new RedirectResponse($this->urls->generate(self::EDIT_ROUTE, ['order_return_reason_id' => $order_return_reason_id]));
+        return $this->action->submit(
+            resource: self::RESOURCE,
+            access: AccessManager::UPDATE,
+            form: $form,
+            eventName: TheliaEvents::ORDER_RETURN_REASON_UPDATE,
+            eventFactory: $this->updateEvent(...),
+            actionLabel: 'Return reason update',
+            successRoute: self::EDIT_ROUTE,
+            successParameters: ['order_return_reason_id' => $order_return_reason_id],
+            renderError: fn (): RedirectResponse => new RedirectResponse($this->urls->generate(self::EDIT_ROUTE, ['order_return_reason_id' => $order_return_reason_id])),
+            describeForLog: self::describeForLog('Return reason "%s" updated'),
+        );
     }
 
     #[Route('/delete', name: 'delete', methods: ['POST'])]
@@ -193,32 +161,23 @@ final class OrderReturnReasonController
     {
         $this->assertFeatureEnabled();
 
-        if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::DELETE)) {
-            return $denied;
-        }
-
+        // The confirm dialog of the theme carries the reason and the token in the
+        // query string, a posted form carries them in the body: read both.
         $reasonId = (int) ($request->request->get('order_return_reason_id') ?? $request->query->get('order_return_reason_id', 0));
 
-        try {
-            // The confirm dialog of the theme carries the token in the query string,
-            // a posted form carries it in the body: read both.
-            $this->tokens->checkToken(
-                (string) ($request->request->get('_token') ?? $request->query->get('_token') ?? ''),
-            );
-
-            if ($this->reasons->delete($reasonId)) {
-                $this->adminLogger->log(
-                    self::RESOURCE,
-                    AccessManager::DELETE,
-                    \sprintf('Return reason #%d deleted', $reasonId),
-                    $reasonId,
-                );
-            }
-        } catch (\Throwable $exception) {
-            $this->errorRenderer->setup('Return reason deletion', $exception->getMessage(), null, $exception);
-        }
-
-        return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
+        return $this->action->tokenAction(
+            resource: self::RESOURCE,
+            access: AccessManager::DELETE,
+            request: $request,
+            event: new OrderReturnReasonDeleteEvent($reasonId),
+            eventName: TheliaEvents::ORDER_RETURN_REASON_DELETE,
+            actionLabel: 'Return reason deletion',
+            successRoute: self::LIST_ROUTE,
+            describeForLog: static fn (OrderReturnReasonDeleteEvent $event): array => [
+                \sprintf('Return reason #%d deleted', $event->getId()),
+                $event->getId(),
+            ],
+        );
     }
 
     #[Route('/update-position', name: 'update-position', methods: ['GET', 'POST'])]
@@ -226,25 +185,70 @@ final class OrderReturnReasonController
     {
         $this->assertFeatureEnabled();
 
-        if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::UPDATE)) {
-            return $denied;
-        }
+        $event = new UpdatePositionEvent(
+            (int) ($request->query->get('order_return_reason_id') ?? $request->request->get('order_return_reason_id', 0)),
+            (int) ($request->query->get('mode') ?? $request->request->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE)),
+            (int) ($request->query->get('position') ?? $request->request->get('position', 0)),
+        );
 
-        try {
-            $this->tokens->checkToken(
-                (string) ($request->request->get('_token') ?? $request->query->get('_token') ?? ''),
-            );
+        return $this->action->tokenAction(
+            resource: self::RESOURCE,
+            access: AccessManager::UPDATE,
+            request: $request,
+            event: $event,
+            eventName: TheliaEvents::ORDER_RETURN_REASON_UPDATE_POSITION,
+            actionLabel: 'Return reason reorder',
+            successRoute: self::LIST_ROUTE,
+        );
+    }
 
-            $this->reasons->updatePosition(
-                (int) ($request->query->get('order_return_reason_id') ?? $request->request->get('order_return_reason_id', 0)),
-                (int) ($request->query->get('mode') ?? $request->request->get('mode', UpdatePositionEvent::POSITION_ABSOLUTE)),
-                (int) ($request->query->get('position') ?? $request->request->get('position', 0)),
-            );
-        } catch (\Throwable $exception) {
-            $this->errorRenderer->setup('Return reason reorder', $exception->getMessage(), null, $exception);
-        }
+    private function createEvent(FormInterface $validated): OrderReturnReasonCreateEvent
+    {
+        return $this->fillEvent(new OrderReturnReasonCreateEvent(), $validated);
+    }
 
-        return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
+    private function updateEvent(FormInterface $validated): OrderReturnReasonUpdateEvent
+    {
+        $data = $validated->getData() ?? [];
+
+        return $this->fillEvent(new OrderReturnReasonUpdateEvent((int) ($data['id'] ?? 0)), $validated);
+    }
+
+    /**
+     * @template TEvent of OrderReturnReasonEvent
+     *
+     * @param TEvent $event
+     *
+     * @return TEvent
+     */
+    private function fillEvent(OrderReturnReasonEvent $event, FormInterface $validated): OrderReturnReasonEvent
+    {
+        $data = $validated->getData() ?? [];
+        $code = (string) ($data['code'] ?? '');
+
+        $event
+            ->setLocale((string) ($data['locale'] ?? 'en_US'))
+            ->setTitle((string) ($data['title'] ?? ''))
+            ->setCode($code === '' ? null : $code)
+            ->setVisible((bool) ($data['visible'] ?? false))
+            ->setDescription((string) ($data['description'] ?? ''));
+
+        return $event;
+    }
+
+    /**
+     * @return callable(OrderReturnReasonEvent): array{0: string, 1: int|null}
+     */
+    private static function describeForLog(string $format): callable
+    {
+        return static function (OrderReturnReasonEvent $event) use ($format): array {
+            $reason = $event->getOrderReturnReason();
+
+            return [
+                \sprintf($format, (string) $reason?->getTitle()),
+                $reason !== null ? (int) $reason->getId() : null,
+            ];
+        };
     }
 
     /**

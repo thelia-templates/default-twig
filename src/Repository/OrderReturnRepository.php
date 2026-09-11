@@ -18,10 +18,15 @@ use BackOfficeDefaultTwigBundle\Service\OrderReturn\OrderReturnFilters;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\Collection\ObjectCollection;
 use Thelia\Model\Map\OrderReturnTableMap;
+use Thelia\Model\Order;
+use Thelia\Model\OrderProduct;
+use Thelia\Model\OrderProductQuery;
+use Thelia\Model\OrderQuery;
 use Thelia\Model\OrderReturn;
 use Thelia\Model\OrderReturnLine;
 use Thelia\Model\OrderReturnLineQuery;
 use Thelia\Model\OrderReturnQuery;
+use Thelia\Model\OrderReturnReason;
 use Thelia\Model\OrderReturnReasonQuery;
 use Thelia\Model\OrderReturnStatus;
 use Thelia\Model\OrderReturnStatusQuery;
@@ -90,6 +95,21 @@ final class OrderReturnRepository
     public function findById(int $returnId): ?OrderReturn
     {
         return OrderReturnQuery::create()->findPk($returnId);
+    }
+
+    public function findOrder(int $orderId): ?Order
+    {
+        return OrderQuery::create()->findPk($orderId);
+    }
+
+    public function findOrderProduct(int $orderProductId): ?OrderProduct
+    {
+        return OrderProductQuery::create()->findPk($orderProductId);
+    }
+
+    public function findReason(int $reasonId): ?OrderReturnReason
+    {
+        return OrderReturnReasonQuery::create()->findPk($reasonId);
     }
 
     /**

@@ -17,32 +17,26 @@ namespace BackOfficeDefaultTwigBundle\Controller\Order;
 use BackOfficeDefaultTwigBundle\Repository\OrderReturnRepository;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
-use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormErrorRenderer;
-use BackOfficeDefaultTwigBundle\Service\Admin\AdminLogger;
 use BackOfficeDefaultTwigBundle\Service\OrderReturn\OrderReturnDetailPresenter;
 use BackOfficeDefaultTwigBundle\Service\OrderReturn\OrderReturnFilterPresenter;
 use BackOfficeDefaultTwigBundle\Service\OrderReturn\OrderReturnFilters;
 use BackOfficeDefaultTwigBundle\Service\OrderReturn\OrderReturnListRowPresenter;
-use BackOfficeDefaultTwigBundle\Service\OrderReturn\OrderReturnOpener;
-use BackOfficeDefaultTwigBundle\Service\OrderReturn\OrderReturnReceptionRecorder;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Thelia\Core\Event\OrderReturn\OrderReturnEvent;
 use Thelia\Core\Event\TheliaEvents;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
 use Thelia\Domain\OrderReturn\OrderReturnStateMachine;
 use Thelia\Domain\OrderReturn\Service\ReturnEligibilityChecker;
-use Thelia\Model\OrderQuery;
+use Thelia\Model\Order;
 use Thelia\Model\OrderReturn;
 use Thelia\Model\OrderReturnLine;
 use Thelia\Model\OrderReturnStatus;
-use Thelia\Model\OrderReturnStatusQuery;
 use Thelia\Tools\TokenProvider;
 use Twig\Environment;
 
@@ -68,20 +62,15 @@ final class OrderReturnController
     public function __construct(
         private readonly AdminFormAction $action,
         private readonly AdminAccessChecker $access,
-        private readonly AdminLogger $adminLogger,
-        private readonly AdminFormErrorRenderer $errorRenderer,
         private readonly Environment $twig,
         private readonly UrlGeneratorInterface $urls,
         private readonly TokenProvider $tokens,
-        private readonly EventDispatcherInterface $events,
         private readonly ReturnEligibilityChecker $eligibility,
         private readonly OrderReturnStateMachine $stateMachine,
         private readonly OrderReturnRepository $returns,
         private readonly OrderReturnListRowPresenter $rowPresenter,
         private readonly OrderReturnFilterPresenter $filterPresenter,
         private readonly OrderReturnDetailPresenter $detailPresenter,
-        private readonly OrderReturnReceptionRecorder $reception,
-        private readonly OrderReturnOpener $opener,
     ) {
     }
 
@@ -204,16 +193,14 @@ final class OrderReturnController
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }
 
-        $receivedStatusId = $this->returns->findStatusIdByCode(OrderReturnStatus::CODE_RECEIVED);
-
-        if ($receivedStatusId === null || !$this->canReceive($orderReturn)) {
+        if (!$this->canReceive($orderReturn)) {
             return new RedirectResponse($this->urls->generate(self::DETAIL_ROUTE, ['order_return_id' => $order_return_id]));
         }
 
         return new Response($this->twig->render(self::RECEPTION_TEMPLATE, [
             'return' => $orderReturn,
             'lines' => $this->detailPresenter->presentLines($orderReturn),
-            'restock' => $this->reception->restockDefault(),
+            'restock' => $this->detailPresenter->restockDefault(),
             'conditions' => OrderReturnLine::CONDITIONS,
             'token' => $this->tokens->assignToken(),
             'detail_url' => $this->urls->generate(self::DETAIL_ROUTE, ['order_return_id' => $order_return_id]),
@@ -225,55 +212,35 @@ final class OrderReturnController
     {
         $this->assertFeatureEnabled();
 
-        if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::UPDATE)) {
-            return $denied;
-        }
-
         $orderReturn = $this->returns->findById($order_return_id);
 
         if ($orderReturn === null) {
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }
 
-        $detailUrl = $this->urls->generate(self::DETAIL_ROUTE, ['order_return_id' => $order_return_id]);
+        // Pointing the parcel and moving the return to "received" are one gesture:
+        // the core writes the quantities, restocks and transitions in a single
+        // transaction. Dispatching a status change on top would restock twice.
+        $event = new OrderReturnEvent($orderReturn);
+        $event->setReceivedLines($this->readReceptionInput($request));
 
-        try {
-            $this->tokens->checkToken((string) $request->request->get('_token', ''));
-
-            $receivedStatusId = $this->returns->findStatusIdByCode(OrderReturnStatus::CODE_RECEIVED);
-
-            if ($receivedStatusId === null || !$this->canReceive($orderReturn)) {
-                return new RedirectResponse($detailUrl);
-            }
-
-            // What the merchant pointed is written first: the core restocks from
-            // these very columns when the return moves to "received".
-            $this->reception->record($orderReturn, $this->readReceptionInput($request));
-
-            $event = new OrderReturnEvent($orderReturn);
-            $event->setTargetStatusId($receivedStatusId);
-            $this->events->dispatch($event, TheliaEvents::ORDER_RETURN_UPDATE_STATUS);
-
-            $this->adminLogger->log(
-                self::RESOURCE,
-                AccessManager::UPDATE,
-                \sprintf('Return %s received', (string) $orderReturn->getRef()),
-                $order_return_id,
-            );
-        } catch (\Throwable $exception) {
-            $this->errorRenderer->setup(
-                'Return reception',
-                $exception->getMessage(),
-                null,
-                $exception,
-            );
-
-            return new RedirectResponse(
+        return $this->action->tokenAction(
+            resource: self::RESOURCE,
+            access: AccessManager::UPDATE,
+            request: $request,
+            event: $event,
+            eventName: TheliaEvents::ORDER_RETURN_RECEIVE,
+            actionLabel: 'Return reception',
+            successRoute: self::DETAIL_ROUTE,
+            successParameters: ['order_return_id' => $order_return_id],
+            describeForLog: static fn (OrderReturnEvent $dispatched): array => [
+                \sprintf('Return %s received', (string) $dispatched->getOrderReturn()->getRef()),
+                (int) $dispatched->getOrderReturn()->getId(),
+            ],
+            renderError: fn (): RedirectResponse => new RedirectResponse(
                 $this->urls->generate('admin.order-return.reception.view', ['order_return_id' => $order_return_id]),
-            );
-        }
-
-        return new RedirectResponse($detailUrl);
+            ),
+        );
     }
 
     /**
@@ -284,51 +251,78 @@ final class OrderReturnController
     {
         $this->assertFeatureEnabled();
 
-        if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::CREATE)) {
-            return $denied;
-        }
-
-        $order = OrderQuery::create()->findPk($order_id);
-        $orderUrl = $this->urls->generate(self::ORDER_DETAIL_ROUTE, ['order_id' => $order_id]);
+        $order = $this->returns->findOrder($order_id);
 
         if ($order === null) {
             return new RedirectResponse($this->urls->generate('admin.order.list'));
         }
 
-        try {
-            $this->tokens->checkToken((string) $request->request->get('_token', ''));
+        $event = new OrderReturnEvent($this->describeOpening($request, $order));
 
-            $reasonId = (int) $request->request->get('reason_id', 0);
-
-            $orderReturn = $this->opener->open(
-                $order,
-                $this->readOpeningQuantities($request),
-                $reasonId > 0 ? $reasonId : null,
-                trim((string) $request->request->get('comment', '')),
-                (bool) $request->request->get('include_postage', false),
-            );
-
-            $this->adminLogger->log(
-                self::RESOURCE,
-                AccessManager::CREATE,
-                \sprintf('Return %s opened on order %s', (string) $orderReturn->getRef(), (string) $order->getRef()),
-                (int) $orderReturn->getId(),
-            );
-
-            $this->events->dispatch(new OrderReturnEvent($orderReturn), TheliaEvents::ORDER_RETURN_SEND_STATUS_EMAIL);
-
-            return new RedirectResponse(
-                $this->urls->generate(self::DETAIL_ROUTE, ['order_return_id' => (int) $orderReturn->getId()]),
-            );
-        } catch (\Throwable $exception) {
-            $this->errorRenderer->setup('Return opening', $exception->getMessage(), null, $exception);
-
-            return new RedirectResponse($orderUrl);
-        }
+        return $this->action->tokenAction(
+            resource: self::RESOURCE,
+            access: AccessManager::CREATE,
+            request: $request,
+            event: $event,
+            eventName: TheliaEvents::ORDER_RETURN_CREATE,
+            actionLabel: 'Return opening',
+            successRoute: self::DETAIL_ROUTE,
+            successParametersResolver: static fn (OrderReturnEvent $dispatched): array => [
+                'order_return_id' => (int) $dispatched->getOrderReturn()->getId(),
+            ],
+            describeForLog: static fn (OrderReturnEvent $dispatched): array => [
+                \sprintf(
+                    'Return %s opened on order %s',
+                    (string) $dispatched->getOrderReturn()->getRef(),
+                    (string) $dispatched->getOrderReturn()->getOrder()->getRef(),
+                ),
+                (int) $dispatched->getOrderReturn()->getId(),
+            ],
+            renderError: fn (): RedirectResponse => new RedirectResponse(
+                $this->urls->generate(self::ORDER_DETAIL_ROUTE, ['order_id' => $order_id]),
+            ),
+        );
     }
 
     /**
-     * @return array<int, array{quantity_received: float, resellable: bool, condition: string}>
+     * What the merchant filled in, as the unsaved return the creation event
+     * expects: the core owns the customer, the status, the reference and every
+     * amount, and refuses the whole thing rather than writing half of it.
+     */
+    private function describeOpening(Request $request, Order $order): OrderReturn
+    {
+        $reasonId = (int) $request->request->get('reason_id', 0);
+
+        $orderReturn = (new OrderReturn())
+            ->setOrder($order)
+            ->setCustomer($order->getCustomer())
+            ->setCreatedByAdmin(true)
+            ->setCustomerComment(trim((string) $request->request->get('comment', '')))
+            ->setIncludePostage((bool) $request->request->get('include_postage', false));
+
+        if ($reasonId > 0) {
+            $orderReturn->setOrderReturnReason($this->returns->findReason($reasonId));
+        }
+
+        foreach ($this->readOpeningQuantities($request) as $orderProductId => $quantity) {
+            $orderProduct = $this->returns->findOrderProduct($orderProductId);
+
+            if ($orderProduct === null) {
+                continue;
+            }
+
+            $orderReturn->addOrderReturnLine(
+                (new OrderReturnLine())
+                    ->setOrderProduct($orderProduct)
+                    ->setQuantity($quantity),
+            );
+        }
+
+        return $orderReturn;
+    }
+
+    /**
+     * @return array<int, array{quantity: float, condition: string, resellable: bool}>
      */
     private function readReceptionInput(Request $request): array
     {
@@ -345,9 +339,11 @@ final class OrderReturnController
             }
 
             $input[$id] = [
-                'quantity_received' => (float) str_replace(',', '.', (string) $quantity),
+                'quantity' => (float) str_replace(',', '.', (string) $quantity),
+                'condition' => \in_array($conditions[$lineId] ?? null, OrderReturnLine::CONDITIONS, true)
+                    ? (string) $conditions[$lineId]
+                    : OrderReturnLine::CONDITION_GOOD,
                 'resellable' => (bool) ($resellables[$lineId] ?? false),
-                'condition' => (string) ($conditions[$lineId] ?? OrderReturnLine::CONDITION_GOOD),
             ];
         }
 
@@ -378,10 +374,10 @@ final class OrderReturnController
      */
     private function canReceive(OrderReturn $orderReturn): bool
     {
-        $status = OrderReturnStatusQuery::create()->findPk((int) $orderReturn->getStatusId());
-
-        return $status !== null
-            && $this->stateMachine->canTransition($status->getEffectiveCode(), OrderReturnStatus::CODE_RECEIVED);
+        return $this->stateMachine->canTransition(
+            $orderReturn->getOrderReturnStatus()->getEffectiveCode(),
+            OrderReturnStatus::CODE_RECEIVED,
+        );
     }
 
     /**

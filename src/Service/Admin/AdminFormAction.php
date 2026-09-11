@@ -108,8 +108,9 @@ readonly class AdminFormAction
 
     /**
      * @param callable(object): array{0: string, 1: int|null}|null $describeForLog
-     * @param callable(\Throwable): Response|null                  $renderError       Optional. When omitted, errors redirect to $successRoute.
+     * @param callable(\Throwable): Response|null                  $renderError               Optional. When omitted, errors redirect to $successRoute.
      * @param array<string, scalar>                                $successParameters
+     * @param callable(object): array<string, scalar>|null          $successParametersResolver Optional. Resolve the redirect parameters from the dispatched event (e.g. the id of an entity the action just created). Overrides $successParameters when provided.
      */
     public function tokenAction(
         string $resource,
@@ -122,6 +123,7 @@ readonly class AdminFormAction
         array $successParameters = [],
         ?callable $describeForLog = null,
         ?callable $renderError = null,
+        ?callable $successParametersResolver = null,
     ): Response {
         if ($denied = $this->access->check($resource, [], $access)) {
             return $denied;
@@ -135,6 +137,10 @@ readonly class AdminFormAction
             $this->events->dispatch($event, $eventName);
 
             $this->logSuccess($resource, $access, $event, $describeForLog);
+
+            if ($successParametersResolver !== null) {
+                $successParameters = $successParametersResolver($event);
+            }
 
             return new RedirectResponse($this->urls->generate($successRoute, $successParameters));
         } catch (\Throwable $exception) {
