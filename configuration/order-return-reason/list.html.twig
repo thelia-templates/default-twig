@@ -1,0 +1,97 @@
+{% extends '@BackOfficeDefaultTwig/base.html.twig' %}
+
+{% block title %}{{ 'Return reasons'|trans }}{% endblock %}
+{% block body_testid %}configuration-order-return-reasons{% endblock %}
+
+{% block breadcrumb %}
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ path('admin.home') }}">{{ 'Home'|trans }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ path('admin.configuration.index') }}">{{ 'Configuration'|trans }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ 'Return reasons'|trans }}</li>
+        </ol>
+    </nav>
+{% endblock %}
+
+{% block content %}
+    {{ safe_hook('order-return-reason.top') }}
+
+    <div class="container-fluid" data-testid="order-return-reasons-page">
+        <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
+            <h1 class="h3 mb-0">{{ 'Return reasons management'|trans }}</h1>
+            {% if is_granted('CREATE', 'admin.configuration.order-return-reason') %}
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                        data-bs-target="#order-return-reason-create-modal"
+                        data-testid="order-return-reason-create-button">
+                    <i class="bi bi-plus-lg" aria-hidden="true"></i> {{ 'Add a new return reason'|trans }}
+                </button>
+            {% endif %}
+        </div>
+
+        {{ component('BoDataTable', {
+            id: 'order-return-reasons',
+            columns: [
+                column('id', 'ID'|trans, 'start', 'id', hideBelow: 'md'),
+                column('title', 'Title'|trans, 'start', 'title'),
+                column('code', 'Code'|trans, 'start', 'code', hideBelow: 'lg'),
+                column_html('visible_html', 'Offered to the customer'|trans, 'center'),
+                column_html('returns_html', 'Returns'|trans, 'center', hideBelow: 'lg'),
+                column('position', 'Position'|trans, 'center', 'position', hideBelow: 'lg'),
+                column_actions('_actions', 'Actions'|trans),
+            ],
+            rows: rows,
+            emptyMessage: 'No return reason yet.'|trans,
+            sortField: sort_field,
+            sortDirection: sort_direction,
+            tbodyAttributes: {
+                'data-controller': 'bo-sortable',
+                'data-bo-sortable-url-value': update_position_url,
+                'data-bo-sortable-token-value': update_position_token,
+                'data-bo-sortable-param-name-value': 'order_return_reason_id',
+            },
+        }) }}
+    </div>
+
+    {{ safe_hook('order-return-reason.bottom') }}
+
+    {% component 'BoCreateDialog' with {
+        id: 'order-return-reason-create-modal',
+        title: 'Create a new return reason',
+        form: create_form,
+        formAction: path('admin.order-return-reason.create'),
+        submitLabel: 'Create',
+        testid: 'order-return-reason-create',
+        size: '',
+    } %}
+        {% block fields %}
+            <div class="mb-3">
+                {{ form_label(create_form.title) }}
+                {{ form_widget(create_form.title, { attr: { class: 'form-control' } }) }}
+            </div>
+            <div class="mb-3">
+                {{ form_label(create_form.code) }}
+                {{ form_widget(create_form.code, { attr: { class: 'form-control' } }) }}
+                <div class="form-text">{{ 'An optional stable identifier, for an integration that needs one.'|trans }}</div>
+            </div>
+            <div class="form-check mb-3">
+                {{ form_widget(create_form.visible, { attr: { class: 'form-check-input' } }) }}
+                {{ form_label(create_form.visible, null, { label_attr: { class: 'form-check-label' } }) }}
+            </div>
+            {{ form_widget(create_form.locale) }}
+        {% endblock %}
+    {% endcomponent %}
+
+    {{ component('BoConfirmDialog', {
+        id: 'order-return-reason-delete-modal',
+        title: 'Delete return reason',
+        formAction: path('admin.order-return-reason.delete'),
+        message: 'Do you really want to delete this return reason? The returns that named it keep its label.',
+        testid: 'order-return-reason-delete',
+        prefillTrigger: 'data-order-return-reason-id',
+        prefillInput: 'order_return_reason_id',
+    }) }}
+{% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('order-return-reason.js', { location: 'order-return-reason-js' }) }}
+{% endblock %}

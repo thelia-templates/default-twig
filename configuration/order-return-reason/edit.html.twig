@@ -1,0 +1,61 @@
+{% extends '@BackOfficeDefaultTwig/base.html.twig' %}
+
+{% block title %}{{ 'Edit return reason'|trans }} - {{ reason.title }}{% endblock %}
+{% block body_testid %}configuration-order-return-reason-edit{% endblock %}
+
+{% block breadcrumb %}
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ path('admin.home') }}">{{ 'Home'|trans }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ path('admin.configuration.index') }}">{{ 'Configuration'|trans }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ path('admin.order-return-reason.default') }}">{{ 'Return reasons'|trans }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ reason.title }}</li>
+        </ol>
+    </nav>
+{% endblock %}
+
+{% block content %}
+    {{ safe_hook('order-return-reason-edit.top', { order_return_reason_id: reason.id }) }}
+
+    <div class="container-fluid" data-testid="order-return-reason-edit-page">
+        <div class="bo-tab-bar">
+            <h1 class="h3 mb-0">{{ 'Return reason'|trans }} <small class="text-muted">#{{ reason.id }}</small></h1>
+            <div class="bo-tab-bar__aside">
+                {{ component('BoLanguageSwitcher', { currentLanguageId: edit_language_id }) }}
+            </div>
+        </div>
+
+        {% form_theme form with bo_form_themes only %}
+        {{ form_start(form, {
+            action: path('admin.order-return-reason.save', { order_return_reason_id: reason.id }),
+            method: 'post',
+            attr: { 'data-testid': 'order-return-reason-edit-form' },
+        }) }}
+            <div class="row">
+                <div class="col-md-8 mb-3">
+                    {{ form_label(form.title) }}
+                    {{ form_widget(form.title, { attr: { class: 'form-control' } }) }}
+                </div>
+                <div class="col-md-4 mb-3">
+                    {{ form_label(form.code) }}
+                    {{ form_widget(form.code, { attr: { class: 'form-control' } }) }}
+                </div>
+            </div>
+            <div class="form-check mb-3">
+                {{ form_widget(form.visible, { attr: { class: 'form-check-input' } }) }}
+                {{ form_label(form.visible, null, { label_attr: { class: 'form-check-label' } }) }}
+            </div>
+            <div class="mb-3">
+                {{ form_label(form.description) }}
+                {{ form_widget(form.description, { attr: { class: 'form-control', rows: 5 } }) }}
+            </div>
+            {{ form_widget(form.id) }}
+            {{ form_widget(form.locale) }}
+            {{ safe_hook('order-return-reason.update-form', { order_return_reason: reason.id }) }}
+            <button type="submit" class="btn btn-primary" data-testid="order-return-reason-edit-submit">{{ 'Save'|trans }}</button>
+            <a href="{{ path('admin.order-return-reason.default') }}" class="btn btn-outline-secondary">{{ 'Back'|trans }}</a>
+        {{ form_end(form) }}
+    </div>
+
+    {{ safe_hook('order-return-reason-edit.bottom', { order_return_reason_id: reason.id }) }}
+{% endblock %}

@@ -1,0 +1,39 @@
+{#
+    The returns opened on this order, and the way for the merchant to open one
+    himself for a parcel announced by phone.
+
+    Expects:
+      - order:            the Order model
+      - order_returns:    list of { id, ref, status_title, status_color, url, created_at }
+      - returnable_lines: list of { order_product_id, title, ref, remaining }
+      - return_reasons:   list of { id, title }
+      - can_create:       whether the admin may open a return
+      - token:            CSRF token
+#}
+<div class="card mb-3" data-testid="order-returns-card">
+    <div class="card-header d-flex flex-wrap gap-2 justify-content-between align-items-center">
+        <span>{{ 'Returns'|trans }}</span>
+        {% if can_create and returnable_lines is not empty %}
+            <button type="button" class="btn btn-sm btn-outline-primary"
+                    data-bs-toggle="modal" data-bs-target="#order-return-open-modal"
+                    data-testid="order-open-return-button">
+                <i class="bi bi-arrow-return-left me-1" aria-hidden="true"></i>{{ 'Open a return'|trans }}
+            </button>
+        {% endif %}
+    </div>
+    {% if order_returns is empty %}
+        <div class="card-body small text-muted" data-testid="order-returns-empty">
+            {{ 'No return on this order.'|trans }}
+        </div>
+    {% else %}
+        <ul class="list-group list-group-flush small">
+            {% for order_return in order_returns %}
+                <li class="list-group-item d-flex justify-content-between align-items-center gap-2"
+                    data-testid="order-return-row-{{ order_return.id }}">
+                    <a href="{{ order_return.url }}" class="text-decoration-none fw-semibold">{{ order_return.ref }}</a>
+                    <span class="badge" style="background-color: {{ order_return.status_color }}; color: #fff;">{{ order_return.status_title }}</span>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</div>
