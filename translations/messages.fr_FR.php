@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the Thelia package.
  * http://www.thelia.net
@@ -1666,7 +1668,7 @@ return [
     'Split over the goods' => 'Répartie sur les marchandises',
     'Stability' => 'Stabilité',
     'Start Date' => 'Date de début',
-    'Start date' => 'Date de début ',
+    'Start date' => "Date de début\u{a0}",
     'State' => 'État/région',
     'State name' => 'Nom de la région',
     'States' => 'États',
