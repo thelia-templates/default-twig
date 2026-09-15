@@ -16,10 +16,11 @@ namespace BackOfficeDefaultTwigBundle\Controller\Configuration;
 
 use BackOfficeDefaultTwigBundle\Form\Configuration\TagType;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
-use BackOfficeDefaultTwigBundle\Service\Customer\CustomerFilters;
+use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormErrorRenderer;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormValidator;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminLogger;
-use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormErrorRenderer;
+use BackOfficeDefaultTwigBundle\Service\Customer\CustomerFilters;
+use BackOfficeDefaultTwigBundle\Service\Tag\TagSwatch;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\ListSort;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
 use Propel\Runtime\ActiveQuery\Criteria;
@@ -61,15 +62,6 @@ final class TagController
     private const DELETE_MODAL_ID = '#tag-delete-modal';
     private const MERGE_TEMPLATE = '@BackOfficeDefaultTwig/configuration/tag/merge.html.twig';
 
-    /**
-     * The same shape the API resource validates a colour against.
-     *
-     * Re-checked here on the way out, not only on the way in: this value ends up
-     * inside a style attribute, and a row written by an import, a module or a
-     * hand-run SQL statement never passed the API validator.
-     */
-    private const COLOR_CODE_SHAPE = '/^#[0-9A-Fa-f]{6}$/';
-
     public function __construct(
         private readonly AdminAccessChecker $access,
         private readonly Environment $twig,
@@ -81,6 +73,7 @@ final class TagController
         private readonly UrlGeneratorInterface $urls,
         private readonly TranslatorInterface $translator,
         private readonly TokenProvider $tokens,
+        private readonly TagSwatch $swatch,
     ) {
     }
 
@@ -473,16 +466,21 @@ final class TagController
 
     /**
      * A coloured square, or nothing at all when the stored value is not a colour.
+     *
+     * The colour is checked by TagSwatch and not here: it is the one place that
+     * decides whether a tag colour may reach a style attribute.
      */
     private function colorSwatch(string $colorCode): string
     {
-        if (preg_match(self::COLOR_CODE_SHAPE, $colorCode) !== 1) {
+        $color = $this->swatch->color($colorCode);
+
+        if ($color === null) {
             return '';
         }
 
         return \sprintf(
             '<span class="d-inline-block rounded border" style="width:1rem;height:1rem;background-color:%s" aria-hidden="true"></span>',
-            $colorCode,
+            $color,
         );
     }
 }
