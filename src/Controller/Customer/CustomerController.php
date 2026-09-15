@@ -599,13 +599,67 @@ final class CustomerController
         // test can tell apart from the one the service already holds.
         $labels = array_map(static fn (mixed $label): string => (string) $label, [...$picked, ...$typed]);
 
+        // Attaching a tag is customer data; adding a word to the shop vocabulary is
+        // not. The admin API refuses the creation to a profile holding no grant on
+        // the tag resource, so the customer sheet refuses it too instead of being
+        // the way around that check. The known labels are still attached.
+        $refused = $this->labelsRefusedToCreate($labels);
+
+        if ($refused !== []) {
+            $labels = array_values(array_filter(
+                $labels,
+                static fn (string $label): bool => !\in_array(Tag::normalizeLabel($label), $refused, true),
+            ));
+        }
+
         try {
             $this->tags->setLabelsFor(TagElement::ELEMENT_KEY_CUSTOMER, $customerId, $labels);
         } catch (\Throwable $exception) {
             return $exception;
         }
 
+        if ($refused !== []) {
+            return new \RuntimeException($this->translator->trans(
+                'Creating a tag needs the tag configuration permission: %labels% not created.',
+                ['%labels%' => implode(', ', array_map(static fn (string $label): string => '"'.$label.'"', $refused))],
+            ));
+        }
+
         return null;
+    }
+
+    /**
+     * The labels the vocabulary does not hold yet, when the profile may not add to it.
+     *
+     * The grant is only checked once an unknown label is actually submitted: the
+     * check writes an audit entry on refusal, and an administrator who only picks
+     * existing tags has attempted nothing.
+     *
+     * @param list<string> $labels
+     *
+     * @return list<string> normalised labels
+     */
+    private function labelsRefusedToCreate(array $labels): array
+    {
+        $unknown = [];
+
+        foreach ($labels as $label) {
+            $normalized = Tag::normalizeLabel($label);
+
+            if ($normalized === '' || isset($unknown[$normalized])) {
+                continue;
+            }
+
+            if (TagQuery::create()->findOneByLabel($normalized) === null) {
+                $unknown[$normalized] = $normalized;
+            }
+        }
+
+        if ($unknown === [] || $this->access->check(AdminResources::TAG, [], AccessManager::CREATE) === null) {
+            return [];
+        }
+
+        return array_values($unknown);
     }
 
     private function customerToFormData(Customer $customer): array

@@ -139,6 +139,7 @@ return [
     'Country code followed by the national number, without spaces.' => 'Code pays suivi du numéro national, sans espaces.',
     'Create a new return reason' => 'Créer un motif de retour',
     'Create “%label%”' => 'Créer « %label% »',
+    'Creating a tag needs the tag configuration permission: %labels% not created.' => 'La création d\'une étiquette demande la permission de configuration des étiquettes : %labels% non créée(s).',
     'Credit note' => 'Avoir',
     'Create a new relation type' => 'Créer un type de relation',
     'Currently targeted: %count% customer(s).' => 'Actuellement ciblés : %count% client(s).',
