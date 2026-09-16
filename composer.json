@@ -22,9 +22,9 @@
         "thelia/custom-delivery-module": "^4.0",
         "thelia/free-order-module": "^3.0",
         "thelia/tiptap-module": "^1.0",
-        "thelia/twig-engine-module": "^1.0.9",
+        "thelia/twig-engine-module": "^1.1",
         "thelia/virtual-product-delivery-module": "^3.0",
-        "twbs/bootstrap": "^5.3.8",
+        "twbs/bootstrap": "~5.3.8",
         "twbs/bootstrap-icons": "^1.13"
     },
     "autoload": {
