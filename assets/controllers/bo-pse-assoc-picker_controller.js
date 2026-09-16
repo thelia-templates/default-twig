@@ -6,6 +6,7 @@ export default class extends Controller {
     static values = {
         listUrlTemplate: String,
         toggleUrlTemplate: String,
+        token: String,
     };
 
     connect() {
@@ -131,9 +132,23 @@ export default class extends Controller {
             .replace(/\/0\//, `/${this.pseId}/`)
             .replace(/\/0$/, `/${item.id}`);
 
+        const body = new URLSearchParams();
+        body.set('_token', this.tokenValue || '');
+
         card.disabled = true;
         try {
-            const response = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } });
+            // Attaching a medium changes the shop: it is a POST carrying the token,
+            // never a link a third-party page could make the admin follow.
+            const response = await fetch(url, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    Accept: 'application/json',
+                },
+                body: body.toString(),
+            });
             if (!response.ok) {
                 throw new Error('toggle failed');
             }
