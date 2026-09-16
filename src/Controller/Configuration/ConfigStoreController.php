@@ -33,6 +33,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
 use Thelia\Domain\Checkout\Enum\GuestCheckoutMode;
+use Thelia\Domain\Media\Video\VideoProviderResolver;
 use Thelia\Model\ConfigQuery;
 use Twig\Environment;
 
@@ -147,6 +148,7 @@ final class ConfigStoreController
             'store_city' => ConfigQuery::read('store_city'),
             'store_country' => ConfigQuery::read('store_country'),
             'guest_checkout_mode' => ConfigQuery::read('guest_checkout_mode', GuestCheckoutMode::Disabled->value),
+            'video_providers' => (string) ConfigQuery::read(VideoProviderResolver::PROVIDERS_VARIABLE, VideoProviderResolver::DEFAULT_PROVIDERS),
         ];
     }
 
