@@ -1,0 +1,171 @@
+{% extends '@BackOfficeDefaultTwig/base.html.twig' %}
+
+{% block title %}{{ 'Edit a video'|trans }} - {{ video_title }}{% endblock %}
+{% block body_testid %}file-video-edit-page{% endblock %}
+
+{% block breadcrumb %}
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ path('admin.home') }}">{{ 'Home'|trans }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ close_url }}">{{ 'Edit product'|trans }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ 'Editing video "%name"'|trans({ '%name': video_title }) }}</li>
+        </ol>
+    </nav>
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid" data-testid="video-edit-page">
+        <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
+            <h1 class="h3 mb-0">{{ 'Edit video "%name"'|trans({ '%name': video_title }) }} <small class="text-muted">#{{ video_id }}</small></h1>
+        </div>
+
+        <div class="mb-3">
+            {{ component('BoLanguageSwitcher', { currentLanguageId: edit_language_id }) }}
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                {% form_theme form with bo_form_themes only %}
+                {{ form_start(form, { action: edit_url, method: 'post', attr: { 'data-testid': 'bo-video-edit-form' } }) }}
+                    {{ form_widget(form.id) }}
+                    {{ form_widget(form.locale) }}
+
+                    {% include '@BackOfficeDefaultTwig/components/SaveModeToolbar/SaveModeToolbar.html.twig' with {
+                        closeUrl: close_url,
+                        closeLabel: 'Close',
+                        closeVariant: 'outline-secondary',
+                        saveModeField: 'save_mode',
+                        saveLabel: 'Save',
+                        saveCloseLabel: 'Save and close',
+                        saveIcon: 'bi-check2',
+                        saveCloseIcon: 'bi-check2-all',
+                        saveVariant: 'outline-primary',
+                        saveCloseVariant: 'primary',
+                        showSave: true,
+                        showSaveClose: true,
+                        align: 'end',
+                        wrapperClass: 'mb-3',
+                        testid: 'bo-video-edit',
+                    } only %}
+
+                    <h2 class="h5 mb-3">{{ 'Source'|trans }}</h2>
+
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <p class="d-flex align-items-center gap-2 mb-3" data-testid="bo-video-edit-source">
+                                {% if hosted %}
+                                    <i class="bi bi-film" aria-hidden="true"></i>
+                                    <span>{{ 'Hosted by the shop'|trans }}</span>
+                                    <code>{{ source_file }}</code>
+                                {% else %}
+                                    <i class="bi bi-play-btn" aria-hidden="true"></i>
+                                    <span>{{ 'Played from %platform'|trans({ '%platform': provider }) }}</span>
+                                    <code>{{ source_external_id }}</code>
+                                {% endif %}
+                            </p>
+
+                            {# Both left empty, the video keeps the source it has. #}
+                            <div class="bo-field-grid">
+                                <div class="bo-field bo-field--7">
+                                    {{ form_label(form.url, null, { help: false }) }}
+                                    {% set url_invalid = form.url.vars.errors|length %}
+                                    {{ form_widget(form.url, { attr: {
+                                        class: 'form-control',
+                                        placeholder: 'https://www.youtube.com/watch?v=…',
+                                        'data-testid': 'bo-video-edit-url',
+                                        'aria-describedby': 'bo-video-edit-url-help',
+                                    }|merge(url_invalid ? { 'aria-invalid': 'true' } : {}) }) }}
+                                    <div class="bo-field-grid__help" id="bo-video-edit-url-help">{{ form.url.vars.help }}</div>
+                                    {{ form_errors(form.url) }}
+                                </div>
+                                <div class="bo-field bo-field--5">
+                                    {{ form_label(form.file, null, { help: false }) }}
+                                    {{ form_widget(form.file, { attr: { class: 'form-control', 'data-testid': 'bo-video-edit-file', 'aria-describedby': 'bo-video-edit-file-help' } }) }}
+                                    <div class="bo-field-grid__help" id="bo-video-edit-file-help">{{ form.file.vars.help }}</div>
+                                    {{ form_errors(form.file) }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h2 class="h5 mb-3">{{ 'Video information'|trans }}</h2>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" for="{{ form.thumbnail_image_id.vars.id }}">{{ 'Thumbnail'|trans }}</label>
+                            <div class="bg-light text-center p-3 rounded">
+                                {% if thumbnail_url %}
+                                    <img src="{{ thumbnail_url }}" alt="" class="img-fluid" style="max-height: 320px;" data-testid="bo-video-edit-thumbnail">
+                                {% else %}
+                                    <div class="text-muted">{{ 'No product image to use as a thumbnail'|trans }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="mb-3 mt-3">
+                                {{ form_widget(form.thumbnail_image_id, { attr: { class: 'form-select', 'data-testid': 'bo-video-edit-thumbnail-choice' } }) }}
+                                {{ form_help(form.thumbnail_image_id) }}
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-check mb-3">
+                                {{ form_widget(form.visible, { attr: { class: 'form-check-input', 'data-testid': 'bo-video-edit-visible' } }) }}
+                                {{ form_label(form.visible, null, { label_attr: { class: 'form-check-label' } }) }}
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_label(form.title) }}
+                                {{ form_widget(form.title, { attr: { class: 'form-control', 'data-testid': 'bo-video-edit-title' } }) }}
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_label(form.alt) }}
+                                {{ form_widget(form.alt, { attr: { class: 'form-control', 'data-testid': 'bo-video-edit-alt' } }) }}
+                                {{ form_help(form.alt) }}
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_label(form.chapo) }}
+                                {{ form_widget(form.chapo, { attr: { class: 'form-control', rows: 3 } }) }}
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_label(form.postscriptum) }}
+                                {{ form_widget(form.postscriptum, { attr: { class: 'form-control', rows: 3 } }) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            {{ form_label(form.description) }}
+                            {{ form_widget(form.description, { attr: { class: 'form-control wysiwyg', rows: 10 } }) }}
+                        </div>
+                    </div>
+
+                    {% include '@BackOfficeDefaultTwig/components/SaveModeToolbar/SaveModeToolbar.html.twig' with {
+                        closeUrl: close_url,
+                        closeLabel: 'Close',
+                        closeVariant: 'outline-secondary',
+                        saveModeField: 'save_mode',
+                        saveLabel: 'Save',
+                        saveCloseLabel: 'Save and close',
+                        saveIcon: 'bi-check2',
+                        saveCloseIcon: 'bi-check2-all',
+                        saveVariant: 'outline-primary',
+                        saveCloseVariant: 'primary',
+                        showSave: true,
+                        showSaveClose: true,
+                        align: 'end',
+                        wrapperClass: 'mt-3',
+                        testid: 'bo-video-edit-bottom',
+                    } only %}
+
+                {{ form_end(form) }}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts_extra %}
+    {{ safe_hook('wysiwyg.js', { location: 'wysiwyg-video-edit-js' }) }}
+{% endblock %}

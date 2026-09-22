@@ -1,0 +1,29 @@
+{# The videos of a product on their own, below a module that owns the images tab.
+   Their positions are the ones of the shared sequence: a move goes through it. #}
+<div class="bo-file-list" data-controller="bo-file-list"
+     data-bo-file-list-toggle-url-template-value="{{ path('admin.video.toggle.process', { productId: product_id, videoId: 0 }) }}"
+     data-bo-file-list-delete-url-template-value="{{ path('admin.video.delete', { productId: product_id, videoId: 0 }) }}"
+     data-bo-file-list-position-url-value="{{ path('admin.video.update-position', { productId: product_id }) }}"
+     data-bo-file-list-token-value="{{ assignToken() }}"
+     data-bo-file-list-sortable-value="true">
+    {% if items|length == 0 %}
+        <div class="alert alert-info" data-testid="bo-video-list-empty">
+            {{ 'No videos yet. Add one with the form above.'|trans }}
+        </div>
+    {% else %}
+        <ul class="list-unstyled row g-3" data-bo-file-list-target="grid" data-testid="bo-video-list-grid">
+            {% for item in items|sort((a, b) => a.position <=> b.position) %}
+                <li class="col-12 col-md-6 col-xl-4" data-bo-file-list-target="item" data-file-id="{{ item.id }}" data-media-type="video" data-testid="bo-video-item-{{ item.id }}">
+                    {% include '@BackOfficeDefaultTwig/file/_video_card.html.twig' with {
+                        item: item,
+                        rank: loop.index,
+                        product_id: product_id,
+                        edit_locale: edit_locale,
+                        can_update: can_update,
+                        can_delete: can_delete,
+                    } only %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</div>

@@ -6,6 +6,7 @@ export default class extends Controller {
     static values = {
         listUrlTemplate: String,
         toggleUrlTemplate: String,
+        token: String,
     };
 
     connect() {
@@ -96,7 +97,9 @@ export default class extends Controller {
         const inner = document.createElement('div');
         inner.className = 'card-body small';
 
-        if (this.type === 'image' && item.url) {
+        // A video is shown by its thumbnail, like an image: the address it plays
+        // from is never part of this payload.
+        if ((this.type === 'image' || this.type === 'video') && item.url) {
             const img = document.createElement('img');
             img.src = item.url;
             img.alt = item.title || '';
@@ -104,7 +107,7 @@ export default class extends Controller {
             inner.appendChild(img);
         } else {
             const icon = document.createElement('i');
-            icon.className = 'bi bi-file-earmark fs-1 d-block mb-2';
+            icon.className = `bi ${this.type === 'video' ? 'bi-film' : 'bi-file-earmark'} fs-1 d-block mb-2`;
             inner.appendChild(icon);
         }
 
@@ -129,9 +132,23 @@ export default class extends Controller {
             .replace(/\/0\//, `/${this.pseId}/`)
             .replace(/\/0$/, `/${item.id}`);
 
+        const body = new URLSearchParams();
+        body.set('_token', this.tokenValue || '');
+
         card.disabled = true;
         try {
-            const response = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } });
+            // Attaching a medium changes the shop: it is a POST carrying the token,
+            // never a link a third-party page could make the admin follow.
+            const response = await fetch(url, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    Accept: 'application/json',
+                },
+                body: body.toString(),
+            });
             if (!response.ok) {
                 throw new Error('toggle failed');
             }

@@ -142,6 +142,13 @@
                             {{ form_row(form.guest_checkout_mode, { attr: { 'data-testid': 'config-store-guest-checkout-mode' } }) }}
                         </div>
                     </div>
+
+                    <div class="card mb-4">
+                        <div class="card-header">{{ 'Product videos'|trans }}</div>
+                        <div class="card-body">
+                            {{ form_row(form.video_providers, { attr: { 'data-testid': 'config-store-video-providers' } }) }}
+                        </div>
+                    </div>
                 </div>
             </div>
 

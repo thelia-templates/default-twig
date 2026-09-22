@@ -67,7 +67,7 @@
                             <div class="bg-light text-center p-3 rounded">
                                 {% if file_url %}
                                     <a href="{{ file_url }}" target="_blank" rel="noopener" data-testid="bo-image-preview">
-                                        <img src="{{ file_url }}" alt="{{ file_title }}" class="img-fluid" style="max-height: 320px;">
+                                        <img src="{{ file_url }}" alt="{{ file_alt }}" class="img-fluid" style="max-height: 320px;">
                                     </a>
                                 {% else %}
                                     <div class="text-muted">{{ 'Image file not found'|trans }}</div>
@@ -92,6 +92,18 @@
                             <div class="mb-3">
                                 {{ form_label(form.title) }}
                                 {{ form_widget(form.title, { attr: { class: 'form-control' } }) }}
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_label(form.alt) }}
+                                {{ form_widget(form.alt, { attr: { class: 'form-control', 'data-testid': 'bo-image-edit-alt' } }) }}
+                                {{ form_help(form.alt) }}
+                            </div>
+
+                            <div class="form-check mb-3">
+                                {{ form_widget(form.decorative, { attr: { class: 'form-check-input', 'data-testid': 'bo-image-edit-decorative' } }) }}
+                                {{ form_label(form.decorative, null, { label_attr: { class: 'form-check-label' } }) }}
+                                {{ form_help(form.decorative) }}
                             </div>
 
                             <div class="mb-3">
