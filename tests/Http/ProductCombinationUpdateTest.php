@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace BackOfficeDefaultTwigBundle\Tests\Http;
 
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
+use Thelia\Model\AttributeCombination;
 use Thelia\Model\ConfigQuery;
 use Thelia\Model\Currency;
 use Thelia\Model\CurrencyQuery;
@@ -236,7 +237,14 @@ final class ProductCombinationUpdateTest extends WebIntegrationTestCase
         [$product, $pse] = $this->productWithoutCombination();
 
         $attribute = $this->factory->attribute(['title' => 'Size']);
-        $this->factory->attributeCombination($pse, $this->factory->attributeAv($attribute, ['title' => 'Large']));
+        $attributeAv = $this->factory->attributeAv($attribute, ['title' => 'Large']);
+
+        (new AttributeCombination())
+            ->setAttributeId($attributeAv->getAttributeId())
+            ->setAttributeAvId($attributeAv->getId())
+            ->setProductSaleElementsId($pse->getId())
+            ->setPosition(1)
+            ->save($this->getPropelConnection());
 
         return [$product, $pse];
     }
