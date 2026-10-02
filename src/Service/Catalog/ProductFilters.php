@@ -16,6 +16,7 @@ namespace BackOfficeDefaultTwigBundle\Service\Catalog;
 
 use Propel\Runtime\ActiveQuery\Criteria;
 use Symfony\Component\HttpFoundation\Request;
+use Thelia\Domain\Catalog\Product\Identifier\Gtin;
 use Thelia\Model\Map\ProductTableMap;
 use Thelia\Model\ProductI18nQuery;
 use Thelia\Model\ProductQuery;
@@ -247,9 +248,13 @@ final readonly class ProductFilters
             return;
         }
 
+        // The wildcards of LIKE typed in the box are searched for as characters: a
+        // "%" alone would otherwise list the whole catalogue.
+        $term = addcslashes($this->search, '%_\\');
+
         $titleIds = ProductI18nQuery::create()
             ->filterByLocale($locale)
-            ->filterByTitle('%'.$this->search.'%', Criteria::LIKE)
+            ->filterByTitle('%'.$term.'%', Criteria::LIKE)
             ->select(['Id'])
             ->find()
             ->toArray();
@@ -258,10 +263,32 @@ final readonly class ProductFilters
         // condition+combine groups the title/ref match as a single OR cluster,
         // otherwise chaining _or() bleeds into the other filters and turns the
         // whole WHERE into an OR.
+        //
+        // A combination is found by its GTIN as scanned, spaces and hyphens dropped,
+        // and by the start of its manufacturer part number: both read an indexed
+        // column, and Propel binds one value per condition, hence one each.
         $query
             ->condition('search_title', ProductTableMap::COL_ID.' IN ('.implode(',', $ids ?: [0]).')')
-            ->condition('search_ref', ProductTableMap::COL_REF.' LIKE ?', '%'.$this->search.'%', \PDO::PARAM_STR)
-            ->combine(['search_title', 'search_ref'], Criteria::LOGICAL_OR);
+            ->condition('search_ref', ProductTableMap::COL_REF.' LIKE ?', '%'.$term.'%', \PDO::PARAM_STR)
+            ->condition('search_mpn', $this->combinationExists('pse_mpn', 'mpn LIKE ?'), $term.'%', \PDO::PARAM_STR);
+        $conditions = ['search_title', 'search_ref', 'search_mpn'];
+
+        // A term made only of spaces and hyphens leaves no code to look for, and an
+        // empty one would match every combination without a GTIN.
+        $gtin = Gtin::normalize($this->search);
+        if ($gtin !== '') {
+            $query->condition('search_gtin', $this->combinationExists('pse_gtin', 'ean_code = ?'), $gtin, \PDO::PARAM_STR);
+            $conditions[] = 'search_gtin';
+        }
+
+        $query->combine($conditions, Criteria::LOGICAL_OR);
+    }
+
+    private function combinationExists(string $alias, string $condition): string
+    {
+        return 'EXISTS (SELECT 1 FROM product_sale_elements '.$alias
+            .' WHERE '.$alias.'.product_id = '.ProductTableMap::COL_ID
+            .' AND '.$alias.'.'.$condition.')';
     }
 
     private function applySaleElementFlag(ProductQuery $query, string $column, ?bool $expected): void
