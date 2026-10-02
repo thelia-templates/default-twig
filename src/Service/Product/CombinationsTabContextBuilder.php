@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace BackOfficeDefaultTwigBundle\Service\Product;
 
 use Propel\Runtime\ActiveQuery\Criteria;
+use Propel\Runtime\Exception\PropelException;
 use Thelia\Model\Attribute;
 use Thelia\Model\AttributeAv;
 use Thelia\Model\AttributeAvQuery;
@@ -80,7 +81,15 @@ final readonly class CombinationsTabContextBuilder
                 $hasCombinations = true;
             }
 
-            $price = $pse->getPricesByCurrency($currency);
+            // A combination written without any price (by the API, an import) has no
+            // row to read or to convert: the tab shows it unpriced instead of failing.
+            try {
+                $price = $pse->getPricesByCurrency($currency);
+            } catch (PropelException $databaseFailure) {
+                throw $databaseFailure;
+            } catch (\RuntimeException) {
+                $price = null;
+            }
             $row = [
                 'id' => (int) $pse->getId(),
                 'label' => $combinationLabels === [] ? 'default' : implode(' / ', $combinationLabels),
