@@ -119,17 +119,17 @@ final class NewsletterController
                 return;
             }
 
-            fputcsv($handle, ['email', 'firstname', 'lastname', 'locale', 'created_at'], escape: '');
+            fwrite($handle, self::csvLine(['email', 'firstname', 'lastname', 'locale', 'created_at']));
 
             foreach (NewsletterQuery::create()->orderByCreatedAt()->find() as $subscriber) {
                 \assert($subscriber instanceof Newsletter);
-                fputcsv($handle, array_map(self::asSpreadsheetText(...), [
+                fwrite($handle, self::csvLine(array_map(self::asSpreadsheetText(...), [
                     (string) $subscriber->getEmail(),
                     (string) $subscriber->getFirstname(),
                     (string) $subscriber->getLastname(),
                     (string) $subscriber->getLocale(),
                     $subscriber->getCreatedAt() instanceof \DateTimeInterface ? $subscriber->getCreatedAt()->format('Y-m-d H:i:s') : '',
-                ]), escape: '');
+                ])));
             }
 
             fclose($handle);
@@ -153,6 +153,23 @@ final class NewsletterController
         }
 
         return \in_array($value[0], ['=', '+', '-', '@', "\t", "\r"], true) ? "'".$value : $value;
+    }
+
+    /**
+     * The line fputcsv() writes, except that a cell holding a semicolon is enclosed too: a
+     * spreadsheet set to a French locale splits the line on it, and the part after it
+     * would start a new cell, unguarded.
+     *
+     * @param list<string> $cells
+     */
+    private static function csvLine(array $cells): string
+    {
+        return implode(',', array_map(
+            static fn (string $cell): string => preg_match('/[,;"\s]/', $cell) === 1
+                ? '"'.str_replace('"', '""', $cell).'"'
+                : $cell,
+            $cells,
+        ))."\n";
     }
 
     /** @return array<string, mixed> */

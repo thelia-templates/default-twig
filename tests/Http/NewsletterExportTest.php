@@ -93,6 +93,16 @@ final class NewsletterExportTest extends WebIntegrationTestCase
         self::assertStringStartsWith($email.','.$exported.',Doe,fr_FR,', $this->lineOf($email));
     }
 
+    public function testANameHoldingTheSeparatorOfAFrenchSpreadsheetIsEnclosed(): void
+    {
+        $email = $this->subscribe('Rue;=1+2', 'Doe');
+
+        $this->loginAs($this->factory->admin());
+        $this->client->request('GET', self::URL);
+
+        self::assertStringStartsWith($email.',"Rue;=1+2",Doe,', $this->lineOf($email));
+    }
+
     public function testABackslashDoesNotKeepAQuoteFromBeingDoubled(): void
     {
         $email = $this->subscribe('A \\"B', 'Doe');
