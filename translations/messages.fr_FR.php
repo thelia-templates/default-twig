@@ -2374,4 +2374,5 @@ return [
     'The verification service could not answer. Nothing was changed.' => 'Le service de vérification n\'a pas pu répondre. Rien n\'a été modifié.',
     'This address cannot be verified: it carries no VAT number, or no verification module is installed.' => 'Cette adresse ne peut pas être vérifiée : elle ne porte pas de numéro de TVA, ou aucun module de vérification n\'est installé.',
     'Too many verifications in a row. Try again in a few minutes.' => 'Trop de vérifications à la suite. Réessayez dans quelques minutes.',
+    'Not saved until a price is entered: %references%.' => 'Non enregistré tant qu\'aucun prix n\'est saisi : %references%.',
 ];
