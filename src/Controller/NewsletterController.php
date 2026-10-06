@@ -119,17 +119,17 @@ final class NewsletterController
                 return;
             }
 
-            fputcsv($handle, ['email', 'firstname', 'lastname', 'locale', 'created_at']);
+            fputcsv($handle, ['email', 'firstname', 'lastname', 'locale', 'created_at'], escape: '');
 
             foreach (NewsletterQuery::create()->orderByCreatedAt()->find() as $subscriber) {
                 \assert($subscriber instanceof Newsletter);
-                fputcsv($handle, [
+                fputcsv($handle, array_map(self::asSpreadsheetText(...), [
                     (string) $subscriber->getEmail(),
                     (string) $subscriber->getFirstname(),
                     (string) $subscriber->getLastname(),
                     (string) $subscriber->getLocale(),
                     $subscriber->getCreatedAt() instanceof \DateTimeInterface ? $subscriber->getCreatedAt()->format('Y-m-d H:i:s') : '',
-                ]);
+                ]), escape: '');
             }
 
             fclose($handle);
@@ -139,6 +139,20 @@ final class NewsletterController
         $response->headers->set('Content-Disposition', 'attachment; filename="newsletter-subscribers-'.date('Y-m-d').'.csv"');
 
         return $response;
+    }
+
+    /**
+     * A spreadsheet reads a cell starting with = + - @, a tab or a carriage return as
+     * a formula: such a value is written behind a quote, as text. A plain signed number
+     * (-5.00, +33612345678) calls nothing and stays a number.
+     */
+    private static function asSpreadsheetText(string $value): string
+    {
+        if ($value === '' || preg_match('/^[+-]?[0-9]+([.,][0-9]+)?$/', $value) === 1) {
+            return $value;
+        }
+
+        return \in_array($value[0], ['=', '+', '-', '@', "\t", "\r"], true) ? "'".$value : $value;
     }
 
     /** @return array<string, mixed> */
