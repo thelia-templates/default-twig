@@ -1,5 +1,6 @@
 import { Controller } from '@hotwired/stimulus';
 import { Modal } from 'bootstrap';
+import { backOfficeToken } from '../lib/post-request.js';
 
 /**
  * Powers the mailing template preview tab:
@@ -34,7 +35,9 @@ export default class extends Controller {
             return;
         }
         if (this.hasModalBodyTarget) {
-            this.modalBodyTarget.innerHTML = `<iframe src="${url}" style="width:100%;height:70vh;border:0"></iframe>`;
+            // The preview is a template anyone who may edit the messages wrote: it shows
+            // itself in a frame without a script, a form, or the session of the back office.
+            this.modalBodyTarget.innerHTML = `<iframe src="${url}" sandbox="" style="width:100%;height:70vh;border:0"></iframe>`;
         }
         const modal = Modal.getInstance(modalEl) ?? new Modal(modalEl);
         modal.show();
@@ -51,6 +54,7 @@ export default class extends Controller {
         }
 
         const formData = new FormData();
+        formData.append('_token', backOfficeToken());
         formData.append('recipient_email', recipient);
         for (const [key, value] of this.collectVariables()) {
             formData.append(key, value);
@@ -61,8 +65,7 @@ export default class extends Controller {
             credentials: 'same-origin',
             body: formData,
         })
-            .then((response) => response.text())
-            .then((text) => this.setResult(true, text))
+            .then((response) => response.text().then((text) => this.setResult(response.ok, text)))
             .catch((error) => this.setResult(false, error.message));
     }
 

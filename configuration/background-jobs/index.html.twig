@@ -1,0 +1,223 @@
+{% extends '@BackOfficeDefaultTwig/base.html.twig' %}
+
+{% block title %}{{ 'Background jobs'|trans }}{% endblock %}
+{% block body_testid %}configuration-background-jobs{% endblock %}
+
+{% block breadcrumb %}
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ path('admin.home') }}">{{ 'Home'|trans }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ path('admin.configuration.index') }}">{{ 'Configuration'|trans }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ 'Background jobs'|trans }}</li>
+        </ol>
+    </nav>
+{% endblock %}
+
+{% block content %}
+    {{ safe_hook('background-jobs.top') }}
+
+    {% import '@BackOfficeDefaultTwig/fragments/_job_status.html.twig' as job_status %}
+
+    <div class="container-fluid" data-testid="background-jobs-page">
+        <h1 class="h3 mb-4">{{ 'Background jobs'|trans }}</h1>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="card h-100" data-testid="background-jobs-queue">
+                    <div class="card-body">
+                        <h2 class="h6 text-muted">{{ 'Queue'|trans }}</h2>
+                        {% if has_queue %}
+                            <p class="h4 mb-1"><span class="badge text-bg-success">{{ 'Configured'|trans }}</span></p>
+                            <p class="small text-muted mb-0">{{ 'Jobs wait for a worker (messenger:consume async async_heavy).'|trans }}</p>
+                        {% else %}
+                            <p class="h4 mb-1"><span class="badge text-bg-secondary">{{ 'None'|trans }}</span></p>
+                            <p class="small text-muted mb-0">{{ 'MESSENGER_TRANSPORT_DSN is empty: every job runs at once, in the page that asks for it.'|trans }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100" data-testid="background-jobs-pending">
+                    <div class="card-body">
+                        <h2 class="h6 text-muted">{{ 'Waiting'|trans }}</h2>
+                        <p class="h4 mb-0" data-testid="background-jobs-pending-count">{{ pending_count is null ? '-' : pending_count }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100" data-testid="background-jobs-failed">
+                    <div class="card-body">
+                        <h2 class="h6 text-muted">{{ 'Failed'|trans }}</h2>
+                        <p class="h4 mb-0 {{ failed_count > 0 ? 'text-danger' }}" data-testid="background-jobs-failed-count">{{ failed_count }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4" data-testid="background-jobs-failed-list">
+            <div class="card-header">
+                <h2 class="h5 mb-0">{{ 'Failed jobs'|trans }}</h2>
+            </div>
+            {% if failed_jobs is empty %}
+                <div class="card-body text-muted" data-testid="background-jobs-failed-empty">{{ 'No job has failed.'|trans }}</div>
+            {% else %}
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0 bo-table-wrap">
+                        <thead>
+                            <tr>
+                                <th scope="col">{{ 'Job'|trans }}</th>
+                                <th scope="col">{{ 'Reason'|trans }}</th>
+                                <th scope="col">{{ 'Failed on'|trans }}</th>
+                                <th scope="col" class="text-end">{{ 'Attempts'|trans }}</th>
+                                <th scope="col" class="text-end">{{ 'Actions'|trans }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for job in failed_jobs %}
+                                <tr data-testid="background-jobs-failed-{{ job.id }}">
+                                    <td>
+                                        <div class="text-break">{{ job.description }}</div>
+                                        <div class="small text-muted text-break">{{ job.messageClass }}</div>
+                                    </td>
+                                    <td class="small text-break">{{ job.error|trans }}</td>
+                                    <td class="text-nowrap">{{ job.failedAt ? job.failedAt|date('Y-m-d H:i') : '-' }}</td>
+                                    <td class="text-end">{{ job.attempts }}</td>
+                                    <td class="text-end text-nowrap">
+                                        {# Replayed, a job the shop cannot read fails the same way. #}
+                                        {% if can_retry and job.replayable %}
+                                            <form method="post" action="{{ path('admin.configuration.background-jobs.retry', { id: job.id }) }}" class="d-inline">
+                                                <input type="hidden" name="_token" value="{{ assignToken() }}">
+                                                <button type="submit" class="btn btn-sm btn-outline-primary" data-testid="background-jobs-retry-{{ job.id }}" aria-label="{{ 'Replay'|trans }} {{ job.description }}">
+                                                    <i class="bi bi-arrow-repeat" aria-hidden="true"></i> {{ 'Replay'|trans }}
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                        {% if can_delete %}
+                                            <form method="post" action="{{ path('admin.configuration.background-jobs.delete', { id: job.id }) }}" class="d-inline">
+                                                <input type="hidden" name="_token" value="{{ assignToken() }}">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" data-testid="background-jobs-delete-{{ job.id }}" aria-label="{{ 'Delete'|trans }} {{ job.description }}"
+                                                        data-controller="confirm-modal" data-action="click->confirm-modal#confirm"
+                                                        data-confirm-modal-message-value="{{ 'Delete this failed job? It can no longer be replayed.'|trans }}">
+                                                    <i class="bi bi-trash" aria-hidden="true"></i> {{ 'Delete'|trans }}
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        </div>
+
+        {% if failed_recurring_tasks is not empty %}
+            <div class="card mb-4" data-testid="background-jobs-recurring-failures">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">{{ 'Recurring tasks that failed'|trans }}</h2>
+                </div>
+                <div class="card-body small text-muted pb-0">{{ 'A recurring task is not kept with the failed jobs: it runs again at its next time. Its last failure stays here until a run goes through.'|trans }}</div>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0 bo-table-wrap">
+                        <thead>
+                            <tr>
+                                <th scope="col">{{ 'Task'|trans }}</th>
+                                <th scope="col">{{ 'Reason'|trans }}</th>
+                                <th scope="col">{{ 'Failed on'|trans }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for task in failed_recurring_tasks %}
+                                <tr data-testid="background-jobs-recurring-failure">
+                                    <td class="text-break"><code>{{ task.task }}</code></td>
+                                    <td class="small text-break">{{ task.error|trans }}</td>
+                                    <td class="text-nowrap">{{ task.failedAt|date('Y-m-d H:i') }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="card" data-testid="background-jobs-exports">
+            <div class="card-header">
+                <h2 class="h5 mb-0">{{ 'Recent exports'|trans }}</h2>
+            </div>
+            {% if recent_exports is empty %}
+                <div class="card-body text-muted">{{ 'No export yet.'|trans }}</div>
+            {% else %}
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th scope="col">{{ 'Export'|trans }}</th>
+                                <th scope="col">{{ 'Status'|trans }}</th>
+                                <th scope="col" class="text-end">{{ 'Rows'|trans }}</th>
+                                <th scope="col">{{ 'Asked on'|trans }}</th>
+                                <th scope="col" class="text-end">{{ 'Actions'|trans }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for export_job in recent_exports %}
+                                <tr data-testid="background-jobs-export-{{ export_job.id }}">
+                                    <td>{{ export_job.export ? export_job.export.title : '-' }}</td>
+                                    <td>{{ job_status.badge(export_job.status) }}</td>
+                                    <td class="text-end">{{ export_job.processedRows }}</td>
+                                    <td class="text-nowrap">{{ export_job.createdAt ? export_job.createdAt|date('Y-m-d H:i') : '-' }}</td>
+                                    <td class="text-end">
+                                        {% if can_view_exports %}
+                                            <a href="{{ path('export.job', { jobId: export_job.id }) }}" class="btn btn-sm btn-outline-secondary" data-testid="background-jobs-export-details-{{ export_job.id }}" aria-label="{{ 'Details'|trans }} {{ export_job.export ? export_job.export.title : '' }}">{{ 'Details'|trans }}</a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="card mt-4" data-testid="background-jobs-imports">
+            <div class="card-header">
+                <h2 class="h5 mb-0">{{ 'Recent imports'|trans }}</h2>
+            </div>
+            {% if recent_imports is empty %}
+                <div class="card-body text-muted">{{ 'No import yet.'|trans }}</div>
+            {% else %}
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th scope="col">{{ 'Import'|trans }}</th>
+                                <th scope="col">{{ 'File'|trans }}</th>
+                                <th scope="col">{{ 'Status'|trans }}</th>
+                                <th scope="col" class="text-end">{{ 'Rows'|trans }}</th>
+                                <th scope="col">{{ 'Asked on'|trans }}</th>
+                                <th scope="col" class="text-end">{{ 'Actions'|trans }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for import_job in recent_imports %}
+                                <tr data-testid="background-jobs-import-{{ import_job.id }}">
+                                    <td>{{ import_job.import ? import_job.import.title : '-' }}</td>
+                                    <td class="text-break">{{ import_job.fileName }}</td>
+                                    <td>{{ job_status.badge(import_job.status) }}</td>
+                                    <td class="text-end">{{ import_job.importedRows }}</td>
+                                    <td class="text-nowrap">{{ import_job.createdAt ? import_job.createdAt|date('Y-m-d H:i') : '-' }}</td>
+                                    <td class="text-end">
+                                        {% if can_view_imports %}
+                                            <a href="{{ path('import.job', { jobId: import_job.id }) }}" class="btn btn-sm btn-outline-secondary" data-testid="background-jobs-import-details-{{ import_job.id }}" aria-label="{{ 'Details'|trans }} {{ import_job.fileName }}">{{ 'Details'|trans }}</a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {{ safe_hook('background-jobs.bottom') }}
+{% endblock %}

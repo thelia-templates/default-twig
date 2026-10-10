@@ -175,11 +175,10 @@ final class CheckoutStepController
 
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         } catch (\Throwable $exception) {
-            $this->errorRenderer->setup(
+            $this->errorRenderer->fail(
                 $this->translator->trans('Checkout layout update'),
-                $exception->getMessage(),
-                $form,
                 $exception,
+                $form,
             );
 
             return new Response(

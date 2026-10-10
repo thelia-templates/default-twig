@@ -111,11 +111,10 @@ final class ConfigStoreController
                     : 'admin.configuration.index',
             ));
         } catch (\Throwable $exception) {
-            $this->errorRenderer->setup(
+            $this->errorRenderer->fail(
                 $this->translator->trans('Store configuration failed.'),
-                $exception->getMessage(),
-                $form,
                 $exception,
+                $form,
             );
 
             return new Response(

@@ -16,13 +16,20 @@ namespace BackOfficeDefaultTwigBundle\Repository;
 
 use BackOfficeDefaultTwigBundle\Service\Admin\ImportTemplateBuilder;
 use Thelia\Model\ExportCategoryQuery;
+use Thelia\Model\ExportJob;
+use Thelia\Model\ExportJobQuery;
 use Thelia\Model\ExportQuery;
 use Thelia\Model\ImportCategoryQuery;
+use Thelia\Model\ImportJob;
+use Thelia\Model\ImportJobQuery;
 use Thelia\Model\ImportQuery;
+use Thelia\Model\Lang;
+use Thelia\Model\LangQuery;
 
 /**
- * Localized export/import catalogues for the data-transfer back-office screens.
- * Each category carries its ordered definitions so the controller stays thin.
+ * Localized export/import catalogues for the data-transfer back-office screens, and
+ * the jobs they were run as. Each category carries its ordered definitions so the
+ * controller stays thin.
  */
 final readonly class DataTransferRepository
 {
@@ -97,5 +104,119 @@ final readonly class DataTransferRepository
         }
 
         return $categories;
+    }
+
+    public function findExportJob(int $jobId): ?ExportJob
+    {
+        return ExportJobQuery::create()->findPk($jobId);
+    }
+
+    public function findImportJob(int $jobId): ?ImportJob
+    {
+        return ImportJobQuery::create()->findPk($jobId);
+    }
+
+    /**
+     * The last jobs of every administrator, or of one only.
+     *
+     * @return list<ExportJob>
+     */
+    public function findRecentExportJobs(int $limit, ?int $authorId = null, bool $everyAuthor = false): array
+    {
+        $locale = $this->defaultLocale();
+        // The export and its title come with each job: one query for the list.
+        $query = ExportJobQuery::create()
+            ->joinWithExport()
+            ->useExportQuery()
+                ->joinWithI18n($locale)
+            ->endUse()
+            ->orderByCreatedAt('desc')
+            ->orderById('desc')
+            ->limit($limit);
+
+        if (!$everyAuthor) {
+            // A job whose author is gone, or an administrator not signed in, sees none.
+            $query->filterByAdminId($authorId ?? 0);
+        }
+
+        $jobs = self::listOf($query->find());
+
+        foreach ($jobs as $job) {
+            $job->getExport()->setLocale($locale);
+        }
+
+        return $jobs;
+    }
+
+    /**
+     * The last jobs of every administrator, or of one only.
+     *
+     * @return list<ImportJob>
+     */
+    public function findRecentImportJobs(int $limit, ?int $authorId = null, bool $everyAuthor = false): array
+    {
+        $locale = $this->defaultLocale();
+        // The import and its title come with each job: one query for the list.
+        $query = ImportJobQuery::create()
+            ->joinWithImport()
+            ->useImportQuery()
+                ->joinWithI18n($locale)
+            ->endUse()
+            ->orderByCreatedAt('desc')
+            ->orderById('desc')
+            ->limit($limit);
+
+        if (!$everyAuthor) {
+            // A job whose author is gone, or an administrator not signed in, sees none.
+            $query->filterByAdminId($authorId ?? 0);
+        }
+
+        $jobs = self::listOf($query->find());
+
+        foreach ($jobs as $job) {
+            $job->getImport()->setLocale($locale);
+        }
+
+        return $jobs;
+    }
+
+    /**
+     * The languages a launch form offers, in their order.
+     *
+     * @return list<Lang>
+     */
+    public function languages(): array
+    {
+        return self::listOf(LangQuery::create()->orderByPosition()->find());
+    }
+
+    public function findLanguage(int $id): ?Lang
+    {
+        return LangQuery::create()->findPk($id);
+    }
+
+    /**
+     * The locale the screens show the exports and imports in.
+     */
+    public function defaultLocale(): string
+    {
+        return (string) (LangQuery::create()->findOneByByDefault(1)?->getLocale() ?? 'en_US');
+    }
+
+    /**
+     * @template T of object
+     *
+     * @param iterable<T> $rows
+     *
+     * @return list<T>
+     */
+    private static function listOf(iterable $rows): array
+    {
+        $list = [];
+        foreach ($rows as $row) {
+            $list[] = $row;
+        }
+
+        return $list;
     }
 }
