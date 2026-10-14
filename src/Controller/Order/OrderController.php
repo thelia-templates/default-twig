@@ -26,6 +26,7 @@ use BackOfficeDefaultTwigBundle\Service\Order\OrderFilterPresenter;
 use BackOfficeDefaultTwigBundle\Service\Order\OrderFilters;
 use BackOfficeDefaultTwigBundle\Service\Order\OrderHistoryContextBuilder;
 use BackOfficeDefaultTwigBundle\Service\Order\OrderListRowPresenter;
+use BackOfficeDefaultTwigBundle\Service\Order\OrderPaymentContextBuilder;
 use BackOfficeDefaultTwigBundle\Service\Order\OrderRoundingRule;
 use BackOfficeDefaultTwigBundle\Service\OrderReturn\OrderReturnContextBuilder;
 use BackOfficeDefaultTwigBundle\Service\Order\OrderStatusChangeContextBuilder;
@@ -42,9 +43,14 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Thelia\Core\Event\Order\OrderAddressEvent;
 use Thelia\Core\Event\Order\OrderEvent;
+use Thelia\Core\Event\Order\OrderPaymentCaptureEvent;
+use Thelia\Core\Event\Order\OrderPaymentSettlementEvent;
 use Thelia\Core\Event\TheliaEvents;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Exception\TokenAuthenticationException;
+use Thelia\Domain\Payment\Enum\PaymentTransactionState;
+use Thelia\Domain\Payment\Exception\CancellationNeedsCaptureRightException;
+use Thelia\Domain\Payment\Exception\PaymentException;
 use Thelia\Core\Security\Resource\AdminResources;
 use Thelia\Domain\Order\Service\OrderStatusTransitionGuard;
 use Thelia\Log\Tlog;
@@ -52,6 +58,7 @@ use Thelia\Model\CountryQuery;
 use Thelia\Model\CustomerTitleQuery;
 use Thelia\Model\Order;
 use Thelia\Model\OrderAddressQuery;
+use Thelia\Model\OrderPaymentTransactionQuery;
 use Thelia\Model\OrderQuery;
 use Thelia\Model\OrderStatusQuery;
 use Thelia\Model\ProductQuery;
@@ -90,6 +97,7 @@ final class OrderController
         private readonly AdminLogger $adminLogger,
         private readonly RequestStack $requestStack,
         private readonly OrderHistoryContextBuilder $historyContextBuilder,
+        private readonly OrderPaymentContextBuilder $paymentContextBuilder,
     ) {
     }
 
@@ -142,6 +150,7 @@ final class OrderController
             $this->detailContextBuilder->build($order, $locale),
             $this->returnContextBuilder->build($order, $locale),
             $this->historyContextBuilder->build($order, $historyPage, $locale),
+            $this->paymentContextBuilder->build($order, $locale),
             [
                 'order' => $order,
                 'order_items' => $this->orderItemsPage($order_id, $itemsPage, $itemsPerPage),
@@ -196,6 +205,7 @@ final class OrderController
         $plan = $this->bulkStatusPlanner->plan($orderIds, $statusId);
         $updated = 0;
         $failed = [];
+        $holdingAnAuthorization = [];
 
         foreach ($this->orderRepository->findByIds($plan['allowed_ids']) as $order) {
             try {
@@ -203,7 +213,10 @@ final class OrderController
                 $event->setStatus($statusId);
                 $this->events->dispatch($event, TheliaEvents::ORDER_UPDATE_STATUS);
                 ++$updated;
-            } catch (\Throwable) {
+            } catch (CancellationNeedsCaptureRightException) {
+                $holdingAnAuthorization[] = (string) $order->getRef();
+            } catch (\Throwable $throwable) {
+                Tlog::getInstance()->error(\sprintf('Bulk status change of order %s failed: %s', (string) $order->getRef(), $throwable->getMessage()));
                 $failed[] = (string) $order->getRef();
             }
         }
@@ -224,6 +237,10 @@ final class OrderController
 
         if ($plan['missing_count'] > 0) {
             $this->flash('warning', $this->translator->trans('%count% order(s) no longer exist and were skipped.', ['%count%' => $plan['missing_count']]));
+        }
+
+        if ([] !== $holdingAnAuthorization) {
+            $this->flash('warning', $this->translator->trans('Not cancelled, their authorized payment would be released, which needs the right to capture payments: %refs%', ['%refs%' => implode(', ', $holdingAnAuthorization)]));
         }
 
         if ([] !== $failed) {
@@ -355,6 +372,119 @@ final class OrderController
             actionLabel: 'Order delivery ref updated',
             successRoute: self::DETAIL_ROUTE,
             successParameters: ['order_id' => $order_id],
+        );
+    }
+
+    /**
+     * Takes all or part of what the payment authorization of the order still holds.
+     *
+     * The capture answers to its own right, not to the order one; the amount is read
+     * as the merchant typed it (a comma is a decimal separator too) and checked here
+     * for its shape only — whether the authorization holds it is the core's call,
+     * made before anything leaves the shop.
+     */
+    #[Route('/admin/order/update/{order_id}/payment-capture', name: 'admin.order.update.paymentCapture', methods: ['POST'], requirements: ['order_id' => '\d+'])]
+    public function capturePayment(int $order_id, Request $request): Response
+    {
+        if ($denied = $this->access->check(AdminResources::ORDER_PAYMENT_CAPTURE, [], AccessManager::CREATE)) {
+            return $denied;
+        }
+
+        $order = OrderQuery::create()->findPk($order_id);
+        if ($order === null) {
+            return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
+        }
+
+        $rawAmount = trim((string) $request->request->get('amount', ''));
+        $amount = null;
+
+        if ($rawAmount !== '') {
+            $typedAmount = str_replace([' ', ','], ['', '.'], $rawAmount);
+
+            if (!is_numeric($typedAmount) || (float) $typedAmount <= 0) {
+                $this->flash('danger', $this->translator->trans('The amount to capture must be a positive number.'));
+
+                return new RedirectResponse($this->urls->generate(self::DETAIL_ROUTE, ['order_id' => $order_id]));
+            }
+
+            $amount = (float) $typedAmount;
+        }
+
+        $event = new OrderPaymentCaptureEvent($order, $amount);
+
+        return $this->action->tokenAction(
+            resource: AdminResources::ORDER_PAYMENT_CAPTURE,
+            access: AccessManager::CREATE,
+            request: $request,
+            event: $event,
+            eventName: TheliaEvents::ORDER_PAYMENT_CAPTURE,
+            actionLabel: 'Order payment captured',
+            successRoute: self::DETAIL_ROUTE,
+            successParameters: ['order_id' => $order_id],
+            // The capture runs listeners of modules: their messages may carry what they
+            // sent their provider. The payment rules and the form token word their own.
+            trustedFailures: [PaymentException::class, TokenAuthenticationException::class],
+            describeForLog: static function (OrderPaymentCaptureEvent $event) use ($order): array {
+                $transaction = $event->getTransaction();
+
+                return [
+                    \sprintf(
+                        'Payment capture of %s asked on order %s: transaction #%d is %s',
+                        (string) $transaction->getAmount(),
+                        (string) $order->getRef(),
+                        (int) $transaction->getId(),
+                        (string) $transaction->getState(),
+                    ),
+                    (int) $order->getId(),
+                ];
+            },
+        );
+    }
+
+    /**
+     * Records by hand the outcome of a pending line of the payment journal the provider
+     * never confirmed, as the merchant reads it in the provider's back office. Under the
+     * capture right: a line settled as succeeded can pay the order.
+     */
+    #[Route('/admin/order/update/{order_id}/payment-transaction/{transaction_id}/settle', name: 'admin.order.update.paymentSettle', methods: ['POST'], requirements: ['order_id' => '\d+', 'transaction_id' => '\d+'])]
+    public function settlePaymentTransaction(int $order_id, int $transaction_id, Request $request): Response
+    {
+        if ($denied = $this->access->check(AdminResources::ORDER_PAYMENT_CAPTURE, [], AccessManager::CREATE)) {
+            return $denied;
+        }
+
+        $detail = new RedirectResponse($this->urls->generate(self::DETAIL_ROUTE, ['order_id' => $order_id]));
+        $transaction = OrderPaymentTransactionQuery::create()->filterByOrderId($order_id)->filterById($transaction_id)->findOne();
+        $state = PaymentTransactionState::tryFrom((string) $request->request->get('outcome', ''));
+
+        if ($transaction === null || !$state?->isSettled()) {
+            $this->flash('danger', $this->translator->trans('Choose whether the provider took the movement or not.'));
+
+            return $detail;
+        }
+
+        $reference = trim((string) $request->request->get('psp_reference', ''));
+        $event = new OrderPaymentSettlementEvent($transaction, $state, $reference === '' ? null : $reference);
+
+        return $this->action->tokenAction(
+            resource: AdminResources::ORDER_PAYMENT_CAPTURE,
+            access: AccessManager::CREATE,
+            request: $request,
+            event: $event,
+            eventName: TheliaEvents::ORDER_PAYMENT_TRANSACTION_SETTLE,
+            actionLabel: 'Payment movement recorded by hand',
+            successRoute: self::DETAIL_ROUTE,
+            successParameters: ['order_id' => $order_id],
+            trustedFailures: [PaymentException::class, TokenAuthenticationException::class],
+            describeForLog: static fn (OrderPaymentSettlementEvent $event): array => [
+                \sprintf(
+                    'Payment transaction #%d of order #%d recorded by hand as %s',
+                    (int) $event->getTransaction()->getId(),
+                    $order_id,
+                    $event->getState()->value,
+                ),
+                $order_id,
+            ],
         );
     }
 
