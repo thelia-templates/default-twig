@@ -2539,4 +2539,12 @@ return [
     'You are restricted to some sale units: you cannot delete one.' => 'Vous êtes limité à certains points de vente : vous ne pouvez pas en supprimer.',
     'This sale unit cannot be deleted: some administrators are restricted to it. Detach them from it first, or turn it off.' => 'Ce point de vente ne peut pas être supprimé : des administrateurs y sont limités. Détachez-les d\'abord, ou désactivez-le.',
     'You are restricted to some sale units: this action is not available to you.' => 'Vous êtes limité à certains points de vente : cette action ne vous est pas ouverte.',
+    'Payment confirmed after the card was given back: refund it through the provider' => 'Paiement confirmé après la restitution de la carte : à rembourser chez le prestataire',
+    'Payment confirmed after the card was given back: refund it through the provider (payment part %part%)' => 'Paiement confirmé après la restitution de la carte : à rembourser chez le prestataire (part de paiement %part%)',
+    'Payment parts' => 'Parts de paiement',
+    'Primary' => 'Principal',
+    'Pending' => 'En attente',
+    'Settled' => 'Réglée',
+    'Failed' => 'Échouée',
+    'Released' => 'Libérée',
 ];

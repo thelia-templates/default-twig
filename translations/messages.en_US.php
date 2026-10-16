@@ -463,4 +463,12 @@ return [
     'You are restricted to some sale units: you cannot delete one.' => 'You are restricted to some sale units: you cannot delete one.',
     'This sale unit cannot be deleted: some administrators are restricted to it. Detach them from it first, or turn it off.' => 'This sale unit cannot be deleted: some administrators are restricted to it. Detach them from it first, or turn it off.',
     'You are restricted to some sale units: this action is not available to you.' => 'You are restricted to some sale units: this action is not available to you.',
+    'Payment confirmed after the card was given back: refund it through the provider' => 'Payment confirmed after the card was given back: refund it through the provider',
+    'Payment confirmed after the card was given back: refund it through the provider (payment part %part%)' => 'Payment confirmed after the card was given back: refund it through the provider (payment part %part%)',
+    'Payment parts' => 'Payment parts',
+    'Primary' => 'Primary',
+    'Pending' => 'Pending',
+    'Settled' => 'Settled',
+    'Failed' => 'Failed',
+    'Released' => 'Released',
 ];
