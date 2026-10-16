@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace BackOfficeDefaultTwigBundle\Controller\Catalog;
 
+use BackOfficeDefaultTwigBundle\Repository\CurrencyRepository;
 use BackOfficeDefaultTwigBundle\Repository\SaleUnitRepository;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminLogger;
@@ -42,6 +43,7 @@ final class ProductSaleUnitValuesController
         private readonly AdminAccessChecker $access,
         private readonly AdminLogger $adminLogger,
         private readonly SaleUnitRepository $saleUnits,
+        private readonly CurrencyRepository $currencies,
         private readonly SaleUnitValuesWriter $writer,
         private readonly UrlGeneratorInterface $urls,
         private readonly TokenProvider $tokens,
@@ -58,10 +60,10 @@ final class ProductSaleUnitValuesController
 
         $form = $request->request;
         $productId = (int) $form->get('product_id', 0);
-        $currencyId = (int) $form->get('currency_id', 0);
+        $currency = $this->currencies->find((int) $form->get('currency_id', 0));
         $saleUnit = $this->saleUnits->find((int) $form->get('sale_unit_id', 0));
 
-        if (null === $saleUnit || $productId <= 0 || $currencyId <= 0) {
+        if (null === $saleUnit || null === $currency || $productId <= 0) {
             return new RedirectResponse($this->urls->generate('admin.products.default'));
         }
 
@@ -69,7 +71,7 @@ final class ProductSaleUnitValuesController
             'product_id' => $productId,
             'current_tab' => 'pse',
             'sale_unit_id' => $saleUnit->getId(),
-            'combinations_currency_id' => $currencyId,
+            'combinations_currency_id' => $currency->getId(),
         ]));
 
         try {
@@ -84,6 +86,7 @@ final class ProductSaleUnitValuesController
         $promoPrices = $form->all('promo_price');
         $quantities = $form->all('quantity');
         $refused = [];
+        $written = false;
 
         // Only the combinations of this product: an id posted for another one is ignored.
         foreach (ProductSaleElementsQuery::create()->filterByProductId($productId)->find() as $pse) {
@@ -93,25 +96,27 @@ final class ProductSaleUnitValuesController
             }
 
             try {
-                $this->writer->save(
+                $written = $this->writer->save(
                     (int) $saleUnit->getId(),
-                    $currencyId,
+                    (int) $currency->getId(),
                     $pseId,
                     self::stringOrNull($prices[$pseId] ?? null),
                     self::stringOrNull($promoPrices[$pseId] ?? null),
                     self::stringOrNull($quantities[$pseId] ?? null),
-                );
+                ) || $written;
             } catch (\InvalidArgumentException) {
                 $refused[] = (string) $pse->getRef();
             }
         }
 
-        $this->adminLogger->log(
-            AdminResources::SALE_UNIT,
-            AccessManager::UPDATE,
-            \sprintf('Prices and stocks of product %d saved for sale unit %s', $productId, $saleUnit->getCode()),
-            (int) $saleUnit->getId(),
-        );
+        if ($written) {
+            $this->adminLogger->log(
+                AdminResources::SALE_UNIT,
+                AccessManager::UPDATE,
+                \sprintf('Prices and stocks of product %d saved for sale unit %s', $productId, $saleUnit->getCode()),
+                (int) $saleUnit->getId(),
+            );
+        }
 
         if ([] !== $refused) {
             $this->flash($request, 'warning', $this->translator->trans(

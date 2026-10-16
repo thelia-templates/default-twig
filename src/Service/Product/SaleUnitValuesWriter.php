@@ -36,9 +36,11 @@ final readonly class SaleUnitValuesWriter
      * A promo price left empty next to a price sells at that price when the combination is
      * on sale: a unit row always carries both, and a zero there would sell for free.
      *
+     * @return bool whether a row was written or deleted
+     *
      * @throws \InvalidArgumentException when a promo price comes without a price, or a value is not a number
      */
-    public function save(int $saleUnitId, int $currencyId, int $productSaleElementsId, ?string $price, ?string $promoPrice, ?string $quantity): void
+    public function save(int $saleUnitId, int $currencyId, int $productSaleElementsId, ?string $price, ?string $promoPrice, ?string $quantity): bool
     {
         $price = self::decimal($price, allowNegative: false);
         $promoPrice = self::decimal($promoPrice, allowNegative: false);
@@ -50,31 +52,38 @@ final readonly class SaleUnitValuesWriter
 
         $connection = Propel::getConnection(SaleUnitProductPriceTableMap::DATABASE_NAME);
         $connection->beginTransaction();
+        $written = false;
 
         try {
             $priceRow = $this->saleUnits->findPrice($saleUnitId, $productSaleElementsId, $currencyId);
             if (null === $price) {
-                $priceRow?->delete($connection);
+                if (null !== $priceRow) {
+                    $priceRow->delete($connection);
+                    $written = true;
+                }
             } else {
-                ($priceRow ?? (new SaleUnitProductPrice())
+                $written = ($priceRow ?? (new SaleUnitProductPrice())
                     ->setSaleUnitId($saleUnitId)
                     ->setProductSaleElementsId($productSaleElementsId)
                     ->setCurrencyId($currencyId))
                     ->setPrice($price)
                     ->setPromoPrice($promoPrice ?? $price)
                     ->setFromDefaultCurrency(false)
-                    ->save($connection);
+                    ->save($connection) > 0;
             }
 
             $stockRow = $this->saleUnits->findStock($saleUnitId, $productSaleElementsId);
             if (null === $quantity) {
-                $stockRow?->delete($connection);
+                if (null !== $stockRow) {
+                    $stockRow->delete($connection);
+                    $written = true;
+                }
             } else {
-                ($stockRow ?? (new SaleUnitProductSaleElements())
+                $written = ($stockRow ?? (new SaleUnitProductSaleElements())
                     ->setSaleUnitId($saleUnitId)
                     ->setProductSaleElementsId($productSaleElementsId))
                     ->setQuantity($quantity)
-                    ->save($connection);
+                    ->save($connection) > 0 || $written;
             }
 
             $connection->commit();
@@ -83,6 +92,8 @@ final readonly class SaleUnitValuesWriter
 
             throw $throwable;
         }
+
+        return $written;
     }
 
     /**

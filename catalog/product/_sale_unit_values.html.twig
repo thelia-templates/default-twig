@@ -6,7 +6,7 @@
     <div class="card-header d-flex justify-content-between align-items-end gap-2 flex-wrap">
         <div>
             <h2 class="h6 mb-1">{{ 'Prices and stock per sale unit'|trans }}</h2>
-            <p class="small text-muted mb-0">{{ 'An empty field takes the national value, shown in grey. Empty a field to go back to the national value.'|trans }}</p>
+            <p class="small text-muted mb-0">{{ 'An empty field takes the value shown in grey, the national one unless said otherwise. Empty a field to go back to it.'|trans }}</p>
         </div>
         <div>
             <label class="form-label mb-1" for="sale-unit-values-switcher">{{ 'Sale unit'|trans }}</label>
@@ -44,24 +44,16 @@
                             <tr data-testid="sale-unit-values-row-{{ row.id }}">
                                 <td><small>{{ row.label == 'default' ? 'Default combination'|trans : row.label }}</small></td>
                                 <td><small class="text-muted">{{ row.ref }}</small></td>
-                                {% for field in [
-                                    { name: 'price', own: row.price, national: row.national_price },
-                                    { name: 'promo_price', own: row.promo_price, national: row.national_promo_price },
-                                    { name: 'quantity', own: row.quantity, national: row.national_quantity },
-                                ] %}
+                                {% for field in row.fields %}
                                     <td class="text-end">
                                         <input type="text" inputmode="decimal" autocomplete="off"
-                                               name="{{ field.name }}[{{ row.id }}]" value="{{ field.own }}"
-                                               placeholder="{{ field.national }}"
+                                               name="{{ field.name }}[{{ row.id }}]" value="{{ field.value }}"
+                                               placeholder="{{ field.placeholder }}"
                                                class="form-control form-control-sm text-end ms-auto" style="max-width:9rem"
                                                aria-label="{{ (field.name == 'price' ? 'Price' : field.name == 'promo_price' ? 'Sale price' : 'Stock')|trans }} - {{ row.ref }}"
                                                data-testid="sale-unit-values-{{ field.name }}-{{ row.id }}">
-                                        <small class="d-block {{ field.own is null ? 'text-muted' : 'text-body-secondary' }}" data-testid="sale-unit-values-{{ field.name }}-source-{{ row.id }}">
-                                            {% if field.own is null %}
-                                                {{ 'National value'|trans }}
-                                            {% else %}
-                                                {{ 'National: %value%'|trans({ '%value%': field.national ?? '-' }) }}
-                                            {% endif %}
+                                        <small class="d-block text-muted" data-testid="sale-unit-values-{{ field.name }}-source-{{ row.id }}">
+                                            {{ field.hint|trans(field.hint_parameters) }}
                                         </small>
                                     </td>
                                 {% endfor %}
@@ -72,7 +64,7 @@
             </div>
             <p class="small text-muted">{{ 'The sale price applies while the combination is on sale. Left empty next to a price, the sale unit sells at that price.'|trans }}</p>
 
-            {% if is_granted('UPDATE', 'admin.sale-unit') %}
+            {% if is_granted('UPDATE', 'admin.sale-unit') and is_granted('UPDATE', 'admin.product') %}
                 <button type="submit" class="btn btn-primary" data-testid="sale-unit-values-submit">
                     <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save the values of this sale unit'|trans }}
                 </button>

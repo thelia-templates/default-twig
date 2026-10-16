@@ -681,12 +681,14 @@ final class ProductAdvancedController
         // The tab is a sub-request: the sale unit picked on the product sheet is in the
         // query of the page itself.
         $saleUnitId = (int) ($request->query->get('sale_unit_id') ?? $this->requestStack->getMainRequest()?->query->get('sale_unit_id', 0));
-        $context['sale_unit_values'] = $this->saleUnitValuesContextBuilder->build(
-            $context['pse_rows'],
-            $context['currency']['id'],
-            $saleUnitId > 0 ? $saleUnitId : null,
-            $request->getLocale(),
-        );
+        $context['sale_unit_values'] = $this->access->canView(AdminResources::SALE_UNIT)
+            ? $this->saleUnitValuesContextBuilder->build(
+                $context['pse_rows'],
+                $context['currency']['id'],
+                $saleUnitId > 0 ? $saleUnitId : null,
+                $request->getLocale(),
+            )
+            : null;
 
         return new Response($this->twig->render(
             '@BackOfficeDefaultTwig/catalog/product/_combinations_tab.html.twig',

@@ -16,6 +16,7 @@ namespace BackOfficeDefaultTwigBundle\Repository;
 
 use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\Collection\ObjectCollection;
+use Thelia\Model\Map\SaleUnitI18nTableMap;
 use Thelia\Model\OrderQuery;
 use Thelia\Model\SaleUnit;
 use Thelia\Model\SaleUnitProductPrice;
@@ -31,6 +32,12 @@ use Thelia\Model\SaleUnitQuery;
  */
 final readonly class SaleUnitRepository
 {
+    /**
+     * The title in the asked language, read by the list query itself: a unit without a
+     * translation in that language costs no query of its own, and falls back to its code.
+     */
+    private const TITLE_COLUMN = 'localized_title';
+
     public function find(int $saleUnitId): ?SaleUnit
     {
         return $saleUnitId > 0 ? SaleUnitQuery::create()->findPk($saleUnitId) : null;
@@ -77,13 +84,13 @@ final readonly class SaleUnitRepository
     public function findSorted(string $locale, string $field, string $direction): ObjectCollection
     {
         $criteria = 'DESC' === strtoupper($direction) ? Criteria::DESC : Criteria::ASC;
-        $query = SaleUnitQuery::create();
+        $query = self::withLocalizedTitle(SaleUnitQuery::create(), $locale);
 
         match ($field) {
             'id' => $query->orderById($criteria),
             'code' => $query->orderByCode($criteria),
             'url' => $query->orderByUrl($criteria),
-            'title' => $query->useSaleUnitI18nQuery(null, Criteria::LEFT_JOIN)->filterByLocale($locale)->orderByTitle($criteria)->endUse(),
+            'title' => $query->orderBy(self::TITLE_COLUMN, $criteria)->orderByCode($criteria),
             default => $query->orderByPosition($criteria)->orderById(),
         };
 
@@ -103,7 +110,7 @@ final readonly class SaleUnitRepository
     {
         $options = [];
 
-        foreach (SaleUnitQuery::create()->orderByPosition()->orderById()->find() as $saleUnit) {
+        foreach (self::withLocalizedTitle(SaleUnitQuery::create(), $locale)->orderByPosition()->orderById()->find() as $saleUnit) {
             $options[] = [
                 'id' => (int) $saleUnit->getId(),
                 'code' => (string) $saleUnit->getCode(),
@@ -135,22 +142,23 @@ final readonly class SaleUnitRepository
 
     /**
      * @param list<int> $productSaleElementsIds
+     * @param list<int> $currencyIds
      *
-     * @return array<int, SaleUnitProductPrice> by sale element id
+     * @return array<int, array<int, SaleUnitProductPrice>> by currency id, then by sale element id
      */
-    public function findPrices(int $saleUnitId, array $productSaleElementsIds, int $currencyId): array
+    public function findPrices(int $saleUnitId, array $productSaleElementsIds, array $currencyIds): array
     {
-        if ([] === $productSaleElementsIds) {
+        if ([] === $productSaleElementsIds || [] === $currencyIds) {
             return [];
         }
 
         $prices = [];
         foreach (SaleUnitProductPriceQuery::create()
             ->filterBySaleUnitId($saleUnitId)
-            ->filterByCurrencyId($currencyId)
+            ->filterByCurrencyId(array_values(array_unique($currencyIds)), Criteria::IN)
             ->filterByProductSaleElementsId($productSaleElementsIds, Criteria::IN)
             ->find() as $price) {
-            $prices[(int) $price->getProductSaleElementsId()] = $price;
+            $prices[(int) $price->getCurrencyId()][(int) $price->getProductSaleElementsId()] = $price;
         }
 
         return $prices;
@@ -197,8 +205,22 @@ final readonly class SaleUnitRepository
 
     public static function titleOf(SaleUnit $saleUnit, string $locale): string
     {
-        $title = trim((string) $saleUnit->setLocale($locale)->getTitle());
+        $title = $saleUnit->hasVirtualColumn(self::TITLE_COLUMN)
+            ? $saleUnit->getVirtualColumn(self::TITLE_COLUMN)
+            : $saleUnit->setLocale($locale)->getTitle();
+        $title = trim((string) $title);
 
         return '' !== $title ? $title : (string) $saleUnit->getCode();
+    }
+
+    /**
+     * The locale is a condition of the join, not of the WHERE: a unit without a title in
+     * this language is still listed.
+     */
+    private static function withLocalizedTitle(SaleUnitQuery $query, string $locale): SaleUnitQuery
+    {
+        return $query
+            ->joinI18n($locale, null, Criteria::LEFT_JOIN)
+            ->withColumn(SaleUnitI18nTableMap::COL_TITLE, self::TITLE_COLUMN);
     }
 }
