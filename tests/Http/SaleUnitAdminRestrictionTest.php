@@ -215,38 +215,107 @@ final class SaleUnitAdminRestrictionTest extends WebIntegrationTestCase
         )), 'A single shop asks nothing about sale units.');
     }
 
-    public function testALimitedAdministratorCannotChangeItsOwnRestriction(): void
+    public function testALimitedAdministratorDoesNotManageTheAdministrators(): void
     {
         $this->saleUnits();
-        $limited = $this->limitedAdmin([$this->north], [AdminResources::ADMINISTRATOR => [AccessManager::VIEW, AccessManager::UPDATE]]);
-        $this->actAs($limited);
-
-        $crawler = $this->client->request('GET', '/admin/configuration/administrators');
-        self::assertCount(1, $crawler->filter('[data-testid="administrator-sale-units-'.$limited->getId().'"] input[type="checkbox"]'), 'It is only offered its own unit.');
-        self::assertCount(1, $crawler->filter('[data-testid="administrator-sale-units-'.$limited->getId().'"] input[type="checkbox"][disabled]'), 'And cannot change it on its own sheet.');
-
-        $this->saveAdministrator($limited, []);
-        self::assertSame([(int) $this->north->getId()], $this->assignedTo($limited), 'A posted change of its own restriction is ignored.');
-
-        $this->saveAdministrator($limited, [$this->south->getId()], false);
-        self::assertSame([(int) $this->north->getId()], $this->assignedTo($limited), 'A unit it does not reach is refused.');
-    }
-
-    public function testALimitedAdministratorOnlyGrantsTheUnitsItReaches(): void
-    {
-        $this->saleUnits();
-        $limited = $this->limitedAdmin([$this->north], [AdminResources::ADMINISTRATOR => [AccessManager::VIEW, AccessManager::UPDATE]]);
+        $grants = [AdminResources::ADMINISTRATOR => [AccessManager::VIEW, AccessManager::CREATE, AccessManager::UPDATE, AccessManager::DELETE]];
+        $limited = $this->limitedAdmin([$this->north], $grants);
         $colleague = $this->limitedAdmin([$this->south]);
         $this->actAs($limited);
 
-        $this->saveAdministrator($colleague, [$this->north->getId()]);
-        self::assertSame([(int) $this->north->getId(), (int) $this->south->getId()], $this->assignedTo($colleague), 'It attaches its own unit, and keeps the one it does not reach.');
+        foreach (['/admin/configuration/administrators', '/admin/configuration/administrators/view'] as $url) {
+            $this->client->request('GET', $url);
+            self::assertSame(403, $this->client->getResponse()->getStatusCode(), $url);
+        }
 
-        $this->saveAdministrator($colleague, [$this->north->getId(), $this->south->getId()], false);
-        self::assertSame([(int) $this->north->getId(), (int) $this->south->getId()], $this->assignedTo($colleague), 'It cannot grant a unit it does not reach.');
+        $crawler = $this->client->request('GET', '/admin/configuration');
+        self::assertCount(0, $crawler->filter('a[href="/admin/configuration/administrators"]'), 'The entry is left out of the configuration menu.');
+        self::assertCount(0, $crawler->filter('[data-testid="bo-top-nav-profile"]'));
 
-        $this->saveAdministrator($colleague, []);
-        self::assertSame([(int) $this->south->getId()], $this->assignedTo($colleague), 'It detaches its own unit, and cannot detach the one it does not reach.');
+        $post = fn (string $url, array $data) => $this->client->request('POST', $url, $data);
+        $form = 'thelia_administrator_update_'.$limited->getId();
+        $data = [$form => ['id' => (string) $limited->getId(), 'login' => 'x', 'firstname' => 'x', 'lastname' => 'x', 'email' => 'x@example.test', 'profile' => (string) $limited->getProfileId(), 'locale' => 'en_US', 'sale_units' => []]];
+
+        // Its own restriction, lifted by an empty choice, and a colleague's, are out of its hands.
+        $post('/admin/configuration/administrators/save', $data);
+        self::assertSame(403, $this->client->getResponse()->getStatusCode());
+        self::assertSame([(int) $this->north->getId()], $this->assignedTo($limited), 'An empty choice never reads as every unit.');
+
+        $post('/admin/configuration/administrators/save', [$form => ['id' => (string) $colleague->getId()] + $data[$form]]);
+        self::assertSame(403, $this->client->getResponse()->getStatusCode());
+        self::assertSame([(int) $this->south->getId()], $this->assignedTo($colleague));
+
+        $post('/admin/configuration/administrators/add', ['thelia_administrator_create' => ['login' => 'new', 'sale_units' => []]]);
+        self::assertSame(403, $this->client->getResponse()->getStatusCode());
+        self::assertNull(\Thelia\Model\AdminQuery::create()->findOneByLogin('new'));
+
+        $post('/admin/configuration/administrators/delete', ['administrator_id' => $colleague->getId()]);
+        self::assertSame(403, $this->client->getResponse()->getStatusCode());
+        self::assertNotNull(\Thelia\Model\AdminQuery::create()->findPk($colleague->getId()));
+
+        $post('/admin/configuration/administrators/two-factor-reset', ['administrator_id' => $colleague->getId()]);
+        self::assertSame(403, $this->client->getResponse()->getStatusCode());
+
+        $this->actAs($this->limitedAdmin([], $grants, false));
+        $this->client->request('GET', '/admin/configuration/administrators');
+        self::assertSame(200, $this->client->getResponse()->getStatusCode(), 'An administrator attached to no unit still manages them.');
+    }
+
+    public function testALimitedAdministratorDoesNotWriteTheNationalPricesAndStocks(): void
+    {
+        $this->saleUnits();
+        $currency = \Thelia\Model\CurrencyQuery::create()->findOneByByDefault(1) ?? throw new \RuntimeException('No default currency.');
+        $product = $this->factory->product($this->factory->category(), $this->factory->taxRule(), $currency, ['basePrice' => 25.0, 'baseQuantity' => 7]);
+        $pse = ProductSaleElementsQuery::create()->filterByProductId($product->getId())->findOne($this->getPropelConnection());
+        self::assertNotNull($pse);
+        $this->actAs($this->limitedAdmin([$this->north], [AdminResources::PRODUCT => [AccessManager::VIEW, AccessManager::UPDATE, AccessManager::CREATE]]));
+        $token = $this->sessionToken();
+
+        $this->client->request('GET', '/admin/products/combinations/tab?product_id='.$product->getId());
+        self::assertSame(200, $this->client->getResponse()->getStatusCode(), 'It reads them.');
+
+        $this->client->request('POST', '/admin/product/combinations/update', ['_token' => $token, 'product_id' => $product->getId(), 'price' => [$pse->getId() => '1'], 'quantity' => [$pse->getId() => '99']]);
+        self::assertSame(403, $this->client->getResponse()->getStatusCode());
+
+        $this->client->request('POST', '/admin/product/default-price/update', ['_token' => $token, 'product_id' => $product->getId(), 'product_sale_element_id' => $pse->getId(), 'price' => '1', 'quantity' => '99']);
+        self::assertSame(403, $this->client->getResponse()->getStatusCode());
+
+        foreach (['/admin/product/combination/add', '/admin/product/combination/build', '/admin/product/combination/delete', '/admin/products/create'] as $url) {
+            $this->client->request('POST', $url, ['_token' => $token, 'product_id' => $product->getId(), 'product_sale_element_id' => $pse->getId()]);
+            self::assertSame(403, $this->client->getResponse()->getStatusCode(), $url);
+        }
+
+        $fresh = ProductSaleElementsQuery::create()->findPk($pse->getId());
+        self::assertSame(7.0, (float) $fresh?->getQuantity(), 'The national stock did not move.');
+        self::assertSame(25.0, (float) \Thelia\Model\ProductPriceQuery::create()->filterByProductSaleElementsId($pse->getId())->findOne()?->getPrice());
+    }
+
+    public function testTheCustomerListCountsTheOrdersOfTheUnitsOfAnAdministratorOnly(): void
+    {
+        $this->saleUnits();
+        $customer = $this->factory->customer($this->factory->customerTitle());
+        $northOrder = $this->factory->order($customer, ['statusCode' => 'paid']);
+        $northOrder->setSaleUnitId($this->north->getId())->setCreatedAt('2026-01-01 10:00:00')->save($this->getPropelConnection());
+        $southOrder = $this->factory->order($customer, ['statusCode' => 'paid']);
+        $southOrder->setSaleUnitId($this->south->getId())->setCreatedAt('2026-02-01 10:00:00')->save($this->getPropelConnection());
+        $customerId = (int) $customer->getId();
+        $row = function () use ($customerId) {
+            $crawler = $this->client->request('GET', '/admin/customers?sort=created_at&direction=desc');
+            $link = $crawler->filter('a.bo-customer-orders[href*="customer_id='.$customerId.'"]');
+            self::assertGreaterThan(0, $link->count());
+
+            return $link->first()->ancestors()->filter('tr')->first();
+        };
+
+        $this->actAs($this->limitedAdmin([$this->north], [AdminResources::CUSTOMER => [AccessManager::VIEW]]));
+        $rows = $row();
+        self::assertSame('1', trim($rows->filter('.bo-customer-orders')->text()));
+        self::assertSame('01/01/2026', trim($rows->filter('time div')->first()->text()), 'The last order is the last one of its units.');
+
+        $this->actAs($this->limitedAdmin([], [AdminResources::CUSTOMER => [AccessManager::VIEW]]));
+        $rows = $row();
+        self::assertSame('2', trim($rows->filter('.bo-customer-orders')->text()));
+        self::assertSame('01/02/2026', trim($rows->filter('time div')->first()->text()));
     }
 
     public function testALimitedAdministratorSeesOnlyItsSaleUnitsAndCannotCreateOrDeleteOne(): void

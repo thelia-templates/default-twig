@@ -80,11 +80,8 @@ final class AdministratorType extends AbstractType
                 'multiple' => true,
                 'expanded' => true,
                 'choices' => $options['sale_unit_choices'],
-                'disabled' => $options['sale_units_locked'],
                 'label' => $this->translator->trans('Sale units'),
-                'help' => $options['sale_units_locked']
-                    ? $this->translator->trans('You cannot change the sale units you are restricted to.')
-                    : $this->translator->trans('The administrator only works on the checked sale units. Check none to give access to all of them.'),
+                'help' => $this->translator->trans('The administrator only works on the checked sale units. Check none to give access to all of them.'),
             ]);
         }
 
@@ -102,12 +99,10 @@ final class AdministratorType extends AbstractType
                 'include_id' => false,
                 'profile_choices' => [],
                 'sale_unit_choices' => [],
-                'sale_units_locked' => false,
                 'csrf_token_id' => 'admin.administrator',
             ])
             ->setAllowedTypes('include_id', 'bool')
             ->setAllowedTypes('profile_choices', 'array')
-            ->setAllowedTypes('sale_unit_choices', 'array')
-            ->setAllowedTypes('sale_units_locked', 'bool');
+            ->setAllowedTypes('sale_unit_choices', 'array');
     }
 }

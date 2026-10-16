@@ -118,7 +118,7 @@ final class CustomerOverviewProviderTest extends IntegrationTestCase
         $order->setStatusId($ownPaid->getId())->save($this->getPropelConnection());
 
         $kpis = $this->provider(true)->compute($customer, $this->now)->kpis;
-        $list = new CustomerRepository(new OrderRepository(new OrderAccess(new AdminSaleUnitScope())));
+        $list = new CustomerRepository(new OrderRepository(new OrderAccess(new AdminSaleUnitScope())), new OrderAccess(new AdminSaleUnitScope()));
         $customerId = (int) $customer->getId();
 
         self::assertNotNull($kpis);

@@ -83,7 +83,7 @@ final class CustomerChoiceProviderTest extends IntegrationTestCase
         $access = $this->createMock(AdminAccessChecker::class);
         $access->method('canView')->with(AdminResources::CUSTOMER)->willReturn($granted);
 
-        return new CustomerChoiceProvider(new CustomerRepository(new OrderRepository(new OrderAccess(new AdminSaleUnitScope()))), $access);
+        return new CustomerChoiceProvider(new CustomerRepository(new OrderRepository(new OrderAccess(new AdminSaleUnitScope())), new OrderAccess(new AdminSaleUnitScope())), $access);
     }
 
     private function customer(): Customer

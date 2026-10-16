@@ -45,7 +45,7 @@ final class CustomerListTotalSpentTest extends IntegrationTestCase
     {
         parent::setUp();
 
-        $this->customers = new CustomerRepository(new OrderRepository(new OrderAccess(new AdminSaleUnitScope())));
+        $this->customers = new CustomerRepository(new OrderRepository(new OrderAccess(new AdminSaleUnitScope())), new OrderAccess(new AdminSaleUnitScope()));
         $this->factory = $this->createFixtureFactory();
         $this->marker = 'Spent'.bin2hex(random_bytes(4));
     }
