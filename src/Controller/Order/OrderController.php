@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace BackOfficeDefaultTwigBundle\Controller\Order;
 
 use BackOfficeDefaultTwigBundle\Repository\OrderRepository;
+use BackOfficeDefaultTwigBundle\Repository\SaleUnitRepository;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminLogger;
@@ -147,6 +148,7 @@ final class OrderController
             $this->shipmentContextBuilder->build($order, $locale),
             [
                 'order' => $order,
+                'sale_unit_title' => null === $order->getSaleUnit() ? null : SaleUnitRepository::titleOf($order->getSaleUnit(), $locale),
                 'active_tab' => 'shipments' === $request->query->get('tab') ? 'shipments' : 'cart',
                 'order_items' => $this->orderItemsPage($order_id, $itemsPage, $itemsPerPage),
                 'items_total' => $itemsTotal,
