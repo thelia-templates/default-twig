@@ -17,7 +17,6 @@ namespace BackOfficeDefaultTwigBundle\Service\Order;
 use BackOfficeDefaultTwigBundle\Repository\CountryRepository;
 use BackOfficeDefaultTwigBundle\Repository\ModuleRepository;
 use BackOfficeDefaultTwigBundle\Repository\OrderRepository;
-use BackOfficeDefaultTwigBundle\Repository\SaleUnitRepository;
 use Thelia\Module\BaseModule;
 
 /**
@@ -38,9 +37,6 @@ final class OrderFilterCatalog
     /** @var array<string, list<array{id: int, title: string, flag: string, iso: string}>> */
     private array $countriesByLocale = [];
 
-    /** @var array<string, list<array{id: int, code: string, title: string, active: bool}>> */
-    private array $saleUnitsByLocale = [];
-
     /** @var array{min: float, max: float, step: int}|null */
     private ?array $amountBounds = null;
 
@@ -51,19 +47,18 @@ final class OrderFilterCatalog
         private readonly OrderRepository $orders,
         private readonly ModuleRepository $modules,
         private readonly CountryRepository $countries,
-        private readonly SaleUnitRepository $saleUnits,
+        private readonly OrderSaleUnits $saleUnits,
     ) {
     }
 
     /**
-     * Empty on a shop that never declared a sale unit: the filter and the column are then
-     * left out of the list.
+     * Empty on a single shop: the filter and the column are then left out of the list.
      *
      * @return list<array{id: int, code: string, title: string, active: bool}>
      */
     public function saleUnits(string $locale): array
     {
-        return $this->saleUnitsByLocale[$locale] ??= $this->saleUnits->findOptions($locale);
+        return $this->saleUnits->options($locale);
     }
 
     /**

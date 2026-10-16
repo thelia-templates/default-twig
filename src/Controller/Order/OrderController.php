@@ -15,7 +15,6 @@ declare(strict_types=1);
 namespace BackOfficeDefaultTwigBundle\Controller\Order;
 
 use BackOfficeDefaultTwigBundle\Repository\OrderRepository;
-use BackOfficeDefaultTwigBundle\Repository\SaleUnitRepository;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminLogger;
@@ -28,6 +27,7 @@ use BackOfficeDefaultTwigBundle\Service\Order\OrderFilters;
 use BackOfficeDefaultTwigBundle\Service\Order\OrderHistoryContextBuilder;
 use BackOfficeDefaultTwigBundle\Service\Order\OrderListRowPresenter;
 use BackOfficeDefaultTwigBundle\Service\Order\OrderRoundingRule;
+use BackOfficeDefaultTwigBundle\Service\Order\OrderSaleUnits;
 use BackOfficeDefaultTwigBundle\Service\Order\OrderShipmentContextBuilder;
 use BackOfficeDefaultTwigBundle\Service\Order\OrderStatusChangeContextBuilder;
 use BackOfficeDefaultTwigBundle\Service\OrderReturn\OrderReturnContextBuilder;
@@ -93,6 +93,7 @@ final class OrderController
         private readonly RequestStack $requestStack,
         private readonly OrderHistoryContextBuilder $historyContextBuilder,
         private readonly OrderShipmentContextBuilder $shipmentContextBuilder,
+        private readonly OrderSaleUnits $orderSaleUnits,
     ) {
     }
 
@@ -148,7 +149,7 @@ final class OrderController
             $this->shipmentContextBuilder->build($order, $locale),
             [
                 'order' => $order,
-                'sale_unit_title' => null === $order->getSaleUnit() ? null : SaleUnitRepository::titleOf($order->getSaleUnit(), $locale),
+                'sale_unit_title' => $this->orderSaleUnits->titleOf($order, $locale),
                 'active_tab' => 'shipments' === $request->query->get('tab') ? 'shipments' : 'cart',
                 'order_items' => $this->orderItemsPage($order_id, $itemsPage, $itemsPerPage),
                 'items_total' => $itemsTotal,

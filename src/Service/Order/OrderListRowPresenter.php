@@ -16,7 +16,6 @@ namespace BackOfficeDefaultTwigBundle\Service\Order;
 
 use BackOfficeDefaultTwigBundle\Repository\ModuleRepository;
 use BackOfficeDefaultTwigBundle\Repository\OrderRepository;
-use BackOfficeDefaultTwigBundle\Repository\SaleUnitRepository;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -48,7 +47,7 @@ final readonly class OrderListRowPresenter
         private OrderRepository $orderRepository,
         private ModuleRepository $moduleRepository,
         private OrderStatusTransitionGuard $transitionGuard,
-        private SaleUnitRepository $saleUnitRepository,
+        private OrderSaleUnits $saleUnits,
     ) {
     }
 
@@ -78,7 +77,7 @@ final readonly class OrderListRowPresenter
         $itemCounts = $this->orderRepository->countItemsByOrder($orderIds);
         $totals = $this->orderRepository->findTotalAmountByOrder($orderIds);
         $moduleTitles = $this->moduleRepository->findLocalizedTitles($locale);
-        $saleUnitTitles = array_column($this->saleUnitRepository->findOptions($locale), 'title', 'id');
+        $saleUnitTitles = $this->saleUnits->titlesById($locale);
 
         $rows = [];
         foreach ($page as $order) {
@@ -152,7 +151,7 @@ final readonly class OrderListRowPresenter
     }
 
     /**
-     * Empty for a national order, the one every order of a single shop is.
+     * Empty for a national order, and on a single shop.
      *
      * @param array<int, string> $saleUnitTitles
      */
@@ -163,13 +162,7 @@ final readonly class OrderListRowPresenter
             return '';
         }
 
-        if (isset($saleUnitTitles[$saleUnitId])) {
-            return $saleUnitTitles[$saleUnitId];
-        }
-
-        $saleUnit = $order->getSaleUnit();
-
-        return null === $saleUnit ? '' : SaleUnitRepository::titleOf($saleUnit, $locale);
+        return $saleUnitTitles[$saleUnitId] ?? (string) $this->saleUnits->titleOf($order, $locale);
     }
 
     private function renderRef(string $ref, bool $isUrgent, string $href): string
