@@ -14,7 +14,14 @@ declare(strict_types=1);
 
 namespace BackOfficeDefaultTwigBundle\Tests\Http;
 
+use BackOfficeDefaultTwigBundle\Repository\SaleUnitRepository;
+use BackOfficeDefaultTwigBundle\Service\Order\OrderSaleUnits;
+use BackOfficeDefaultTwigBundle\Tests\Support\QueryCounter;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Thelia\Core\Security\AccessManager;
+use Thelia\Core\Security\Resource\AdminResources;
+use Thelia\Domain\SaleUnit\SaleUnitActivityChecker;
+use Thelia\Model\AdminLogQuery;
 use Thelia\Model\ConfigQuery;
 use Thelia\Model\Currency;
 use Thelia\Model\CurrencyQuery;
@@ -27,6 +34,7 @@ use Thelia\Model\SaleUnitProductPriceQuery;
 use Thelia\Model\SaleUnitProductSaleElementsQuery;
 use Thelia\Model\SaleUnitQuery;
 use Thelia\Test\FixtureFactory;
+use Thelia\Test\Trait\RecordsSqlQueries;
 use Thelia\Test\WebIntegrationTestCase;
 use Thelia\Tests\Support\BackOffice\AdminSessionInjector;
 
@@ -37,6 +45,8 @@ use Thelia\Tests\Support\BackOffice\AdminSessionInjector;
  */
 final class SaleUnitBackOfficeTest extends WebIntegrationTestCase
 {
+    use RecordsSqlQueries;
+
     private AdminSessionInjector $injector;
 
     private FixtureFactory $factory;
@@ -207,6 +217,142 @@ final class SaleUnitBackOfficeTest extends WebIntegrationTestCase
         self::assertSame(0, SaleUnitProductSaleElementsQuery::create()->filterBySaleUnitId($saleUnit->getId())->count(), 'An emptied stock gives it back to the national stock.');
     }
 
+    /**
+     * A promo price left empty is stored equal to the price. Shown back as that value, it
+     * would stay behind when the merchant changes the price, and a combination on sale
+     * would keep selling at the old price.
+     */
+    public function testAPromoPriceLeftEmptyFollowsALaterChangeOfThePrice(): void
+    {
+        $saleUnit = $this->saleUnit('north');
+        [$product, $pse] = $this->productWithACombination();
+        $currency = $this->defaultCurrency();
+
+        $this->saveValues($product, $saleUnit, $currency, $pse, price: '19.5', promoPrice: '', quantity: '');
+
+        $crawler = $this->client->request('GET', '/admin/products/combinations/tab?product_id='.$product->getId());
+        $promoField = $crawler->filter('[data-testid="sale-unit-values-promo_price-'.$pse->getId().'"]');
+        self::assertSame('', (string) $promoField->attr('value'), 'A promo price equal to the price is shown empty.');
+        self::assertSame('19.5', $promoField->attr('placeholder'));
+
+        // The merchant only changes the price and sends the promo field as the screen showed it.
+        $this->saveValues($product, $saleUnit, $currency, $pse, price: '22', promoPrice: (string) $promoField->attr('value'), quantity: '');
+
+        $price = SaleUnitProductPriceQuery::create()->filterBySaleUnitId($saleUnit->getId())->findOneByProductSaleElementsId($pse->getId());
+        self::assertSame(22.0, (float) $price?->getPromoPrice());
+    }
+
+    public function testAnotherCurrencyShowsTheUnitPriceConvertedFromTheDefaultCurrency(): void
+    {
+        $saleUnit = $this->saleUnit('north');
+        [$product, $pse] = $this->productWithACombination();
+        $default = $this->defaultCurrency();
+        $other = $this->factory->currency(['code' => 'XTS', 'symbol' => 'X', 'rate' => (float) $default->getRate() * 2]);
+
+        $this->saveValues($product, $saleUnit, $default, $pse, price: '10', promoPrice: '8', quantity: '');
+
+        $crawler = $this->client->request('GET', '/admin/products/combinations/tab?product_id='.$product->getId().'&currency_id='.$other->getId());
+        $price = $crawler->filter('[data-testid="sale-unit-values-price-'.$pse->getId().'"]');
+        self::assertSame('', (string) $price->attr('value'));
+        self::assertSame('20', $price->attr('placeholder'), 'The unit price of the default currency, converted, applies.');
+        self::assertStringContainsString('Converted from '.$default->getCode(), $crawler->filter('[data-testid="sale-unit-values-price-source-'.$pse->getId().'"]')->text());
+        self::assertSame('16', $crawler->filter('[data-testid="sale-unit-values-promo_price-'.$pse->getId().'"]')->attr('placeholder'));
+    }
+
+    public function testTheSectionNeedsTheRightOnSaleUnits(): void
+    {
+        $this->saleUnit('north');
+        [$product] = $this->productWithACombination();
+
+        $this->injector->setAdmin($this->restrictedAdmin([AdminResources::PRODUCT => [AccessManager::VIEW]]));
+        $crawler = $this->client->request('GET', '/admin/products/combinations/tab?product_id='.$product->getId());
+        self::assertCount(1, $crawler->filter('[data-testid="product-combinations-tab"]'));
+        self::assertCount(0, $crawler->filter('[data-testid="sale-unit-values-section"]'));
+
+        $this->injector->setAdmin($this->restrictedAdmin([AdminResources::PRODUCT => [AccessManager::VIEW], AdminResources::SALE_UNIT => [AccessManager::VIEW, AccessManager::UPDATE]]));
+        $crawler = $this->client->request('GET', '/admin/products/combinations/tab?product_id='.$product->getId());
+        self::assertCount(1, $crawler->filter('[data-testid="sale-unit-values-section"]'));
+        self::assertCount(0, $crawler->filter('[data-testid="sale-unit-values-submit"]'), 'Saving needs both update rights.');
+
+        $this->injector->setAdmin($this->restrictedAdmin([AdminResources::PRODUCT => [AccessManager::VIEW, AccessManager::UPDATE], AdminResources::SALE_UNIT => [AccessManager::VIEW, AccessManager::UPDATE]]));
+        $crawler = $this->client->request('GET', '/admin/products/combinations/tab?product_id='.$product->getId());
+        self::assertCount(1, $crawler->filter('[data-testid="sale-unit-values-submit"]'));
+    }
+
+    public function testAnUnknownCurrencyIsRefusedWithoutAnError(): void
+    {
+        $saleUnit = $this->saleUnit('north');
+        [$product, $pse] = $this->productWithACombination();
+
+        $this->client->request('POST', '/admin/product/sale-unit-values/save', [
+            '_token' => $this->sessionToken(),
+            'product_id' => $product->getId(),
+            'sale_unit_id' => $saleUnit->getId(),
+            'currency_id' => 999999,
+            'price' => [$pse->getId() => '10'],
+        ]);
+
+        self::assertTrue($this->client->getResponse()->isRedirection());
+        self::assertSame(0, SaleUnitProductPriceQuery::create()->filterBySaleUnitId($saleUnit->getId())->count());
+    }
+
+    public function testNothingIsLoggedWhenNothingWasWritten(): void
+    {
+        $saleUnit = $this->saleUnit('north');
+        [$product, $pse] = $this->productWithACombination();
+        $logged = AdminLogQuery::create()->filterByResource(AdminResources::SALE_UNIT)->count();
+
+        $this->saveValues($product, $saleUnit, $this->defaultCurrency(), $pse, price: '', promoPrice: '5', quantity: '');
+        self::assertSame($logged, AdminLogQuery::create()->filterByResource(AdminResources::SALE_UNIT)->count());
+
+        $this->saveValues($product, $saleUnit, $this->defaultCurrency(), $pse, price: '12', promoPrice: '', quantity: '');
+        self::assertSame($logged + 1, AdminLogQuery::create()->filterByResource(AdminResources::SALE_UNIT)->count());
+    }
+
+    /**
+     * The order list and sheet of a single shop ask the database nothing about sale units:
+     * whether the shop sells from them is read from the configuration pool.
+     */
+    public function testTheOrderScreensOfASingleShopReadNoSaleUnitTable(): void
+    {
+        $order = $this->factory->order();
+        $this->client->request('GET', '/admin/orders');
+
+        $statements = $this->recordSqlQueries(function () use ($order): void {
+            // A later request is another process: only what the shared pool kept is remembered.
+            $this->getService(SaleUnitActivityChecker::class)->reset();
+            $this->getService(OrderSaleUnits::class)->reset();
+
+            $this->client->request('GET', '/admin/orders');
+            self::assertSame(200, $this->client->getResponse()->getStatusCode());
+            $this->client->request('GET', '/admin/order/update/'.$order->getId());
+            self::assertSame(200, $this->client->getResponse()->getStatusCode());
+        });
+
+        self::assertNotSame([], $statements, 'The requests are recorded.');
+        self::assertSame([], array_values(array_filter(
+            $statements,
+            static fn (string $statement): bool => 1 === preg_match('/FROM `sale_unit(_\w+)?`/', $statement),
+        )));
+    }
+
+    public function testTheSaleUnitsAreReadWithTheirTitlesInOneQuery(): void
+    {
+        $this->saleUnit('north');
+        $this->saleUnit('south');
+        $this->saleUnit('west');
+        $repository = $this->getService(SaleUnitRepository::class);
+
+        self::assertSame(1, QueryCounter::count(static fn () => $repository->findOptions('en_US')));
+        self::assertSame(1, QueryCounter::count(static fn () => $repository->findOptions('fr_FR')), 'A missing translation costs no query of its own.');
+
+        $codes = [];
+        foreach ($repository->findSorted('fr_FR', 'title', 'asc') as $saleUnit) {
+            $codes[] = $saleUnit->getCode();
+        }
+        self::assertSame(['north', 'south', 'west'], $codes, 'Sorted by a title none of them has in this language, every unit is still listed.');
+    }
+
     public function testAPromoPriceWithoutAPriceIsRefused(): void
     {
         $saleUnit = $this->saleUnit('north');
@@ -237,6 +383,17 @@ final class SaleUnitBackOfficeTest extends WebIntegrationTestCase
 
         $crawler = $this->client->request('GET', '/admin/order/update/'.$northOrder->getId());
         self::assertStringContainsString('north title', $crawler->filter('[data-testid="order-sale-unit"]')->text(''));
+    }
+
+    /**
+     * @param array<string, list<string>> $grants
+     */
+    private function restrictedAdmin(array $grants): \Thelia\Model\Admin
+    {
+        $admin = $this->factory->restrictedAdmin($grants);
+        $admin->eraseCredentials();
+
+        return $admin;
     }
 
     private function saleUnit(string $code, ?string $url = null): SaleUnit
