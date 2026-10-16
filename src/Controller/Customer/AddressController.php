@@ -127,11 +127,10 @@ final class AddressController
                 );
             }
         } catch (\Throwable $exception) {
-            $this->errorRenderer->setup(
+            $this->errorRenderer->fail(
                 $this->translator->trans('Address creation'),
-                $exception->getMessage(),
-                $form,
                 $exception,
+                $form,
             );
         }
 
@@ -167,11 +166,10 @@ final class AddressController
                 );
             }
         } catch (\Throwable $exception) {
-            $this->errorRenderer->setup(
+            $this->errorRenderer->fail(
                 $this->translator->trans('Address update'),
-                $exception->getMessage(),
-                $form,
                 $exception,
+                $form,
             );
         }
 

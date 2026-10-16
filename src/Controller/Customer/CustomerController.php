@@ -319,7 +319,7 @@ final class CustomerController
 
             $tagFailure = $this->applySubmittedTags($savedCustomerId, $data);
             if ($tagFailure !== null) {
-                $this->errorRenderer->setup(
+                $this->errorRenderer->refuse(
                     $this->translator->trans('Customer update'),
                     $this->translator->trans('The customer was saved, but its tags could not be updated.'),
                     $form,
@@ -329,11 +329,10 @@ final class CustomerController
 
             return new RedirectResponse($this->urls->generate(self::EDIT_ROUTE, ['customer_id' => $savedCustomerId]));
         } catch (\Throwable $exception) {
-            $this->errorRenderer->setup(
+            $this->errorRenderer->fail(
                 $this->translator->trans('Customer update'),
-                $exception->getMessage(),
-                $form,
                 $exception,
+                $form,
             );
 
             return new RedirectResponse($this->urls->generate(self::EDIT_ROUTE, ['customer_id' => $customerId]));

@@ -16,6 +16,7 @@ namespace BackOfficeDefaultTwigBundle\Controller\Configuration;
 
 use BackOfficeDefaultTwigBundle\Form\Configuration\TagType;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
+use BackOfficeDefaultTwigBundle\Service\Admin\AdminFailureMessage;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormErrorRenderer;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormValidator;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminLogger;
@@ -159,7 +160,7 @@ final class TagController
 
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         } catch (\Throwable $exception) {
-            $this->errorRenderer->setup(
+            $this->errorRenderer->refuse(
                 $this->translator->trans('Tag creation failed.'),
                 $this->refusalMessage($exception),
                 $form,
@@ -223,7 +224,7 @@ final class TagController
 
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         } catch (\Throwable $exception) {
-            $this->errorRenderer->setup(
+            $this->errorRenderer->refuse(
                 $this->translator->trans('Tag update failed.'),
                 $this->refusalMessage($exception, suggestMerge: true),
                 $form,
@@ -303,10 +304,8 @@ final class TagController
                 (int) $surviving->getId(),
             );
         } catch (\Throwable $exception) {
-            $this->errorRenderer->setup(
+            $this->errorRenderer->fail(
                 $this->translator->trans('Tag merge'),
-                $exception->getMessage(),
-                null,
                 $exception,
             );
         }
@@ -330,10 +329,8 @@ final class TagController
                 (string) $request->request->get('_token', ''),
             );
         } catch (\Throwable $exception) {
-            $this->errorRenderer->setup(
+            $this->errorRenderer->fail(
                 $this->translator->trans('Tag deletion'),
-                $exception->getMessage(),
-                null,
                 $exception,
             );
 
@@ -388,7 +385,7 @@ final class TagController
     private function refusalMessage(\Throwable $exception, bool $suggestMerge = false): string
     {
         if (!$exception instanceof TagLabelAlreadyUsedException) {
-            return $exception->getMessage();
+            return AdminFailureMessage::of($exception, $this->translator);
         }
 
         // Two sentences rather than one: when the collision is on the very same

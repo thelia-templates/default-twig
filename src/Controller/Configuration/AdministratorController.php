@@ -108,7 +108,7 @@ final class AdministratorController
             actionLabel: 'Administrator creation',
             successRoute: self::LIST_ROUTE,
             renderError: fn (): Response => $this->renderListWithError(),
-            describeForLog: fn (AdministratorEvent $event): array => $this->describe($event, 'created'),
+            describeForLog: fn (AdministratorEvent $event): array => $this->describe($event, 'created', $this->translator->trans('No administrator was created.')),
         );
     }
 
@@ -155,7 +155,7 @@ final class AdministratorController
             actionLabel: 'Administrator update',
             successRoute: self::LIST_ROUTE,
             renderError: fn (): Response => $this->renderListWithError(),
-            describeForLog: fn (AdministratorEvent $event): array => $this->describe($event, 'modified'),
+            describeForLog: fn (AdministratorEvent $event): array => $this->describe($event, 'modified', $this->translator->trans('No administrator was modified.')),
         );
     }
 
@@ -231,10 +231,10 @@ final class AdministratorController
     /**
      * @return array{0: string, 1: int|null}
      */
-    private function describe(AdministratorEvent $event, string $action): array
+    private function describe(AdministratorEvent $event, string $action, string $noneWasThere): array
     {
         if (!$event->hasAdministrator()) {
-            throw new \LogicException($this->translator->trans('No administrator was '.$action.'.'));
+            throw new \LogicException($noneWasThere);
         }
 
         $admin = $event->getAdministrator();

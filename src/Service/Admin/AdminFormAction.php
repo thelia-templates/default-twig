@@ -95,11 +95,10 @@ readonly class AdminFormAction
 
             return new RedirectResponse($this->urls->generate($successRoute, $successParameters));
         } catch (\Throwable $exception) {
-            $this->errorRenderer->setup(
+            $this->errorRenderer->fail(
                 $this->translator->trans($actionLabel),
-                $exception->getMessage(),
-                $form,
                 $exception,
+                $form,
             );
 
             return $renderError($exception);
@@ -145,10 +144,8 @@ readonly class AdminFormAction
 
             return new RedirectResponse($this->urls->generate($successRoute, $successParameters));
         } catch (\Throwable $exception) {
-            $this->errorRenderer->setup(
+            $this->errorRenderer->fail(
                 $this->translator->trans($actionLabel),
-                $exception->getMessage(),
-                null,
                 $exception,
             );
 

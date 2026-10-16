@@ -21,18 +21,12 @@
 
         <h1 class="h3 mb-3">{{ 'Export'|trans }} : {{ export.title }}</h1>
 
-        {% for type, messages in bo_flashes(['error', 'success']) %}
-            {% for message in messages %}
-                <div class="alert alert-{{ type == 'success' ? 'success' : 'danger' }}">{{ message|raw }}</div>
-            {% endfor %}
-        {% endfor %}
-
         <form method="post" action="{{ path('export.process', { id: export_id }) }}" enctype="multipart/form-data" data-testid="export-form">
             <input type="hidden" name="_token" value="{{ assignToken() }}">
             <div class="card">
                 <div class="card-body">
                     {% if export.description %}
-                        <div class="alert alert-info">{{ export.description|raw }}</div>
+                        <div class="alert alert-info">{{ export.description|bo_safe_html }}</div>
                     {% endif %}
 
                     {{ safe_hook('export.top', { id: export_id, type: 'page' }) }}

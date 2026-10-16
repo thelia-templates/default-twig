@@ -1,0 +1,72 @@
+{% extends '@BackOfficeDefaultTwig/base.html.twig' %}
+
+{% set export_title = job.export ? job.export.title : 'Export'|trans %}
+
+{% block title %}{{ 'Export'|trans }} : {{ export_title }}{% endblock %}
+{% block body_testid %}export-job{% endblock %}
+
+{% block head_extra %}
+    {# The worker writes the progress on the row: the page reads it again until the export is over. #}
+    {# Five minutes at most, and the administrator may stop it: a page that reloads for
+       ever loses the place of a screen reader, and a job without a worker never ends. #}
+    {% if auto_refresh %}<meta http-equiv="refresh" content="3;url={{ path('export.job', { jobId: job.id, round: refresh_round + 1 }) }}">{% endif %}
+{% endblock %}
+
+{% block breadcrumb %}
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ path('admin.home') }}">{{ 'Home'|trans }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ path('admin.tools.index') }}">{{ 'Tools'|trans }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ path('export.list') }}">{{ 'Exports'|trans }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ export_title }}</li>
+        </ol>
+    </nav>
+{% endblock %}
+
+{% block content %}
+    {% import '@BackOfficeDefaultTwig/fragments/_job_status.html.twig' as job_status %}
+
+    <div class="container-fluid" data-testid="export-job-page" data-export-job-status="{{ job.status }}">
+        <h1 class="h3 mb-3">{{ 'Export'|trans }} : {{ export_title }}</h1>
+
+        <div class="card">
+            <div class="card-body" role="status">
+                <p class="mb-2">
+                    {{ job_status.badge(job.status, 'export-job-status') }}
+                </p>
+
+                {% if job.status == 'queued' %}
+                    <p class="text-muted mb-0">{{ 'The export waits for a worker. This page refreshes on its own.'|trans }}</p>
+                {% elseif job.status == 'running' %}
+                    <p class="mb-0" data-testid="export-job-progress">{{ '%count% rows written so far. This page refreshes on its own.'|trans({ '%count%': job.processedRows }) }}</p>
+                {% elseif job.status == 'done' %}
+                    <p class="mb-3" data-testid="export-job-progress">{{ '%count% rows written.'|trans({ '%count%': job.processedRows }) }}</p>
+                    {% if file_available %}
+                        <a href="{{ path('export.job.download', { jobId: job.id }) }}" class="btn btn-primary" data-testid="export-job-download">
+                            <i class="bi bi-download" aria-hidden="true"></i> {{ 'Download'|trans }} {{ job.fileName }}
+                        </a>
+                    {% else %}
+                        <p class="text-muted mb-0">{{ 'The file of this export is no longer available. Run the export again.'|trans }}</p>
+                    {% endif %}
+                {% else %}
+                    <p class="text-danger mb-0 text-break" data-testid="export-job-error">{{ job.error|trans }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if not job.finished %}
+            <p class="small mt-2 mb-0" data-testid="export-job-refresh">
+                {% if auto_refresh %}
+                    <a href="{{ path('export.job', { jobId: job.id, round: max_refresh_rounds }) }}">{{ 'Stop refreshing'|trans }}</a>
+                {% else %}
+                    {{ 'This page no longer refreshes on its own.'|trans }}
+                    <a href="{{ path('export.job', { jobId: job.id }) }}">{{ 'Refresh'|trans }}</a>
+                {% endif %}
+            </p>
+        {% endif %}
+
+        {% if job.export %}
+            <a href="{{ path('export.view', { id: job.exportId }) }}" class="btn btn-outline-secondary mt-3">{{ 'Back to the export'|trans }}</a>
+        {% endif %}
+    </div>
+{% endblock %}

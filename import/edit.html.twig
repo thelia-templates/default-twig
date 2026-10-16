@@ -18,19 +18,12 @@
     <div class="container-fluid" data-testid="import-edit-page">
         <h1 class="h3 mb-3">{{ 'Import'|trans }} : {{ import.title }}</h1>
 
-        {% for type, messages in bo_flashes(['thelia.import.error', 'thelia.import.success', 'error', 'success']) %}
-            {% for message in messages %}
-                {% set variant = type ends with 'success' ? 'success' : 'danger' %}
-                <div class="alert alert-{{ variant }}">{{ message|raw }}</div>
-            {% endfor %}
-        {% endfor %}
-
         <form method="post" action="{{ path('import.process', { id: import_id }) }}" enctype="multipart/form-data" data-testid="import-form">
             <input type="hidden" name="_token" value="{{ assignToken() }}">
             <div class="card">
                 <div class="card-body">
                     {% if import.description %}
-                        <div class="alert alert-info">{{ import.description|raw }}</div>
+                        <div class="alert alert-info">{{ import.description|bo_safe_html }}</div>
                     {% endif %}
 
                     {% if not handler_available %}
@@ -60,7 +53,11 @@
                         </div>
 
                         <div class="d-flex justify-content-end mt-4">
-                            <button type="submit" class="btn btn-primary"><i class="bi bi-upload me-1" aria-hidden="true"></i>{{ 'Import this file'|trans }}</button>
+                            {% if can_import %}
+                                <button type="submit" class="btn btn-primary"><i class="bi bi-upload me-1" aria-hidden="true"></i>{{ 'Import this file'|trans }}</button>
+                            {% else %}
+                                <p class="text-muted mb-0" data-testid="import-not-allowed">{{ 'You may see this import, not run it.'|trans }}</p>
+                            {% endif %}
                         </div>
                     {% endif %}
                 </div>

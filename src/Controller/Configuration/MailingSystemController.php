@@ -17,21 +17,32 @@ namespace BackOfficeDefaultTwigBundle\Controller\Configuration;
 use BackOfficeDefaultTwigBundle\Form\Configuration\MailingSystemType;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
+use BackOfficeDefaultTwigBundle\Service\Admin\CurrentAdministrator;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
+use Symfony\Component\Mime\Exception\RfcComplianceException;
+use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Thelia\Core\Event\MailingSystem\MailingSystemEvent;
 use Thelia\Core\Event\TheliaEvents;
 use Thelia\Core\Security\AccessManager;
+use Thelia\Core\Security\Exception\TokenAuthenticationException;
 use Thelia\Core\Security\Resource\AdminResources;
+use Thelia\Mailer\Exception\StoreEmailMissingException;
 use Thelia\Mailer\MailerFactory;
+use Thelia\Mailer\TransportCredentials;
+use Thelia\Messenger\JobFailureMessage;
 use Thelia\Model\ConfigQuery;
+use Thelia\Tools\TokenProvider;
 use Twig\Environment;
 
 #[Route('/admin/configuration/mailingSystem', name: 'admin.mailingSystem.')]
@@ -49,6 +60,11 @@ final class MailingSystemController
         private readonly UrlGeneratorInterface $urls,
         private readonly MailerFactory $mailer,
         private readonly TranslatorInterface $translator,
+        private readonly LoggerInterface $logger,
+        private readonly TokenProvider $tokens,
+        private readonly CurrentAdministrator $administrator,
+        #[Autowire(service: 'limiter.admin_test_mail')]
+        private readonly RateLimiterFactoryInterface $testMailLimiter,
     ) {
     }
 
@@ -86,46 +102,73 @@ final class MailingSystemController
         );
     }
 
-    #[Route('/test', name: 'test', methods: ['GET'])]
+    #[Route('/test', name: 'test', methods: ['POST'])]
     public function test(Request $request): Response
     {
         if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::UPDATE)) {
             return $denied;
         }
 
-        $contactEmail = (string) ConfigQuery::read('store_email', '');
-        $storeName = (string) ConfigQuery::read('store_name', 'Thelia');
-
-        if ($contactEmail === '') {
-            return new JsonResponse([
-                'success' => false,
-                'message' => $this->translator->trans('You have to configure your store email first !'),
-            ]);
+        // It writes to whatever address is typed: never on the word of a page of another
+        // site, and ten in ten minutes at most.
+        try {
+            $this->tokens->checkToken((string) $request->request->get('_token', ''));
+        } catch (TokenAuthenticationException) {
+            return new JsonResponse(['success' => false, 'message' => $this->translator->trans('Invalid security token, please try again.')], Response::HTTP_FORBIDDEN);
         }
 
-        $recipient = (string) $request->query->get('email', $contactEmail);
-        $subject = $this->translator->trans('Email test from : %store%', ['%store%' => $storeName]);
-        $html = '<p>'.$subject.'</p>';
+        $recipient = trim((string) $request->request->get('email', ''));
+        if ('' === $recipient) {
+            return new JsonResponse(['success' => false, 'message' => $this->translator->trans('Recipient email is required.')], Response::HTTP_BAD_REQUEST);
+        }
 
+        if (!$this->testMailLimiter->create((string) $this->administrator->id())->consume()->isAccepted()) {
+            return new JsonResponse(['success' => false, 'message' => $this->translator->trans('Too many test mails in a short time: wait a few minutes before the next one.')], Response::HTTP_TOO_MANY_REQUESTS);
+        }
+
+        $subject = $this->translator->trans('Email test from : %store%', ['%store%' => (string) ConfigQuery::read('store_name', 'Thelia')]);
+
+        // Handed to the mail server now, even when the shop delivers its mails through a
+        // queue: the point of a test is the server's answer. The name of the shop is text,
+        // not HTML, in the body.
         try {
-            $this->mailer->sendSimpleEmailMessage(
-                [$contactEmail => $storeName],
-                [$recipient => $storeName],
-                $subject,
-                $subject,
-                $html,
-            );
+            $this->mailer->sendTestMail($recipient, $subject, '<p>'.htmlspecialchars($subject, \ENT_QUOTES | \ENT_SUBSTITUTE).'</p>');
 
             return new JsonResponse([
                 'success' => true,
                 'message' => $this->translator->trans('Your configuration seems to be ok. Checked out your mailbox : %email%', ['%email%' => $recipient]),
             ]);
-        } catch (\Throwable $exception) {
+        } catch (StoreEmailMissingException) {
             return new JsonResponse([
                 'success' => false,
-                'message' => $exception->getMessage(),
+                'message' => $this->translator->trans('You have to configure your store email first !'),
             ]);
+        } catch (TransportExceptionInterface $refusal) {
+            // What the mail server answered is what the administrator came for; the
+            // credentials it may quote are hidden.
+            return new JsonResponse([
+                'success' => false,
+                'message' => TransportCredentials::hide($refusal->getMessage()),
+            ]);
+        } catch (RfcComplianceException $mistypedAddress) {
+            // It quotes the address typed, nothing else.
+            return new JsonResponse([
+                'success' => false,
+                'message' => $mistypedAddress->getMessage(),
+            ]);
+        } catch (\Throwable $exception) {
+            return $this->failed($exception);
         }
+    }
+
+    private function failed(\Throwable $exception): JsonResponse
+    {
+        $this->logger->error(\sprintf('The test mail could not be sent: %s', JobFailureMessage::forLog($exception)));
+
+        return new JsonResponse([
+            'success' => false,
+            'message' => $this->translator->trans('The test mail could not be sent. The details are in the server log.'),
+        ]);
     }
 
     /** @return array<string, mixed> */

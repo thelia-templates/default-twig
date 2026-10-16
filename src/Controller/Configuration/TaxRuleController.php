@@ -17,6 +17,7 @@ namespace BackOfficeDefaultTwigBundle\Controller\Configuration;
 use BackOfficeDefaultTwigBundle\Form\Tax\TaxType;
 use BackOfficeDefaultTwigBundle\Form\TaxRule\TaxRuleType;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
+use BackOfficeDefaultTwigBundle\Service\Admin\AdminFailureMessage;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormAction;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormErrorRenderer;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormValidator;
@@ -219,11 +220,10 @@ final class TaxRuleController
                 'tax_rule_id' => $taxRule?->getId() ?? $taxRuleId,
             ]));
         } catch (\Throwable $exception) {
-            $this->errorRenderer->setup(
+            $this->errorRenderer->fail(
                 $this->translator->trans('Tax rule update'),
-                $exception->getMessage(),
-                $form,
                 $exception,
+                $form,
             );
 
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
@@ -240,7 +240,7 @@ final class TaxRuleController
         try {
             $this->tokens->checkToken((string) $request->request->get('_token'));
         } catch (TokenAuthenticationException $exception) {
-            return new JsonResponse(['success' => false, 'message' => $exception->getMessage()], 403);
+            return new JsonResponse(['success' => false, 'message' => AdminFailureMessage::of($exception, $this->translator)], 403);
         }
 
         $taxRuleId = (int) $request->request->get('id', 0);
@@ -272,7 +272,7 @@ final class TaxRuleController
                 'data' => $this->buildSpecification($taxRuleId),
             ]);
         } catch (\Throwable $exception) {
-            return new JsonResponse(['success' => false, 'message' => $exception->getMessage()], 400);
+            return new JsonResponse(['success' => false, 'message' => AdminFailureMessage::of($exception, $this->translator)], 400);
         }
     }
 
@@ -361,7 +361,7 @@ final class TaxRuleController
         $strategy = PostageTaxStrategy::tryFrom((string) $request->request->get('postage-tax-strategy'));
 
         if (null === $strategy) {
-            $this->errorRenderer->setup(
+            $this->errorRenderer->refuse(
                 $this->translator->trans('Postage tax breakdown'),
                 $this->translator->trans('Unknown postage tax strategy.'),
             );

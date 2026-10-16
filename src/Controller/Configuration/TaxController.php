@@ -113,11 +113,10 @@ final class TaxController
                 'tax_id' => $tax?->getId() ?? 0,
             ]));
         } catch (\Throwable $exception) {
-            $this->errorRenderer->setup(
+            $this->errorRenderer->fail(
                 $this->translator->trans('Tax creation'),
-                $exception->getMessage(),
-                $form,
                 $exception,
+                $form,
             );
 
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
@@ -153,11 +152,10 @@ final class TaxController
                 'tax_id' => $tax?->getId() ?? $taxId,
             ]));
         } catch (\Throwable $exception) {
-            $this->errorRenderer->setup(
+            $this->errorRenderer->fail(
                 $this->translator->trans('Tax update'),
-                $exception->getMessage(),
-                $form,
                 $exception,
+                $form,
             );
 
             $tax = TaxQuery::create()->findPk($taxId);
