@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace BackOfficeDefaultTwigBundle\Form\Product;
 
+use BackOfficeDefaultTwigBundle\Service\CoreCompatibility;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
@@ -25,7 +26,10 @@ use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\GreaterThan;
 use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints\Range;
 use Symfony\Contracts\Translation\TranslatorInterface;
+use Thelia\Domain\Shipping\DeliveryDate\Service\DeliveryDateCalendar;
+use Thelia\Model\Product;
 
 final class ProductType extends AbstractType
 {
@@ -122,6 +126,15 @@ final class ProductType extends AbstractType
                     'required' => false,
                     'label' => $this->translator->trans('Conclusion'),
                 ]);
+
+            // Only on a core that estimates deliveries: there is nowhere to keep it otherwise.
+            if (method_exists(CoreCompatibility::anyClass(Product::class), 'getAvailabilityDelayDays')) {
+                $builder->add('availability_delay_days', IntegerType::class, [
+                    'required' => false,
+                    'constraints' => [new Range(min: 0, max: DeliveryDateCalendar::MAXIMUM_HORIZON_DAYS)],
+                    'label' => $this->translator->trans('Availability delay (working days)'),
+                ]);
+            }
         }
     }
 

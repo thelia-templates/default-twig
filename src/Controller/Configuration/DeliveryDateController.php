@@ -17,6 +17,7 @@ namespace BackOfficeDefaultTwigBundle\Controller\Configuration;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminFormErrorRenderer;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminLogger;
+use BackOfficeDefaultTwigBundle\Service\CoreCompatibility;
 use BackOfficeDefaultTwigBundle\Service\I18n\EditLocaleResolver;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -57,6 +58,8 @@ final class DeliveryDateController
     private const CARRIER_ROUTE = 'admin.delivery-date.carrier';
     private const LIST_TEMPLATE = '@BackOfficeDefaultTwig/configuration/delivery-date/list.html.twig';
     private const CARRIER_TEMPLATE = '@BackOfficeDefaultTwig/configuration/delivery-date/carrier.html.twig';
+    private const TYPED_SHOP = 'delivery_date_typed_shop';
+    private const TYPED_DELAYS = 'delivery_date_typed_delays';
 
     public function __construct(
         private readonly AdminAccessChecker $access,
@@ -75,12 +78,16 @@ final class DeliveryDateController
     #[Route('', name: 'list', methods: ['GET'])]
     public function list(Request $request): Response
     {
+        // Taken first, whatever happens next: what was typed is shown once or not at all.
+        $typed = $this->typedBack($request, self::TYPED_SHOP);
+
         if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::VIEW)) {
             return $denied;
         }
 
         $locale = $request->getLocale();
         $carriers = [];
+        $settings = CoreCompatibility::anyObject($this->settings);
 
         foreach (ModuleQuery::create()->filterByType(BaseModule::DELIVERY_MODULE_TYPE)->orderByPosition()->find() as $module) {
             $carriers[] = [
@@ -90,14 +97,17 @@ final class DeliveryDateController
                 'active' => (bool) $module->getActivate(),
                 'accepts_dates' => [] !== $this->calendar->acceptedChoiceModesOf($module),
                 'choice_mode' => $this->calendar->choiceModeOf($module)->value,
+                'estimate' => $this->estimateOf($module),
             ];
         }
 
         return new Response($this->twig->render(self::LIST_TEMPLATE, [
             'carriers' => $carriers,
             'weekdays' => $this->weekdays($locale),
-            'shop_closed_weekdays' => $this->settings->shopClosedWeekdays(),
+            'shop_closed_weekdays' => $typed['closed_weekdays'] ?? $this->settings->shopClosedWeekdays(),
             'shop_closures' => $this->closureRows(null),
+            'shop_cutoff_time' => $typed['cutoff_time'] ?? (method_exists($settings, 'shopCutoffTime') ? $settings->shopCutoffTime() : null),
+            'estimates_supported' => $this->estimatesDeliveries(),
         ]));
     }
 
@@ -107,14 +117,28 @@ final class DeliveryDateController
         return $this->write(
             $request,
             'Shop delivery days update',
-            fn () => $this->settings->saveShopClosedWeekdays($this->weekdayList($request)),
+            function () use ($request): void {
+                // The cutoff first: it is the one a rule can refuse, before anything is written.
+                // No transaction around the two: the configuration cache keeps what was written,
+                // so a rollback would leave it reading a value the database no longer holds.
+                $settings = CoreCompatibility::anyObject($this->settings);
+
+                if ($request->request->has('cutoff_time') && method_exists($settings, 'saveShopCutoffTime')) {
+                    $settings->saveShopCutoffTime((string) $request->request->get('cutoff_time'));
+                }
+
+                $this->settings->saveShopClosedWeekdays($this->weekdayList($request));
+            },
             $this->urls->generate(self::LIST_ROUTE),
+            typedBack: [self::TYPED_SHOP => ['closed_weekdays' => $this->weekdayList($request)] + ($request->request->has('cutoff_time') ? ['cutoff_time' => (string) $request->request->get('cutoff_time')] : [])],
         );
     }
 
     #[Route('/carrier/{module_id}', name: 'carrier', methods: ['GET'], requirements: ['module_id' => '\d+'])]
     public function carrier(int $module_id, Request $request): Response
     {
+        $typed = $this->typedBack($request, self::TYPED_DELAYS);
+
         if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::VIEW)) {
             return $denied;
         }
@@ -161,6 +185,7 @@ final class DeliveryDateController
                 'title' => $titles[(int) $slot->getId()] ?? '',
             ], $slots),
             'closures' => $this->closureRows($module),
+            'estimate' => $this->estimatesDeliveries() && $module_id === ($typed['module_id'] ?? null) ? $typed['delays'] : $this->estimateOf($module),
             'edit_language_id' => (int) $editLang->getId(),
             'edit_locale' => $editLocale,
         ]));
@@ -286,20 +311,133 @@ final class DeliveryDateController
         );
     }
 
+    #[Route('/carrier/{module_id}/delays/save', name: 'carrier.delays.save', methods: ['POST'], requirements: ['module_id' => '\d+'])]
+    public function saveDelays(int $module_id, Request $request): Response
+    {
+        $module = $this->deliveryModule($module_id);
+
+        return $this->write(
+            $request,
+            'Carrier delivery estimate update',
+            function () use ($module, $request): void {
+                $settings = CoreCompatibility::anyObject($this->settings);
+
+                if (!method_exists($settings, 'saveDeliveryDelays')) {
+                    throw new \InvalidArgumentException($this->translator->trans('This version of Thelia does not estimate deliveries.'));
+                }
+
+                $settings->saveDeliveryDelays(
+                    $module ?? throw new \InvalidArgumentException($this->translator->trans('No such carrier.')),
+                    $this->days($request, 'preparation_days'),
+                    $this->days($request, 'transit_min_days'),
+                    $this->days($request, 'transit_max_days'),
+                );
+            },
+            $this->carrierUrl($module_id, $request),
+            $module_id,
+            null === $module ? [] : [self::TYPED_DELAYS => [
+                'module_id' => $module_id,
+                'delays' => [
+                    'preparation_days' => (string) $request->request->get('preparation_days', ''),
+                    'transit_min_days' => (string) $request->request->get('transit_min_days', ''),
+                    'transit_max_days' => (string) $request->request->get('transit_max_days', ''),
+                ],
+            ]],
+        );
+    }
+
+    /**
+     * The delays a delivery of this carrier is estimated with; null on a core that does not
+     * estimate deliveries yet, whose screens keep their dates only.
+     *
+     * @return array{preparation_days: ?int, transit_min_days: ?int, transit_max_days: ?int}|null
+     */
+    private function estimateOf(Module $module): ?array
+    {
+        if (!$this->estimatesDeliveries()) {
+            return null;
+        }
+
+        $rule = $this->settings->ruleOf($module);
+        $rule = null === $rule ? null : CoreCompatibility::anyObject($rule);
+
+        return [
+            'preparation_days' => null !== $rule && method_exists($rule, 'getPreparationDays') ? $rule->getPreparationDays() : null,
+            'transit_min_days' => null !== $rule && method_exists($rule, 'getTransitMinDays') ? $rule->getTransitMinDays() : null,
+            'transit_max_days' => null !== $rule && method_exists($rule, 'getTransitMaxDays') ? $rule->getTransitMaxDays() : null,
+        ];
+    }
+
+    /**
+     * Whether the core estimates deliveries: one older than that keeps the screens of the
+     * delivery dates as they were.
+     */
+    private function estimatesDeliveries(): bool
+    {
+        return method_exists(CoreCompatibility::anyObject($this->settings), 'saveDeliveryDelays');
+    }
+
+    /**
+     * What the merchant typed in a form that was refused, shown again once instead of what is
+     * stored, so a mistake is corrected rather than typed over. Kept in the session apart from
+     * the flash messages, which the layout prints whatever their type.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function typedBack(Request $request, string $key): ?array
+    {
+        if (!$request->hasSession()) {
+            return null;
+        }
+
+        $typed = $request->getSession()->remove($key);
+
+        return \is_array($typed) ? $typed : null;
+    }
+
+    private function days(Request $request, string $field): ?int
+    {
+        $days = trim((string) $request->request->get($field, ''));
+
+        if ('' === $days) {
+            return null;
+        }
+
+        // A value typed by hand would otherwise be read as 0, a delay the merchant never set.
+        if (!ctype_digit($days)) {
+            throw new \InvalidArgumentException($this->translator->trans('A delay is a whole number of days.'));
+        }
+
+        return (int) $days;
+    }
+
     /**
      * The one road every write takes: permission, token read from the body, the write
-     * itself, the log, and the way back to the screen — with the refusal as a flash message.
+     * itself, the log, and the way back to the screen — with the refusal as a flash message,
+     * and what the form sent kept for that screen once its token was accepted.
+     *
+     * @param array<string, array<string, mixed>> $typedBack what the form sent, by session key
      */
-    private function write(Request $request, string $actionLabel, callable $write, string $backTo, ?int $resourceId = null): Response
+    private function write(Request $request, string $actionLabel, callable $write, string $backTo, ?int $resourceId = null, array $typedBack = []): Response
     {
         if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::UPDATE)) {
             return $denied;
         }
 
+        $tokenAccepted = false;
+
         try {
             $this->tokens->checkToken((string) $request->request->get('_token', ''));
+            $tokenAccepted = true;
             $write();
             $this->adminLogger->log(self::RESOURCE, AccessManager::UPDATE, $actionLabel, $resourceId);
+
+            // Saved: a refusal typed earlier and never shown is no longer what the screen should offer.
+            if ($request->hasSession()) {
+                foreach (array_keys($typedBack) as $key) {
+                    $request->getSession()->remove($key);
+                }
+            }
 
             $session = $request->getSession();
             if ($session instanceof Session) {
@@ -314,6 +452,12 @@ final class DeliveryDateController
                 : $this->translator->trans('The delivery dates could not be saved. Please try again.');
 
             $this->errorRenderer->setup($this->translator->trans($actionLabel), $shown, null, $exception);
+
+            if ($tokenAccepted && $request->hasSession()) {
+                foreach ($typedBack as $key => $typed) {
+                    $request->getSession()->set($key, $typed);
+                }
+            }
         }
 
         return new RedirectResponse($backTo);
