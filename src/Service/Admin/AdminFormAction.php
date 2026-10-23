@@ -15,6 +15,8 @@ declare(strict_types=1);
 namespace BackOfficeDefaultTwigBundle\Service\Admin;
 
 use BackOfficeDefaultTwigBundle\Form\Legacy\LegacyFormEventBridge;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -23,6 +25,7 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Thelia\Core\Event\ActionEvent;
+use Thelia\Core\Security\Exception\TokenAuthenticationException;
 use Thelia\Tools\TokenProvider;
 
 /**
@@ -50,6 +53,7 @@ readonly class AdminFormAction
         private TranslatorInterface $translator,
         private TokenProvider $tokens,
         private LegacyFormEventBridge $legacyFormBridge,
+        private LoggerInterface $logger = new NullLogger(),
     ) {
     }
 
@@ -117,6 +121,8 @@ readonly class AdminFormAction
      * @param callable(\Throwable): Response|null                  $renderError               Optional. When omitted, errors redirect to $successRoute.
      * @param array<string, scalar>                                $successParameters
      * @param callable(object): array<string, scalar>|null         $successParametersResolver Optional. Resolve the redirect parameters from the dispatched event (e.g. the id of an entity the action just created). Overrides $successParameters when provided.
+     * @param list<class-string<\Throwable>>                       $trustedFailures           Optional. The failures whose message the administrator reads; any other is reported as an internal error. Empty shows every message but the technical ones.
+     * @param (callable(object, string): array{0: string, 1: int|null})|null $describeFailureForLog Optional. Describe a failed action for the administration log, given the event and the reason the administrator read; never called for a request without the form token.
      */
     public function tokenAction(
         string $resource,
@@ -130,6 +136,8 @@ readonly class AdminFormAction
         ?callable $describeForLog = null,
         ?callable $renderError = null,
         ?callable $successParametersResolver = null,
+        array $trustedFailures = [],
+        ?callable $describeFailureForLog = null,
     ): Response {
         if ($denied = $this->access->check($resource, [], $access)) {
             return $denied;
@@ -156,7 +164,9 @@ readonly class AdminFormAction
                 $exception->getMessage(),
                 null,
                 $exception,
+                $trustedFailures,
             );
+            $this->logFailure($resource, $access, $event, $exception, $trustedFailures, $describeFailureForLog);
 
             return $renderError !== null
                 ? $renderError($exception)
@@ -165,6 +175,36 @@ readonly class AdminFormAction
     }
 
     /**
+     * A failed action is written to the administration log too when the screen asks for
+     * it, with the reason the administrator read: the words of a trusted failure, never
+     * the inside of a technical one. A request without the form token asked nothing and
+     * is not written.
+     *
+     * @param list<class-string<\Throwable>>                                    $trustedFailures
+     * @param (callable(object, string): array{0: string, 1: int|null})|null $describeFailureForLog
+     */
+    private function logFailure(string $resource, string $access, object $event, \Throwable $failure, array $trustedFailures, ?callable $describeFailureForLog): void
+    {
+        if ($describeFailureForLog === null || $failure instanceof TokenAuthenticationException) {
+            return;
+        }
+
+        $reason = $this->errorRenderer->isShown($failure, $trustedFailures)
+            ? $failure->getMessage()
+            : 'technical failure, see the application log';
+
+        try {
+            [$message, $resourceId] = $describeFailureForLog($event, $reason);
+            $this->adminLogger->log($resource, $access, $message, $resourceId);
+        } catch (\Throwable $logFailure) {
+            $this->logger->error(\sprintf('The administration log line of a failed action on %s could not be written: %s', $resource, $logFailure->getMessage()), ['exception' => $logFailure]);
+        }
+    }
+
+    /**
+     * The administration log tells what was done; it never decides whether it was: a line
+     * that cannot be written goes to the application log, and the action stays done.
+     *
      * @param callable(object): array{0: string, 1: int|null}|null $describeForLog
      */
     private function logSuccess(string $resource, string $access, object $event, ?callable $describeForLog): void
@@ -173,7 +213,11 @@ readonly class AdminFormAction
             return;
         }
 
-        [$message, $resourceId] = $describeForLog($event);
-        $this->adminLogger->log($resource, $access, $message, $resourceId);
+        try {
+            [$message, $resourceId] = $describeForLog($event);
+            $this->adminLogger->log($resource, $access, $message, $resourceId);
+        } catch (\Throwable $failure) {
+            $this->logger->error(\sprintf('The administration log line of a done action on %s could not be written: %s', $resource, $failure->getMessage()), ['exception' => $failure]);
+        }
     }
 }
