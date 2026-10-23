@@ -29,11 +29,12 @@
         <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
             <h1 class="h3 mb-0">{{ 'Folder'|trans }} <small class="text-muted">#{{ folder.id }}</small></h1>
             <div class="d-flex flex-wrap gap-2">
-                {% if preview_url is defined and preview_url %}
-                    <a href="{{ preview_url }}" target="_blank" rel="noopener" class="btn btn-outline-secondary flex-shrink-0" title="{{ 'Preview folder page'|trans }}" data-testid="folder-preview-btn">
-                        <i class="bi bi-eye" aria-hidden="true"></i> {{ 'Preview'|trans }}
-                    </a>
-                {% endif %}
+                {% include '@BackOfficeDefaultTwig/fragments/publication-preview.html.twig' with {
+                    type: 'folder',
+                    preview_link: preview_link|default(null),
+                    preview_url: preview_url|default(null),
+                    title: 'Preview folder page'|trans,
+                } only %}
                 <a href="{{ path('admin.folders.default', { folder_id: folder.parent }) }}" class="btn btn-outline-secondary">
                     <i class="bi bi-arrow-left" aria-hidden="true"></i> {{ 'Back'|trans }}
                 </a>
@@ -113,10 +114,14 @@
                         </div>
                         <div class="col-md-4">
                             {{ safe_hook('folder.modification.form-right.top', { folder_id: folder.id }) }}
-                            <div class="form-check mb-3">
-                                {{ form_widget(form.visible, { attr: { class: 'form-check-input' } }) }}
-                                {{ form_label(form.visible, null, { label_attr: { class: 'form-check-label' } }) }}
-                            </div>
+                            {% if publication|default(null) %}
+                                {% include '@BackOfficeDefaultTwig/fragments/publication-panel.html.twig' with { publication: publication } only %}
+                            {% elseif form.visible is defined %}
+                                <div class="form-check mb-3">
+                                    {{ form_widget(form.visible, { attr: { class: 'form-check-input' } }) }}
+                                    {{ form_label(form.visible, null, { label_attr: { class: 'form-check-label' } }) }}
+                                </div>
+                            {% endif %}
                             <div class="mb-3">
                                 {{ form_label(form.parent) }}
                                 {{ form_widget(form.parent, { attr: { class: 'form-control' } }) }}
@@ -149,27 +154,37 @@
                 {{ form_widget(form._token) }}
                 {# module fields added through the legacy form bridge are rendered by the module hooks, not auto-dumped #}
                 {{ form_end(form, {render_rest: false}) }}
+                {% if publication|default(null) %}
+                    {% include '@BackOfficeDefaultTwig/fragments/publication-form.html.twig' with { publication: publication } only %}
+                {% endif %}
             </div>
 
             <div class="tab-pane fade {% if current_tab == 'children' %}show active{% endif %}" id="tab-children" role="tabpanel">
                 <a href="{{ path('admin.folders.default', { folder_id: folder.id }) }}" class="btn btn-outline-primary mb-3">
                     <i class="bi bi-list" aria-hidden="true"></i> {{ 'Manage subfolders'|trans }}
                 </a>
+                {% set children_publication = publication_enabled|default(false) %}
                 {% set children_rows = [] %}
                 {% for child in children %}
                     {% set children_rows = children_rows|merge([{
                         'id': child.id,
                         'title_html': '<a href="' ~ child.edit_url ~ '">' ~ child.title|e ~ '</a>',
                         'visible_html': child.visible ? '<i class="bi bi-check-circle text-success"></i>' : '<i class="bi bi-x-circle text-muted"></i>',
+                        'publication_badge': child.publication_badge|default(null),
+                        'publication_label': child.publication_label|default(null),
+                        '_attrs': child._attrs|default({}),
                         'position': child.position,
                         '_actions': [ row_action('edit', 'Edit'|trans, child.edit_url) ],
                     }]) %}
                 {% endfor %}
+                {# With the publication of the core, the state of each subfolder as the folder list shows it; without it, the online icon. #}
                 {{ component('BoDataTable', {
                     id: 'folder-children-table',
                     columns: [
                         column_html('title_html', 'Title'|trans),
-                        column_html('visible_html', 'Online'|trans, 'center'),
+                        children_publication
+                            ? column_badge('publication_badge', 'Publication'|trans, publication_badge_variants, 'start', labelKey: 'publication_label')
+                            : column_html('visible_html', 'Online'|trans, 'center'),
                         column('position', 'Position'|trans, 'center', hideBelow: 'lg'),
                         column_actions(),
                     ],
@@ -179,11 +194,16 @@
             </div>
 
             <div class="tab-pane fade {% if current_tab == 'images' %}show active{% endif %}" id="tab-images" role="tabpanel">
-                {{ render(controller('BackOfficeDefaultTwigBundle\\Controller\\File\\FileController::imageForm', { parentType: 'folder', parentId: folder.id })) }}
+                {# The media forms need the right to update: without it, the sheet is shown without them. #}
+                {% if is_granted('UPDATE', 'admin.folder') %}
+                    {{ render(controller('BackOfficeDefaultTwigBundle\\Controller\\File\\FileController::imageForm', { parentType: 'folder', parentId: folder.id })) }}
+                {% endif %}
             </div>
 
             <div class="tab-pane fade {% if current_tab == 'documents' %}show active{% endif %}" id="tab-documents" role="tabpanel">
-                {{ render(controller('BackOfficeDefaultTwigBundle\\Controller\\File\\FileController::documentForm', { parentType: 'folder', parentId: folder.id })) }}
+                {% if is_granted('UPDATE', 'admin.folder') %}
+                    {{ render(controller('BackOfficeDefaultTwigBundle\\Controller\\File\\FileController::documentForm', { parentType: 'folder', parentId: folder.id })) }}
+                {% endif %}
             </div>
 
             <div class="tab-pane fade {% if current_tab == 'seo' %}show active{% endif %}" id="tab-seo" role="tabpanel">
