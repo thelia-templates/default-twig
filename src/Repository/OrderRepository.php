@@ -18,6 +18,7 @@ use BackOfficeDefaultTwigBundle\DTO\Dashboard\DateRange;
 use BackOfficeDefaultTwigBundle\Service\Bundle\BundleCore;
 use BackOfficeDefaultTwigBundle\Service\Order\OrderAccess;
 use BackOfficeDefaultTwigBundle\Service\Order\OrderFilters;
+use BackOfficeDefaultTwigBundle\Service\Order\OrderRoundingRule;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\Collection\ObjectCollection;
 use Propel\Runtime\Propel;
@@ -311,13 +312,20 @@ final class OrderRepository
 
         $totals = [];
         while (($row = $statement->fetch(\PDO::FETCH_ASSOC)) !== false) {
-            $total = (float) $row['items_total'] - (float) $row['discount'];
+            $orderId = (int) $row['order_id'];
+            // The order is charged in cents: Order::getTotalAmount() rounds its lines total
+            // before the discount, as the cart did (1.25 kg at 14.82 is 18.525, charged
+            // 18.53). An order frozen on the pre-2.4 rule is read without any rounding.
+            $itemsTotal = OrderRoundingRule::Legacy === OrderRoundingRule::forOrder($orderId)
+                ? (float) $row['items_total']
+                : round((float) $row['items_total'], 2);
+            $total = $itemsTotal - (float) $row['discount'];
 
             if ($total < 0) {
                 $total = 0.0;
             }
 
-            $totals[(int) $row['order_id']] = $total + (float) $row['postage'];
+            $totals[$orderId] = $total + (float) $row['postage'];
         }
 
         return $totals;

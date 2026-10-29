@@ -522,7 +522,10 @@ final readonly class OrderFilters
             $unitTax = 'ROUND('.$unitTax.', 2)';
         }
 
-        $lineTotal = 'op.quantity * ('.$unitPrice.' + (
+        // The quantity as it was sold, three decimals at most, the way Order::getTotalAmount()
+        // reads it: the column is a binary float, and 0.7 kept as 0.69999998 would land a
+        // line on the cent below the one charged.
+        $lineTotal = 'ROUND(op.quantity, 3) * ('.$unitPrice.' + (
             SELECT COALESCE(SUM('.$unitTax.'), 0)
             FROM order_product_tax opt
             WHERE opt.order_product_id = op.id

@@ -110,6 +110,35 @@ final class OrderListTotalsTest extends IntegrationTestCase
     }
 
     /**
+     * A line sold by measure lands on a half cent: 1.25 kg at 14.82 is 18.525, charged
+     * 18.53. The list shows the amount the order model answers, to the float it is
+     * formatted from, not a sum the money formatter then rounds to the even cent.
+     */
+    public function testALineSoldByMeasureIsListedAtTheCentTheOrderIsCharged(): void
+    {
+        $order = $this->orderWith([['price' => '14.820000', 'tax' => '0.000000', 'quantity' => 1.25]], '0', '0');
+
+        $batched = $this->orders->findTotalAmountByOrder([(int) $order->getId()]);
+
+        self::assertSame(18.53, $order->getTotalAmount());
+        self::assertSame($order->getTotalAmount(), $batched[(int) $order->getId()]);
+        self::assertSame('18,53 €', str_replace("\u{a0}", ' ', (string) (new \NumberFormatter('fr_FR', \NumberFormatter::CURRENCY))->formatCurrency($batched[(int) $order->getId()], 'EUR')));
+    }
+
+    /**
+     * A quantity kept with an error past the thousandth is read as it was sold, as the
+     * order model reads it: 0.7 kg at 0.75 is 0.525, charged 0.53.
+     */
+    public function testAQuantityKeptWithABinaryErrorIsReadAsItWasSold(): void
+    {
+        $order = $this->orderWith([['price' => '0.750000', 'tax' => '0.000000', 'quantity' => 0.69999998]], '0', '0');
+
+        $batched = $this->orders->findTotalAmountByOrder([(int) $order->getId()]);
+
+        self::assertSame($order->getTotalAmount(), $batched[(int) $order->getId()]);
+    }
+
+    /**
      * Orders placed before Thelia 2.4 are totalled without any rounding at all,
      * and a shop that has some keeps them frozen on that rule for good: reading an
      * invoice back under a newer rule would restate an amount already paid. The
