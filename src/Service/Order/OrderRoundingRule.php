@@ -104,15 +104,20 @@ enum OrderRoundingRule
      * the untaxed total, summing `ttc` gives the taxed total, and `tax` is the gap
      * between the two rather than a rounding of its own.
      *
+     * Outside the legacy rule the order is charged in cents, rounded half up by
+     * round(): the line is rounded the same way before it is shown. The money
+     * formatter would otherwise round it half to even, and a line sold by measure
+     * (1.25 at 14.82, 18.525) would read a cent below the total it makes.
+     *
      * @return array{ht: float, tax: float, ttc: float}
      */
     public function lineTotals(float $unitPriceUntaxed, float $unitTax, float $quantity): array
     {
-        if (self::RoundingOfSums === $this) {
-            $untaxed = round($unitPriceUntaxed * $quantity, 2);
-            $taxed = round(($unitPriceUntaxed + $unitTax) * $quantity, 2);
+        if (self::Legacy === $this) {
+            $untaxed = $unitPriceUntaxed * $quantity;
+            $tax = $unitTax * $quantity;
 
-            return ['ht' => $untaxed, 'tax' => round($taxed - $untaxed, 2), 'ttc' => $taxed];
+            return ['ht' => $untaxed, 'tax' => $tax, 'ttc' => $untaxed + $tax];
         }
 
         if (self::SumOfRoundings === $this) {
@@ -120,9 +125,9 @@ enum OrderRoundingRule
             $unitTax = round($unitTax, 2);
         }
 
-        $untaxed = $unitPriceUntaxed * $quantity;
-        $tax = $unitTax * $quantity;
+        $untaxed = round($unitPriceUntaxed * $quantity, 2);
+        $taxed = round(($unitPriceUntaxed + $unitTax) * $quantity, 2);
 
-        return ['ht' => $untaxed, 'tax' => $tax, 'ttc' => $untaxed + $tax];
+        return ['ht' => $untaxed, 'tax' => round($taxed - $untaxed, 2), 'ttc' => $taxed];
     }
 }
