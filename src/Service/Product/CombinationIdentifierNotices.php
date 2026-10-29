@@ -21,8 +21,8 @@ use Thelia\Domain\Catalog\Product\Identifier\GtinSharer;
 use Thelia\Model\ProductSaleElementsQuery;
 
 /**
- * The messages a save of combinations leaves on the next page: a code the core refused,
- * and a GTIN another combination already carries. The duplicate is a warning only, the
+ * The messages a save of combinations leaves on the next page: a code or quantity rules
+ * the core refused, and a GTIN another combination already carries. The duplicate is a warning only, the
  * combination is saved: two combinations of the same physical item share a code.
  */
 final readonly class CombinationIdentifierNotices
@@ -40,6 +40,18 @@ final readonly class CombinationIdentifierNotices
     public function refused(\InvalidArgumentException $refusal): void
     {
         $this->flash('danger', $refusal->getMessage());
+    }
+
+    /**
+     * A refusal the core words without naming the combination (its quantity rules, its
+     * stock): the message says which one, by its reference.
+     */
+    public function refusedRow(string $reference, \InvalidArgumentException $refusal): void
+    {
+        $this->flash('danger', $this->translator->trans(
+            'Combination %ref%: %reason%',
+            ['%ref%' => $reference, '%reason%' => $refusal->getMessage()],
+        ));
     }
 
     /**

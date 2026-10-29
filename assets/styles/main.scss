@@ -3109,6 +3109,14 @@ form[data-bo-unsaved-changes-dirty] .bo-combinations-savebar {
     transform: translateX(-100%);
 }
 
+// The quantity rules of a combination, in its row's panel and in the default
+// combination's card: fields wide enough for "0,125" or a unit's name, wrapping
+// on a phone instead of widening the grid.
+.bo-quantity-rules__field {
+    width: 11rem;
+    max-width: 100%;
+}
+
 // ---------- Reports: conversion funnel ----------
 
 // The funnel reads as two groups of steps, carts then orders: roomy rows, labels

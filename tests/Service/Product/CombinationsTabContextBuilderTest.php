@@ -164,6 +164,43 @@ final class CombinationsTabContextBuilderTest extends IntegrationTestCase
         self::assertNull($rows[(int) $unpricedSaleElement->getId()]['price_with_tax'], 'No price, no price with taxes either.');
     }
 
+    public function testAProductSoldByThePieceKeepsTheQuantityRulesOutOfSight(): void
+    {
+        $this->givenCombination(0, 's', 'blue');
+
+        $context = (new CombinationsTabContextBuilder())->build($this->product, null, 'fr_FR');
+
+        self::assertFalse($context['has_quantity_rules']);
+        foreach ($context['pse_rows'] as $row) {
+            self::assertSame(['1', '1', 0, '', '', ''], [$row['min_quantity'], $row['quantity_step'], $row['quantity_decimals'], $row['unit_quantity'], $row['reference_unit_quantity'], $row['unit_code']]);
+            self::assertFalse($row['has_quantity_rule']);
+        }
+    }
+
+    public function testTheRulesReadInTheAdminsLanguageAndTheUnitsAreNamedInIt(): void
+    {
+        if (!class_exists('Thelia\\Domain\\Catalog\\Quantity\\UnitCode')) {
+            self::markTestSkipped('The installed core predates the quantity rules of a combination.');
+        }
+
+        $bottle = $this->factory->productSaleElement($this->product, ['minQuantity' => 2, 'quantityStep' => 6, 'unitQuantity' => 0.75, 'referenceUnitQuantity' => 1, 'unitCode' => 'l']);
+        $this->factory->attributeCombination($bottle, $this->values['s']);
+
+        $french = (new CombinationsTabContextBuilder())->build($this->product, null, 'fr_FR');
+        $row = array_column($french['pse_rows'], null, 'id')[(int) $bottle->getId()];
+
+        self::assertTrue($french['has_quantity_rules']);
+        self::assertSame(['2', '6', 0, '0,75', '1', 'l', true], [$row['min_quantity'], $row['quantity_step'], $row['quantity_decimals'], $row['unit_quantity'], $row['reference_unit_quantity'], $row['unit_code'], $row['has_quantity_rule']]);
+        self::assertSame([0, 1, 2, 3], $french['decimals_choices']);
+        self::assertSame(['pc', 'kg', 'g', 'l', 'ml', 'm', 'cm', 'm2', 'm3'], array_column($french['unit_choices'], 'code'));
+        self::assertContains('kilogramme (kg)', array_column($french['unit_choices'], 'label'));
+        self::assertContains('mètre carré (m²)', array_column($french['unit_choices'], 'label'));
+
+        $english = (new CombinationsTabContextBuilder())->build($this->product, null, 'en_US');
+        self::assertSame('0.75', array_column($english['pse_rows'], null, 'id')[(int) $bottle->getId()]['unit_quantity']);
+        self::assertContains('kilogram (kg)', array_column($english['unit_choices'], 'label'));
+    }
+
     /**
      * @param list<int> $createdIds
      *

@@ -1,4 +1,4 @@
-<div data-testid="product-combinations-tab">
+<div data-testid="product-combinations-tab" data-controller="bo-combination-quantity-rules">
     {{ safe_hook('product.combinations-tab.top', { product: product.id }) }}
 
     <div class="card mb-3 bo-combinations-card" data-testid="product-combinations-section"
@@ -23,6 +23,15 @@
             {% else %}
                 <span></span>
             {% endif %}
+
+            {# Out of sight while every combination sells by the piece, from one, one by one. #}
+            <div class="form-check form-switch mb-1" data-testid="combinations-quantity-rules-switch-wrapper">
+                <input class="form-check-input" type="checkbox" role="switch" id="combinations-quantity-rules-switch"
+                       data-bo-combination-quantity-rules-target="switch"
+                       data-action="change->bo-combination-quantity-rules#toggle"
+                       data-testid="combinations-quantity-rules-switch"{{ has_quantity_rules ? ' checked' }}>
+                <label class="form-check-label" for="combinations-quantity-rules-switch">{{ 'Sold by measure, by pack or from a minimum'|trans }}</label>
+            </div>
 
             {% if has_combinations or template_attributes is not empty %}
                 <div class="d-flex flex-wrap gap-2" data-testid="combinations-toolbar">
@@ -53,6 +62,8 @@
                       data-controller="bo-pse-price-with-tax bo-combination-default"
                       data-bo-pse-price-with-tax-calc-url-value="{{ path('admin.product.calculate-price') }}"
                       data-bo-pse-price-with-tax-product-id-value="{{ product.id }}">
+                    {# Enter in a field submits through the form's first button: this one saves the grid, not a panel's "apply to every combination". #}
+                    <button type="submit" class="visually-hidden" tabindex="-1" aria-hidden="true"></button>
                     <input type="hidden" name="_token" value="{{ assignToken() }}">
                     <input type="hidden" name="product_id" value="{{ product.id }}">
                     <input type="hidden" name="currency" value="{{ currency.id }}">
@@ -163,6 +174,16 @@
                                                     <i class="bi bi-eye" aria-hidden="true"></i><i class="bi bi-eye-slash" aria-hidden="true"></i>
                                                     <span class="visually-hidden">{{ 'Visible in the shop'|trans }}</span>
                                                 </label>
+                                                <button type="button" class="btn btn-sm {{ row.has_quantity_rule ? 'btn-outline-primary' : 'btn-outline-secondary' }} bo-datatable__details-toggle text-nowrap"
+                                                        data-controller="bo-datatable-details" data-action="click->bo-datatable-details#toggle"
+                                                        data-bo-combination-quantity-rules-target="toggleable"{{ has_quantity_rules ? '' : ' hidden' }}
+                                                        aria-expanded="false" aria-controls="pse-quantity-rules-{{ row.id }}"
+                                                        title="{{ 'Quantity rules and units'|trans }}"
+                                                        data-testid="combinations-quantity-rules-toggle-{{ row.id }}">
+                                                    <i class="bi bi-rulers" aria-hidden="true"></i>
+                                                    <span class="visually-hidden">{{ 'Quantity rules and units'|trans }}</span>
+                                                    <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                                                </button>
                                                 {{ include('@BackOfficeDefaultTwig/catalog/product/_combination_row_actions.html.twig', { row: row, product: product }, with_context = false) }}
                                             </div>
                                         </td>
@@ -191,7 +212,7 @@
                                         <td></td>
                                         <td>
                                             <div class="input-group input-group-sm">
-                                                <input type="number" step="any" name="price[]" value="{{ row.price }}" data-bulk-field="price" class="form-control text-end bo-combinations-grid__number"{% if row.price is null %} required{% endif %}
+                                                <input type="number" step="any" id="{{ field_id }}-price" name="price[]" value="{{ row.price }}" data-bulk-field="price" class="form-control text-end bo-combinations-grid__number"{% if row.price is null %} required{% endif %}
                                                        aria-label="{{ 'Price excl. taxes'|trans }}"
                                                        data-bo-pse-price-with-tax-target="priceExcl"
                                                        data-action="blur->bo-pse-price-with-tax#onPriceExclBlur">
@@ -277,6 +298,17 @@
                                         <td class="bo-combinations-grid__handle-cont"></td>
                                         <td colspan="{{ 7 + module_columns }}">
                                             {{ include('@BackOfficeDefaultTwig/catalog/product/_combination_more_fields.html.twig', { row: row, field_id: field_id, brand_options: brand_options, product_brand_title: product_brand_title }, with_context = false) }}
+                                        </td>
+                                    </tr>
+                                    <tr class="bo-datatable__details" id="pse-quantity-rules-{{ row.id }}" data-detail-for="{{ row.id }}" hidden
+                                        data-controller="bo-pse-reference-price"
+                                        data-bo-pse-reference-price-calc-url-value="{{ path('admin.product.calculate-reference-price') }}"
+                                        data-bo-pse-reference-price-price-selector-value="#{{ field_id }}-price"
+                                        data-bo-pse-reference-price-tax-rule-selector-value="[name=&quot;tax_rule&quot;]"
+                                        data-bo-pse-reference-price-currency-id-value="{{ currency.id }}">
+                                        <td class="bo-combinations-grid__handle-cont"></td>
+                                        <td colspan="{{ 7 + module_columns }}">
+                                            {{ include('@BackOfficeDefaultTwig/catalog/product/_combination_quantity_rules.html.twig', { rule: row, keyed: true }) }}
                                         </td>
                                     </tr>
                                     {# product.combinations-row keeps its contract: it is rendered inside a line, where a module returns its own <tr> lines, as under the line of a combination before. #}
@@ -452,6 +484,7 @@
 
                     <form method="post" action="{{ path('admin.product.combination.defaut-price.update') }}"
                           data-testid="default-pse-form"
+                          data-bo-unsaved-changes-target="form"
                           data-controller="bo-pse-price-with-tax"
                           data-bo-pse-price-with-tax-calc-url-value="{{ path('admin.product.calculate-price') }}"
                           data-bo-pse-price-with-tax-product-id-value="{{ product.id }}">
@@ -636,6 +669,19 @@
                                         {{ safe_hook('product.details-promotion-form', { product: product.id, location: 'product_details_promotion_form' }) }}
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+
+                        <div class="card mt-3" data-bo-combination-quantity-rules-target="toggleable"{{ has_quantity_rules ? '' : ' hidden' }}
+                             data-testid="default-pse-quantity-rules"
+                             data-controller="bo-pse-reference-price"
+                             data-bo-pse-reference-price-calc-url-value="{{ path('admin.product.calculate-reference-price') }}"
+                             data-bo-pse-reference-price-price-selector-value="#default_pse_price"
+                             data-bo-pse-reference-price-tax-rule-selector-value="#default_pse_tax_rule"
+                             data-bo-pse-reference-price-currency-id-value="{{ currency.id }}">
+                            <div class="card-body">
+                                <h2 class="h6 mb-3">{{ 'Quantity rules and units'|trans }}</h2>
+                                {{ include('@BackOfficeDefaultTwig/catalog/product/_combination_quantity_rules.html.twig', { rule: default_pse, keyed: false }) }}
                             </div>
                         </div>
 
