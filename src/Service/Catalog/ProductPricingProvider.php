@@ -51,7 +51,7 @@ final class ProductPricingProvider
         $snapshots = [];
         foreach ($productIds as $productId) {
             $price = $prices[$productId] ?? null;
-            $stock = $stocks[$productId] ?? ['quantity' => 0.0, 'count' => 0];
+            $stock = $stocks[$productId] ?? ['quantity' => 0.0, 'count' => 0, 'decimals' => 0, 'unit_code' => null];
 
             $untaxed = (float) ($price['price'] ?? 0.0);
             $untaxedPromo = (float) ($price['promo_price'] ?? 0.0);
@@ -66,6 +66,8 @@ final class ProductPricingProvider
                 onSale: $onSale,
                 quantity: (float) $stock['quantity'],
                 saleElementCount: (int) $stock['count'],
+                quantityDecimals: $stock['decimals'],
+                unitCode: $stock['unit_code'],
             );
         }
 
@@ -110,11 +112,15 @@ final class ProductPricingProvider
     /**
      * @param list<int> $productIds
      *
-     * @return array<int, array{quantity: float, count: int}>
+     * @return array<int, array{quantity: float, count: int, decimals: int, unit_code: string|null}>
      */
     private function fetchStocks(array $productIds): array
     {
-        $sql = 'SELECT product_id, COALESCE(SUM(quantity), 0) AS total, COUNT(*) AS pse_count
+        // A sum of kilograms and pieces has no unit: the unit is only kept when every
+        // combination of the product is sold in the same one.
+        $sql = 'SELECT product_id, COALESCE(SUM(quantity), 0) AS total, COUNT(*) AS pse_count,
+                       MAX(quantity_decimals) AS decimals,
+                       IF(COUNT(DISTINCT COALESCE(unit_code, \'\')) = 1, MAX(unit_code), NULL) AS unit_code
                 FROM product_sale_elements
                 WHERE product_id IN ('.$this->placeholders($productIds).')
                 GROUP BY product_id';
@@ -128,6 +134,8 @@ final class ProductPricingProvider
             $rows[(int) $row['product_id']] = [
                 'quantity' => (float) $row['total'],
                 'count' => (int) $row['pse_count'],
+                'decimals' => (int) $row['decimals'],
+                'unit_code' => $row['unit_code'] !== null ? (string) $row['unit_code'] : null,
             ];
         }
 

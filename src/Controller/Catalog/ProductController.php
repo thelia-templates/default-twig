@@ -767,7 +767,7 @@ final class ProductController
             'promo_price_html' => $this->pricingPresenter->promoPrice($pricing, $uiLocale),
             'stock_html' => $isBundle
                 ? \sprintf('<span class="text-muted" title="%s" data-testid="bo-product-bundle-stock">-</span>', htmlspecialchars($this->translator->trans('The stock of a bundle is the one of its components')))
-                : $this->pricingPresenter->stock($pricing),
+                : $this->pricingPresenter->stock($pricing, $uiLocale),
             'visible' => (bool) $product->getVisible(),
             'position' => (int) $product->getPosition(),
             'toggle_visible_url' => $this->urls->generate(

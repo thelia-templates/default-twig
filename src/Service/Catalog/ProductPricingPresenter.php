@@ -16,6 +16,8 @@ namespace BackOfficeDefaultTwigBundle\Service\Catalog;
 
 use BackOfficeDefaultTwigBundle\Service\I18n\MoneyFormatter;
 use Symfony\Contracts\Translation\TranslatorInterface;
+use Thelia\Domain\Catalog\Quantity\QuantityFormatter;
+use Thelia\Domain\Catalog\Quantity\UnitCode;
 use Thelia\Model\CurrencyQuery;
 
 /**
@@ -29,6 +31,7 @@ final class ProductPricingPresenter
     public function __construct(
         private readonly TranslatorInterface $translator,
         private readonly MoneyFormatter $money,
+        private readonly QuantityFormatter $quantities,
     ) {
     }
 
@@ -61,9 +64,14 @@ final class ProductPricingPresenter
         return $pair;
     }
 
-    public function stock(ProductPricingSnapshot $snapshot): string
+    public function stock(ProductPricingSnapshot $snapshot, string $locale): string
     {
-        $quantity = $this->formatQuantity($snapshot->quantity);
+        $quantity = $this->quantities->format(
+            $snapshot->quantity,
+            $this->decimalsOf($snapshot),
+            $snapshot->unitCode !== null ? UnitCode::tryFrom($snapshot->unitCode) : null,
+            $locale,
+        );
         $class = $snapshot->quantity <= 0.0 ? 'text-bg-danger-subtle text-danger-emphasis' : 'text-bg-light';
 
         $tooltip = $snapshot->saleElementCount > 1
@@ -91,11 +99,15 @@ final class ProductPricingPresenter
         );
     }
 
-    private function formatQuantity(float $quantity): string
+    /**
+     * The decimals the combinations are sold with. A stock written before they had rules
+     * (12.5 of a combination sold by the piece) keeps the two decimals it was shown with.
+     */
+    private function decimalsOf(ProductPricingSnapshot $snapshot): int
     {
-        return $quantity === floor($quantity)
-            ? number_format($quantity, 0, ',', ' ')
-            : number_format($quantity, 2, ',', ' ');
+        $scaled = $snapshot->quantity * 10 ** $snapshot->quantityDecimals;
+
+        return abs($scaled - round($scaled)) < 1e-6 ? $snapshot->quantityDecimals : max($snapshot->quantityDecimals, 2);
     }
 
     private function currencyCode(): ?string

@@ -19,7 +19,8 @@ namespace BackOfficeDefaultTwigBundle\Service\Catalog;
  *
  * Amounts come from the default sale element in the default currency; the taxed
  * values are computed with the shop default country. `quantity` sums every sale
- * element so a product with combinations reports its whole stock.
+ * element so a product with combinations reports its whole stock, written with the
+ * most decimals its combinations are sold with, and in their unit when they share one.
  */
 final readonly class ProductPricingSnapshot
 {
@@ -31,6 +32,8 @@ final readonly class ProductPricingSnapshot
         public bool $onSale = false,
         public float $quantity = 0.0,
         public int $saleElementCount = 0,
+        public int $quantityDecimals = 0,
+        public ?string $unitCode = null,
     ) {
     }
 }
