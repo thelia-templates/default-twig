@@ -99,15 +99,21 @@ enum OrderRoundingRule
     }
 
     /**
-     * The three figures of one order line, built so that they add up the way
-     * Order::getTotalAmount() adds up the order: summing `ht` over the lines gives
-     * the untaxed total, summing `ttc` gives the taxed total, and `tax` is the gap
-     * between the two rather than a rounding of its own.
+     * The three figures of one order line: `ht` and `ttc` are the unit prices times the
+     * quantity, and `tax` is the gap between the two rather than a rounding of its own.
+     * The legacy rule leaves them unrounded; every other rule rounds each of them to the
+     * cent (the sum-of-roundings rule rounds the unit prices first).
      *
      * Outside the legacy rule the order is charged in cents, rounded half up by
      * round(): the line is rounded the same way before it is shown. The money
      * formatter would otherwise round it half to even, and a line sold by measure
      * (1.25 at 14.82, 18.525) would read a cent below the total it makes.
+     *
+     * Outside the legacy rule the lines do not always add up to the order:
+     * Order::getTotalAmount() rounds the sum of the unrounded lines, here each line is
+     * rounded first. Two lines of
+     * 18.525 show 18.53 + 18.53 = 37.06 for an order total of 37.05. The one cent
+     * of difference is accepted.
      *
      * @return array{ht: float, tax: float, ttc: float}
      */
