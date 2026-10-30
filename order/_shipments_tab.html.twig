@@ -68,7 +68,7 @@
                             <td>
                                 <ul class="list-unstyled mb-0 small">
                                     {% for line in shipment.lines %}
-                                        <li><span dir="ltr">{{ line.quantity }}</span> &times; {{ line.title }} <span class="font-monospace small">{{ line.ref }}</span></li>
+                                        <li><span dir="ltr">{{ line.quantity|format_quantity(line.quantity_decimals, line.unit_code) }}</span> &times; {{ line.title }} <span class="font-monospace small">{{ line.ref }}</span></li>
                                     {% endfor %}
                                 </ul>
                             </td>
