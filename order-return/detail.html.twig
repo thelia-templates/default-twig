@@ -103,9 +103,9 @@
                                             {% if line.ref %}<div class="text-muted small"><code>{{ line.ref }}</code></div>{% endif %}
                                             {% if line.attributes %}<div class="text-muted small" data-testid="order-return-line-attributes">{{ line.attributes|join(', ') }}</div>{% endif %}
                                         </td>
-                                        <td class="text-center">{{ line.quantity|number_format(0) }}</td>
+                                        <td class="text-center"><span dir="ltr">{{ line.quantity|format_quantity(line.quantity_decimals, line.unit_code) }}</span></td>
                                         <td class="text-center">
-                                            {{ line.quantity_received|number_format(0) }}
+                                            <span dir="ltr">{{ line.quantity_received|format_quantity(line.quantity_decimals, line.unit_code) }}</span>
                                             {% if line.quantity_received > 0 %}
                                                 {% if line.resellable %}
                                                     <span class="badge text-bg-success ms-1">{{ 'Back in stock'|trans }}</span>

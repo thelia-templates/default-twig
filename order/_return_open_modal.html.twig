@@ -33,13 +33,13 @@
                                             <div class="fw-semibold">{{ line.title }}</div>
                                             {% if line.ref %}<div class="text-muted small"><code>{{ line.ref }}</code></div>{% endif %}
                                         </td>
-                                        <td class="text-center">{{ line.remaining|number_format(0) }}</td>
+                                        <td class="text-center"><span dir="ltr">{{ line.remaining|format_quantity(line.quantity_decimals, line.unit_code) }}</span></td>
                                         <td class="text-center" style="max-width: 8rem;">
                                             <label class="visually-hidden" for="return-quantity-{{ line.order_product_id }}">{{ 'Quantity'|trans }}</label>
                                             <input type="number" class="form-control form-control-sm text-center"
                                                    id="return-quantity-{{ line.order_product_id }}"
                                                    name="quantity[{{ line.order_product_id }}]"
-                                                   value="0" min="0" max="{{ line.remaining|number_format(0) }}" step="1"
+                                                   value="0" min="0" max="{{ line.remaining }}" step="{{ line.input_step }}"
                                                    data-testid="order-return-open-quantity-{{ line.order_product_id }}">
                                         </td>
                                     </tr>

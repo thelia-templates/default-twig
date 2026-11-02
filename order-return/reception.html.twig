@@ -59,14 +59,14 @@
                                         {% if line.ref %}<div class="text-muted small"><code>{{ line.ref }}</code></div>{% endif %}
                                         {% if line.attributes %}<div class="text-muted small" data-testid="order-return-line-attributes">{{ line.attributes|join(', ') }}</div>{% endif %}
                                     </td>
-                                    <td class="text-center">{{ line.quantity|number_format(0) }}</td>
+                                    <td class="text-center"><span dir="ltr">{{ line.quantity|format_quantity(line.quantity_decimals, line.unit_code) }}</span></td>
                                     <td class="text-center" style="max-width: 8rem;">
                                         <label class="visually-hidden" for="quantity-received-{{ line.id }}">{{ 'Received'|trans }}</label>
                                         <input type="number" class="form-control form-control-sm text-center"
                                                id="quantity-received-{{ line.id }}"
                                                name="quantity_received[{{ line.id }}]"
-                                               value="{{ line.quantity_received > 0 ? line.quantity_received|number_format(0) : line.quantity|number_format(0) }}"
-                                               min="0" max="{{ line.quantity|number_format(0) }}" step="1"
+                                               value="{{ line.quantity_received > 0 ? line.quantity_received : line.quantity }}"
+                                               min="0" max="{{ line.quantity }}" step="{{ line.input_step }}"
                                                data-testid="order-return-reception-quantity-{{ line.id }}">
                                     </td>
                                     <td>

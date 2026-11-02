@@ -504,6 +504,62 @@ final class OrderReturnBackOfficeTest extends WebIntegrationTestCase
         self::assertSame('Size: XL', $row->filter('[data-testid="order-return-line-attributes"]')->text());
     }
 
+    public function testAReturnOfALineSoldByMeasureIsOpenedAndReceivedWithItsDecimals(): void
+    {
+        $this->loginFullAdmin();
+        $product = $this->factory->product($this->factory->category(), $this->factory->taxRule(), $this->factory->currency());
+        $pse = $this->factory->productSaleElement($product, ['quantity' => 10]);
+        $order = $this->factory->order($this->factory->customer($this->factory->customerTitle()), ['statusCode' => OrderStatus::CODE_PAID]);
+        $orderProduct = $this->orderProduct($order, $pse, 1.25, 'Weighed cheese');
+        $orderProduct->setQuantityDecimals(2)->setUnitCode('kg')->save($this->getPropelConnection());
+
+        $crawler = $this->client->request('GET', '/admin/order/update/'.$order->getId());
+        self::assertSame(200, $this->client->getResponse()->getStatusCode());
+
+        $field = $crawler->filter('[data-testid="order-return-open-quantity-'.$orderProduct->getId().'"]');
+        self::assertMatchesRegularExpression('/^1[.,]25\s*kg$/u', trim($field->closest('tr')->filter('td')->eq(1)->text()), 'What is still returnable reads like the order line.');
+        self::assertSame('1.25', $field->attr('max'), 'The whole weighed quantity may be returned, not its integer part.');
+        self::assertSame('0.01', $field->attr('step'));
+
+        $this->client->request('POST', '/admin/order/'.$order->getId().'/return/open', [
+            '_token' => $this->tokenOf('/admin/order/update/'.$order->getId()),
+            'quantity' => [(string) $orderProduct->getId() => '1.25'],
+        ]);
+        self::assertSame(302, $this->client->getResponse()->getStatusCode());
+
+        $return = OrderReturnQuery::create()->filterByOrderId((int) $order->getId())->findOne($this->getPropelConnection());
+        self::assertNotNull($return, 'The return is opened.');
+        $lines = $return->getOrderReturnLines();
+        self::assertCount(1, $lines);
+        self::assertSame(1.25, (float) $lines->getFirst()->getQuantity(), 'The decimal quantity reaches the return untruncated.');
+
+        $crawler = $this->client->request('GET', '/admin/return/'.$return->getId());
+        $row = $crawler->filter('[data-testid="order-return-line-'.$lines->getFirst()->getId().'"]');
+        self::assertMatchesRegularExpression('/^1[.,]25\s*kg$/u', trim($row->filter('td')->eq(1)->text()), 'The sheet of the return reads the requested quantity like the order line.');
+
+        $return->setOrderReturnStatus(OrderReturnStatusQuery::create()->findOneByCode(OrderReturnStatus::CODE_ACCEPTED))->save($this->getPropelConnection());
+        $crawler = $this->client->request('GET', '/admin/return/'.$return->getId().'/reception');
+        self::assertSame(200, $this->client->getResponse()->getStatusCode());
+        $row = $crawler->filter('[data-testid="order-return-reception-line-'.$lines->getFirst()->getId().'"]');
+        self::assertMatchesRegularExpression('/^1[.,]25\s*kg$/u', trim($row->filter('td')->eq(1)->text()));
+        $received = $row->filter('input[type="number"]');
+        self::assertSame('1.25', $received->attr('value'));
+        self::assertSame('1.25', $received->attr('max'));
+        self::assertSame('0.01', $received->attr('step'));
+    }
+
+    public function testAReturnOfALineSoldByThePieceKeepsAWholeStep(): void
+    {
+        $this->loginFullAdmin();
+        [$return, , $line] = $this->requestedReturn(OrderReturnStatus::CODE_ACCEPTED);
+
+        $crawler = $this->client->request('GET', '/admin/return/'.$return->getId().'/reception');
+        $row = $crawler->filter('[data-testid="order-return-reception-line-'.$line->getId().'"]');
+        self::assertSame('2', trim($row->filter('td')->eq(1)->text()));
+        self::assertSame('1', $row->filter('input[type="number"]')->attr('step'));
+        self::assertSame('2', $row->filter('input[type="number"]')->attr('max'));
+    }
+
     public function testTheReasonsConfigurationScreenIsServed(): void
     {
         $this->loginFullAdmin();

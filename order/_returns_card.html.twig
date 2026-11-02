@@ -5,7 +5,7 @@
     Expects:
       - order:            the Order model
       - order_returns:    list of { id, ref, status_title, status_color, url, created_at }
-      - returnable_lines: list of { order_product_id, title, ref, remaining }
+      - returnable_lines: list of { order_product_id, title, ref, remaining, quantity_decimals, unit_code, input_step }
       - return_reasons:   list of { id, title }
       - can_create:       whether the admin may open a return
       - token:            CSRF token
