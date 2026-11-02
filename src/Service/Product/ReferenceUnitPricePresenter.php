@@ -42,6 +42,6 @@ final readonly class ReferenceUnitPricePresenter
 
         $decimals = str_contains($written, '.') ? \strlen($written) - strpos($written, '.') - 1 : 0;
 
-        return $amount.' / '.$this->quantities->format($price->referenceUnitQuantity, $decimals, $price->unitCode, $locale);
+        return $amount.' / '.$this->quantities->formatMeasure($price->referenceUnitQuantity, $decimals, $price->unitCode, $locale);
     }
 }

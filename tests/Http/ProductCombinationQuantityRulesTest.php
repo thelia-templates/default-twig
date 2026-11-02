@@ -285,6 +285,27 @@ final class ProductCombinationQuantityRulesTest extends WebIntegrationTestCase
         self::assertStringEndsWith(' / l', (string) $payload['formatted']);
     }
 
+    public function testThePreviewWritesTheUnitOfAReferenceQuantityOfAnArticleSoldByThePiece(): void
+    {
+        $this->loginFullAdmin();
+
+        // A 250 g jar sold by the piece (no decimals): its reference quantity still is a measure.
+        $this->client->request('GET', self::PREVIEW_URL, [
+            'price' => '3',
+            'tax_rule_id' => 0,
+            'currency_id' => $this->defaultCurrency()->getId(),
+            'quantity_decimals' => '0',
+            'unit_quantity' => '250',
+            'reference_unit_quantity' => '100',
+            'unit_code' => 'g',
+        ]);
+
+        self::assertSame(200, $this->client->getResponse()->getStatusCode());
+        $payload = json_decode((string) $this->client->getResponse()->getContent(), true);
+        self::assertSame(1.2, $payload['result']);
+        self::assertStringEndsWith(' / 100 g', (string) $payload['formatted']);
+    }
+
     public function testThePreviewIsEmptyWithoutAUnitAndRefusesAnUnreadableNumber(): void
     {
         $this->loginFullAdmin();
