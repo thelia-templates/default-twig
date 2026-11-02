@@ -104,6 +104,8 @@ final readonly class OrderShipmentContextBuilder
                     'title' => $titles[$lineId]['title'] ?? '',
                     'ref' => $titles[$lineId]['ref'] ?? '',
                     'remaining' => $left,
+                    'quantity_decimals' => $titles[$lineId]['quantity_decimals'] ?? 0,
+                    'unit_code' => $titles[$lineId]['unit_code'] ?? null,
                 ];
             }
         }
