@@ -38,6 +38,12 @@ final class QuantityExtensionTest extends TestCase
         self::assertSame('1.25 kg', $this->render('en_US', '{{ 1.25|format_quantity(2, "kg") }}'));
     }
 
+    public function testTheLanguageGivenToTheFilterWinsOverTheRequestsOne(): void
+    {
+        self::assertSame('1,25 kg', $this->render('en_US', '{{ 1.25|format_quantity(2, "kg", "fr_FR") }}'));
+        self::assertSame('1.25 kg', $this->render('fr_FR', '{{ 1.25|format_quantity(2, "kg", "en_US") }}'));
+    }
+
     public function testAQuantitySoldByThePieceReadsAsAWholeNumberWithoutUnit(): void
     {
         self::assertSame('6', $this->render('fr_FR', '{{ 6.0|format_quantity(0, null) }}'));

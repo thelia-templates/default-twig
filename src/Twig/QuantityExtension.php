@@ -21,9 +21,10 @@ use Twig\Extension\AbstractExtension;
 use Twig\TwigFilter;
 
 /**
- * `{{ quantity|format_quantity(decimals, unitCode) }}`: a quantity with the decimals of its
- * combination and the symbol of its unit, in the admin's language ("1,25 kg"). The core
- * writes it; each theme only declares its own filter.
+ * `{{ quantity|format_quantity(decimals, unitCode, locale) }}`: a quantity with the decimals of its
+ * combination and the symbol of its unit, in the language given or else the admin's ("1,25 kg"). The
+ * core writes it; each theme only declares its own filter. The e-mail and PDF templates call it
+ * with the language of their document.
  */
 final class QuantityExtension extends AbstractExtension
 {
@@ -36,7 +37,7 @@ final class QuantityExtension extends AbstractExtension
     public function getFilters(): array
     {
         return [
-            new TwigFilter('format_quantity', fn (float|int|string|null $quantity, int|string|null $decimals = 0, ?string $unitCode = null): string => $this->formatter->format((float) $quantity, (int) $decimals, UnitCode::tryFrom((string) $unitCode), $this->requestStack->getCurrentRequest()?->getLocale())),
+            new TwigFilter('format_quantity', fn (float|int|string|null $quantity, int|string|null $decimals = 0, ?string $unitCode = null, ?string $locale = null): string => $this->formatter->format((float) $quantity, (int) $decimals, UnitCode::tryFrom((string) $unitCode), $locale ?? $this->requestStack->getCurrentRequest()?->getLocale())),
         ];
     }
 }
