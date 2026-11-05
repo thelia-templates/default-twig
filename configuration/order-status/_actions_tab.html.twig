@@ -3,6 +3,7 @@
 <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
     <p class="text-muted small mb-0">
         {{ 'Actions run in this order once the status is saved. One that fails is recorded below and does not undo the status change, and the next actions still run.'|trans }}
+        {{ 'A stock action is applied with the status change instead: when the stock cannot follow, the status change is refused.'|trans }}
     </p>
     {% if can_edit and action_type_choices|length > 0 %}
         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#order-status-action-create-modal" data-testid="order-status-action-create-button">
@@ -17,13 +18,13 @@
         column('position', 'Run order'|trans, 'center', hideBelow: 'md'),
         column('trigger', 'Trigger'|trans, 'start'),
         column_html('type_html', 'Action'|trans, 'start'),
-        column('summary', 'Settings'|trans, 'start', hideBelow: 'lg'),
+        column('summary', 'Settings'|trans, 'start', hideBelow: 'lg', wrap: true),
         column_html('failures_html', 'Failures'|trans, 'center'),
         column_toggle('active', 'Active'|trans, can_edit ? 'toggle_url' : null),
         column_actions('_actions', 'Actions'|trans),
     ],
     rows: action_rows|map(row => row|merge({
-        type_html: '<span>' ~ row.type_label|e ~ '</span>' ~ (row.installed ? '' : ' <span class="badge text-bg-danger" title="' ~ ('The module providing this action is missing or disabled: it will be recorded as a failure.'|trans)|e ~ '">' ~ ('missing'|trans)|e ~ '</span>'),
+        type_html: '<span>' ~ row.type_label|e ~ '</span>' ~ (row.installed ? '' : ' <span class="badge text-bg-danger" title="' ~ ('The module providing this action is missing or disabled: it will be recorded as a failure.'|trans)|e ~ '">' ~ ('missing'|trans)|e ~ '</span>') ~ (row.warnings|map(warning => '<div class="small text-warning-emphasis mt-1" data-testid="order-status-action-warning-' ~ row.id ~ '"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i> ' ~ warning|e ~ '</div>')|join),
         failures_html: row.failures > 0 ? '<span class="badge text-bg-warning" data-testid="order-status-action-failures-' ~ row.id ~ '">' ~ row.failures ~ '</span>' : '<span class="text-muted">0</span>',
     })),
     emptyMessage: 'No action yet: entering this status changes nothing beyond what the core always does.'|trans,
@@ -35,6 +36,44 @@
         'data-bo-sortable-param-name-value': 'action_id',
     } : {},
 }) }}
+
+{% if stock_simulation is not null %}
+    <div class="card mt-3" data-testid="order-status-stock-simulation">
+        <div class="card-header">{{ 'Check the stock operation of a status change'|trans }}</div>
+        <div class="card-body">
+            <p class="text-muted small">{{ 'Type an order reference and pick the status to move it to: the stock operation it would apply is shown, and nothing is moved.'|trans }}</p>
+            <form method="get" action="{{ path('admin.order-status.update', { order_status_id: status.id }) }}" class="row g-2 align-items-end">
+                <input type="hidden" name="tab" value="actions">
+                <div class="col-md-4">
+                    <label class="form-label" for="stock-simulation-ref">{{ 'Order reference'|trans }}</label>
+                    <input type="text" class="form-control{{ stock_simulation.error ? ' is-invalid' : '' }}" id="stock-simulation-ref" name="simulate_ref" value="{{ stock_simulation.reference }}" required
+                           data-testid="order-status-stock-simulation-ref">
+                    {% if stock_simulation.error %}
+                        <div class="invalid-feedback" data-testid="order-status-stock-simulation-error">{{ stock_simulation.error }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="stock-simulation-status">{{ 'Move it to'|trans }}</label>
+                    <select class="form-select" id="stock-simulation-status" name="simulate_status" data-testid="order-status-stock-simulation-status">
+                        {% for choice in stock_simulation.status_choices %}
+                            <option value="{{ choice.id }}"{{ choice.id == stock_simulation.status_id ? ' selected' : '' }}>{{ choice.title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-auto">
+                    <button type="submit" class="btn btn-outline-primary" data-testid="order-status-stock-simulation-submit">{{ 'Check'|trans }}</button>
+                </div>
+            </form>
+            {% if stock_simulation.result %}
+                <p class="mt-3 mb-0" data-testid="order-status-stock-simulation-result">
+                    <code>{{ stock_simulation.result.order_ref }}</code> &rarr; {{ stock_simulation.result.status_title }} :
+                    <strong>{{ stock_simulation.result.operation }}</strong>.
+                    {{ stock_simulation.result.decided_by }}
+                </p>
+            {% endif %}
+        </div>
+    </div>
+{% endif %}
 
 {% if action_recent_failures|length > 0 %}
     <div class="card mt-3" data-testid="order-status-action-failures">
@@ -96,25 +135,44 @@
                     </div>
 
                     {% for type, fields in action_fields_by_type %}
-                        <div data-bo-order-status-action-form-target="fields" data-type="{{ type }}" hidden>
+                        <div class="row g-3 mb-3" data-bo-order-status-action-form-target="fields" data-type="{{ type }}" hidden>
                             {% for field in fields %}
-                                <div class="mb-3">
-                                    <label class="form-label" for="action-field-{{ type }}-{{ field.name }}">{{ field.label }}</label>
-                                    {% if field.type == 'choice' %}
-                                        <select class="form-select" name="payload[{{ type }}][{{ field.name }}]" id="action-field-{{ type }}-{{ field.name }}" {% if field.required %}required{% endif %}
-                                                data-testid="order-status-action-field-{{ type }}-{{ field.name }}">
-                                            {% for value, label in field.choices %}
-                                                <option value="{{ value }}">{{ label }}</option>
-                                            {% endfor %}
-                                        </select>
-                                    {% else %}
-                                        <input type="text" class="form-control" name="payload[{{ type }}][{{ field.name }}]" id="action-field-{{ type }}-{{ field.name }}" {% if field.required %}required{% endif %}
-                                               data-testid="order-status-action-field-{{ type }}-{{ field.name }}">
-                                    {% endif %}
-                                </div>
+                                {% if field.type == 'multiple_choice' %}
+                                    <fieldset class="col-md-6" data-testid="order-status-action-field-{{ type }}-{{ field.name }}">
+                                        <legend class="form-label fs-6">{{ field.label }}</legend>
+                                        {% if field.choices is empty %}
+                                            <p class="text-muted small mb-0">{{ 'Nothing to choose from: no module is installed for it.'|trans }}</p>
+                                        {% else %}
+                                            <div class="border rounded px-3 py-2">
+                                                {% for value, label in field.choices %}
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" name="payload[{{ type }}][{{ field.name }}][]" value="{{ value }}" id="action-field-{{ type }}-{{ field.name }}-{{ loop.index }}">
+                                                        <label class="form-check-label" for="action-field-{{ type }}-{{ field.name }}-{{ loop.index }}">{{ label }}</label>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                            <div class="form-text">{{ 'Nothing ticked: no limit.'|trans }}</div>
+                                        {% endif %}
+                                    </fieldset>
+                                {% else %}
+                                    <div class="col-12">
+                                        <label class="form-label" for="action-field-{{ type }}-{{ field.name }}">{{ field.label }}</label>
+                                        {% if field.type == 'choice' %}
+                                            <select class="form-select" name="payload[{{ type }}][{{ field.name }}]" id="action-field-{{ type }}-{{ field.name }}" {% if field.required %}required{% endif %}
+                                                    data-testid="order-status-action-field-{{ type }}-{{ field.name }}">
+                                                {% for value, label in field.choices %}
+                                                    <option value="{{ value }}">{{ label }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        {% else %}
+                                            <input type="text" class="form-control" name="payload[{{ type }}][{{ field.name }}]" id="action-field-{{ type }}-{{ field.name }}" {% if field.required %}required{% endif %}
+                                                   data-testid="order-status-action-field-{{ type }}-{{ field.name }}">
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
                             {% endfor %}
                             {% if fields|length == 0 %}
-                                <p class="text-muted small">{{ 'This action has no setting.'|trans }}</p>
+                                <p class="col-12 text-muted small mb-0">{{ 'This action has no setting.'|trans }}</p>
                             {% endif %}
                         </div>
                     {% endfor %}
