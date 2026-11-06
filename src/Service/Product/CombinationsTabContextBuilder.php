@@ -14,11 +14,14 @@ declare(strict_types=1);
 
 namespace BackOfficeDefaultTwigBundle\Service\Product;
 
+use BackOfficeDefaultTwigBundle\Service\Bundle\BundleCore;
 use BackOfficeDefaultTwigBundle\Service\Catalog\ProductFilterCatalog;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\Exception\PropelException;
 use Thelia\Domain\Catalog\Product\Identifier\GtinDuplicateFinder;
 use Thelia\Domain\Catalog\Product\Identifier\GtinSharer;
+use Thelia\Domain\Catalog\Stock\OutOfStockPolicy;
+use Thelia\Domain\Catalog\Stock\StockSettings;
 use Thelia\Domain\Taxation\TaxEngine\Calculator;
 use Thelia\Model\Attribute;
 use Thelia\Model\AttributeAv;
@@ -40,6 +43,8 @@ final readonly class CombinationsTabContextBuilder
         private ProductFilterCatalog $catalog = new ProductFilterCatalog(),
         private CombinationLabeler $labeler = new CombinationLabeler(),
         private CombinationDisplayOrder $displayOrder = new CombinationDisplayOrder(),
+        private StockSettings $stockSettings = new StockSettings(),
+        private ?CombinationSellableReader $sellableReader = null,
     ) {
     }
 
@@ -52,7 +57,10 @@ final readonly class CombinationsTabContextBuilder
      *     tax_rule_id: int,
      *     tax_rules: list<array{id: int, title: string}>,
      *     currency: array{id: int, symbol: string, name: string, code: string, is_default: bool},
-     *     template_attributes: list<array{id: int, title: string, values: list<array{id: int, title: string}>}>
+     *     template_attributes: list<array{id: int, title: string, values: list<array{id: int, title: string}>}>,
+     *     stock_policies: list<array{value: int, label: string}>,
+     *     limited_policy: int,
+     *     default_low_stock_threshold: float
      * }
      */
     public function build(Product $product, ?int $currencyId = null): array
@@ -62,7 +70,11 @@ final readonly class CombinationsTabContextBuilder
         $rows = [];
         $hasCombinations = false;
         $taxed = $this->taxedPriceOf($product);
-        foreach ($this->displayOrder->of($product) as $pse) {
+        $combinations = $this->displayOrder->of($product);
+        // The combination of a bundle holds no stock of its own: the stock of its components decides, so no figure is shown.
+        $isBundle = BundleCore::present() && 1 === (int) $product->getIsBundle();
+        $sellable = $isBundle ? [] : ($this->sellableReader?->of($combinations) ?? []);
+        foreach ($combinations as $pse) {
             $description = $this->labeler->describe($pse, $locale);
             $hasCombinations = $hasCombinations || CombinationLabeler::DEFAULT_LABEL !== $description['label'];
 
@@ -85,6 +97,11 @@ final readonly class CombinationsTabContextBuilder
                 'price_with_tax' => $taxed($price?->getPrice()),
                 'sale_price_with_tax' => $taxed($price?->getPromoPrice()),
                 'quantity' => (float) $pse->getQuantity(),
+                'sellable' => $sellable[(int) $pse->getId()] ?? null,
+                'out_of_stock_policy' => OutOfStockPolicy::fromStored($pse->getOutOfStockPolicy())->value,
+                'preorder_limit' => $pse->getPreorderLimit(),
+                'restock_date' => $pse->getRestockDate('Y-m-d'),
+                'low_stock_threshold' => $pse->getLowStockThreshold(),
                 'weight' => (float) $pse->getWeight(),
                 'ean_code' => (string) $pse->getEanCode(),
                 'mpn' => (string) $pse->getMpn(),
@@ -128,6 +145,9 @@ final readonly class CombinationsTabContextBuilder
             ],
             'available_currencies' => $this->collectCurrencies(),
             'template_attributes' => $this->collectTemplateAttributes($product, $locale),
+            'stock_policies' => $this->stockPolicies(),
+            'limited_policy' => OutOfStockPolicy::Limited->value,
+            'default_low_stock_threshold' => $this->stockSettings->lowStockThreshold(),
             'brand_options' => $this->catalog->brands($locale),
             'product_brand_title' => $this->productBrandTitle($product, $locale),
         ];
@@ -319,5 +339,20 @@ final readonly class CombinationsTabContextBuilder
         }
 
         return $first;
+    }
+
+    /**
+     * @return list<array{value: int, label: string}> labels are translation keys, translated by the template
+     */
+    private function stockPolicies(): array
+    {
+        return array_map(static fn (OutOfStockPolicy $policy): array => [
+            'value' => $policy->value,
+            'label' => match ($policy) {
+                OutOfStockPolicy::Refuse => 'Refuse the sale',
+                OutOfStockPolicy::Unlimited => 'Keep selling',
+                OutOfStockPolicy::Limited => 'Sell up to a limit (preorder)',
+            },
+        ], OutOfStockPolicy::cases());
     }
 }
