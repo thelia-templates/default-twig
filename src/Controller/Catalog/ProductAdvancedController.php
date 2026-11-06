@@ -22,7 +22,10 @@ use BackOfficeDefaultTwigBundle\Service\Product\CombinationIdentifierNotices;
 use BackOfficeDefaultTwigBundle\Service\Product\CombinationPositionMover;
 use BackOfficeDefaultTwigBundle\Service\Product\CombinationsTabContextBuilder;
 use BackOfficeDefaultTwigBundle\Service\Product\GroupPricesContextBuilder;
+use BackOfficeDefaultTwigBundle\Service\Product\QuantityRuleSubmission;
+use BackOfficeDefaultTwigBundle\Service\Product\ReferenceUnitPricePresenter;
 use BackOfficeDefaultTwigBundle\Service\Product\SaleUnitValuesContextBuilder;
+use BackOfficeDefaultTwigBundle\Service\Product\UnknownUnitCodeException;
 use BackOfficeDefaultTwigBundle\Service\SaleUnit\RestrictedAdminGuard;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -52,6 +55,11 @@ use Thelia\Core\Security\Exception\TokenAuthenticationException;
 use Thelia\Core\Security\Resource\AdminResources;
 use Thelia\Domain\Catalog\Product\Identifier\InvalidGtinException;
 use Thelia\Domain\Catalog\Product\Identifier\InvalidMpnException;
+use Thelia\Domain\Catalog\Quantity\InvalidQuantityRuleException;
+use Thelia\Domain\Catalog\Quantity\QuantityRefusedException;
+use Thelia\Domain\Catalog\Quantity\QuantityRule;
+use Thelia\Domain\Catalog\Quantity\ReferenceUnitPriceCalculator;
+use Thelia\Domain\Catalog\Quantity\UnreadableQuantityException;
 use Thelia\Model\AccessoryQuery;
 use Thelia\Model\Attribute;
 use Thelia\Model\AttributeAvQuery;
@@ -113,6 +121,9 @@ final class ProductAdvancedController
         private readonly GroupPricesContextBuilder $groupPricesContextBuilder,
         private readonly RequestStack $requestStack,
         private readonly RestrictedAdminGuard $restricted,
+        private readonly QuantityRuleSubmission $quantityRules,
+        private readonly ReferenceUnitPriceCalculator $referenceUnitPrices,
+        private readonly ReferenceUnitPricePresenter $referenceUnitPricePresenter,
     ) {
     }
 
@@ -384,6 +395,70 @@ final class ProductAdvancedController
         ]);
     }
 
+    /**
+     * The price of a combination brought to its reference unit, while the merchant types:
+     * the price excluding taxes of the row is taxed with the rule of the product, as the
+     * shop shows it, and the core divides. Values not saved yet, so read from the query.
+     */
+    #[Route('/admin/product/calculate-reference-price', name: 'admin.product.calculate-reference-price', methods: ['GET'])]
+    public function calculateReferencePrice(Request $request): JsonResponse
+    {
+        if ($this->access->check(self::RESOURCE, [], AccessManager::VIEW) !== null) {
+            return new JsonResponse([], Response::HTTP_FORBIDDEN);
+        }
+
+        $query = $request->query;
+
+        try {
+            $rule = $this->quantityRules->read([
+                QuantityRuleSubmission::UNIT_QUANTITY => (string) $query->get('unit_quantity', ''),
+                QuantityRuleSubmission::REFERENCE_UNIT_QUANTITY => (string) $query->get('reference_unit_quantity', ''),
+                QuantityRuleSubmission::UNIT_CODE => (string) $query->get('unit_code', ''),
+            ]);
+        } catch (InvalidQuantityRuleException|UnreadableQuantityException|UnknownUnitCodeException $unreadable) {
+            return new JsonResponse(['result' => null, 'formatted' => null, 'error' => $unreadable->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        // The price field of the row is a number field: the browser posts it with a dot.
+        $price = (float) $query->get('price', 0);
+        $referencePrice = $rule !== null && $price > 0
+            ? $this->referenceUnitPrices->compute($this->taxedPrice($price, (int) $query->get('tax_rule_id', 0)), $rule)
+            : null;
+
+        if ($referencePrice === null) {
+            return new JsonResponse(['result' => null, 'formatted' => null]);
+        }
+
+        $currencyCode = CurrencyQuery::create()->findPk((int) $query->get('currency_id', 0))?->getCode();
+
+        return new JsonResponse([
+            'result' => $referencePrice->price,
+            'formatted' => $this->referenceUnitPricePresenter->format($referencePrice, $request->getLocale(), $currencyCode),
+        ]);
+    }
+
+    /**
+     * The price as the shop shows it, taxed in the default country; untaxed when the rule
+     * cannot be applied, as the taxed price preview does.
+     */
+    private function taxedPrice(float $price, int $taxRuleId): float
+    {
+        $taxRule = \Thelia\Model\TaxRuleQuery::create()->findPk($taxRuleId);
+        $country = \Thelia\Model\CountryQuery::create()->findOneByByDefault(1);
+        if ($taxRule === null || $country === null) {
+            return $price;
+        }
+
+        $calculator = new \Thelia\Domain\Taxation\TaxEngine\Calculator();
+        try {
+            $calculator->loadTaxRuleWithoutProduct($taxRule, $country);
+
+            return (float) $calculator->getTaxedPrice($price);
+        } catch (\Throwable) {
+            return $price;
+        }
+    }
+
     #[Route('/admin/product/load-converted-prices', name: 'admin.product.load-converted-prices', methods: ['GET'])]
     public function loadConvertedPrices(Request $request): JsonResponse
     {
@@ -628,7 +703,61 @@ final class ProductAdvancedController
     #[Route('/admin/product/combinations/update', name: 'admin.product.combination.update', methods: ['POST'])]
     public function combinationUpdate(Request $request, EventDispatcherInterface $events): Response
     {
-        // What these write holds for every sale unit.
+        if ($denied = $this->denyGridWrite($request)) {
+            return $denied;
+        }
+
+        $product = ProductQuery::create()->findPk((int) $request->request->get('product_id', 0));
+        if ($product === null) {
+            return new RedirectResponse($this->urls->generate('admin.products.default'));
+        }
+
+        return $this->saveGrid($request, $events, $product);
+    }
+
+    /**
+     * Saves the grid with the quantity rules of one combination given to every combination
+     * of the product: the rules a merchant typed in a row's panel, the other values of the
+     * grid as typed too, so nothing typed is lost. A combination posted for another product
+     * is left alone, whatever its id.
+     */
+    #[Route('/admin/product/combinations/quantity-rules/add-to-all', name: 'admin.product.combination.quantity-rules.add-to-all', methods: ['POST'])]
+    public function applyQuantityRulesToAll(Request $request, EventDispatcherInterface $events): Response
+    {
+        if ($denied = $this->denyGridWrite($request)) {
+            return $denied;
+        }
+
+        $form = $request->request;
+        $product = ProductQuery::create()->findPk((int) $form->get('product_id', 0));
+        if ($product === null) {
+            return new RedirectResponse($this->urls->generate('admin.products.default'));
+        }
+
+        $sourceId = (int) $form->get('quantity_rules_source', 0);
+        $source = $this->combinationsOf($product)[$sourceId] ?? null;
+        if ($source === null) {
+            return new RedirectResponse($this->urls->generate(self::EDIT_ROUTE, ['product_id' => $product->getId(), 'current_tab' => 'pse']));
+        }
+
+        try {
+            $rule = $this->quantityRules->fromGrid($form, $sourceId) ?? QuantityRule::fromProductSaleElements($source);
+        } catch (InvalidQuantityRuleException|UnreadableQuantityException|UnknownUnitCodeException $refusal) {
+            // Nothing is saved: the rules to spread are the very ones refused.
+            $this->identifierNotices->refusedRow((string) $source->getRef(), $refusal);
+
+            return new RedirectResponse($this->urls->generate(self::EDIT_ROUTE, ['product_id' => $product->getId(), 'current_tab' => 'pse']));
+        }
+
+        return $this->saveGrid($request, $events, $product, $rule);
+    }
+
+    /**
+     * The grid writes what holds for every sale unit, with the right to update products,
+     * and only with the token of the page, read from the body.
+     */
+    private function denyGridWrite(Request $request): ?Response
+    {
         if ($denied = $this->restricted->denyIfRestricted(self::RESOURCE, AccessManager::UPDATE)) {
             return $denied;
         }
@@ -637,14 +766,28 @@ final class ProductAdvancedController
             return $denied;
         }
 
-        $form = $request->request;
-        $this->tokens->checkToken((string) $form->get('_token', ''));
+        $this->tokens->checkToken((string) $request->request->get('_token', ''));
 
-        $productId = (int) $form->get('product_id', 0);
-        $product = ProductQuery::create()->findPk($productId);
-        if ($product === null) {
-            return new RedirectResponse($this->urls->generate('admin.products.default'));
+        return null;
+    }
+
+    /**
+     * @return array<int, ProductSaleElements> the combinations of the product, by id
+     */
+    private function combinationsOf(Product $product): array
+    {
+        $combinations = [];
+        foreach (ProductSaleElementsQuery::create()->filterByProductId((int) $product->getId())->find() as $combination) {
+            $combinations[(int) $combination->getId()] = $combination;
         }
+
+        return $combinations;
+    }
+
+    private function saveGrid(Request $request, EventDispatcherInterface $events, Product $product, ?QuantityRule $ruleForEveryRow = null): Response
+    {
+        $form = $request->request;
+        $productId = (int) $product->getId();
 
         // The grid saves in the currency it displays, and sends it in a hidden field.
         $currency = (int) $form->get('currency', 0);
@@ -674,12 +817,14 @@ final class ProductAdvancedController
         // A grid copy made before the visibility boxes existed sends no marker: leave the visibility as it is.
         $visible = $form->all('visible');
         $sendsVisibility = $form->has('visible_sent');
+        $combinations = $this->combinationsOf($product);
         $saved = [];
 
         $unpriced = [];
         foreach ($ids as $index => $rawId) {
             $pseId = (int) $rawId;
-            if ($pseId <= 0) {
+            // An id the page did not render for this product is not written through it.
+            if (!isset($combinations[$pseId])) {
                 continue;
             }
 
@@ -688,6 +833,14 @@ final class ProductAdvancedController
             // is: the other combinations of the grid are saved, and the notice names it.
             if ($this->savesAFreePrice($prices[$index] ?? null, $storedPrice)) {
                 $unpriced[] = $this->referenceOf($refs[$index] ?? null, $pseId);
+                continue;
+            }
+
+            // Rules the core cannot accept cost their own row only, like a refused code.
+            try {
+                $quantityRule = $ruleForEveryRow ?? $this->quantityRules->fromGrid($form, $pseId);
+            } catch (InvalidQuantityRuleException|UnreadableQuantityException|UnknownUnitCodeException $refusal) {
+                $this->identifierNotices->refusedRow($this->referenceOf($refs[$index] ?? null, $pseId), $refusal);
                 continue;
             }
 
@@ -705,6 +858,7 @@ final class ProductAdvancedController
                 ->setEanCode((string) ($eans[$index] ?? ''))
                 ->setMpn(isset($mpns[$index]) ? (string) $mpns[$index] : null)
                 ->setManufacturerBrandId(isset($manufacturerBrands[$index]) ? (int) $manufacturerBrands[$index] : null)
+                ->setQuantityRule($quantityRule)
                 ->setTaxRuleId($taxRule)
                 ->setFromDefaultCurrency($useExchangeRate);
 
@@ -718,6 +872,9 @@ final class ProductAdvancedController
                 $saved[] = $pseId;
             } catch (InvalidGtinException|InvalidMpnException $refusal) {
                 $this->identifierNotices->refused($refusal);
+            } catch (QuantityRefusedException|UnreadableQuantityException $refusal) {
+                // A stock with more decimals than the combination is now sold with.
+                $this->identifierNotices->refusedRow($this->referenceOf($refs[$index] ?? null, $pseId), $refusal);
             }
         }
 
@@ -752,7 +909,7 @@ final class ProductAdvancedController
         }
 
         $currencyId = (int) ($request->attributes->get('currency_id') ?? $request->query->get('currency_id', 0));
-        $context = $this->combinationsTabContextBuilder->build($product, $currencyId > 0 ? $currencyId : null);
+        $context = $this->combinationsTabContextBuilder->build($product, $currencyId > 0 ? $currencyId : null, $request->getLocale());
 
         // The tab is a sub-request: the sale unit picked on the product sheet is in the
         // query of the page itself.
@@ -881,7 +1038,8 @@ final class ProductAdvancedController
         }
 
         $pseId = (int) $form->get('product_sale_element_id', 0);
-        if ($pseId > 0) {
+        // Only a combination of this very product is written through its form.
+        if ($pseId > 0 && isset($this->combinationsOf($product)[$pseId])) {
             $currency = (int) $form->get('currency', $this->defaultCurrencyId());
             $storedPrice = $this->storedPrice($pseId, $currency);
             if ($this->savesAFreePrice($form->get('price'), $storedPrice)) {
@@ -889,6 +1047,14 @@ final class ProductAdvancedController
 
                 return new RedirectResponse($this->urls->generate(self::EDIT_ROUTE, ['product_id' => $productId, 'current_tab' => 'pse']));
             }
+            try {
+                $quantityRule = $this->quantityRules->fromFields($form);
+            } catch (InvalidQuantityRuleException|UnreadableQuantityException|UnknownUnitCodeException $refusal) {
+                $this->identifierNotices->refusedRow($this->referenceOf($form->get('reference'), $pseId), $refusal);
+
+                return new RedirectResponse($this->urls->generate(self::EDIT_ROUTE, ['product_id' => $productId, 'current_tab' => 'pse']));
+            }
+
             $event = new ProductSaleElementUpdateEvent($product, $pseId);
             $event
                 ->setReference((string) $form->get('reference', ''))
@@ -903,6 +1069,7 @@ final class ProductAdvancedController
                 ->setEanCode((string) $form->get('ean_code', ''))
                 ->setMpn($form->has('mpn') ? (string) $form->get('mpn') : null)
                 ->setManufacturerBrandId($form->has('manufacturer_brand_id') ? (int) $form->get('manufacturer_brand_id') : null)
+                ->setQuantityRule($quantityRule)
                 ->setTaxRuleId((int) $form->get('tax_rule', (int) $product->getTaxRuleId()))
                 ->setFromDefaultCurrency((int) $form->get('use_exchange_rate', 0));
 
@@ -911,6 +1078,8 @@ final class ProductAdvancedController
                 $this->identifierNotices->reportSharedCodes([$pseId]);
             } catch (InvalidGtinException|InvalidMpnException $refusal) {
                 $this->identifierNotices->refused($refusal);
+            } catch (QuantityRefusedException|UnreadableQuantityException $refusal) {
+                $this->identifierNotices->refusedRow($this->referenceOf($form->get('reference'), $pseId), $refusal);
             }
         }
 

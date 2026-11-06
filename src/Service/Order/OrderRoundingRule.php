@@ -99,30 +99,53 @@ enum OrderRoundingRule
     }
 
     /**
-     * The three figures of one order line, built so that they add up the way
-     * Order::getTotalAmount() adds up the order: summing `ht` over the lines gives
-     * the untaxed total, summing `ttc` gives the taxed total, and `tax` is the gap
-     * between the two rather than a rounding of its own.
+     * The three figures of one order line: `ht` and `ttc` are the unit prices times the
+     * quantity, and `tax` is the gap between the two rather than a rounding of its own.
+     * The legacy rule leaves them unrounded; every other rule rounds each of them to the
+     * cent (the sum-of-roundings rule rounds the unit prices first).
+     *
+     * Outside the legacy rule the order is charged in cents, rounded half up by
+     * round(): the line is rounded the same way before it is shown. The money
+     * formatter would otherwise round it half to even, and a line sold by measure
+     * (1.25 at 14.82, 18.525) would read a cent below the total it makes.
+     *
+     * Outside the legacy rule the lines do not always add up to the order:
+     * Order::getTotalAmount() rounds the sum of the unrounded lines, here each line is
+     * rounded first. Two lines of
+     * 18.525 show 18.53 + 18.53 = 37.06 for an order total of 37.05. The one cent
+     * of difference is accepted.
      *
      * @return array{ht: float, tax: float, ttc: float}
      */
     public function lineTotals(float $unitPriceUntaxed, float $unitTax, float $quantity): array
     {
-        if (self::RoundingOfSums === $this) {
-            $untaxed = round($unitPriceUntaxed * $quantity, 2);
-            $taxed = round(($unitPriceUntaxed + $unitTax) * $quantity, 2);
+        if (self::Legacy === $this) {
+            $untaxed = $unitPriceUntaxed * $quantity;
+            $tax = $unitTax * $quantity;
 
-            return ['ht' => $untaxed, 'tax' => round($taxed - $untaxed, 2), 'ttc' => $taxed];
+            return ['ht' => $untaxed, 'tax' => $tax, 'ttc' => $untaxed + $tax];
         }
 
         if (self::SumOfRoundings === $this) {
-            $unitPriceUntaxed = round($unitPriceUntaxed, 2);
-            $unitTax = round($unitTax, 2);
+            $unitPriceUntaxed = self::toTheCent($unitPriceUntaxed);
+            $unitTax = self::toTheCent($unitTax);
         }
 
-        $untaxed = $unitPriceUntaxed * $quantity;
-        $tax = $unitTax * $quantity;
+        $untaxed = self::toTheCent($unitPriceUntaxed * $quantity);
+        $taxed = self::toTheCent(($unitPriceUntaxed + $unitTax) * $quantity);
 
-        return ['ht' => $untaxed, 'tax' => $tax, 'ttc' => $untaxed + $tax];
+        return ['ht' => $untaxed, 'tax' => self::toTheCent($taxed - $untaxed), 'ttc' => $taxed];
+    }
+
+    /**
+     * An amount rounded half up to the cent the way the core rounds it
+     * (Thelia\Domain\Pricing\MoneyRounding::toTheCent()), copied here because the template
+     * must keep working against a published core that does not have it yet: brought back
+     * to six decimals first, so that 0.7 kg at 0.75 (0.52499999… as a float) shows the 0.53
+     * the order charged on PHP 8.4 as on PHP 8.3, which pre-rounded it.
+     */
+    public static function toTheCent(float $amount): float
+    {
+        return round(round($amount, 6), 2);
     }
 }

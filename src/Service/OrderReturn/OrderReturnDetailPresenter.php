@@ -100,6 +100,9 @@ final readonly class OrderReturnDetailPresenter
      *     attributes: list<string>,
      *     quantity: float,
      *     quantity_received: float,
+     *     quantity_decimals: int,
+     *     unit_code: ?string,
+     *     input_step: string,
      *     resellable: bool,
      *     received_condition: ?string,
      *     unit_price: float,
@@ -120,6 +123,7 @@ final readonly class OrderReturnDetailPresenter
         foreach ($returnLines as $line) {
             // order_product_id is a required column behind a RESTRICT foreign key.
             $orderProduct = $line->getOrderProduct();
+            $decimals = (int) $orderProduct->getQuantityDecimals();
 
             $lines[] = [
                 'id' => (int) $line->getId(),
@@ -132,6 +136,10 @@ final readonly class OrderReturnDetailPresenter
                 ),
                 'quantity' => (float) $line->getQuantity(),
                 'quantity_received' => (float) $line->getQuantityReceived(),
+                'quantity_decimals' => $decimals,
+                'unit_code' => $orderProduct->getUnitCode(),
+                // The smallest quantity the line is sold in: "0.01" for two decimals, "1" for none.
+                'input_step' => $decimals > 0 ? number_format(10 ** -$decimals, $decimals, '.', '') : '1',
                 'resellable' => (bool) $line->getResellable(),
                 'received_condition' => $line->getReceivedCondition(),
                 'unit_price' => $this->refundCalculator->unitTaxedPrice($orderProduct),

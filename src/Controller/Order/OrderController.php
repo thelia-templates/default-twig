@@ -533,6 +533,9 @@ final class OrderController
                 'mpn' => (string) $product->getMpn(),
                 'title' => (string) $product->getTitle(),
                 'quantity' => $quantity,
+                // Frozen on the line too: the unit and the decimals it was sold in.
+                'quantity_decimals' => (int) $product->getQuantityDecimals(),
+                'unit_code' => $product->getUnitCode(),
                 'price' => $unitPriceHt,
                 'tax' => $unitTax,
                 'unit_taxed_price' => $unitPriceHt + $unitTax,

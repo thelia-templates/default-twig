@@ -19,6 +19,7 @@ use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\Exception\PropelException;
 use Thelia\Domain\Catalog\Product\Identifier\GtinDuplicateFinder;
 use Thelia\Domain\Catalog\Product\Identifier\GtinSharer;
+use Thelia\Domain\Catalog\Quantity\UnitCode;
 use Thelia\Domain\Taxation\TaxEngine\Calculator;
 use Thelia\Model\Attribute;
 use Thelia\Model\AttributeAv;
@@ -30,6 +31,7 @@ use Thelia\Model\Currency;
 use Thelia\Model\CurrencyQuery;
 use Thelia\Model\LangQuery;
 use Thelia\Model\Product;
+use Thelia\Model\ProductSaleElements;
 use Thelia\Model\TaxRule;
 use Thelia\Model\TaxRuleQuery;
 
@@ -52,11 +54,15 @@ final readonly class CombinationsTabContextBuilder
      *     tax_rule_id: int,
      *     tax_rules: list<array{id: int, title: string}>,
      *     currency: array{id: int, symbol: string, name: string, code: string, is_default: bool},
-     *     template_attributes: list<array{id: int, title: string, values: list<array{id: int, title: string}>}>
+     *     template_attributes: list<array{id: int, title: string, values: list<array{id: int, title: string}>}>,
+     *     has_quantity_rules: bool,
+     *     unit_choices: list<array{code: string, label: string}>,
+     *     decimals_choices: list<int>
      * }
      */
-    public function build(Product $product, ?int $currencyId = null): array
+    public function build(Product $product, ?int $currencyId = null, ?string $uiLocale = null): array
     {
+        $uiLocale ??= $this->defaultLocale();
         $locale = $this->defaultLocale();
         $currency = $this->resolveCurrency($currencyId);
         $rows = [];
@@ -95,7 +101,7 @@ final readonly class CombinationsTabContextBuilder
                 'isdefault' => (bool) $pse->getIsDefault(),
                 'visible' => (bool) $pse->getVisible(),
                 'position' => (int) $pse->getPosition(),
-            ];
+            ] + $this->quantityRuleFields($pse, $uiLocale);
             $rows[] = $row;
         }
 
@@ -130,6 +136,11 @@ final readonly class CombinationsTabContextBuilder
             'template_attributes' => $this->collectTemplateAttributes($product, $locale),
             'brand_options' => $this->catalog->brands($locale),
             'product_brand_title' => $this->productBrandTitle($product, $locale),
+            // The settings stay out of sight while every combination sells by the piece,
+            // from one, one by one: the tab then reads as it always did.
+            'has_quantity_rules' => \in_array(true, array_column($rows, 'has_quantity_rule'), true),
+            'unit_choices' => $this->unitChoices($uiLocale),
+            'decimals_choices' => [0, 1, 2, 3],
         ];
     }
 
@@ -167,6 +178,60 @@ final readonly class CombinationsTabContextBuilder
                 return null;
             }
         };
+    }
+
+    /**
+     * The quantity rules of a combination as the tab shows them: the numbers written with
+     * the decimal separator of the admin's language and without trailing zeros, "0,75"
+     * rather than "0.750000".
+     *
+     * @return array{min_quantity: string, quantity_step: string, quantity_decimals: int, unit_quantity: string, reference_unit_quantity: string, unit_code: string, has_quantity_rule: bool}
+     */
+    private function quantityRuleFields(ProductSaleElements $pse, string $uiLocale): array
+    {
+        $fields = [
+            'min_quantity' => $this->displayed($pse->getMinQuantity() ?? '1', $uiLocale),
+            'quantity_step' => $this->displayed($pse->getQuantityStep() ?? '1', $uiLocale),
+            'quantity_decimals' => (int) $pse->getQuantityDecimals(),
+            'unit_quantity' => $this->displayed($pse->getUnitQuantity(), $uiLocale),
+            'reference_unit_quantity' => $this->displayed($pse->getReferenceUnitQuantity(), $uiLocale),
+            'unit_code' => (string) $pse->getUnitCode(),
+        ];
+
+        // Compared as written, never as floats: the defaults read "1".
+        $fields['has_quantity_rule'] = $fields['min_quantity'] !== '1'
+            || $fields['quantity_step'] !== '1'
+            || $fields['quantity_decimals'] !== 0
+            || $fields['unit_quantity'] !== ''
+            || $fields['reference_unit_quantity'] !== ''
+            || $fields['unit_code'] !== '';
+
+        return $fields;
+    }
+
+    private function displayed(?string $decimalColumn, string $uiLocale): string
+    {
+        if ($decimalColumn === null || trim($decimalColumn) === '') {
+            return '';
+        }
+
+        $written = str_contains($decimalColumn, '.') ? rtrim(rtrim($decimalColumn, '0'), '.') : $decimalColumn;
+        $separator = (new \NumberFormatter($uiLocale, \NumberFormatter::DECIMAL))->getSymbol(\NumberFormatter::DECIMAL_SEPARATOR_SYMBOL);
+
+        return str_replace('.', $separator !== '' ? $separator : '.', $written);
+    }
+
+    /**
+     * The units the core knows, named in the admin's language, read once per tab.
+     *
+     * @return list<array{code: string, label: string}>
+     */
+    private function unitChoices(string $uiLocale): array
+    {
+        return array_map(
+            static fn (UnitCode $unit): array => ['code' => $unit->value, 'label' => $unit->label($uiLocale).' ('.$unit->symbol().')'],
+            UnitCode::cases(),
+        );
     }
 
     /**

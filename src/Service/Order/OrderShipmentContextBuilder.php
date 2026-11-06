@@ -67,6 +67,8 @@ final readonly class OrderShipmentContextBuilder
                     'title' => $titles[$lineId]['title'] ?? '',
                     'ref' => $titles[$lineId]['ref'] ?? '',
                     'quantity' => $quantity,
+                    'quantity_decimals' => $titles[$lineId]['quantity_decimals'] ?? 0,
+                    'unit_code' => $titles[$lineId]['unit_code'] ?? null,
                 ];
 
                 if ($shipment->isShipped()) {
@@ -102,6 +104,8 @@ final readonly class OrderShipmentContextBuilder
                     'title' => $titles[$lineId]['title'] ?? '',
                     'ref' => $titles[$lineId]['ref'] ?? '',
                     'remaining' => $left,
+                    'quantity_decimals' => $titles[$lineId]['quantity_decimals'] ?? 0,
+                    'unit_code' => $titles[$lineId]['unit_code'] ?? null,
                 ];
             }
         }
@@ -118,7 +122,7 @@ final readonly class OrderShipmentContextBuilder
     }
 
     /**
-     * @return array<int, array{title: string, ref: string}>
+     * @return array<int, array{title: string, ref: string, quantity_decimals: int, unit_code: string|null}>
      */
     private function lineTitles(int $orderId): array
     {
@@ -128,6 +132,8 @@ final readonly class OrderShipmentContextBuilder
             $titles[(int) $line->getId()] = [
                 'title' => (string) $line->getTitle(),
                 'ref' => (string) $line->getProductRef(),
+                'quantity_decimals' => (int) $line->getQuantityDecimals(),
+                'unit_code' => $line->getUnitCode(),
             ];
         }
 

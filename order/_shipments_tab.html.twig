@@ -4,7 +4,7 @@
     Expects:
       - order:                    the Order model
       - shipments:                list of { id, ref, status, is_draft, carrier, delivery_ref, tracking_url, shipped_at, created_at, lines, pdf_url, pdf_download_url }
-      - shippable_lines:          list of { order_product_id, title, ref, remaining }, empty when nothing is left or the admin may not ship
+      - shippable_lines:          list of { order_product_id, title, ref, remaining, quantity_decimals, unit_code }, empty when nothing is left or the admin may not ship
       - carriers:                 list of { id, title }
       - order_delivery_module_id: the carrier of the order, selected by default
       - can_ship:                 whether the admin may compose a parcel
@@ -68,7 +68,7 @@
                             <td>
                                 <ul class="list-unstyled mb-0 small">
                                     {% for line in shipment.lines %}
-                                        <li><span dir="ltr">{{ line.quantity }}</span> &times; {{ line.title }} <span class="font-monospace small">{{ line.ref }}</span></li>
+                                        <li><span dir="ltr">{{ line.quantity|format_quantity(line.quantity_decimals, line.unit_code) }}</span> &times; {{ line.title }} <span class="font-monospace small">{{ line.ref }}</span></li>
                                     {% endfor %}
                                 </ul>
                             </td>
@@ -121,7 +121,7 @@
                             {% for line in shippable_lines %}
                                 <tr data-testid="order-shipment-line-{{ line.order_product_id }}">
                                     <td>{{ line.title }} <span class="font-monospace small">{{ line.ref }}</span></td>
-                                    <td class="text-end"><span dir="ltr">{{ line.remaining }}</span></td>
+                                    <td class="text-end"><span dir="ltr">{{ line.remaining|format_quantity(line.quantity_decimals, line.unit_code) }}</span></td>
                                     <td class="text-end">
                                         <label for="shipment-line-{{ line.order_product_id }}" class="visually-hidden">{{ 'Quantity in this shipment'|trans }}</label>
                                         <input type="number" id="shipment-line-{{ line.order_product_id }}" name="line[{{ line.order_product_id }}]"
