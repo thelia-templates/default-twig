@@ -55,6 +55,20 @@ final class OrderRoundingRuleTest extends TestCase
         self::assertSame('18,53 €', $this->euros($line['ht']));
     }
 
+    /**
+     * 0.7 kg at 0.75 is 0.52499999… as a float: PHP 8.4 no longer rounds it up on its own,
+     * and the sheet would show 0.52 above an order charged 0.53.
+     */
+    #[DataProvider('provideCurrentRules')]
+    public function testALineWhoseTotalIsNotExactAsAFloatIsShownAtTheCentTheOrderIsCharged(OrderRoundingRule $rule): void
+    {
+        $line = $rule->lineTotals(0.75, 0.0, 0.7);
+
+        self::assertSame(0.53, $line['ht']);
+        self::assertSame(0.53, $line['ttc']);
+        self::assertSame(0.0, $line['tax']);
+    }
+
     public function testALineSoldByThePieceKeepsItsAmount(): void
     {
         $line = OrderRoundingRule::SumOfRoundings->lineTotals(12.3456, 2.46912, 3.0);

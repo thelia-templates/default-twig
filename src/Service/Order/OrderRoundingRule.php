@@ -127,13 +127,25 @@ enum OrderRoundingRule
         }
 
         if (self::SumOfRoundings === $this) {
-            $unitPriceUntaxed = round($unitPriceUntaxed, 2);
-            $unitTax = round($unitTax, 2);
+            $unitPriceUntaxed = self::toTheCent($unitPriceUntaxed);
+            $unitTax = self::toTheCent($unitTax);
         }
 
-        $untaxed = round($unitPriceUntaxed * $quantity, 2);
-        $taxed = round(($unitPriceUntaxed + $unitTax) * $quantity, 2);
+        $untaxed = self::toTheCent($unitPriceUntaxed * $quantity);
+        $taxed = self::toTheCent(($unitPriceUntaxed + $unitTax) * $quantity);
 
-        return ['ht' => $untaxed, 'tax' => round($taxed - $untaxed, 2), 'ttc' => $taxed];
+        return ['ht' => $untaxed, 'tax' => self::toTheCent($taxed - $untaxed), 'ttc' => $taxed];
+    }
+
+    /**
+     * An amount rounded half up to the cent the way the core rounds it
+     * (Thelia\Domain\Pricing\MoneyRounding::toTheCent()), copied here because the template
+     * must keep working against a published core that does not have it yet: brought back
+     * to six decimals first, so that 0.7 kg at 0.75 (0.52499999… as a float) shows the 0.53
+     * the order charged on PHP 8.4 as on PHP 8.3, which pre-rounded it.
+     */
+    public static function toTheCent(float $amount): float
+    {
+        return round(round($amount, 6), 2);
     }
 }

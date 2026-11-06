@@ -318,7 +318,7 @@ final class OrderRepository
             // 18.53). An order frozen on the pre-2.4 rule is read without any rounding.
             $itemsTotal = OrderRoundingRule::Legacy === OrderRoundingRule::forOrder($orderId)
                 ? (float) $row['items_total']
-                : round((float) $row['items_total'], 2);
+                : OrderRoundingRule::toTheCent((float) $row['items_total']);
             $total = $itemsTotal - (float) $row['discount'];
 
             if ($total < 0) {
