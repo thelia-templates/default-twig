@@ -16,6 +16,8 @@ namespace BackOfficeDefaultTwigBundle\Service\Product;
 
 use BackOfficeDefaultTwigBundle\Repository\PreorderTrackingRepository;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Thelia\Domain\Catalog\Quantity\QuantityFormatter;
+use Thelia\Domain\Catalog\Quantity\UnitCode;
 
 /**
  * The rows of the preorder follow-up screen: what the repository reads, shaped for the table.
@@ -28,6 +30,7 @@ final readonly class PreorderTrackingPresenter
     public function __construct(
         private PreorderTrackingRepository $preorders,
         private UrlGeneratorInterface $urls,
+        private QuantityFormatter $quantities = new QuantityFormatter(),
     ) {
     }
 
@@ -48,7 +51,8 @@ final readonly class PreorderTrackingPresenter
                     htmlspecialchars($this->urls->generate(self::PRODUCT_ROUTE, ['product_id' => $row['product_id'], 'current_tab' => self::COMBINATIONS_TAB]), \ENT_QUOTES | \ENT_HTML5),
                     htmlspecialchars($row['product_title'], \ENT_QUOTES | \ENT_HTML5),
                 ),
-                'to_order' => self::quantity($row['to_order']),
+                // With the decimals and unit of the combination, in the language of the screen: "2,5 kg", "6".
+                'to_order' => $this->quantities->format($row['to_order'], $row['quantity_decimals'], UnitCode::tryFrom($row['unit_code']), $locale),
                 'open_orders' => (string) $row['open_orders'],
                 'restock_date' => $row['restock_date'] ?? '-',
             ];
@@ -60,10 +64,5 @@ final readonly class PreorderTrackingPresenter
             'pages' => $found['lastPage'],
             'current_page' => min(max(1, $page), $found['lastPage']),
         ];
-    }
-
-    private static function quantity(float $quantity): string
-    {
-        return rtrim(rtrim(number_format($quantity, 3, '.', ''), '0'), '.');
     }
 }

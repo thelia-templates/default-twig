@@ -44,7 +44,7 @@ final readonly class PreorderTrackingRepository
      * Soonest restock date first, the combinations without a date last, then the largest
      * shortage first.
      *
-     * @return array{rows: list<array{id: int, product_id: int, product_title: string, ref: string, to_order: float, open_orders: int, restock_date: ?string}>, total: int, lastPage: int}
+     * @return array{rows: list<array{id: int, product_id: int, product_title: string, ref: string, to_order: float, quantity_decimals: int, unit_code: string, open_orders: int, restock_date: ?string}>, total: int, lastPage: int}
      */
     public function findPaginated(string $locale, int $page, int $perPage): array
     {
@@ -58,7 +58,7 @@ final readonly class PreorderTrackingRepository
 
         $statement = Propel::getConnection()->prepare(
             'SELECT `pse`.`id`, `pse`.`product_id`, COALESCE(NULLIF(`product_i18n`.`title`, \'\'), `product`.`ref`), `pse`.`ref`, -`pse`.`quantity`, '
-            .'('.$this->openOrdersSql().') AS `open_orders`, `pse`.`restock_date` '
+            .'('.$this->openOrdersSql().') AS `open_orders`, `pse`.`restock_date`, `pse`.`quantity_decimals`, `pse`.`unit_code` '
             .$this->fromAndWhere()
             .'ORDER BY (`pse`.`restock_date` IS NULL) ASC, `pse`.`restock_date` ASC, `pse`.`quantity` ASC, `pse`.`id` ASC '
             .'LIMIT ? OFFSET ?',
@@ -75,13 +75,16 @@ final readonly class PreorderTrackingRepository
         $statement->execute();
 
         $rows = [];
-        foreach ($statement->fetchAll(\PDO::FETCH_NUM) as [$id, $productId, $title, $ref, $toOrder, $openOrders, $restockDate]) {
+        foreach ($statement->fetchAll(\PDO::FETCH_NUM) as [$id, $productId, $title, $ref, $toOrder, $openOrders, $restockDate, $quantityDecimals, $unitCode]) {
             $rows[] = [
                 'id' => (int) $id,
                 'product_id' => (int) $productId,
                 'product_title' => (string) $title,
                 'ref' => (string) $ref,
                 'to_order' => max(0.0, round((float) $toOrder, 6)),
+                // What is to order is written in the unit the combination is sold in (2.5 kg, 6 pieces).
+                'quantity_decimals' => (int) $quantityDecimals,
+                'unit_code' => (string) $unitCode,
                 'open_orders' => (int) $openOrders,
                 'restock_date' => null === $restockDate || '' === $restockDate ? null : (string) $restockDate,
             ];

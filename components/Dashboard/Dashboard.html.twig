@@ -181,7 +181,7 @@
                     <a href="{{ path('admin.products.update', { product_id: pse.productId }) }}" class="text-decoration-none">
                         {{ pse.product.title|default(pse.ref) }} <span class="text-muted ms-2">{{ pse.ref }}</span>
                     </a>
-                    <span class="badge text-bg-danger">{{ pse.quantity }}</span>
+                    <span class="badge text-bg-danger" dir="ltr">{{ pse.quantity|format_quantity(pse.quantityDecimals, pse.unitCode) }}</span>
                 </li>
             {% else %}
                 {% if data.unsellableBundles == 0 %}

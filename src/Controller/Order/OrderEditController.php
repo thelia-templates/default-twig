@@ -220,7 +220,7 @@ final class OrderEditController
 
         $locale = LangQuery::create()->findOneByByDefault(1)?->getLocale() ?? 'en_US';
 
-        return new JsonResponse($this->search->findSellableCombinations((string) $request->query->get('q', ''), $locale));
+        return new JsonResponse($this->search->findSellableCombinations((string) $request->query->get('q', ''), $locale, displayLocale: $request->getLocale()));
     }
 
     private function readEdit(Request $request, Order $order): OrderEdit

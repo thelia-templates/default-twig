@@ -18,6 +18,8 @@ use BackOfficeDefaultTwigBundle\Service\Customer\CustomerPhoneSearch;
 use BackOfficeDefaultTwigBundle\Service\Order\OrderAccess;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\Collection\ObjectCollection;
+use Thelia\Domain\Catalog\Quantity\QuantityFormatter;
+use Thelia\Domain\Catalog\Quantity\UnitCode;
 use Thelia\Model\AttributeAvQuery;
 use Thelia\Model\AttributeCombinationQuery;
 use Thelia\Model\Brand;
@@ -41,6 +43,7 @@ final readonly class SearchRepository
 {
     public function __construct(
         private OrderAccess $orderAccess,
+        private QuantityFormatter $quantities = new QuantityFormatter(),
     ) {
     }
 
@@ -69,10 +72,11 @@ final readonly class SearchRepository
     /**
      * The combinations an order can be given a line for: those of the visible products whose
      * title or reference contains the term, which is what the order editor of the core accepts.
+     * The stock is written in the unit the combination is sold in, in the language of the screen.
      *
      * @return list<array{pse_id: int, product_ref: string, title: string, pse_ref: string, combination: string, stock: string}>
      */
-    public function findSellableCombinations(string $term, string $locale, int $limit = 20): array
+    public function findSellableCombinations(string $term, string $locale, int $limit = 20, ?string $displayLocale = null): array
     {
         $term = trim($term);
 
@@ -133,7 +137,7 @@ final readonly class SearchRepository
                 'title' => $titles[$productId]['title'],
                 'pse_ref' => (string) $pse->getRef(),
                 'combination' => $labels[(int) $pse->getId()] ?? '',
-                'stock' => rtrim(rtrim(number_format((float) $pse->getQuantity(), 6, '.', ''), '0'), '.') ?: '0',
+                'stock' => $this->quantities->format((float) $pse->getQuantity(), (int) $pse->getQuantityDecimals(), UnitCode::tryFrom((string) $pse->getUnitCode()), $displayLocale ?? $locale),
             ];
         }
 
