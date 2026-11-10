@@ -62,8 +62,8 @@
                       data-controller="bo-pse-price-with-tax bo-combination-default"
                       data-bo-pse-price-with-tax-calc-url-value="{{ path('admin.product.calculate-price') }}"
                       data-bo-pse-price-with-tax-product-id-value="{{ product.id }}">
-                    {# Enter in a field submits through the form's first button: this one saves the grid, not a panel's "apply to every combination". #}
-                    <button type="submit" class="visually-hidden" tabindex="-1" aria-hidden="true"></button>
+                    {# Enter in a field submits through the form's first button: this one saves the grid, not a panel's "apply to every combination". Hidden: out of the tab order and of the accessibility tree, yet still the form's default button. #}
+                    <button type="submit" hidden></button>
                     <input type="hidden" name="_token" value="{{ assignToken() }}">
                     <input type="hidden" name="product_id" value="{{ product.id }}">
                     <input type="hidden" name="currency" value="{{ currency.id }}">
