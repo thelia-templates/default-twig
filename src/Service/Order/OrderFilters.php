@@ -483,6 +483,7 @@ final readonly class OrderFilters
     {
         $legacyPivot = OrderRoundingRule::legacyPivot();
         $sumOfRoundingsPivot = OrderRoundingRule::sumOfRoundingsPivot();
+        $floatLineRoundingPivot = OrderRoundingRule::floatLineRoundingPivot();
         $roundsLineTotals = OrderRoundingRule::RoundingOfSums === OrderRoundingRule::shopRule();
 
         $frozenBranches = [];
@@ -495,6 +496,11 @@ final readonly class OrderFilters
         if ($roundsLineTotals && $sumOfRoundingsPivot > 0) {
             $frozenBranches[] = 'WHEN '.OrderTableMap::COL_ID.' <= '.$sumOfRoundingsPivot
                 .' THEN '.self::itemsTotalSqlExpression(false);
+        }
+
+        if ($roundsLineTotals && $floatLineRoundingPivot > 0) {
+            $frozenBranches[] = 'WHEN '.OrderTableMap::COL_ID.' <= '.$floatLineRoundingPivot
+                .' THEN '.self::itemsTotalSqlExpression(true, false);
         }
 
         $currentRule = self::itemsTotalSqlExpression($roundsLineTotals);
@@ -511,8 +517,14 @@ final readonly class OrderFilters
      * order: rounding the unit amounts before multiplying by the quantity is the
      * historical rule, rounding the line total instead is what a shop selling by
      * weight or by volume needs.
+     *
+     * The quantity is a DOUBLE, and so is a line total: 1.25 x 14.82 is 18.52499…, which
+     * ROUND() brings down to 18.52 where the order charges 18.53. The line is brought back
+     * to a decimal at six places before it is rounded, as Order::buildTotalAmountQuery()
+     * does, unless the order was invoiced on the floating point figure (placed before the
+     * 3.4 upgrade, see OrderRoundingRule::floatLineRoundingPivot()).
      */
-    private static function itemsTotalSqlExpression(bool $roundLineTotals): string
+    private static function itemsTotalSqlExpression(bool $roundLineTotals, bool $asDecimal = true): string
     {
         $unitPrice = 'IF(op.was_in_promo = 1, op.promo_price, op.price)';
         $unitTax = 'IF(op.was_in_promo = 1, opt.promo_amount, opt.amount)';
@@ -532,7 +544,7 @@ final readonly class OrderFilters
         ))';
 
         if ($roundLineTotals) {
-            $lineTotal = 'ROUND('.$lineTotal.', 2)';
+            $lineTotal = 'ROUND('.($asDecimal ? 'CAST('.$lineTotal.' AS DECIMAL(20,6))' : $lineTotal).', 2)';
         }
 
         return '(

@@ -99,6 +99,21 @@ enum OrderRoundingRule
     }
 
     /**
+     * Id of the last order whose line totals were rounded on the floating point figure under
+     * the rounding of sums (1.25 x 14.82 kept as 18.52), 0 when the shop has none. Written
+     * once by the 3.4 upgrade (ConfigQuery::isOrderWithFloatLineRounding()), and 0 on a shop
+     * installed in 3.4 or later.
+     *
+     * It always comes after the pivot of the text promotional price (3.3 upgrade), so the
+     * orders the core reads with a text promotional price are read on the floating point
+     * figure here too, which is what the text reading amounts to.
+     */
+    public static function floatLineRoundingPivot(): int
+    {
+        return (int) ConfigQuery::read('last_float_line_rounding_order_id', 0);
+    }
+
+    /**
      * The three figures of one order line: `ht` and `ttc` are the unit prices times the
      * quantity, and `tax` is the gap between the two rather than a rounding of its own.
      * The legacy rule leaves them unrounded; every other rule rounds each of them to the
