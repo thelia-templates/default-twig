@@ -25,7 +25,7 @@ final readonly class DashboardData
      * @param list<array{id: int, code: string, title: string, color: string, count: int}>       $statusBreakdown
      * @param list<Order>                                                                        $recentOrders
      * @param array<int, float>                                                                  $recentOrderAmounts amount of each recent order, by order id
-     * @param list<array{id: int, ref: string, title: string, quantity: int, revenue: float}>    $topProducts
+     * @param list<array{id: int, ref: string, title: string, quantity: float, revenue: float}>    $topProducts
      * @param list<ProductSaleElements>                                                          $lowStockProducts
      * @param list<array{label: string, count: int, href: ?string, icon: string, level: string}> $alerts
      * @param list<array{value: string, label: string, active: bool, url: string}>               $periodOptions

@@ -156,7 +156,7 @@
                                 <span class="text-muted ms-2">{{ product.ref }}</span>
                             </div>
                             <div class="text-end">
-                                <div class="fw-semibold">{{ product.quantity }} {{ 'sold'|trans }}</div>
+                                <div class="fw-semibold">{{ product.quantity|format_number({ max_fraction_digit: 3 }) }} {{ 'sold'|trans }}</div>
                                 <div class="text-muted"><span dir="ltr">{{ product.revenue|format_currency(data.currencyCode, { fraction_digit: 0 }) }}</span></div>
                             </div>
                         </li>

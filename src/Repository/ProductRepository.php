@@ -86,7 +86,7 @@ final readonly class ProductRepository
      * Aggregates order_product rows so a sold-out product still appears as long
      * as it has historical sales in the window.
      *
-     * @return list<array{id: int, ref: string, title: string, quantity: int, revenue: float}>
+     * @return list<array{id: int, ref: string, title: string, quantity: float, revenue: float}>
      */
     public function findTopSellers(DateRange $range, int $limit, string $locale): array
     {
@@ -131,7 +131,8 @@ final readonly class ProductRepository
                 'id' => $product !== null ? (int) $product->getId() : 0,
                 'ref' => (string) $row['ref'],
                 'title' => $product !== null ? (string) $product->getTitle() : (string) $row['ref'],
-                'quantity' => (int) $row['quantity_sum'],
+                // Kept as a float: a line sold by measure carries decimals (2.5 kg + 1.25 kg).
+                'quantity' => (float) $row['quantity_sum'],
                 'revenue' => (float) $row['revenue'],
             ];
         }
