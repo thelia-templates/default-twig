@@ -107,6 +107,24 @@ final class ProductCombinationQuantityRulesTest extends WebIntegrationTestCase
         self::assertCount(9, $crawler->filter(\sprintf('select[name="unit_code[%d]"] option[value!=""]', $bottle->getId())), 'Every unit the core knows.');
     }
 
+    /**
+     * Switching "sold by measure" off puts the fields back to a sale by the piece (the
+     * controller bo-combination-quantity-rules posts these values): saved, the tab finds no
+     * rule left and renders the switch off.
+     */
+    public function testSavingTheDefaultsOfASaleByThePieceOverARuleBringsTheSwitchBackOff(): void
+    {
+        $this->loginFullAdmin();
+        [$product] = $this->productWithCombinations(1);
+        $bottle = $this->combinationOf($product, ['minQuantity' => 2, 'quantityStep' => 6, 'unitQuantity' => 0.75, 'referenceUnitQuantity' => 1, 'unitCode' => 'l']);
+
+        $this->postGrid($product, [[$bottle, ['min_quantity' => '1', 'quantity_step' => '1', 'quantity_decimals' => '0', 'unit_quantity' => '', 'reference_unit_quantity' => '', 'unit_code' => '']]]);
+
+        self::assertSame([], $this->flashes()['danger']);
+        $crawler = $this->client->request('GET', '/admin/products/combinations/tab?product_id='.$product->getId());
+        self::assertNull($crawler->filter('[data-testid="combinations-quantity-rules-switch"]')->attr('checked'));
+    }
+
     public function testTheGridSavesTheRulesOfEachRowWithoutShiftingThemToAnotherRow(): void
     {
         $this->loginFullAdmin();
