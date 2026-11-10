@@ -736,7 +736,7 @@ final class ProductAdvancedController
         }
 
         $sourceId = (int) $form->get('quantity_rules_source', 0);
-        $source = $this->combinationsOf($product)[$sourceId] ?? null;
+        $source = $this->combinationOf($product, $sourceId);
         if ($source === null) {
             return new RedirectResponse($this->urls->generate(self::EDIT_ROUTE, ['product_id' => $product->getId(), 'current_tab' => 'pse']));
         }
@@ -773,16 +773,35 @@ final class ProductAdvancedController
     }
 
     /**
-     * @return array<int, ProductSaleElements> the combinations of the product, by id
+     * The combination of this very product with this id, read alone.
      */
-    private function combinationsOf(Product $product): array
+    private function combinationOf(Product $product, int $combinationId): ?ProductSaleElements
     {
-        $combinations = [];
-        foreach (ProductSaleElementsQuery::create()->filterByProductId((int) $product->getId())->find() as $combination) {
-            $combinations[(int) $combination->getId()] = $combination;
+        return ProductSaleElementsQuery::create()
+            ->filterByProductId((int) $product->getId())
+            ->filterById($combinationId)
+            ->findOne();
+    }
+
+    private function belongsToProduct(Product $product, int $combinationId): bool
+    {
+        return ProductSaleElementsQuery::create()
+            ->filterByProductId((int) $product->getId())
+            ->filterById($combinationId)
+            ->exists();
+    }
+
+    /**
+     * @return array<int, true> the ids of the combinations of the product, read without loading them
+     */
+    private function combinationIdsOf(Product $product): array
+    {
+        $ids = [];
+        foreach (ProductSaleElementsQuery::create()->filterByProductId((int) $product->getId())->select('Id')->find() as $id) {
+            $ids[(int) $id] = true;
         }
 
-        return $combinations;
+        return $ids;
     }
 
     private function saveGrid(Request $request, EventDispatcherInterface $events, Product $product, ?QuantityRule $ruleForEveryRow = null): Response
@@ -822,7 +841,7 @@ final class ProductAdvancedController
         $preorderLimits = $form->all('preorder_limit');
         $restockDates = $form->all('restock_date');
         $lowStockThresholds = $form->all('low_stock_threshold');
-        $combinations = $this->combinationsOf($product);
+        $combinationIds = $this->combinationIdsOf($product);
         $saved = [];
 
         $unpriced = [];
@@ -830,7 +849,7 @@ final class ProductAdvancedController
         foreach ($ids as $index => $rawId) {
             $pseId = (int) $rawId;
             // An id the page did not render for this product is not written through it.
-            if (!isset($combinations[$pseId])) {
+            if (!isset($combinationIds[$pseId])) {
                 continue;
             }
 
@@ -1059,7 +1078,7 @@ final class ProductAdvancedController
 
         $pseId = (int) $form->get('product_sale_element_id', 0);
         // Only a combination of this very product is written through its form.
-        if ($pseId > 0 && isset($this->combinationsOf($product)[$pseId])) {
+        if ($pseId > 0 && $this->belongsToProduct($product, $pseId)) {
             $currency = (int) $form->get('currency', $this->defaultCurrencyId());
             $storedPrice = $this->storedPrice($pseId, $currency);
             if ($this->savesAFreePrice($form->get('price'), $storedPrice)) {
