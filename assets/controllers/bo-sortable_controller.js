@@ -140,16 +140,10 @@ export default class extends Controller {
             return;
         }
 
-        // A row may be followed by its detail panel (data-detail-for): the panel moves
-        // with its row, and a row dropped below another lands after that one's panel.
-        const panel = this.panelOf(this.dragged);
         if (fromIndex < toIndex) {
-            (this.panelOf(target) ?? target).after(this.dragged);
+            target.after(this.dragged);
         } else {
             target.before(this.dragged);
-        }
-        if (panel) {
-            this.dragged.after(panel);
         }
 
         const newPosition = Number.isInteger(targetPosition) ? targetPosition : this.rows().indexOf(this.dragged) + 1;
@@ -172,12 +166,6 @@ export default class extends Controller {
         this.element
             .querySelectorAll('.bo-sortable-target')
             .forEach((row) => row.classList.remove('bo-sortable-target', 'bo-sortable-target--after'));
-    }
-
-    panelOf(row) {
-        const next = row.nextElementSibling;
-
-        return next && next.dataset.detailFor === row.dataset.rowId ? next : null;
     }
 
     request(rowId, position, accept) {
