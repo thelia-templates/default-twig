@@ -1367,7 +1367,7 @@ return [
     'A line of a bundle cannot be edited.' => 'A line of a bundle cannot be edited.',
     'A line that has been shipped or returned cannot be edited.' => 'A line that has been shipped or returned cannot be edited.',
     'The product of a line no longer exists in the catalogue.' => 'The product of a line no longer exists in the catalogue.',
-    'A quantity must be a number greater than zero.' => 'A quantity must be a number greater than zero.',
+    'A quantity must be a number greater than zero, with no more decimals than its line is sold with.' => 'A quantity must be a number greater than zero, with no more decimals than its line is sold with.',
     'A price must be a positive amount, without tax.' => 'A price must be a positive amount, without tax.',
     'The discount must be a positive amount that the order covers.' => 'The discount must be a positive amount that the order covers.',
     'The postage must be a positive amount, without tax.' => 'The postage must be a positive amount, without tax.',

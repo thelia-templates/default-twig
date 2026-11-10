@@ -3566,7 +3566,7 @@ return [
     'A line of a bundle cannot be edited.' => 'Une ligne d\'un lot ne peut pas être modifiée.',
     'A line that has been shipped or returned cannot be edited.' => 'Une ligne expédiée ou retournée ne peut pas être modifiée.',
     'The product of a line no longer exists in the catalogue.' => 'Le produit d\'une ligne n\'existe plus dans le catalogue.',
-    'A quantity must be a number greater than zero.' => 'Une quantité doit être un nombre supérieur à zéro.',
+    'A quantity must be a number greater than zero, with no more decimals than its line is sold with.' => 'Une quantité doit être un nombre supérieur à zéro, sans plus de décimales que sa ligne n\'en accepte.',
     'A price must be a positive amount, without tax.' => 'Un prix doit être un montant positif, hors taxes.',
     'The discount must be a positive amount that the order covers.' => 'La remise doit être un montant positif que la commande couvre.',
     'The postage must be a positive amount, without tax.' => 'Le port doit être un montant positif, hors taxes.',

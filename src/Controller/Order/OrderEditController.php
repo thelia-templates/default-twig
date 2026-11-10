@@ -372,7 +372,7 @@ final class OrderEditController
             OrderEditRefusal::BundleLine => $this->translator->trans('A line of a bundle cannot be edited.'),
             OrderEditRefusal::LineInUse => $this->translator->trans('A line that has been shipped or returned cannot be edited.'),
             OrderEditRefusal::UnknownProduct => $this->translator->trans('The product of a line no longer exists in the catalogue.'),
-            OrderEditRefusal::InvalidQuantity => $this->translator->trans('A quantity must be a number greater than zero.'),
+            OrderEditRefusal::InvalidQuantity => $this->translator->trans('A quantity must be a number greater than zero, with no more decimals than its line is sold with.'),
             OrderEditRefusal::InvalidPrice => $this->translator->trans('A price must be a positive amount, without tax.'),
             OrderEditRefusal::InvalidDiscount => $this->translator->trans('The discount must be a positive amount that the order covers.'),
             OrderEditRefusal::InvalidPostage => $this->translator->trans('The postage must be a positive amount, without tax.'),
