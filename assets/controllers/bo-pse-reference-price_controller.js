@@ -49,7 +49,8 @@ export default class extends Controller {
         try {
             const response = await fetch(url, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
             const payload = await response.json();
-            this.outputTarget.textContent = payload?.formatted ?? '-';
+            // A refused rule answers 422 with the reason: shown as text, in place of the dash.
+            this.outputTarget.textContent = payload?.formatted ?? (typeof payload?.error === 'string' && payload.error !== '' ? payload.error : '-');
         } catch {
             this.outputTarget.textContent = '-';
         }
