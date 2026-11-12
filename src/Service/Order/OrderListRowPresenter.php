@@ -42,6 +42,7 @@ final readonly class OrderListRowPresenter
     private const DETAIL_ROUTE = 'admin.order.update.view';
     private const INVOICE_PDF_ROUTE = 'admin.order.pdf.invoice';
     private const DELIVERY_PDF_ROUTE = 'admin.order.pdf.delivery';
+    private const PICKING_SLIP_PDF_ROUTE = 'admin.order.pdf.preparation';
     private const CANCEL_FROM_LIST_ROUTE = 'admin.order.list.cancel';
     private const FALLBACK_STATUS_COLOR = '#6c757d';
     private const URGENT_THRESHOLD_HOURS = 48;
@@ -419,6 +420,14 @@ final readonly class OrderListRowPresenter
                 kind: 'delivery-slip',
                 label: $this->translator->trans('Download delivery slip PDF'),
                 href: $this->urls->generate(self::DELIVERY_PDF_ROUTE, ['order_id' => $orderId, 'browser' => 1]),
+                grantedAttribute: AccessManager::VIEW,
+                grantedSubject: self::RESOURCE,
+                inlineFrom: 'md',
+            ),
+            new RowAction(
+                kind: 'picking-slip',
+                label: $this->translator->trans('Picking slip'),
+                href: $this->urls->generate(self::PICKING_SLIP_PDF_ROUTE, ['order_id' => $orderId, 'browser' => 1]),
                 grantedAttribute: AccessManager::VIEW,
                 grantedSubject: self::RESOURCE,
                 inlineFrom: 'md',
