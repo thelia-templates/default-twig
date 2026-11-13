@@ -4,7 +4,7 @@
    Expects: row (row.id, row.out_of_stock_policy, row.preorder_limit, row.restock_date, row.low_stock_threshold), field_id (prefix of the field ids),
    stock_policies (value, label), limited_policy (value of the preorder mode), default_low_stock_threshold. #}
 <div class="bo-combinations-grid__more-fields" data-testid="combinations-stock-fields-{{ row.id }}">
-    <div data-controller="bo-stock-policy" data-bo-stock-policy-limited-value="{{ limited_policy }}">
+    <div class="bo-combinations-grid__stock-policy" data-controller="bo-stock-policy" data-bo-stock-policy-limited-value="{{ limited_policy }}">
         <label class="form-label small" for="{{ field_id }}-policy" title="{{ 'What happens when the stock is at zero'|trans }}">{{ 'At zero stock'|trans }}</label>
         <select id="{{ field_id }}-policy" name="out_of_stock_policy[]" class="form-select form-select-sm"
                 data-bo-stock-policy-target="policy" data-action="change->bo-stock-policy#toggle" data-testid="combinations-policy-{{ row.id }}">

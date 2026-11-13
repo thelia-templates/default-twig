@@ -2748,6 +2748,11 @@ tr.bo-order-row--urgent {
             width: 11rem;
         }
 
+        // The longest wording of the policy ("Vendre jusqu'à une limite (précommande)") has to be readable in its select.
+        > div.bo-combinations-grid__stock-policy {
+            width: min(100%, 19rem);
+        }
+
         .form-label {
             margin-bottom: .35rem;
         }
