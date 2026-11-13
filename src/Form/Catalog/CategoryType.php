@@ -40,7 +40,7 @@ final class CategoryType extends AbstractType
                 'constraints' => [new NotBlank()],
                 'label' => $this->translator->trans('Category title'),
             ])
-            ->add('parent', IntegerType::class, [
+            ->add('parent', HiddenType::class, [
                 'constraints' => [new NotBlank()],
                 'label' => $this->translator->trans('Parent category'),
             ])

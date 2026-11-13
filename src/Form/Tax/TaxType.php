@@ -94,8 +94,10 @@ final class TaxType extends AbstractType
             $requirement = $field['requirement'];
             $type = $requirement->getType();
 
+            // Every requirement of the selected tax type is mandatory (the callback checks it);
+            // the others are disabled by the page, so the browser does not ask for them.
             $options = array_merge([
-                'required' => false,
+                'required' => true,
                 'mapped' => true,
                 'constraints' => [new Callback($validator)],
                 'attr' => [

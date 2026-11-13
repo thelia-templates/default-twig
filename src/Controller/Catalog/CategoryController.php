@@ -437,6 +437,7 @@ final class CategoryController
         return $this->formFactory->createNamed('thelia_category_creation', CategoryType::class, [
             'locale' => $locale,
             'parent' => $parentId,
+            'visible' => true,
         ], []);
     }
 
