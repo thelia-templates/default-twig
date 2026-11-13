@@ -101,7 +101,9 @@ final class ScheduledReportType extends AbstractType
                 'placeholder' => $this->translator->trans('Choose an export'),
                 'constraints' => [new NotBlank()],
                 'choice_attr' => static fn (mixed $ref): array => ['data-date-range' => \in_array($ref, $rangeRefs, true) ? '1' : '0'],
-                'label' => $this->translator->trans('Export'),
+                'label' => $this->translator->trans('Export to send'),
+                // Already translated above: the form theme would translate "Export" again, as the verb.
+                'translation_domain' => false,
                 'help' => $this->translator->trans('The export that is run and sent as a CSV file.'),
             ])
             ->add('period', ChoiceType::class, [

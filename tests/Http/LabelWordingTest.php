@@ -22,6 +22,7 @@ use Thelia\Model\LangQuery;
 use Thelia\Model\Map\ModuleTableMap;
 use Thelia\Model\Module;
 use Thelia\Model\ModuleQuery;
+use Thelia\Model\ReportMailing;
 use Thelia\Test\FixtureFactory;
 use Thelia\Test\WebIntegrationTestCase;
 use Thelia\Tests\Support\BackOffice\AdminSessionInjector;
@@ -160,6 +161,18 @@ final class LabelWordingTest extends WebIntegrationTestCase
 
         $summary = $this->page('/admin/modules', 'en_US')->filter('[data-testid="modules-summary"]')->text();
         self::assertSame(\sprintf('%d modules · 1 active · %d inactive', $total, $total - 1), preg_replace('/\s+/u', ' ', $summary));
+    }
+
+    public function testTheExportFieldOfAScheduledReportIsANounInFrench(): void
+    {
+        if (!class_exists(ReportMailing::class)) {
+            self::markTestSkipped('The core predates the scheduled reports.');
+        }
+
+        $crawler = $this->page('/admin/scheduled-reports/new', 'fr_FR');
+
+        $label = trim($crawler->filter('label[for="thelia_scheduled_report_export_ref"] .bo-form-label__text')->text());
+        self::assertSame('Export', $label);
     }
 
     private function page(string $path, string $locale): Crawler

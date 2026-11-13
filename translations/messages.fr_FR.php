@@ -1172,6 +1172,7 @@ return [
     'Expiration date' => 'Date de fin de validité',
     'Expired' => 'Expiré',
     'Export' => 'Exporter',
+    'Export to send' => 'Export',
     'Export CSV' => 'Exporter en CSV',
     'Exports' => 'Exports',
     'Failed to create new hook %s' => 'Impossible de créer le point d\'accroche %s',
