@@ -19,6 +19,9 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Thelia\Model\Area;
 use Thelia\Model\ConfigQuery;
 use Thelia\Model\LangQuery;
+use Thelia\Model\Map\ModuleTableMap;
+use Thelia\Model\Module;
+use Thelia\Model\ModuleQuery;
 use Thelia\Test\FixtureFactory;
 use Thelia\Test\WebIntegrationTestCase;
 use Thelia\Tests\Support\BackOffice\AdminSessionInjector;
@@ -120,6 +123,43 @@ final class LabelWordingTest extends WebIntegrationTestCase
     {
         self::assertStringContainsString('ISO 639-1 Code', $this->page('/admin/configuration/languages', 'en_US')->filter('table')->text());
         self::assertStringContainsString('Code ISO 639-1', $this->page('/admin/configuration/languages', 'fr_FR')->filter('table')->text());
+    }
+
+    public function testTheModulesSummaryAgreesWithItsCounters(): void
+    {
+        $modules = ModuleQuery::create()->find();
+        self::assertGreaterThan(2, \count($modules), 'The test shop needs a few modules.');
+        $total = \count($modules);
+
+        try {
+            $this->assertSummaries($modules, $total);
+        } finally {
+            // The rollback restores the rows, not the models Propel keeps in memory for the next tests.
+            ModuleTableMap::clearInstancePool();
+        }
+    }
+
+    /**
+     * @param iterable<Module> $modules
+     */
+    private function assertSummaries(iterable $modules, int $total): void
+    {
+        // Exactly one module switched off.
+        foreach ($modules as $index => $module) {
+            $module->setActivate(0 === $index ? 0 : 1)->save($this->getPropelConnection());
+        }
+        $summary = $this->page('/admin/modules', 'fr_FR')->filter('[data-testid="modules-summary"]')->text();
+        self::assertSame(\sprintf('%d modules · %d actifs · 1 inactif', $total, $total - 1), preg_replace('/\s+/u', ' ', $summary));
+
+        // Exactly one module switched on.
+        foreach ($modules as $index => $module) {
+            $module->setActivate(0 === $index ? 1 : 0)->save($this->getPropelConnection());
+        }
+        $summary = $this->page('/admin/modules', 'fr_FR')->filter('[data-testid="modules-summary"]')->text();
+        self::assertSame(\sprintf('%d modules · 1 actif · %d inactifs', $total, $total - 1), preg_replace('/\s+/u', ' ', $summary));
+
+        $summary = $this->page('/admin/modules', 'en_US')->filter('[data-testid="modules-summary"]')->text();
+        self::assertSame(\sprintf('%d modules · 1 active · %d inactive', $total, $total - 1), preg_replace('/\s+/u', ' ', $summary));
     }
 
     private function page(string $path, string $locale): Crawler
