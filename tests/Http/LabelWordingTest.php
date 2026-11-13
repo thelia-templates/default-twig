@@ -223,6 +223,16 @@ final class LabelWordingTest extends WebIntegrationTestCase
         self::assertSame('Annulé', $voidedTotal, 'The same root for what a void does, on the line and in the totals.');
     }
 
+    public function testTheFlashMessagesOfTheAdvancedConfigurationAreTranslated(): void
+    {
+        $translator = $this->getService('translator');
+
+        foreach (['Application cache cleared.' => 'Cache de l\'application vidé.', 'Web assets cache cleared.' => 'Cache des assets web vidé.', 'Images and documents cache cleared.' => 'Cache des images et des documents vidé.'] as $message => $french) {
+            self::assertSame($french, $translator->trans($message, [], null, 'fr_FR'));
+            self::assertSame($message, $translator->trans($message, [], null, 'en_US'));
+        }
+    }
+
     private function page(string $path, string $locale): Crawler
     {
         $crawler = $this->client->request('GET', $path.'?lang='.$locale);
