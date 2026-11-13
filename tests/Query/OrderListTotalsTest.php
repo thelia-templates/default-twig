@@ -143,7 +143,7 @@ final class OrderListTotalsTest extends IntegrationTestCase
 
         $totals = [];
         // The first read of the configuration loads the whole table: the set-up of the test, not the cost of a page.
-        ConfigQuery::read(self::ROUNDING_MODE);
+        ConfigQuery::read(self::LEGACY_ROUNDING_PIVOT);
         $queries = QueryCounter::count(function () use ($orderIds, &$totals): void {
             $totals = $this->orders->findTotalAmountByOrder($orderIds);
         });
