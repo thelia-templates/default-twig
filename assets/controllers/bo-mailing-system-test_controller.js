@@ -10,6 +10,7 @@ export default class extends Controller {
 
     static values = {
         url: String,
+        emailRequiredLabel: String,
     };
 
     send() {
@@ -18,7 +19,7 @@ export default class extends Controller {
         }
         const email = this.emailTarget.value.trim();
         if (email === '') {
-            this.display(false, 'Please enter an email');
+            this.display(false, this.emailRequiredLabelValue);
             return;
         }
 

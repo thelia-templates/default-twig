@@ -9,6 +9,7 @@ export default class extends Controller {
         initial: Array,
         unassigned: Array,
         statesAllLabel: String,
+        emptyLabel: String,
     };
 
     connect() {
@@ -77,13 +78,9 @@ export default class extends Controller {
         }
         if (this.hasAddedBodyTarget) {
             this.addedBodyTarget.innerHTML = addedList.length === 0
-                ? `<tr><td colspan="2" class="text-center text-muted">${this.statesAllLabelValue ? '' : ''}${this.translate('This shipping zone does not contains any country.')}</td></tr>`
+                ? `<tr><td colspan="2" class="text-center text-muted">${this.escape(this.emptyLabelValue)}</td></tr>`
                 : this.renderAddedRows(addedList);
         }
-    }
-
-    translate(text) {
-        return text;
     }
 
     renderAddOptions(list) {

@@ -10,6 +10,7 @@
      data-bo-file-list-position-url-value="{{ path(urls.position, { parentType: parent_type, parentId: parent_id }) }}"
      {% if with_videos %}data-bo-file-list-reorder-url-value="{{ path('admin.product.media.reorder', { productId: parent_id }) }}"{% endif %}
      data-bo-file-list-token-value="{{ assignToken() }}"
+     data-bo-file-list-confirm-delete-value="{{ 'Are you sure?'|trans }}"
      data-bo-file-list-sortable-value="{{ sortable ? 'true' : 'false' }}">
     {% if items|length == 0 %}
         <div class="alert alert-info mb-0" data-testid="bo-file-list-empty">

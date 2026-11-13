@@ -5,6 +5,7 @@
      data-bo-file-list-delete-url-template-value="{{ path('admin.video.delete', { productId: product_id, videoId: 0 }) }}"
      data-bo-file-list-position-url-value="{{ path('admin.video.update-position', { productId: product_id }) }}"
      data-bo-file-list-token-value="{{ assignToken() }}"
+     data-bo-file-list-confirm-delete-value="{{ 'Are you sure?'|trans }}"
      data-bo-file-list-sortable-value="true">
     {% if items|length == 0 %}
         <div class="alert alert-info" data-testid="bo-video-list-empty">
