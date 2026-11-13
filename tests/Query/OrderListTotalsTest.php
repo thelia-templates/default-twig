@@ -142,6 +142,8 @@ final class OrderListTotalsTest extends IntegrationTestCase
         $orderIds = array_map(static fn (Order $order): int => (int) $order->getId(), $orders);
 
         $totals = [];
+        // The first read of the configuration loads the whole table: the set-up of the test, not the cost of a page.
+        ConfigQuery::read(self::ROUNDING_MODE);
         $queries = QueryCounter::count(function () use ($orderIds, &$totals): void {
             $totals = $this->orders->findTotalAmountByOrder($orderIds);
         });

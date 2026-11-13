@@ -26,6 +26,7 @@ use Symfony\Component\Translation\IdentityTranslator;
 use Thelia\Core\Security\Resource\AdminResources;
 use Thelia\Domain\OrderReturn\Service\ReturnEligibilityChecker;
 use Thelia\Domain\SaleUnit\Access\AdminSaleUnitScope;
+use Thelia\Model\ConfigQuery;
 use Thelia\Model\Currency;
 use Thelia\Model\Customer;
 use Thelia\Model\OrderStatus;
@@ -201,6 +202,8 @@ final class CustomerOverviewProviderTest extends IntegrationTestCase
             $this->order($customer, OrderStatus::CODE_PAID, '10', '2026-01-10 09:00:00');
         }
         $provider = $this->provider(true);
+        // The first read of the configuration loads the whole table: the set-up of the test, not the cost of the figures.
+        ConfigQuery::read('order_rounding_mode');
 
         $queries = QueryCounter::count(function () use ($provider, $customer): void {
             $provider->compute($customer, $this->now);
