@@ -122,6 +122,21 @@ final class AdminLanguageRuleTest extends WebIntegrationTestCase
         self::assertStringContainsString('data-currency-name="Other currency name"', (string) $this->client->getResponse()->getContent());
     }
 
+    public function testTheCurrencyListIsSortedInTheLanguageItIsReadIn(): void
+    {
+        $first = $this->factory->currency(['code' => 'ZZA']);
+        $second = $this->factory->currency(['code' => 'ZZB']);
+        foreach ([[$first, 'Zeta', 'Alpha'], [$second, 'Beta', 'Omega']] as [$currency, $defaultName, $otherName]) {
+            $currency->setLocale($this->otherLang->getLocale())->setName($otherName)->save($this->getPropelConnection());
+            $currency->setLocale($this->defaultLang->getLocale())->setName($defaultName)->save($this->getPropelConnection());
+        }
+
+        $this->client->request('GET', '/admin/configuration/currencies?order=name&direction=asc&lang='.$this->otherLang->getCode());
+        $html = (string) $this->client->getResponse()->getContent();
+
+        self::assertLessThan(strpos($html, 'data-currency-name="Omega"'), strpos($html, 'data-currency-name="Alpha"'), 'Alpha comes before Omega in the language of the page.');
+    }
+
     public function testTheShippingZoneAndItsCountryFeedReadInTheLanguageOfTheInterface(): void
     {
         $country = $this->countryTitled('Default country title', 'Other country title');
