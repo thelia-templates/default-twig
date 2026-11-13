@@ -16,6 +16,7 @@ namespace BackOfficeDefaultTwigBundle\Controller\Configuration;
 
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -47,8 +48,13 @@ final class StoreMediaController
     }
 
     #[Route('/{field}', name: 'show', methods: ['GET'], requirements: ['field' => 'logo|banner|favicon'])]
-    public function show(string $field): Response
+    public function show(Request $request, string $field): Response
     {
+        // Every page of the back office loads the logo as an image: the core would keep it as the page to come back to
+        // (RequestListener::registerPreviousUrl()), and a module sending the admin back there after a save would show
+        // the image instead of the page.
+        $request->attributes->set('_previous_url', 'dont-save');
+
         if ($denied = $this->access->check(AdminResources::STORE, [], AccessManager::VIEW)) {
             return $denied;
         }
