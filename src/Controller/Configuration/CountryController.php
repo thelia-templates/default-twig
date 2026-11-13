@@ -291,7 +291,7 @@ final class CountryController
             ->setIsocode((string) ($data['isocode'] ?? ''))
             ->setIsoAlpha2((string) ($data['isoalpha2'] ?? ''))
             ->setIsoAlpha3((string) ($data['isoalpha3'] ?? ''))
-            ->setArea((int) ($data['area'] ?? 0))
+            ->setArea(0)
             ->setVisible((bool) ($data['visible'] ?? false))
             ->setHasStates((bool) ($data['has_states'] ?? false));
 
@@ -307,7 +307,7 @@ final class CountryController
             ->setIsocode((string) ($data['isocode'] ?? ''))
             ->setIsoAlpha2((string) ($data['isoalpha2'] ?? ''))
             ->setIsoAlpha3((string) ($data['isoalpha3'] ?? ''))
-            ->setArea((int) ($data['area'] ?? 0))
+            ->setArea(0)
             ->setVisible((bool) ($data['visible'] ?? false))
             ->setHasStates((bool) ($data['has_states'] ?? false))
             ->setNeedZipCode((bool) ($data['need_zip_code'] ?? false))
@@ -328,7 +328,6 @@ final class CountryController
             'isocode' => $country->getIsocode(),
             'isoalpha2' => $country->getIsoalpha2(),
             'isoalpha3' => $country->getIsoalpha3(),
-            'area' => null,
             'visible' => (bool) $country->getVisible(),
             'has_states' => (bool) $country->getHasStates(),
             'need_zip_code' => (bool) $country->getNeedZipCode(),

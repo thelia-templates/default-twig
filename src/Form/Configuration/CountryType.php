@@ -17,7 +17,6 @@ namespace BackOfficeDefaultTwigBundle\Form\Configuration;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
-use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -51,10 +50,6 @@ final class CountryType extends AbstractType
             ->add('isoalpha3', TextType::class, [
                 'constraints' => [new NotBlank()],
                 'label' => $this->translator->trans('ISO 3166-1 alpha-3'),
-            ])
-            ->add('area', IntegerType::class, [
-                'required' => false,
-                'label' => $this->translator->trans('Shipping area'),
             ])
             ->add('visible', CheckboxType::class, [
                 'required' => false,
