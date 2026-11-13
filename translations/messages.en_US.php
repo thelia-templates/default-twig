@@ -1416,4 +1416,5 @@ return [
     'the customer account' => 'the customer account',
     'the shipping account' => 'the shipping account',
     'the accounts of the tax rates' => 'the accounts of the tax rates',
+    'More' => 'More',
 ];

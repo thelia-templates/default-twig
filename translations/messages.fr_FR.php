@@ -3615,4 +3615,5 @@ return [
     'the customer account' => 'le compte client',
     'the shipping account' => 'le compte de port',
     'the accounts of the tax rates' => 'les comptes des taux de taxe',
+    'More' => 'Plus',
 ];
