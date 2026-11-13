@@ -188,11 +188,15 @@ final class ModuleController
             return new RedirectResponse($this->urls->generate(self::LIST_ROUTE));
         }
 
+        // The event skips the dependency and mandatory-module checks unless told otherwise.
+        $event = new ModuleToggleActivationEvent($module_id);
+        $event->setNoCheck(false);
+
         return $this->action->tokenAction(
             resource: self::RESOURCE,
             access: AccessManager::UPDATE,
             request: $request,
-            event: new ModuleToggleActivationEvent($module_id),
+            event: $event,
             eventName: TheliaEvents::MODULE_TOGGLE_ACTIVATION,
             actionLabel: 'Module activation toggled',
             successRoute: self::LIST_ROUTE,
