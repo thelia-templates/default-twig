@@ -4,7 +4,8 @@ import { Controller } from '@hotwired/stimulus';
  * Previews the price of a combination per reference unit (13,32 € / l) while the merchant
  * types, the way bo-pse-price-with-tax previews the taxed price: the server taxes the price
  * and the core divides, never this script. Asked when a unit field is left and when the
- * price of the combination changes.
+ * price of the combination changes. The price divided is the one the customer pays: the sale
+ * price while the combination is on promotion, the price otherwise.
  */
 export default class extends Controller {
     static targets = ['unitQuantity', 'referenceUnitQuantity', 'unitCode', 'output'];
@@ -12,25 +13,28 @@ export default class extends Controller {
     static values = {
         calcUrl: String,
         priceSelector: String,
+        salePriceSelector: String,
+        onSaleSelector: String,
         taxRuleSelector: String,
         currencyId: Number,
     };
 
     connect() {
         this.onPriceChange = () => this.compute();
-        this.priceInput?.addEventListener('change', this.onPriceChange);
+        this.watched = [this.priceInput, this.salePriceInput, this.onSaleInput].filter(Boolean);
+        this.watched.forEach((input) => input.addEventListener('change', this.onPriceChange));
         this.compute();
     }
 
     disconnect() {
-        this.priceInput?.removeEventListener('change', this.onPriceChange);
+        (this.watched ?? []).forEach((input) => input.removeEventListener('change', this.onPriceChange));
     }
 
     async compute() {
         const unitQuantity = this.unitQuantityTarget.value.trim();
         const referenceUnitQuantity = this.referenceUnitQuantityTarget.value.trim();
         const unitCode = this.unitCodeTarget.value;
-        const price = this.priceInput?.value ?? '';
+        const price = this.payablePrice();
 
         if (unitQuantity === '' || referenceUnitQuantity === '' || unitCode === '' || price === '') {
             this.outputTarget.textContent = '-';
@@ -56,11 +60,29 @@ export default class extends Controller {
         }
     }
 
+    /** The sale price of a combination on promotion, the price of the row otherwise. */
+    payablePrice() {
+        const salePrice = this.salePriceInput?.value ?? '';
+        if (this.onSaleInput?.checked && salePrice !== '' && Number(salePrice) > 0) {
+            return salePrice;
+        }
+
+        return this.priceInput?.value ?? '';
+    }
+
     get form() {
         return this.element.closest('form');
     }
 
     get priceInput() {
         return this.priceSelectorValue ? this.form?.querySelector(this.priceSelectorValue) ?? null : null;
+    }
+
+    get salePriceInput() {
+        return this.salePriceSelectorValue ? this.form?.querySelector(this.salePriceSelectorValue) ?? null : null;
+    }
+
+    get onSaleInput() {
+        return this.onSaleSelectorValue ? this.form?.querySelector(this.onSaleSelectorValue) ?? null : null;
     }
 }

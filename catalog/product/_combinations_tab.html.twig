@@ -274,7 +274,7 @@
                                         </td>
                                         <td class="bo-combinations-grid__promo">
                                             <div class="input-group input-group-sm">
-                                                <input type="number" step="any" name="sale_price[]" value="{{ row.sale_price }}" data-bulk-field="sale-price" class="form-control text-end bo-combinations-grid__number"{% if not row.onsale %} readonly{% endif %}
+                                                <input type="number" step="any" id="{{ field_id }}-sale-price" name="sale_price[]" value="{{ row.sale_price }}" data-bulk-field="sale-price" class="form-control text-end bo-combinations-grid__number"{% if not row.onsale %} readonly{% endif %}
                                                        aria-label="{{ 'Sale price excluding taxes'|trans }}"
                                                        data-bo-virtual-toggle-target="field"
                                                        data-bo-pse-price-with-tax-target="salePriceExcl"
@@ -304,6 +304,8 @@
                                         data-controller="bo-pse-reference-price"
                                         data-bo-pse-reference-price-calc-url-value="{{ path('admin.product.calculate-reference-price') }}"
                                         data-bo-pse-reference-price-price-selector-value="#{{ field_id }}-price"
+                                        data-bo-pse-reference-price-sale-price-selector-value="#{{ field_id }}-sale-price"
+                                        data-bo-pse-reference-price-on-sale-selector-value="#{{ field_id }}-onsale"
                                         data-bo-pse-reference-price-tax-rule-selector-value="[name=&quot;tax_rule&quot;]"
                                         data-bo-pse-reference-price-currency-id-value="{{ currency.id }}">
                                         <td class="bo-combinations-grid__handle-cont"></td>

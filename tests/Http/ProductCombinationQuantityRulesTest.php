@@ -408,6 +408,31 @@ final class ProductCombinationQuantityRulesTest extends WebIntegrationTestCase
     /**
      * @return list<string|int|null>
      */
+    /**
+     * The preview divides the price the customer pays: the sale price when the combination is on
+     * promotion. The script reads the fields named by these attributes, so each must point at
+     * one field of the row.
+     */
+    public function testThePreviewOfAnArticleOnPromotionReadsTheSalePriceOfItsRow(): void
+    {
+        $this->loginFullAdmin();
+        [$product] = $this->productWithCombinations(1);
+        $bottle = $this->combinationOf($product, ['unitQuantity' => 0.75, 'referenceUnitQuantity' => 1, 'unitCode' => 'l']);
+
+        $crawler = $this->client->request('GET', '/admin/products/combinations/tab?product_id='.$product->getId());
+
+        $preview = $crawler->filter('#pse-quantity-rules-'.$bottle->getId());
+        foreach (['sale-price-selector', 'on-sale-selector', 'price-selector'] as $name) {
+            $selector = (string) $preview->attr('data-bo-pse-reference-price-'.$name.'-value');
+            self::assertNotSame('', $selector, $name.' is declared.');
+            self::assertCount(1, $crawler->filter($selector), $name.' points at one field of the page.');
+        }
+
+        $source = (string) file_get_contents(__DIR__.'/../../assets/controllers/bo-pse-reference-price_controller.js');
+        self::assertStringContainsString('salePriceSelector', $source);
+        self::assertStringContainsString('onSaleSelector', $source);
+    }
+
     private function ruleOf(ProductSaleElements $pse): array
     {
         return [
