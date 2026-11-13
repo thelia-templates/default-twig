@@ -83,13 +83,13 @@
                     </div>
                 {% endif %}
                 <div class="btn-group" data-controller="bo-print-iframe" data-bo-print-iframe-url-value="{{ delivery_url }}" data-bo-print-iframe-name-value="order-delivery">
-                    <a href="{{ delivery_url }}" target="_blank" class="btn btn-outline-secondary" data-testid="order-delivery-link" title="{{ 'View purchase order as PDF'|trans }}">
+                    <a href="{{ delivery_url }}" target="_blank" class="btn btn-outline-secondary" data-testid="order-delivery-link" title="{{ 'View delivery slip as PDF'|trans }}">
                         <i class="bi bi-file-pdf" aria-hidden="true"></i> {{ 'Delivery slip'|trans }}
                     </a>
-                    <button type="button" class="btn btn-outline-secondary" data-action="bo-print-iframe#print" data-testid="order-delivery-print" title="{{ 'Print purchase order'|trans }}">
+                    <button type="button" class="btn btn-outline-secondary" data-action="bo-print-iframe#print" data-testid="order-delivery-print" title="{{ 'Print delivery slip'|trans }}">
                         <i class="bi bi-printer" aria-hidden="true"></i>
                     </button>
-                    <a href="{{ delivery_download_url }}" class="btn btn-outline-secondary" data-testid="order-delivery-download" title="{{ 'Download purchase order as PDF'|trans }}">
+                    <a href="{{ delivery_download_url }}" class="btn btn-outline-secondary" data-testid="order-delivery-download" title="{{ 'Download delivery slip as PDF'|trans }}">
                         <i class="bi bi-download" aria-hidden="true"></i>
                     </a>
                 </div>
