@@ -654,6 +654,22 @@ final class OrderRepository
         return (float) ($row['revenue'] ?? 0);
     }
 
+    /**
+     * The orders getRevenue() adds up: what an average order is divided by.
+     */
+    public function countRevenueOrders(DateRange $range): int
+    {
+        $sql = 'SELECT COUNT(*) AS paid FROM `order`
+            WHERE created_at BETWEEN :from AND :to
+              AND status_id IN ('.$this->statusIdListSql(self::REVENUE_STATUS_CODES).')'.$this->access->sqlCondition();
+
+        $statement = Propel::getConnection()->prepare($sql);
+        $statement->execute([':from' => $range->fromSql(), ':to' => $range->toSql()]);
+        $row = $statement->fetch(\PDO::FETCH_ASSOC);
+
+        return (int) ($row['paid'] ?? 0);
+    }
+
     public function countOrders(DateRange $range): int
     {
         $query = OrderQuery::create();

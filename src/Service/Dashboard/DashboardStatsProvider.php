@@ -105,8 +105,11 @@ final readonly class DashboardStatsProvider
             $previousRevenue = $this->orders->getRevenue($previous);
             $previousOrderCount = $this->orders->countOrders($previous);
 
-            $aov = $orderCount > 0 ? $revenue / $orderCount : 0.0;
-            $previousAov = $previousOrderCount > 0 ? $previousRevenue / $previousOrderCount : 0.0;
+            // The revenue counts the paid orders only: so does what it is divided by.
+            $revenueOrderCount = $this->orders->countRevenueOrders($range);
+            $previousRevenueOrderCount = $this->orders->countRevenueOrders($previous);
+            $aov = $revenueOrderCount > 0 ? $revenue / $revenueOrderCount : 0.0;
+            $previousAov = $previousRevenueOrderCount > 0 ? $previousRevenue / $previousRevenueOrderCount : 0.0;
 
             $kpis[] = new Kpi(
                 label: $this->translator->trans('Revenue'),
