@@ -30,7 +30,6 @@ use BackOfficeDefaultTwigBundle\Service\Customer\CustomerFilters;
 use BackOfficeDefaultTwigBundle\Service\Customer\CustomerListRowPresenter;
 use BackOfficeDefaultTwigBundle\Service\Customer\CustomerOverviewProvider;
 use BackOfficeDefaultTwigBundle\Service\Customer\CustomerPaymentMethodsProvider;
-use BackOfficeDefaultTwigBundle\Service\I18n\CountryFlag;
 use BackOfficeDefaultTwigBundle\Service\I18n\CountryStateProvider;
 use BackOfficeDefaultTwigBundle\Service\I18n\StateChoiceProvider;
 use BackOfficeDefaultTwigBundle\Service\SaleUnit\RestrictedAdminGuard;
@@ -141,7 +140,7 @@ final class CustomerController
         foreach ($paginated['rows'] as $customer) {
             $customerId = (int) $customer->getId();
             $countryId = $primaryCountryIds[$customerId] ?? 0;
-            $country = $countriesIndex[$countryId] ?? ['flag' => '', 'title' => ''];
+            $country = $countriesIndex[$countryId] ?? ['iso' => '', 'title' => ''];
 
             $rows[] = $this->rowPresenter->present(
                 customer: $customer,
@@ -150,7 +149,7 @@ final class CustomerController
                 totalSpent: $totalsSpent[$customerId] ?? 0.0,
                 lastOrderAt: $lastOrders[$customerId] ?? null,
                 phone: $phones[$customerId] ?? '',
-                countryFlag: $country['flag'],
+                countryIso: $country['iso'],
                 countryTitle: $country['title'],
                 tags: $tagsByCustomer[$customerId] ?? [],
                 groupLabel: $groupLabels[(int) $customer->getCustomerGroupId()] ?? '',
@@ -174,7 +173,7 @@ final class CustomerController
     /**
      * @param array<int, int> $primaryCountryIds
      *
-     * @return array<int, array{flag: string, title: string}>
+     * @return array<int, array{iso: string, title: string}>
      */
     private function buildCountriesIndex(array $primaryCountryIds, string $locale): array
     {
@@ -188,7 +187,7 @@ final class CustomerController
         $index = [];
         foreach ($countries as $country) {
             $index[$country['id']] = [
-                'flag' => CountryFlag::of($country['iso']),
+                'iso' => $country['iso'],
                 'title' => $country['title'],
             ];
         }

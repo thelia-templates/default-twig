@@ -887,8 +887,8 @@ td.bo-datatable__details-col {
     white-space: normal;
 }
 
-// The e-mail under the customer name in the return queue gives way first when the table
-// is short of room; the full address stays in its title.
+// The e-mail under the customer name in the order list and the return queue gives way
+// first when the table is short of room; the full address stays in its title.
 .bo-order-customer--compact .text-truncate {
     max-width: 11rem;
 }
@@ -2074,6 +2074,11 @@ main[data-testid="bo-main"] {
     min-height: 0;
 }
 
+// The flag before a customer name names its country on hover; it is not text to select.
+.bo-country-flag {
+    cursor: default;
+}
+
 // ---------- Order list ----------
 
 .bo-order-customer {
@@ -2082,8 +2087,6 @@ main[data-testid="bo-main"] {
 }
 
 .bo-order-items {
-    font-weight: 500;
-
     &[data-bs-toggle="tooltip"] {
         cursor: help;
     }
@@ -2096,11 +2099,12 @@ main[data-testid="bo-main"] {
     text-align: start;
 }
 
+// The size of the number of lines under the total: secondary figures of the row.
 .bo-order-module {
     display: inline-flex;
     align-items: center;
     color: var(--bs-body-color);
-    font-size: .9rem;
+    font-size: $small-font-size;
 }
 
 tr.bo-order-row--urgent {
@@ -2589,6 +2593,35 @@ tr.bo-order-row--urgent {
 .bo-action-row-dropdown {
     min-width: 12rem;
     max-width: max-content;
+}
+
+// The "..." of a row carries `dropdown-toggle`, which Bootstrap leaves its end corners to
+// although its menu follows it in the group; the caret that class draws is not wanted.
+.bo-row-menu__toggle::after {
+    display: none;
+}
+
+// From the breakpoint where the "..." gives way to the actions it holds, it is hidden but
+// still the last child of the group: the button before it would keep the square end
+// Bootstrap gives a middle child. @content gives the end corners back, per direction.
+// The selector only ties with the rule it corrects (Bootstrap's `.btn-group > .btn:not(:last-child)`
+// here, the button-group block of _rtl.scss there): it wins by coming after it, so this file
+// keeps importing Bootstrap first and _rtl.scss calls the mixin after its own button-group rules.
+@mixin bo-row-menu-hidden-after {
+    @each $breakpoint in map-keys($grid-breakpoints) {
+        @if $breakpoint != "xs" {
+            @include media-breakpoint-up($breakpoint) {
+                .btn-group > .btn:has(+ .bo-row-menu.d-#{$breakpoint}-none) {
+                    @content;
+                }
+            }
+        }
+    }
+}
+
+@include bo-row-menu-hidden-after {
+    border-top-right-radius: var(--#{$prefix}btn-border-radius);
+    border-bottom-right-radius: var(--#{$prefix}btn-border-radius);
 }
 
 // A row action that is offered but cannot run: the reason wraps under the label,

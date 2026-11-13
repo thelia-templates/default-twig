@@ -19,6 +19,7 @@ use Propel\Runtime\Connection\ConnectionWrapper;
 use Propel\Runtime\Propel;
 use Psr\Log\AbstractLogger;
 use Thelia\Model\ConfigQuery;
+use Thelia\Model\CountryQuery;
 use Thelia\Model\OrderProduct;
 use Thelia\Model\OrderProductAttributeCombination;
 use Thelia\Model\OrderStatus;
@@ -142,6 +143,59 @@ final class OrderListRowPresenterTest extends IntegrationTestCase
         self::assertSame((string) $order->getId(), $link->textContent);
         self::assertSame('ORD"<b>1', $link->getAttribute('title'));
         self::assertStringNotContainsString('<b>', $html);
+    }
+
+    public function testTheTotalComesFirstWithTheNumberOfLinesUnderneath(): void
+    {
+        $order = $this->factory->order($this->factory->customer($this->factory->customerTitle()));
+        $this->factory->orderProduct($order);
+        $presenter = static::getContainer()->get(OrderListRowPresenter::class);
+
+        $row = $presenter->presentAll([$order], 'en_US')[0];
+
+        self::assertStringStartsWith('<div class="fw-semibold"><span dir="ltr">'.htmlspecialchars($row['amount']).'</span></div>', $row['total_html']);
+        self::assertStringEndsWith('<div class="small">'.$row['items_html'].'</div>', $row['total_html']);
+    }
+
+    public function testALongEMailKeepsItsFullAddressOnHover(): void
+    {
+        $order = $this->factory->order($this->factory->customer($this->factory->customerTitle(), ['email' => 'a.very.long.address@an-example-shop.test']));
+        $presenter = static::getContainer()->get(OrderListRowPresenter::class);
+
+        $customer = $presenter->presentAll([$order], 'en_US')[0]['customer_html'];
+
+        self::assertStringContainsString('bo-order-customer--compact', $customer);
+        self::assertStringContainsString('title="a.very.long.address@an-example-shop.test"', $customer);
+    }
+
+    public function testTheActionsOfARowSitBehindASingleButton(): void
+    {
+        $order = $this->factory->order($this->factory->customer($this->factory->customerTitle()), ['statusCode' => OrderStatus::CODE_PAID]);
+        $presenter = static::getContainer()->get(OrderListRowPresenter::class);
+
+        $actions = $presenter->presentAll([$order], 'en_US')[0]['_actions'];
+
+        self::assertSame(['view', 'invoice', 'delivery-slip', 'cancel'], array_map(static fn ($action): string => $action->kind, $actions));
+        foreach ($actions as $action) {
+            self::assertTrue($action->inMenu, $action->kind.' sits in the menu of the row.');
+        }
+    }
+
+    public function testTheFlagOfTheDeliveryCountryCarriesItsNameOnHover(): void
+    {
+        $order = $this->factory->order($this->factory->customer($this->factory->customerTitle()));
+        // A country whose name differs from one language to the other, so the locale shows.
+        $germany = CountryQuery::create()->findOneByIsoalpha2('DE');
+        self::assertNotNull($germany);
+        $order->getOrderAddressRelatedByDeliveryOrderAddressId()->setCountryId((int) $germany->getId())->save($this->getPropelConnection());
+        $presenter = static::getContainer()->get(OrderListRowPresenter::class);
+
+        $customer = $presenter->presentAll([$order], 'fr_FR')[0]['customer_html'];
+
+        self::assertStringContainsString(
+            '<span class="bo-country-flag" data-bs-toggle="tooltip" title="Allemagne">',
+            $customer,
+        );
     }
 
     public function testAnOrderWithoutLinesHasNoTooltip(): void
