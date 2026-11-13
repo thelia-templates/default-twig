@@ -167,7 +167,7 @@ final readonly class OrderListRowPresenter
             'sale_unit' => $this->saleUnitTitle($order, $saleUnitTitles, $locale),
             'is_urgent' => $isUrgent,
             '_row_class' => $isUrgent ? 'bo-order-row--urgent' : '',
-            '_actions' => $this->buildActions($orderId, $canCancel, (string) $order->getRef()),
+            '_actions' => $this->buildActions($orderId, $canCancel, (string) $order->getRef(), $this->hasInvoice($order)),
         ];
     }
 
@@ -394,9 +394,18 @@ final readonly class OrderListRowPresenter
     }
 
     /**
+     * Same rule as the order sheet: the invoice date is set when the order is paid, before that
+     * the PDF has neither date nor number.
+     */
+    private function hasInvoice(Order $order): bool
+    {
+        return $order->isPaid(false) || null !== $order->getInvoiceDate();
+    }
+
+    /**
      * @return list<RowAction>
      */
-    private function buildActions(int $orderId, bool $canCancel, string $orderRef): array
+    private function buildActions(int $orderId, bool $canCancel, string $orderRef, bool $hasInvoice): array
     {
         $actions = [
             new RowAction(
@@ -407,14 +416,6 @@ final readonly class OrderListRowPresenter
                 grantedSubject: self::RESOURCE,
             ),
             new RowAction(
-                kind: 'invoice',
-                label: $this->translator->trans('Download invoice PDF'),
-                href: $this->urls->generate(self::INVOICE_PDF_ROUTE, ['order_id' => $orderId, 'browser' => 1]),
-                grantedAttribute: AccessManager::VIEW,
-                grantedSubject: self::RESOURCE,
-                inlineFrom: 'md',
-            ),
-            new RowAction(
                 kind: 'delivery-slip',
                 label: $this->translator->trans('Download delivery slip PDF'),
                 href: $this->urls->generate(self::DELIVERY_PDF_ROUTE, ['order_id' => $orderId, 'browser' => 1]),
@@ -423,6 +424,17 @@ final readonly class OrderListRowPresenter
                 inlineFrom: 'md',
             ),
         ];
+
+        if ($hasInvoice) {
+            array_splice($actions, 1, 0, [new RowAction(
+                kind: 'invoice',
+                label: $this->translator->trans('Download invoice PDF'),
+                href: $this->urls->generate(self::INVOICE_PDF_ROUTE, ['order_id' => $orderId, 'browser' => 1]),
+                grantedAttribute: AccessManager::VIEW,
+                grantedSubject: self::RESOURCE,
+                inlineFrom: 'md',
+            )]);
+        }
 
         if ($canCancel) {
             $actions[] = new RowAction(

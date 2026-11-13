@@ -100,6 +100,20 @@ final class OrderListRowPresenterTest extends IntegrationTestCase
         self::assertStringNotContainsString('LINE-11', $items);
     }
 
+    public function testTheInvoiceIsOfferedOnlyOnceTheOrderHasOne(): void
+    {
+        $customer = $this->factory->customer($this->factory->customerTitle());
+        $presenter = static::getContainer()->get(OrderListRowPresenter::class);
+        $kinds = fn (string $status): array => array_map(
+            static fn ($action): string => $action->kind,
+            $presenter->present($this->factory->order($customer, ['statusCode' => $status]), 'en_US')['_actions'],
+        );
+
+        self::assertNotContains('invoice', $kinds(OrderStatus::CODE_NOT_PAID), 'An unpaid order has no invoice date: its PDF would be empty.');
+        self::assertContains('invoice', $kinds(OrderStatus::CODE_PAID));
+        self::assertContains('delivery-slip', $kinds(OrderStatus::CODE_NOT_PAID));
+    }
+
     public function testTheListShowsTheReferenceOfAnOrderByDefault(): void
     {
         $order = $this->factory->order($this->factory->customer($this->factory->customerTitle()));
