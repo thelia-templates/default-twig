@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace BackOfficeDefaultTwigBundle\Tests\Service\Product;
 
+use BackOfficeDefaultTwigBundle\Service\Product\CombinationLabeler;
 use BackOfficeDefaultTwigBundle\Service\Product\CombinationsTabContextBuilder;
 use Thelia\Model\Attribute;
 use Thelia\Model\AttributeAv;
@@ -190,6 +191,17 @@ final class CombinationsTabContextBuilderTest extends IntegrationTestCase
         self::assertStringContainsString('Bleu', $french[$blue]['label']);
         self::assertStringContainsString('Color', $english[$blue]['label']);
         self::assertStringNotContainsString('Couleur', $english[$blue]['label']);
+    }
+
+    public function testACombinationFallsBackToTheDefaultLanguageWhereTheAdminsLanguageHasNoWording(): void
+    {
+        $blue = $this->givenCombination(0, 'blue');
+
+        $french = array_column((new CombinationsTabContextBuilder())->build($this->product, null, 'fr_FR')['pse_rows'], null, 'id');
+        $labels = (new CombinationLabeler())->labelsFor([$blue], 'fr_FR');
+
+        self::assertSame('Color: Blue', $french[$blue]['label'], 'The attributes only exist in the default language: no empty title.');
+        self::assertSame('Color: Blue', $labels[$blue]);
     }
 
     public function testTheRulesReadInTheAdminsLanguageAndTheUnitsAreNamedInIt(): void

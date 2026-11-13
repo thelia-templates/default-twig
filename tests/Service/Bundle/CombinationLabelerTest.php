@@ -16,6 +16,7 @@ namespace BackOfficeDefaultTwigBundle\Tests\Service\Bundle;
 
 use BackOfficeDefaultTwigBundle\Service\Product\CombinationLabeler;
 use BackOfficeDefaultTwigBundle\Tests\Support\QueryCounter;
+use Thelia\Model\Lang;
 use Thelia\Model\ProductSaleElementsQuery;
 use Thelia\Test\IntegrationTestCase;
 
@@ -87,6 +88,9 @@ final class CombinationLabelerTest extends IntegrationTestCase
             $factory->attributeCombination($saleElements, $factory->attributeAv($color, ['title' => 'Value '.$i]));
             $ids[] = (int) $saleElements->getId();
         }
+
+        // The default language, the fallback of a title, is read once and kept: the set-up, not the cost of a batch.
+        Lang::getDefaultLanguage();
 
         $few = QueryCounter::count(static fn () => (new CombinationLabeler())->labelsFor(\array_slice($ids, 0, 2), 'en_US'));
         $many = QueryCounter::count(static fn () => (new CombinationLabeler())->labelsFor($ids, 'en_US'));
