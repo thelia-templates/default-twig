@@ -177,6 +177,21 @@ final class CombinationsTabContextBuilderTest extends IntegrationTestCase
         }
     }
 
+    public function testACombinationIsNamedInTheLanguageOfTheBackOffice(): void
+    {
+        $this->color->setLocale('fr_FR')->setTitle('Couleur')->save();
+        $this->values['blue']->setLocale('fr_FR')->setTitle('Bleu')->save();
+        $blue = $this->givenCombination(0, 'blue');
+
+        $french = array_column((new CombinationsTabContextBuilder())->build($this->product, null, 'fr_FR')['pse_rows'], null, 'id');
+        $english = array_column((new CombinationsTabContextBuilder())->build($this->product, null, 'en_US')['pse_rows'], null, 'id');
+
+        self::assertStringContainsString('Couleur', $french[$blue]['label']);
+        self::assertStringContainsString('Bleu', $french[$blue]['label']);
+        self::assertStringContainsString('Color', $english[$blue]['label']);
+        self::assertStringNotContainsString('Couleur', $english[$blue]['label']);
+    }
+
     public function testTheRulesReadInTheAdminsLanguageAndTheUnitsAreNamedInIt(): void
     {
         if (!class_exists('Thelia\\Domain\\Catalog\\Quantity\\UnitCode')) {

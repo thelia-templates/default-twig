@@ -85,7 +85,7 @@ final class CategoryController
         $locale = $request->getLocale();
 
         $context = $this->listPresenter->buildListContext($parentId, $productPage, $locale);
-        $context['create_form'] = $this->buildCreateForm($locale, $parentId)->createView();
+        $context['create_form'] = $this->buildCreateForm($this->editLocale->resolveFromRequest($request)->getLocale() ?? $locale, $parentId)->createView();
 
         return new Response($this->twig->render(self::LIST_TEMPLATE, $context));
     }
@@ -94,7 +94,7 @@ final class CategoryController
     public function create(Request $request): Response
     {
         $form = $this->formFactory->createNamed('thelia_category_creation', CategoryType::class, [
-            'locale' => $request->getLocale(),
+            'locale' => $this->editLocale->resolveFromRequest($request)->getLocale() ?? $request->getLocale(),
             'visible' => true,
         ], [
         ]);

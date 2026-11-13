@@ -355,8 +355,12 @@ final class CurrencyController
         $editForms = [];
 
         foreach ($currencies as $currency) {
-            $rows[] = $this->currencyToRow($currency);
             $editForms[$currency->getId()] = $this->createEditForm($currency)->createView();
+            // The edit form keeps the model locale it saves under; the row reads in the admin language.
+            if ($request !== null) {
+                $currency->setLocale($request->getLocale());
+            }
+            $rows[] = $this->currencyToRow($currency);
         }
 
         $createForm = $this->formFactory->createNamed('thelia_currency_create', CurrencyType::class, null, [

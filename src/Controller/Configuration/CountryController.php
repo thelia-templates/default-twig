@@ -238,7 +238,7 @@ final class CountryController
         }
 
         $visible = $request->query->getBoolean('visible', true);
-        $locale = (string) ($request->query->get('locale') ?? $this->defaultLocale());
+        $locale = (string) ($request->query->get('locale') ?? $request->getLocale());
 
         $countriesQuery = CountryQuery::create();
         if ($visible) {

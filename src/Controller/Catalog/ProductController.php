@@ -121,7 +121,7 @@ final class ProductController
 
         $page = max(1, (int) $request->query->get('page', 1));
         $filters = ProductFilters::fromRequest($request);
-        $locale = $this->defaultLocale();
+        $locale = $request->getLocale();
         $editLocale = $this->editLocaleOf($request);
         $categories = $this->categoryChoices($editLocale);
 
@@ -140,7 +140,7 @@ final class ProductController
                 'clone_form' => $this->buildCloneForm()->createView(),
                 'available_categories' => $categories,
                 'available_currencies' => $this->currencyChoices(),
-                'available_tax_rules' => $this->taxRuleChoices(),
+                'available_tax_rules' => $this->taxRuleChoices($request->getLocale()),
                 'bulk_contents' => $this->contentChoices($locale),
                 'bulk_products' => $this->productChoices($locale),
                 'bulk_association_types' => $this->associationTypeChoices($request->getLocale()),
@@ -185,7 +185,7 @@ final class ProductController
             'create_form' => $this->buildCreateForm($editLocale)->createView(),
             'available_categories' => $this->categoryChoices($editLocale),
             'available_currencies' => $this->currencyChoices(),
-            'available_tax_rules' => $this->taxRuleChoices(),
+            'available_tax_rules' => $this->taxRuleChoices($request->getLocale()),
             'default_category_id' => $default_category,
         ]));
     }
@@ -267,7 +267,7 @@ final class ProductController
                 'clone_form' => $this->buildCloneForm()->createView(),
                 'current_tab' => (string) $request->query->get('current_tab', 'general'),
                 'edit_language_id' => (int) $editLang->getId(),
-                'available_templates' => $this->templateChoices(),
+                'available_templates' => $this->templateChoices($uiLocale),
                 'available_categories' => $this->categories->flatTree($uiLocale),
                 'available_brands' => $this->brandChoices($uiLocale),
                 'available_documents' => $this->documentChoices($product, $uiLocale),
@@ -674,10 +674,10 @@ final class ProductController
      */
     private function paginatedRows(ProductFilters $filters, int $page, string $uiLocale): array
     {
-        $locale = $this->defaultLocale();
+        $locale = $uiLocale;
         $query = $filters->applyTo(ProductQuery::create(), $locale);
 
-        $this->applyOrder($query, $filters);
+        $this->applyOrder($query, $filters, $locale);
 
         $total = (int) $query->count();
         $pages = max(1, (int) ceil($total / self::PAGE_SIZE));
@@ -778,7 +778,7 @@ final class ProductController
         ];
     }
 
-    private function applyOrder(ProductQuery $query, ProductFilters $filters): void
+    private function applyOrder(ProductQuery $query, ProductFilters $filters, string $locale): void
     {
         $direction = $filters->direction === 'desc' ? Criteria::DESC : Criteria::ASC;
 
@@ -786,7 +786,7 @@ final class ProductController
             'id' => $query->orderById($direction),
             'ref' => $query->orderByRef($direction),
             'title' => $query->useProductI18nQuery('order_i18n')
-                ->filterByLocale($this->defaultLocale())
+                ->filterByLocale($locale)
                 ->orderByTitle($direction)
                 ->endUse(),
             'price' => $query->addAsColumn(
@@ -968,9 +968,8 @@ final class ProductController
     /**
      * @return list<array<string, mixed>>
      */
-    private function taxRuleChoices(): array
+    private function taxRuleChoices(string $locale): array
     {
-        $locale = $this->defaultLocale();
         $items = [];
         foreach (TaxRuleQuery::create()->joinWithI18n($locale)->orderById()->find() as $taxRule) {
             $taxRule->setLocale($locale);
@@ -983,9 +982,8 @@ final class ProductController
     /**
      * @return list<array<string, mixed>>
      */
-    private function templateChoices(): array
+    private function templateChoices(string $locale): array
     {
-        $locale = $this->defaultLocale();
         $items = [['id' => null, 'name' => $this->translator->trans('- No template -')]];
         foreach (TemplateQuery::create()->joinWithI18n($locale)->orderById()->find() as $template) {
             $template->setLocale($locale);
