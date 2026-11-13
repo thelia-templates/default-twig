@@ -37,8 +37,8 @@
             <div class="col-md-4">
                 <div class="card h-100">
                     <div class="card-body">
-                        <h2 class="h5"><i class="bi bi-file-earmark-binary" aria-hidden="true"></i> {{ 'Compiled assets'|trans }}</h2>
-                        <p class="text-muted small">{{ 'Clear public/assets compiled output (Webpack/Encore artifacts).'|trans }}</p>
+                        <h2 class="h5"><i class="bi bi-file-earmark-binary" aria-hidden="true"></i> {{ 'Module and theme assets'|trans }}</h2>
+                        <p class="text-muted small">{{ 'Clear the copies of the module and theme assets. They are made again when a page needs them; the compiled assets of the store and of the back office are kept.'|trans }}</p>
                     </div>
                     <div class="card-footer text-end">
                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#advanced-flush-assets-modal" data-testid="advanced-flush-assets">
@@ -79,7 +79,7 @@
         id: 'advanced-flush-assets-modal',
         title: 'Flush assets',
         formAction: path('admin.configuration.advanced.flush-assets'),
-        message: 'Flush the compiled assets? The files under public/assets are deleted.',
+        message: 'Flush the copies of the module and theme assets? The compiled assets are kept.',
         variant: 'warning',
         confirmLabel: 'Flush assets',
         confirmIcon: 'bi-trash3',

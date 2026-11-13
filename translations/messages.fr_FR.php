@@ -3828,4 +3828,7 @@ return [
     'Apply these settings to every combination and save' => 'Appliquer ces réglages à toutes les déclinaisons et enregistrer',
     'The unit "%unit%" is not one of the units a combination can be sold in.' => 'L\'unité « %unit% » ne fait pas partie des unités dans lesquelles une déclinaison peut être vendue.',
     'Combination %ref%: %reason%' => 'Déclinaison %ref% : %reason%',
+    'Module and theme assets' => 'Assets des modules et des thèmes',
+    'Clear the copies of the module and theme assets. They are made again when a page needs them; the compiled assets of the store and of the back office are kept.' => 'Vider les copies des assets des modules et des thèmes. Elles sont refaites quand une page en a besoin ; les assets compilés de la boutique et du back-office sont conservés.',
+    'Flush the copies of the module and theme assets? The compiled assets are kept.' => 'Vider les copies des assets des modules et des thèmes ? Les assets compilés sont conservés.',
 ];

@@ -1416,4 +1416,7 @@ return [
     'the customer account' => 'the customer account',
     'the shipping account' => 'the shipping account',
     'the accounts of the tax rates' => 'the accounts of the tax rates',
+    'Module and theme assets' => 'Module and theme assets',
+    'Clear the copies of the module and theme assets. They are made again when a page needs them; the compiled assets of the store and of the back office are kept.' => 'Clear the copies of the module and theme assets. They are made again when a page needs them; the compiled assets of the store and of the back office are kept.',
+    'Flush the copies of the module and theme assets? The compiled assets are kept.' => 'Flush the copies of the module and theme assets? The compiled assets are kept.',
 ];
