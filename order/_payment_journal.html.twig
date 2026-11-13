@@ -25,7 +25,7 @@
             <dd class="col-5 text-end mb-0" dir="ltr" data-testid="order-payment-pending">{{ payment_totals.pending_capture|format_currency(currency.code) }}</dd>
         {% endif %}
         {% if payment_totals.voided > 0 %}
-            <dt class="col-7">{{ 'Released'|trans }}</dt>
+            <dt class="col-7">{{ 'Voided'|trans }}</dt>
             <dd class="col-5 text-end mb-0" dir="ltr" data-testid="order-payment-voided">{{ payment_totals.voided|format_currency(currency.code) }}</dd>
         {% endif %}
         {% if payment_totals.refunded > 0 %}

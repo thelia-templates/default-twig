@@ -22,6 +22,7 @@ use Thelia\Model\LangQuery;
 use Thelia\Model\Map\ModuleTableMap;
 use Thelia\Model\Module;
 use Thelia\Model\ModuleQuery;
+use Thelia\Model\OrderPaymentTransaction;
 use Thelia\Model\ReportMailing;
 use Thelia\Test\FixtureFactory;
 use Thelia\Test\WebIntegrationTestCase;
@@ -173,6 +174,53 @@ final class LabelWordingTest extends WebIntegrationTestCase
 
         $label = trim($crawler->filter('label[for="thelia_scheduled_report_export_ref"] .bo-form-label__text')->text());
         self::assertSame('Export', $label);
+    }
+
+    public function testThePaymentJournalNamesTheModuleAndUsesOneWordPerState(): void
+    {
+        $module = $this->factory->paymentModule('JournalWordsModule');
+        $module->setLocale('en_US')->setTitle('Journal words module')->save($this->getPropelConnection());
+        $module->setLocale('fr_FR')->setTitle('Module du journal')->save($this->getPropelConnection());
+        $order = $this->factory->order($this->factory->customer($this->factory->customerTitle()));
+
+        foreach ([['capture', 'failed'], ['capture', 'pending'], ['authorization', 'succeeded']] as [$type, $state]) {
+            (new OrderPaymentTransaction())
+                ->setOrderId($order->getId())
+                ->setType($type)
+                ->setState($state)
+                ->setAmount('10.00')
+                ->setCurrencyId($order->getCurrencyId())
+                ->setPaymentModuleId($module->getId())
+                ->setActorType('module')
+                ->setActorLabel('JournalWordsModule')
+                ->save($this->getPropelConnection());
+        }
+        (new OrderPaymentTransaction())
+            ->setOrderId($order->getId())
+            ->setType('void')
+            ->setState('succeeded')
+            ->setAmount('5.00')
+            ->setCurrencyId($order->getCurrencyId())
+            ->setPaymentModuleId($module->getId())
+            ->setActorType('module')
+            ->setActorLabel('JournalWordsModule')
+            ->save($this->getPropelConnection());
+
+        $crawler = $this->page('/admin/order/update/'.$order->getId(), 'fr_FR');
+
+        $lines = $crawler->filter('[data-testid="order-payment-line"]');
+        self::assertCount(4, $lines);
+        self::assertStringContainsString('Module du journal', $crawler->filter('[data-testid="order-payment-journal"]')->text(), 'The author is the title of the module.');
+        self::assertStringNotContainsString('JournalWordsModule', $crawler->filter('[data-testid="order-payment-journal"]')->text());
+
+        $failedLine = trim($crawler->filter('[data-payment-state="failed"] .badge')->text());
+        $failedButton = trim($crawler->filter('[data-testid="order-payment-settle-failed"]')->text());
+        self::assertSame($failedLine, $failedButton, 'One word for a movement that failed, in the journal and on the button.');
+
+        $voidType = trim($crawler->filter('[data-payment-type="void"] strong')->text());
+        $voidedTotal = trim($crawler->filterXPath('//dd[@data-testid="order-payment-voided"]/preceding-sibling::dt[1]')->text());
+        self::assertSame('Annulation', $voidType);
+        self::assertSame('Annulé', $voidedTotal, 'The same root for what a void does, on the line and in the totals.');
     }
 
     private function page(string $path, string $locale): Crawler

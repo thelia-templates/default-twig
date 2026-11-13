@@ -20,6 +20,7 @@ use Thelia\Domain\Order\Enum\OrderHistoryActorType;
 use Thelia\Domain\Payment\Enum\PaymentTransactionState;
 use Thelia\Domain\Payment\Enum\PaymentTransactionType;
 use Thelia\Domain\Payment\Service\PaymentTransactionRecorder;
+use Thelia\Model\ModuleQuery;
 use Thelia\Model\OrderPaymentTransaction;
 
 /**
@@ -133,12 +134,27 @@ final readonly class OrderPaymentLinePresenter
         $label = (string) $line->getActorLabel();
 
         if ('' !== $label) {
-            return $label;
+            // The core stores the code of the module that wrote the line: the title is what an admin reads.
+            return OrderHistoryActorType::MODULE->value === $line->getActorType()
+                ? $this->moduleTitleOf($label, $locale) ?? $label
+                : $label;
         }
 
         return OrderHistoryActorType::SYSTEM->value === $line->getActorType()
             ? $this->trans('System', $locale)
             : (string) $line->getActorType();
+    }
+
+    private function moduleTitleOf(string $code, string $locale): ?string
+    {
+        $module = ModuleQuery::create()->findOneByCode($code);
+        if (null === $module) {
+            return null;
+        }
+
+        $title = trim((string) $module->setLocale($locale)->getTitle());
+
+        return '' === $title ? null : $title;
     }
 
     private function trans(string $message, string $locale): string
