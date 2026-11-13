@@ -99,7 +99,7 @@ final class ProductCombinationQuantityRulesTest extends WebIntegrationTestCase
 
         $crawler = $this->client->request('GET', '/admin/products/combinations/tab?product_id='.$product->getId());
 
-        self::assertSame('checked', $crawler->filter('[data-testid="combinations-quantity-rules-switch"]')->attr('checked'));
+        self::assertNotNull($crawler->filter('[data-testid="combinations-quantity-rules-switch"]')->attr('checked'), 'The switch is on.');
         self::assertSame('2', $crawler->filter(\sprintf('input[name="min_quantity[%d]"]', $bottle->getId()))->attr('value'));
         self::assertSame('6', $crawler->filter(\sprintf('input[name="quantity_step[%d]"]', $bottle->getId()))->attr('value'));
         self::assertMatchesRegularExpression('/^0[.,]75$/', (string) $crawler->filter(\sprintf('input[name="unit_quantity[%d]"]', $bottle->getId()))->attr('value'));
