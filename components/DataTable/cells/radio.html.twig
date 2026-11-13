@@ -11,7 +11,7 @@
 <div class="form-check {{ column.cellAlign == 'center' ? 'd-inline-flex justify-content-center' : '' }} mb-0"{% if href %} data-controller="bo-default-radio" data-bo-default-radio-url-value="{{ href }}"{% endif %}>
     <input class="form-check-input" type="radio"
            id="{{ inputId }}"
-           name="{{ name }}"
+           name="{{ name ~ idSuffix|default('') }}"
            value="{{ row[valueKey] }}"
            {% if href %} data-action="change->bo-default-radio#select"{% endif %}
            {% if checked %} checked{% endif %}>

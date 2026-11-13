@@ -374,7 +374,7 @@ final class CountryController
             $badges .= '<span class="badge bg-light text-dark border me-1">'.htmlspecialchars($zone['name'], \ENT_QUOTES | \ENT_HTML5).'</span>';
         }
 
-        return $badges;
+        return '<div class="bo-datatable__wrap">'.$badges.'</div>';
     }
 
     /**

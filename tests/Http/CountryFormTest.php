@@ -81,4 +81,32 @@ final class CountryFormTest extends WebIntegrationTestCase
 
         self::assertResponseRedirects();
     }
+
+    public function testTheDefaultCountryIsTheOnlyCheckedRadioOfItsGroup(): void
+    {
+        $default = CountryQuery::create()->findOneByByDefault(1);
+        self::assertNotNull($default, 'The test shop has a default country.');
+
+        $crawler = $this->client->request('GET', '/admin/configuration/countries');
+        self::assertResponseStatusCodeSame(200);
+
+        // The column is shown from md up, so the row repeats it in its detail line: the two
+        // copies must not belong to one group, or the browser keeps the last one checked.
+        $radios = $crawler->filter('input[type="radio"][value="'.$default->getId().'"]');
+        self::assertCount(2, $radios, 'The default cell and its copy in the detail line.');
+        $names = $radios->each(static fn ($radio): string => (string) $radio->attr('name'));
+        self::assertCount(2, array_unique($names), 'Each copy has a group of its own.');
+        foreach ($radios as $radio) {
+            self::assertNotNull($radio->attributes->getNamedItem('checked'), 'Both copies of the default country are checked.');
+        }
+        self::assertCount(0, $crawler->filter('input[type="radio"][name="country_default"]:not([value="'.$default->getId().'"])[checked]'), 'No other country is checked.');
+    }
+
+    public function testTheCountryAndZoneCellsWrapSoTheTableFitsTheCard(): void
+    {
+        $crawler = $this->client->request('GET', '/admin/configuration/countries');
+
+        self::assertGreaterThan(0, $crawler->filter('td[data-testid="datatable-countries-cell-title"] .bo-datatable__wrap')->count(), 'A long country name breaks over lines.');
+        self::assertGreaterThan(0, $crawler->filter('td[data-testid="datatable-countries-cell-shipping_zones_html"] .bo-datatable__wrap')->count(), 'The zones break over lines.');
+    }
 }
