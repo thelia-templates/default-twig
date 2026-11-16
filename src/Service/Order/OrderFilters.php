@@ -16,6 +16,8 @@ namespace BackOfficeDefaultTwigBundle\Service\Order;
 
 use Propel\Runtime\ActiveQuery\Criteria;
 use Symfony\Component\HttpFoundation\Request;
+use Thelia\Domain\Pricing\OrderLineRounding;
+use Thelia\Model\ConfigQuery;
 use Thelia\Model\Map\OrderTableMap;
 use Thelia\Model\OrderQuery;
 
@@ -481,6 +483,10 @@ final readonly class OrderFilters
      */
     public static function taxedItemsTotalSqlExpression(): string
     {
+        if (OrderRoundingRule::coreHasTheRule()) {
+            return 'COALESCE('.self::coreItemsTotalSqlExpression().', 0)';
+        }
+
         $legacyPivot = OrderRoundingRule::legacyPivot();
         $sumOfRoundingsPivot = OrderRoundingRule::sumOfRoundingsPivot();
         $floatLineRoundingPivot = OrderRoundingRule::floatLineRoundingPivot();
@@ -510,6 +516,69 @@ final readonly class OrderFilters
             : 'CASE '.implode(' ', $frozenBranches).' ELSE '.$currentRule.' END';
 
         return 'COALESCE('.$itemsTotal.', 0)';
+    }
+
+    /**
+     * The taxed total of the order lines under the rule of the core (OrderLineRounding), the
+     * one Order::getTotalAmount() totals the order with: the pivots the order was placed
+     * before choose, line by line, the mode and the arithmetic. A pivot the shop does not
+     * have adds no branch.
+     */
+    private static function coreItemsTotalSqlExpression(): string
+    {
+        $orderId = OrderTableMap::COL_ID;
+        $shopMode = OrderRoundingRule::RoundingOfSums === OrderRoundingRule::shopRule()
+            ? ConfigQuery::ROUNDING_MODE_ROUNDING_OF_SUMS
+            : ConfigQuery::ROUNDING_MODE_SUM_OF_ROUNDINGS;
+        $sumOfRoundingsPivot = OrderRoundingRule::sumOfRoundingsPivot();
+
+        $lineTotal = self::coreLineTotalSqlExpression($shopMode);
+
+        if ($sumOfRoundingsPivot > 0 && ConfigQuery::ROUNDING_MODE_ROUNDING_OF_SUMS === $shopMode) {
+            $lineTotal = 'CASE WHEN '.$orderId.' <= '.$sumOfRoundingsPivot
+                .' THEN '.self::coreLineTotalSqlExpression(ConfigQuery::ROUNDING_MODE_SUM_OF_ROUNDINGS)
+                .' ELSE '.$lineTotal.' END';
+        }
+
+        $itemsTotal = '(
+            SELECT SUM('.$lineTotal.')
+            FROM order_product
+            WHERE order_product.order_id = '.$orderId.'
+        )';
+
+        $legacyPivot = OrderRoundingRule::legacyPivot();
+
+        return $legacyPivot > 0
+            ? 'CASE WHEN '.$orderId.' <= '.$legacyPivot.' THEN '.self::legacyItemsTotalSqlExpression().' ELSE '.$itemsTotal.' END'
+            : $itemsTotal;
+    }
+
+    private static function coreLineTotalSqlExpression(int $roundingMode): string
+    {
+        // Called only once coreHasTheRule() said yes; static analysis reads the guard only here.
+        if (!class_exists(OrderLineRounding::class)) {
+            throw new \LogicException('The core has no OrderLineRounding.');
+        }
+
+        $orderId = OrderTableMap::COL_ID;
+        $textPromoPricePivot = (int) ConfigQuery::read('last_text_promo_price_order_id', 0);
+        $floatLineRoundingPivot = OrderRoundingRule::floatLineRoundingPivot();
+
+        $branches = [];
+
+        if ($textPromoPricePivot > 0) {
+            $branches[] = 'WHEN '.$orderId.' <= '.$textPromoPricePivot
+                .' THEN '.OrderLineRounding::inMode($roundingMode, true, true)->lineTotalSql(true);
+        }
+
+        if ($floatLineRoundingPivot > 0) {
+            $branches[] = 'WHEN '.$orderId.' <= '.$floatLineRoundingPivot
+                .' THEN '.OrderLineRounding::inMode($roundingMode, false, true)->lineTotalSql(true);
+        }
+
+        $current = OrderLineRounding::inMode($roundingMode, false, false)->lineTotalSql(true);
+
+        return [] === $branches ? $current : 'CASE '.implode(' ', $branches).' ELSE '.$current.' END';
     }
 
     /**
