@@ -19,6 +19,7 @@ use Thelia\Core\Security\SecurityContext;
 use Thelia\Core\Security\Resource\AdminResources;
 use BackOfficeDefaultTwigBundle\Repository\ModuleRepository;
 use BackOfficeDefaultTwigBundle\Repository\OrderRepository;
+use BackOfficeDefaultTwigBundle\Service\Pdf\OrderPickingSlipRenderer;
 use BackOfficeDefaultTwigBundle\Service\I18n\CountryFlag;
 use BackOfficeDefaultTwigBundle\Service\I18n\MoneyFormatter;
 use BackOfficeDefaultTwigBundle\UiComponents\DataTable\RowAction;
@@ -61,6 +62,7 @@ final readonly class OrderListRowPresenter
         private OrderSaleUnits $saleUnits,
         private MoneyFormatter $money,
         private SecurityContext $securityContext,
+        private OrderPickingSlipRenderer $pickingSlip,
     ) {
     }
 
@@ -424,15 +426,19 @@ final readonly class OrderListRowPresenter
                 grantedSubject: self::RESOURCE,
                 inlineFrom: 'md',
             ),
-            new RowAction(
+        ];
+
+        // A PDF theme without a preparation document has no slip to give: the action would only fail.
+        if ($this->pickingSlip->isAvailable()) {
+            $actions[] = new RowAction(
                 kind: 'picking-slip',
                 label: $this->translator->trans('Picking slip'),
                 href: $this->urls->generate(self::PICKING_SLIP_PDF_ROUTE, ['order_id' => $orderId, 'browser' => 1]),
                 grantedAttribute: AccessManager::VIEW,
                 grantedSubject: self::RESOURCE,
                 inlineFrom: 'md',
-            ),
-        ];
+            );
+        }
 
         if ($hasInvoice) {
             array_splice($actions, 1, 0, [new RowAction(
