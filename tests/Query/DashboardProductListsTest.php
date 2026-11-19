@@ -17,6 +17,8 @@ namespace BackOfficeDefaultTwigBundle\Tests\Query;
 use BackOfficeDefaultTwigBundle\Repository\ProductRepository;
 use BackOfficeDefaultTwigBundle\Tests\Support\QueryCounter;
 use Propel\Runtime\ActiveQuery\Criteria;
+use BackOfficeDefaultTwigBundle\DTO\Dashboard\DateRange;
+use Thelia\Model\OrderProduct;
 use Thelia\Model\ProductSaleElements;
 use Thelia\Model\ProductSaleElementsQuery;
 use Thelia\Test\IntegrationTestCase;
@@ -99,6 +101,32 @@ final class DashboardProductListsTest extends IntegrationTestCase
         sort($sorted);
 
         self::assertSame($sorted, $quantities);
+    }
+
+    public function testTheTopSellersSumTheQuantitiesSoldByMeasureWithoutTruncatingThem(): void
+    {
+        $factory = $this->createFixtureFactory();
+        $order = $factory->order($factory->customer($factory->customerTitle()));
+        foreach ([2.5, 1.25] as $quantity) {
+            (new OrderProduct())
+                ->setOrderId($order->getId())
+                ->setProductRef('TOP-SELLER-MEASURE')
+                ->setProductSaleElementsRef('TOP-SELLER-MEASURE-PSE')
+                ->setTitle('Sold by weight')
+                ->setQuantity($quantity)
+                ->setQuantityDecimals(2)
+                ->setUnitCode('kg')
+                ->setPrice('10.000000')
+                ->setWasNew(0)
+                ->setWasInPromo(0)
+                ->save($this->getPropelConnection());
+        }
+
+        $range = DateRange::fromPreset(DateRange::PRESET_THIS_YEAR);
+        $sellers = array_column($this->products->findTopSellers($range, 1000, 'en_US'), null, 'ref');
+
+        self::assertArrayHasKey('TOP-SELLER-MEASURE', $sellers);
+        self::assertSame(3.75, $sellers['TOP-SELLER-MEASURE']['quantity']);
     }
 
     private function givenCombinationsUnderTheThreshold(): void

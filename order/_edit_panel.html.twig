@@ -77,7 +77,7 @@
                                                aria-label="{{ 'Remove this line'|trans }} &mdash; {{ line.title|e('html_attr') }}" data-testid="order-edit-remove-{{ line.id }}">
                                     </td>
                                 {% else %}
-                                    <td class="text-center">{{ line.quantity }}</td>
+                                    <td class="text-center"><span dir="ltr">{{ line.quantity|format_quantity(line.quantity_decimals, line.unit_code) }}</span></td>
                                     <td class="text-end">{{ line.price }}</td>
                                     <td></td>
                                 {% endif %}

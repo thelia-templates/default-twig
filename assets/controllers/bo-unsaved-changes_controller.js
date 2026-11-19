@@ -161,6 +161,7 @@ export default class extends Controller {
         }
     }
 
+    /** The form last changed: a page may watch several (the product sheet and its combinations). */
     get dirtyForm() {
         return this.formTargets.find((form) => this.dirtyForms.has(form)) ?? null;
     }

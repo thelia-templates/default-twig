@@ -101,7 +101,7 @@ final readonly class OrderReturnContextBuilder
     }
 
     /**
-     * @return list<array{order_product_id: int, title: string, ref: string, remaining: float}>
+     * @return list<array{order_product_id: int, title: string, ref: string, remaining: float, quantity_decimals: int, unit_code: string|null, input_step: string}>
      */
     private function presentReturnableLines(Order $order): array
     {
@@ -109,12 +109,17 @@ final readonly class OrderReturnContextBuilder
 
         foreach ($this->eligibility->returnableLines($order) as $line) {
             $orderProduct = $line['order_product'];
+            $decimals = (int) $orderProduct->getQuantityDecimals();
 
             $lines[] = [
                 'order_product_id' => (int) $orderProduct->getId(),
                 'title' => (string) $orderProduct->getTitle(),
                 'ref' => (string) $orderProduct->getProductRef(),
                 'remaining' => $line['remaining'],
+                'quantity_decimals' => $decimals,
+                'unit_code' => $orderProduct->getUnitCode(),
+                // The smallest quantity the line is sold in: "0.01" for two decimals, "1" for none.
+                'input_step' => $decimals > 0 ? number_format(10 ** -$decimals, $decimals, '.', '') : '1',
             ];
         }
 

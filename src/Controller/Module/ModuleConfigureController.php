@@ -15,11 +15,11 @@ declare(strict_types=1);
 namespace BackOfficeDefaultTwigBundle\Controller\Module;
 
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Thelia\Core\Security\AccessManager;
-use Thelia\Model\LangQuery;
 use Thelia\Model\ModuleQuery;
 use Twig\Environment;
 
@@ -34,7 +34,7 @@ final class ModuleConfigureController
     }
 
     #[Route('/admin/module/{module_code}', name: 'admin.module.configure', methods: ['GET'])]
-    public function configure(string $module_code): Response
+    public function configure(string $module_code, Request $request): Response
     {
         $module = ModuleQuery::create()->findOneByCode($module_code);
         if ($module === null) {
@@ -45,9 +45,7 @@ final class ModuleConfigureController
             return $denied;
         }
 
-        $defaultLang = LangQuery::create()->findOneByByDefault(1);
-        $locale = $defaultLang?->getLocale() ?? 'en_US';
-        $module->setLocale($locale);
+        $module->setLocale($request->getLocale());
 
         return new Response($this->twig->render(self::TEMPLATE, [
             'module' => $module,

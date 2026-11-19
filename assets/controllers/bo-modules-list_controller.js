@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
+import { tokenBody } from '../lib/post-request.js';
 
 /**
  * Client-side enhancement of the single, server-rendered module list.
@@ -197,6 +198,7 @@ export default class extends Controller {
         Promise.all(toFlip.map((box) => fetch(box.dataset.toggleUrl, {
             method: 'POST',
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: tokenBody(),
             credentials: 'same-origin',
         }))).finally(() => window.location.reload());
     }

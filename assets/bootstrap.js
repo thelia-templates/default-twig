@@ -25,6 +25,7 @@ import BoCombinationBuilderController from './controllers/bo-combination-builder
 import BoCombinationCreationController from './controllers/bo-combination-creation_controller.js';
 import BoCombinationDefaultController from './controllers/bo-combination-default_controller.js';
 import BoCombinationsBulkEditController from './controllers/bo-combinations-bulk-edit_controller.js';
+import BoCombinationQuantityRulesController from './controllers/bo-combination-quantity-rules_controller.js';
 import BoCouponAttributePickerController from './controllers/bo-coupon-attribute-picker_controller.js';
 import BoCouponBuyXGetYController from './controllers/bo-coupon-buy-x-get-y_controller.js';
 import BoCouponFormController from './controllers/bo-coupon-form_controller.js';
@@ -61,6 +62,7 @@ import BoPrintIframeController from './controllers/bo-print-iframe_controller.js
 import BoProductFeatureBatchController from './controllers/bo-product-feature-batch_controller.js';
 import BoPseAssocPickerController from './controllers/bo-pse-assoc-picker_controller.js';
 import BoPsePriceWithTaxController from './controllers/bo-pse-price-with-tax_controller.js';
+import BoPseReferencePriceController from './controllers/bo-pse-reference-price_controller.js';
 import BoPublicationFormController from './controllers/bo-publication-form_controller.js';
 import BoRangeSliderController from './controllers/bo-range-slider_controller.js';
 import BoSaleProductAttributesController from './controllers/bo-sale-product-attributes_controller.js';
@@ -82,6 +84,7 @@ import BootstrapBridgeController from './controllers/bootstrap-bridge_controller
 import BoPostLinkController from './controllers/bo-post-link_controller.js';
 import BoFreeShippingController from './controllers/bo-free-shipping_controller.js';
 import ConfirmModalController from './controllers/confirm-modal_controller.js';
+import BoSearchShortcutController from './controllers/bo-search-shortcut_controller.js';
 
 const app = Application.start();
 
@@ -103,6 +106,7 @@ app.register('bo-combination-builder', BoCombinationBuilderController);
 app.register('bo-combination-creation', BoCombinationCreationController);
 app.register('bo-combination-default', BoCombinationDefaultController);
 app.register('bo-combinations-bulk-edit', BoCombinationsBulkEditController);
+app.register('bo-combination-quantity-rules', BoCombinationQuantityRulesController);
 app.register('bo-coupon-attribute-picker', BoCouponAttributePickerController);
 app.register('bo-coupon-buy-x-get-y', BoCouponBuyXGetYController);
 app.register('bo-coupon-form', BoCouponFormController);
@@ -143,6 +147,7 @@ app.register('bo-print-iframe', BoPrintIframeController);
 app.register('bo-product-feature-batch', BoProductFeatureBatchController);
 app.register('bo-pse-assoc-picker', BoPseAssocPickerController);
 app.register('bo-pse-price-with-tax', BoPsePriceWithTaxController);
+app.register('bo-pse-reference-price', BoPseReferencePriceController);
 app.register('bo-publication-form', BoPublicationFormController);
 app.register('bo-range-slider', BoRangeSliderController);
 app.register('bo-sale-product-attributes', BoSaleProductAttributesController);
@@ -164,5 +169,6 @@ app.register('bootstrap-bridge', BootstrapBridgeController);
 app.register('bo-post-link', BoPostLinkController);
 app.register('bo-free-shipping', BoFreeShippingController);
 app.register('confirm-modal', ConfirmModalController);
+app.register('bo-search-shortcut', BoSearchShortcutController);
 
 export { app };

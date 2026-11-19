@@ -91,6 +91,64 @@ final class OrderShipmentBackOfficeTest extends WebIntegrationTestCase
         self::assertStringContainsString('active', (string) $crawler->filter('#tab-shipments-toggle')->attr('class'), 'The tab asked for is the one opened.');
     }
 
+    public function testAParcelLineShowsItsQuantityWithTheDecimalsAndTheUnitOfTheOrderLine(): void
+    {
+        $this->loginFullAdmin();
+        $order = $this->factory->order(null, ['statusCode' => OrderStatus::CODE_PAID]);
+        $line = $this->factory->orderProduct($order, ['quantity' => 3.0, 'title' => 'Weighed cheese']);
+        $line->setQuantityDecimals(2);
+        $line->setUnitCode('kg');
+        $line->save($this->getPropelConnection());
+        $this->shipped($order, $line, 1.25, 'WEIGHED-PARCEL');
+
+        $crawler = $this->client->request('GET', '/admin/order/update/'.$order->getId().'?tab=shipments');
+        self::assertSame(200, $this->client->getResponse()->getStatusCode());
+
+        $parcel = $crawler->filter('[data-testid^="order-shipment-row-"]')->text();
+        self::assertMatchesRegularExpression('/1[.,]25\s*kg\s*×/u', $parcel, 'The parcel line is written like the order line: decimals and unit.');
+    }
+
+    public function testWhatIsShippedAndLeftOfALineSoldByMeasureReadsWithItsDecimalsAndUnit(): void
+    {
+        $this->loginFullAdmin();
+        $order = $this->factory->order(null, ['statusCode' => OrderStatus::CODE_PAID]);
+        $line = $this->factory->orderProduct($order, ['quantity' => 3.0, 'title' => 'Weighed cheese']);
+        $line->setQuantityDecimals(2);
+        $line->setUnitCode('kg');
+        $line->save($this->getPropelConnection());
+        $this->shipped($order, $line, 1.25, 'WEIGHED-PARCEL');
+
+        $crawler = $this->client->request('GET', '/admin/order/update/'.$order->getId().'?tab=shipments');
+        self::assertSame(200, $this->client->getResponse()->getStatusCode());
+
+        $row = $crawler->filter('tr[data-order-product-id="'.$line->getId().'"]');
+        self::assertMatchesRegularExpression('/^1[.,]25\s*kg$/u', $this->cellOf($row, 'shipped'));
+        self::assertMatchesRegularExpression('/^1[.,]75\s*kg$/u', $this->cellOf($row, 'left'));
+
+        $composed = $crawler->filter('[data-testid="order-shipment-line-'.$line->getId().'"]');
+        self::assertMatchesRegularExpression('/^1[.,]75\s*kg$/u', trim($composed->filter('td')->eq(1)->text()), 'The parcel form reads what is left like the order line.');
+        self::assertSame('1.75', $composed->filter('input')->attr('value'), 'The field keeps the exact quantity a browser submits.');
+        self::assertSame('1.75', $composed->filter('input')->attr('max'));
+    }
+
+    public function testWhatIsLeftOfALineSoldByThePieceWithAContentUnitReadsAsAWholeNumber(): void
+    {
+        $this->loginFullAdmin();
+        $order = $this->factory->order(null, ['statusCode' => OrderStatus::CODE_PAID]);
+        $line = $this->factory->orderProduct($order, ['quantity' => 6.0, 'title' => 'Bottle of wine']);
+        $line->setQuantityDecimals(0);
+        $line->setUnitCode('l');
+        $line->save($this->getPropelConnection());
+        $this->shipped($order, $line, 2.0, 'BOTTLE-PARCEL');
+
+        $crawler = $this->client->request('GET', '/admin/order/update/'.$order->getId().'?tab=shipments');
+
+        $row = $crawler->filter('tr[data-order-product-id="'.$line->getId().'"]');
+        self::assertSame('2', $this->cellOf($row, 'shipped'));
+        self::assertSame('4', $this->cellOf($row, 'left'), 'A bottle sold by the piece is counted, not measured.');
+        self::assertSame('4', trim($crawler->filter('[data-testid="order-shipment-line-'.$line->getId().'"] td')->eq(1)->text()));
+    }
+
     public function testComposingAParcelThatLeavesMovesTheOrderToPartiallyShipped(): void
     {
         $this->loginFullAdmin();

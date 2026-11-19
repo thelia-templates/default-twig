@@ -57,8 +57,14 @@ final readonly class OrderDetailContextBuilder
                 $lineTax += (float) ($wasInPromo ? $orderProductTax->getPromoAmount() : $orderProductTax->getAmount());
             }
 
+            // Old lines carry no rule title: they fall back on the rule description, then on
+            // the empty label, which the template renders as the generic "Taxes". A taxed
+            // line never drops out of the breakdown.
             $ruleTitle = (string) ($orderProduct->getTaxRuleTitle() ?? '');
-            if ($lineTax > 0 && $ruleTitle !== '') {
+            if ($ruleTitle === '') {
+                $ruleTitle = trim((string) ($orderProduct->getTaxRuleDescription() ?? ''));
+            }
+            if ($lineTax > 0) {
                 // Totalled with the rule the order was invoiced with, so the per-rule
                 // breakdown adds up to the tax total read from Order::getTotalAmount().
                 $unitPriceUntaxed = (float) ($wasInPromo ? $orderProduct->getPromoPrice() : $orderProduct->getPrice());

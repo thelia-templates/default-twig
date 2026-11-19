@@ -83,13 +83,13 @@
                     </div>
                 {% endif %}
                 <div class="btn-group" data-controller="bo-print-iframe" data-bo-print-iframe-url-value="{{ delivery_url }}" data-bo-print-iframe-name-value="order-delivery">
-                    <a href="{{ delivery_url }}" target="_blank" class="btn btn-outline-secondary" data-testid="order-delivery-link" title="{{ 'View purchase order as PDF'|trans }}">
+                    <a href="{{ delivery_url }}" target="_blank" class="btn btn-outline-secondary" data-testid="order-delivery-link" title="{{ 'View delivery slip as PDF'|trans }}">
                         <i class="bi bi-file-pdf" aria-hidden="true"></i> {{ 'Delivery slip'|trans }}
                     </a>
-                    <button type="button" class="btn btn-outline-secondary" data-action="bo-print-iframe#print" data-testid="order-delivery-print" title="{{ 'Print purchase order'|trans }}">
+                    <button type="button" class="btn btn-outline-secondary" data-action="bo-print-iframe#print" data-testid="order-delivery-print" title="{{ 'Print delivery slip'|trans }}">
                         <i class="bi bi-printer" aria-hidden="true"></i>
                     </button>
-                    <a href="{{ delivery_download_url }}" class="btn btn-outline-secondary" data-testid="order-delivery-download" title="{{ 'Download purchase order as PDF'|trans }}">
+                    <a href="{{ delivery_download_url }}" class="btn btn-outline-secondary" data-testid="order-delivery-download" title="{{ 'Download delivery slip as PDF'|trans }}">
                         <i class="bi bi-download" aria-hidden="true"></i>
                     </a>
                 </div>
@@ -216,9 +216,9 @@
                         'price': priced ? item.price|format_currency(currency.code) : '',
                         'tax': priced ? item.tax|format_currency(currency.code) : '',
                         'unit_taxed_price': priced ? item.unit_taxed_price|format_currency(currency.code) : '',
-                        'quantity': item.quantity,
-                        'shipped': shipped_by_line[item.id]|default(0),
-                        'left': left_by_line[item.id] is defined ? left_by_line[item.id] : '',
+                        'quantity': item.quantity|format_quantity(item.quantity_decimals, item.unit_code),
+                        'shipped': shipped_by_line[item.id]|default(0)|format_quantity(item.quantity_decimals, item.unit_code),
+                        'left': left_by_line[item.id] is defined ? left_by_line[item.id]|format_quantity(item.quantity_decimals, item.unit_code) : '',
                         'line_ht': priced ? item.line_ht|format_currency(currency.code) : '',
                         'line_tax': priced ? item.line_tax|format_currency(currency.code) : '',
                         'line_ttc': priced ? '<span class="fw-semibold" dir="ltr">' ~ item.line_ttc|format_currency(currency.code) ~ '</span>' : '',
@@ -313,7 +313,7 @@
                                 <ul class="list-group list-group-flush small" data-testid="order-taxes-items">
                                     {% for label, amount in totals.items_taxes %}
                                         <li class="list-group-item d-flex justify-content-between px-0">
-                                            <span>{{ label }}</span>
+                                            <span>{{ label != '' ? label : 'Taxes'|trans }}</span>
                                             <strong dir="ltr">{{ amount|format_currency(currency.code) }}</strong>
                                         </li>
                                     {% else %}

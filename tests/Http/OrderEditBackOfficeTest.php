@@ -393,6 +393,24 @@ final class OrderEditBackOfficeTest extends WebIntegrationTestCase
         );
     }
 
+    public function testAQuantityWithMoreDecimalsThanItsLineIsSoldWithIsExplained(): void
+    {
+        $this->loginFullAdmin();
+        [$order, $first] = $this->editableOrder();
+        $fields = $this->fieldsOf($this->sheetUrl($order));
+
+        $this->client->request('POST', $this->previewUrl($order), [
+            '_token' => $fields['_token'],
+            'expected_state' => $fields['expected_state'],
+            'quantity' => [(string) $first->getId() => '2.5'],
+        ]);
+
+        self::assertSame(422, $this->client->getResponse()->getStatusCode(), 'Half a piece of a line sold by the piece.');
+        $answer = json_decode((string) $this->client->getResponse()->getContent(), true);
+        self::assertSame('invalid_quantity', $answer['refusal'] ?? null);
+        self::assertSame('A quantity must be a number greater than zero, with no more decimals than its line is sold with.', $answer['error'] ?? null);
+    }
+
     public function testThePreviewNeedsTheTokenInTheBodyAndTheEditPermission(): void
     {
         $this->loginFullAdmin();

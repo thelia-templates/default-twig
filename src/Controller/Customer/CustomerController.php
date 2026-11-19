@@ -30,10 +30,10 @@ use BackOfficeDefaultTwigBundle\Service\Customer\CustomerFilters;
 use BackOfficeDefaultTwigBundle\Service\Customer\CustomerListRowPresenter;
 use BackOfficeDefaultTwigBundle\Service\Customer\CustomerOverviewProvider;
 use BackOfficeDefaultTwigBundle\Service\Customer\CustomerPaymentMethodsProvider;
-use BackOfficeDefaultTwigBundle\Service\I18n\CountryFlag;
 use BackOfficeDefaultTwigBundle\Service\I18n\CountryStateProvider;
 use BackOfficeDefaultTwigBundle\Service\I18n\StateChoiceProvider;
 use BackOfficeDefaultTwigBundle\Service\SaleUnit\RestrictedAdminGuard;
+use BackOfficeDefaultTwigBundle\Service\Subscription\CustomerSubscriptionsProvider;
 use BackOfficeDefaultTwigBundle\Service\Tag\TagSwatch;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Symfony\Component\Form\FormFactoryInterface;
@@ -105,6 +105,7 @@ final class CustomerController
         private readonly TagSwatch $swatch,
         private readonly CustomerOverviewProvider $overviewProvider,
         private readonly CustomerPaymentMethodsProvider $paymentMethods,
+        private readonly CustomerSubscriptionsProvider $subscriptions,
         private readonly CustomerGroupAssignment $groupAssignment,
         private readonly RestrictedAdminGuard $restricted,
     ) {
@@ -141,7 +142,7 @@ final class CustomerController
         foreach ($paginated['rows'] as $customer) {
             $customerId = (int) $customer->getId();
             $countryId = $primaryCountryIds[$customerId] ?? 0;
-            $country = $countriesIndex[$countryId] ?? ['flag' => '', 'title' => ''];
+            $country = $countriesIndex[$countryId] ?? ['iso' => '', 'title' => ''];
 
             $rows[] = $this->rowPresenter->present(
                 customer: $customer,
@@ -150,7 +151,7 @@ final class CustomerController
                 totalSpent: $totalsSpent[$customerId] ?? 0.0,
                 lastOrderAt: $lastOrders[$customerId] ?? null,
                 phone: $phones[$customerId] ?? '',
-                countryFlag: $country['flag'],
+                countryIso: $country['iso'],
                 countryTitle: $country['title'],
                 tags: $tagsByCustomer[$customerId] ?? [],
                 groupLabel: $groupLabels[(int) $customer->getCustomerGroupId()] ?? '',
@@ -174,7 +175,7 @@ final class CustomerController
     /**
      * @param array<int, int> $primaryCountryIds
      *
-     * @return array<int, array{flag: string, title: string}>
+     * @return array<int, array{iso: string, title: string}>
      */
     private function buildCountriesIndex(array $primaryCountryIds, string $locale): array
     {
@@ -188,7 +189,7 @@ final class CustomerController
         $index = [];
         foreach ($countries as $country) {
             $index[$country['id']] = [
-                'flag' => CountryFlag::of($country['iso']),
+                'iso' => $country['iso'],
                 'title' => $country['title'],
             ];
         }
@@ -242,6 +243,8 @@ final class CustomerController
             'overview' => $overview,
             'can_view_payment_methods' => $canViewPaymentMethods,
             'payment_methods' => $canViewPaymentMethods ? $this->paymentMethods->forCustomer($customerId, $request->getLocale(), new \DateTimeImmutable('today')) : [],
+            'can_view_subscriptions' => $this->subscriptions->canView(),
+            'subscriptions' => $this->subscriptions->forCustomer($customerId, $request->getLocale()),
             'recent_orders' => $overview->canViewOrders ? $this->customerOrdersPage($customerId, $ordersPage, $ordersPerPage) : [],
             'orders_total' => $ordersTotal,
             'orders_page' => $ordersPage,

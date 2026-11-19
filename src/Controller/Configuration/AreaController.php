@@ -46,7 +46,6 @@ use Thelia\Model\CountryArea;
 use Thelia\Model\CountryAreaQuery;
 use Thelia\Model\CountryQuery;
 use Thelia\Model\Event\AreaEvent;
-use Thelia\Model\LangQuery;
 use Thelia\Tools\TokenProvider;
 use Twig\Environment;
 
@@ -159,14 +158,15 @@ final class AreaController
         );
 
         $zipCodeRulesSupported = class_exists(AreaZipCodeRuleQuery::class);
-        $zoneCountries = $zipCodeRulesSupported ? $this->zoneCountries((int) $area->getId()) : [];
+        $locale = $request->getLocale();
+        $zoneCountries = $zipCodeRulesSupported ? $this->zoneCountries((int) $area->getId(), $locale) : [];
         $zipCodeRules = $this->zipCodeRules((int) $area->getId(), $zoneCountries);
 
         return new Response($this->twig->render(self::EDIT_TEMPLATE, [
             'area' => $area,
             'area_id' => (int) $area->getId(),
             'form' => $modificationForm->createView(),
-            'countries_in_area' => $this->collectAssignments((int) $area->getId()),
+            'countries_in_area' => $this->collectAssignments((int) $area->getId(), $locale),
             'countries_data_url' => $this->urls->generate('admin.configuration.countries.data'),
             'unassigned_country_ids' => $this->unassignedCountryIds(),
             // The postal code rules come with a core that knows them.
@@ -447,7 +447,7 @@ final class AreaController
     }
 
     /** @return array<int, array{country_id: int, state_id: int|null, label: string}> */
-    private function collectAssignments(int $areaId): array
+    private function collectAssignments(int $areaId, string $locale): array
     {
         $rows = CountryAreaQuery::create()->filterByAreaId($areaId)->find();
         $assignments = [];
@@ -458,16 +458,15 @@ final class AreaController
             $assignments[] = [
                 'country_id' => $countryId,
                 'state_id' => $stateId,
-                'label' => $this->describeAssignment($countryId, $stateId),
+                'label' => $this->describeAssignment($countryId, $stateId, $locale),
             ];
         }
 
         return $assignments;
     }
 
-    private function describeAssignment(int $countryId, ?int $stateId): string
+    private function describeAssignment(int $countryId, ?int $stateId, string $locale): string
     {
-        $locale = $this->defaultLocale();
         $countryTitles = $this->countryStates->countryTitles($locale);
         if (!isset($countryTitles[$countryId])) {
             return '';
@@ -562,9 +561,9 @@ final class AreaController
      *
      * @return array<int, string>
      */
-    private function zoneCountries(int $areaId): array
+    private function zoneCountries(int $areaId, string $locale): array
     {
-        $countryTitles = $this->countryStates->countryTitles($this->defaultLocale());
+        $countryTitles = $this->countryStates->countryTitles($locale);
         $countries = [];
 
         foreach (CountryAreaQuery::create()->filterByAreaId($areaId)->find() as $countryArea) {
@@ -650,12 +649,5 @@ final class AreaController
         $area->setName((string) ($data['name'] ?? ''));
 
         return new AreaEvent($area);
-    }
-
-    private function defaultLocale(): string
-    {
-        $defaultLang = LangQuery::create()->findOneByByDefault(1);
-
-        return $defaultLang?->getLocale() ?? 'en_US';
     }
 }

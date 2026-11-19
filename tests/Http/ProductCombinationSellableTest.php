@@ -141,7 +141,8 @@ final class ProductCombinationSellableTest extends WebIntegrationTestCase
         self::assertSame(8, $columns, 'The 8 columns of the grid.');
         foreach ([$combination, $other] as $pse) {
             $row = \sprintf('tbody[data-row-id="%d"] > tr', $pse->getId());
-            self::assertCount(5, $grid->filter($row), 'The five lines of a combination.');
+            self::assertCount(6, $grid->filter($row), 'The five lines of a combination and the panel of its quantity rules.');
+            self::assertCount(1, $grid->filter($row.'#pse-quantity-rules-'.$pse->getId()), 'The sixth line is the panel of the quantity rules.');
             self::assertCount(1, $grid->filter($row.' > td.bo-combinations-grid__logistics [data-testid="combinations-sellable-'.$pse->getId().'"]'), 'Inside the cell of the stock field.');
         }
     }

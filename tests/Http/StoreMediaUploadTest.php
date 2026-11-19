@@ -14,6 +14,9 @@ declare(strict_types=1);
 
 namespace BackOfficeDefaultTwigBundle\Tests\Http;
 
+use Symfony\Component\EventDispatcher\EventDispatcherInterface as ListenedDispatcher;
+use Symfony\Component\HttpKernel\Event\ResponseEvent;
+use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Thelia\Model\ConfigQuery;
 use Thelia\Test\FixtureFactory;
@@ -165,6 +168,37 @@ final class StoreMediaUploadTest extends WebIntegrationTestCase
         self::assertSame('image/png', $response->headers->get('Content-Type'));
         self::assertSame('nosniff', $response->headers->get('X-Content-Type-Options'));
         self::assertNull($response->headers->get('Content-Disposition'));
+    }
+
+    /**
+     * Every page loads the logo after itself: the page stays the one an admin comes back to after a save.
+     */
+    public function testServingAStoreMediaKeepsThePageToComeBackTo(): void
+    {
+        $this->storeFile('logo_file', 'logo.png', $this->png());
+        $kept = [];
+        // Read in the request, after the core recorded it (RequestListener::registerPreviousUrl(), priority 128).
+        $read = static function (ResponseEvent $event) use (&$kept): void {
+            if ($event->isMainRequest() && $event->getRequest()->hasSession()) {
+                $kept[] = $event->getRequest()->getSession()->getReturnToUrl();
+            }
+        };
+        $dispatcher = $this->getService(ListenedDispatcher::class);
+        \assert($dispatcher instanceof ListenedDispatcher);
+        $dispatcher->addListener(KernelEvents::RESPONSE, $read, -1024);
+
+        try {
+            $this->client->request('GET', '/admin/configuration/store');
+            self::assertSame(200, $this->client->getResponse()->getStatusCode());
+            $this->client->request('GET', '/admin/store-media/logo');
+            self::assertSame(200, $this->client->getResponse()->getStatusCode());
+        } finally {
+            $dispatcher->removeListener(KernelEvents::RESPONSE, $read);
+        }
+
+        self::assertCount(2, $kept);
+        self::assertStringEndsWith('/admin/configuration/store', (string) $kept[0], 'The page is kept.');
+        self::assertSame($kept[0], $kept[1], 'Not the image.');
     }
 
     public function testAStoreMediaThatIsNotAnImageIsDownloaded(): void

@@ -107,6 +107,9 @@ final readonly class OrderEditContextBuilder
                 'ref' => (string) $line->getProductRef(),
                 'title' => (string) $line->getTitle(),
                 'quantity' => self::plain($line->getQuantity()),
+                // A line shown as it is (shipped, returned, bundle) reads in the unit it was sold in.
+                'quantity_decimals' => (int) $line->getQuantityDecimals(),
+                'unit_code' => (string) $line->getUnitCode(),
                 'price' => self::plain($line->getWasInPromo() ? $line->getPromoPrice() : $line->getPrice()),
                 'editable' => $editable,
                 'locked_reason' => $editable ? '' : (isset($inUse[$lineId]) ? 'in_use' : 'not_editable'),

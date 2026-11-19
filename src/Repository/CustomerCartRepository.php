@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace BackOfficeDefaultTwigBundle\Repository;
 
+use BackOfficeDefaultTwigBundle\Service\Order\OrderRoundingRule;
 use Propel\Runtime\Propel;
 
 /**
@@ -93,7 +94,7 @@ final readonly class CustomerCartRepository
                 'line_count' => (int) $row['line_count'],
                 // DECIMAL and FLOAT columns come back as strings.
                 'quantity' => (float) $row['quantity'],
-                'amount' => round((float) $row['amount'], 2),
+                'amount' => OrderRoundingRule::toTheCent((float) $row['amount']),
             ];
         }
 
@@ -131,8 +132,8 @@ final readonly class CustomerCartRepository
                 'title' => (string) ($row['product_title'] ?: $reference),
                 'reference' => $reference,
                 'quantity' => $quantity,
-                'unit_price' => round($unitPrice, 2),
-                'line_total' => (int) $row['is_offered'] === 1 ? 0.0 : round($unitPrice * $quantity, 2),
+                'unit_price' => OrderRoundingRule::toTheCent($unitPrice),
+                'line_total' => (int) $row['is_offered'] === 1 ? 0.0 : OrderRoundingRule::toTheCent($unitPrice * $quantity),
                 'is_promo' => $isPromo,
                 'is_offered' => (int) $row['is_offered'] === 1,
             ];

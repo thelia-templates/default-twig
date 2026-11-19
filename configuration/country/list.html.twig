@@ -37,7 +37,7 @@
             id: 'countries',
             columns: [
                 column('id', 'ID'|trans, 'start', 'id', visibleFrom: 'md'),
-                column('title', 'Country'|trans, 'start', 'title'),
+                column('title', 'Country'|trans, 'start', 'title', wrap: true),
                 column('isoalpha2', 'ISO-2'|trans, 'center', 'iso_alpha2'),
                 column('isoalpha3', 'ISO-3'|trans, 'center', 'iso_alpha3', visibleFrom: 'lg'),
                 column('isocode', 'Numeric'|trans, 'center', 'iso_code', visibleFrom: 'xl'),

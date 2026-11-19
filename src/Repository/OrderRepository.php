@@ -18,6 +18,7 @@ use BackOfficeDefaultTwigBundle\DTO\Dashboard\DateRange;
 use BackOfficeDefaultTwigBundle\Service\Bundle\BundleCore;
 use BackOfficeDefaultTwigBundle\Service\Order\OrderAccess;
 use BackOfficeDefaultTwigBundle\Service\Order\OrderFilters;
+use BackOfficeDefaultTwigBundle\Service\Order\OrderRoundingRule;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\Collection\ObjectCollection;
 use Propel\Runtime\Propel;
@@ -51,7 +52,6 @@ final class OrderRepository
         'id' => 'id',
         'ref' => 'ref',
         'created_at' => 'createdAt',
-        'amount' => 'id', // total is computed; we fall back to id (insertion order ≈ creation order).
     ];
 
     /**
@@ -311,13 +311,20 @@ final class OrderRepository
 
         $totals = [];
         while (($row = $statement->fetch(\PDO::FETCH_ASSOC)) !== false) {
-            $total = (float) $row['items_total'] - (float) $row['discount'];
+            $orderId = (int) $row['order_id'];
+            // The order is charged in cents: Order::getTotalAmount() rounds its lines total
+            // before the discount, as the cart did (1.25 kg at 14.82 is 18.525, charged
+            // 18.53). An order frozen on the pre-2.4 rule is read without any rounding.
+            $itemsTotal = OrderRoundingRule::Legacy === OrderRoundingRule::forOrder($orderId)
+                ? (float) $row['items_total']
+                : OrderRoundingRule::toTheCent((float) $row['items_total']);
+            $total = $itemsTotal - (float) $row['discount'];
 
             if ($total < 0) {
                 $total = 0.0;
             }
 
-            $totals[(int) $row['order_id']] = $total + (float) $row['postage'];
+            $totals[$orderId] = $total + (float) $row['postage'];
         }
 
         return $totals;
@@ -627,6 +634,17 @@ final class OrderRepository
     }
 
     /**
+     * Changes when an order is placed, updated or deleted: a figure computed over the orders
+     * and kept aside is stale as soon as it changes.
+     */
+    public function changeFingerprint(): string
+    {
+        $row = Propel::getConnection()->query('SELECT COUNT(*), MAX(id), MAX(updated_at) FROM `order`')->fetch(\PDO::FETCH_NUM);
+
+        return implode('|', array_map(static fn (mixed $value): string => (string) $value, \is_array($row) ? $row : []));
+    }
+
+    /**
      * Sum of computed totals on the orders created in $range the shop has been paid for.
      * Used by the dashboard revenue KPI.
      */
@@ -644,6 +662,22 @@ final class OrderRepository
         $row = $statement->fetch(\PDO::FETCH_ASSOC);
 
         return (float) ($row['revenue'] ?? 0);
+    }
+
+    /**
+     * The orders getRevenue() adds up: what an average order is divided by.
+     */
+    public function countRevenueOrders(DateRange $range): int
+    {
+        $sql = 'SELECT COUNT(*) AS paid FROM `order`
+            WHERE created_at BETWEEN :from AND :to
+              AND status_id IN ('.$this->statusIdListSql(self::REVENUE_STATUS_CODES).')'.$this->access->sqlCondition();
+
+        $statement = Propel::getConnection()->prepare($sql);
+        $statement->execute([':from' => $range->fromSql(), ':to' => $range->toSql()]);
+        $row = $statement->fetch(\PDO::FETCH_ASSOC);
+
+        return (int) ($row['paid'] ?? 0);
     }
 
     public function countOrders(DateRange $range): int

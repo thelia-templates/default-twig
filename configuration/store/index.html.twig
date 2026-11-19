@@ -8,7 +8,7 @@
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{{ path('admin.home') }}">{{ 'Home'|trans }}</a></li>
             <li class="breadcrumb-item"><a href="{{ path('admin.configuration.index') }}">{{ 'Configuration'|trans }}</a></li>
-            <li class="breadcrumb-item active" aria-current="page">{{ 'Store'|trans }}</li>
+            <li class="breadcrumb-item active" aria-current="page">{{ 'Store info'|trans }}</li>
         </ol>
     </nav>
 {% endblock %}
@@ -165,6 +165,13 @@
                         <div class="card-header">{{ 'Administrators'|trans }}</div>
                         <div class="card-body">
                             {{ form_row(form.admin_two_factor_required, { attr: { 'data-testid': 'config-store-admin-two-factor-required' } }) }}
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-header">{{ 'Prices'|trans }}</div>
+                        <div class="card-body">
+                            {{ form_row(form.price_display_mode, { attr: { 'data-testid': 'config-store-price-display-mode' } }) }}
                         </div>
                     </div>
 

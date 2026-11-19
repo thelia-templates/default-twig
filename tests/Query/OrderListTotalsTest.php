@@ -16,12 +16,15 @@ namespace BackOfficeDefaultTwigBundle\Tests\Query;
 
 use BackOfficeDefaultTwigBundle\Repository\OrderRepository;
 use BackOfficeDefaultTwigBundle\Service\Order\OrderAccess;
+use BackOfficeDefaultTwigBundle\Service\Order\OrderFilters;
 use BackOfficeDefaultTwigBundle\Tests\Support\QueryCounter;
 use Thelia\Domain\SaleUnit\Access\AdminSaleUnitScope;
 use Thelia\Model\ConfigQuery;
+use Thelia\Model\Map\OrderTableMap;
 use Thelia\Model\Order;
 use Thelia\Model\OrderProduct;
 use Thelia\Model\OrderProductTax;
+use Thelia\Model\OrderQuery;
 use Thelia\Test\IntegrationTestCase;
 
 /**
@@ -38,9 +41,17 @@ final class OrderListTotalsTest extends IntegrationTestCase
     /** Mirrors the pivot Thelia's 2.4 upgrade writes once. */
     private const LEGACY_ROUNDING_PIVOT = 'last_legacy_rounding_order_id';
 
+    /** Mirrors the pivot Thelia's 3.4 upgrade writes once. */
+    private const FLOAT_LINE_ROUNDING_PIVOT = 'last_float_line_rounding_order_id';
+
+    private const ROUNDING_MODE = 'order_rounding_mode';
+
     private OrderRepository $orders;
 
     private bool $legacyPivotWritten = false;
+
+    /** @var array<string, ?string> the configuration values a test changed, as they were before */
+    private array $configBefore = [];
 
     protected function setUp(): void
     {
@@ -57,6 +68,18 @@ final class OrderListTotalsTest extends IntegrationTestCase
             ConfigQuery::write(self::LEGACY_ROUNDING_PIVOT, '0');
             $this->legacyPivotWritten = false;
         }
+
+        foreach ($this->configBefore as $name => $value) {
+            if (null === $value) {
+                ConfigQuery::create()->filterByName($name)->delete();
+                ConfigQuery::resetCache();
+
+                continue;
+            }
+
+            ConfigQuery::write($name, $value);
+        }
+        $this->configBefore = [];
 
         parent::tearDown();
     }
@@ -110,6 +133,35 @@ final class OrderListTotalsTest extends IntegrationTestCase
     }
 
     /**
+     * A line sold by measure lands on a half cent: 1.25 kg at 14.82 is 18.525, charged
+     * 18.53. The list shows the amount the order model answers, to the float it is
+     * formatted from, not a sum the money formatter then rounds to the even cent.
+     */
+    public function testALineSoldByMeasureIsListedAtTheCentTheOrderIsCharged(): void
+    {
+        $order = $this->orderWith([['price' => '14.820000', 'tax' => '0.000000', 'quantity' => 1.25]], '0', '0');
+
+        $batched = $this->orders->findTotalAmountByOrder([(int) $order->getId()]);
+
+        self::assertSame(18.53, $order->getTotalAmount());
+        self::assertSame($order->getTotalAmount(), $batched[(int) $order->getId()]);
+        self::assertSame('18,53 €', str_replace("\u{a0}", ' ', (string) (new \NumberFormatter('fr_FR', \NumberFormatter::CURRENCY))->formatCurrency($batched[(int) $order->getId()], 'EUR')));
+    }
+
+    /**
+     * A quantity kept with an error past the thousandth is read as it was sold, as the
+     * order model reads it: 0.7 kg at 0.75 is 0.525, charged 0.53.
+     */
+    public function testAQuantityKeptWithABinaryErrorIsReadAsItWasSold(): void
+    {
+        $order = $this->orderWith([['price' => '0.750000', 'tax' => '0.000000', 'quantity' => 0.69999998]], '0', '0');
+
+        $batched = $this->orders->findTotalAmountByOrder([(int) $order->getId()]);
+
+        self::assertSame($order->getTotalAmount(), $batched[(int) $order->getId()]);
+    }
+
+    /**
      * Orders placed before Thelia 2.4 are totalled without any rounding at all,
      * and a shop that has some keeps them frozen on that rule for good: reading an
      * invoice back under a newer rule would restate an amount already paid. The
@@ -132,6 +184,46 @@ final class OrderListTotalsTest extends IntegrationTestCase
         );
     }
 
+    /**
+     * Under the rounding of sums the line total is rounded, and the quantity is a binary
+     * float: 1.25 x 14.82 is 18.52499… as a double, which ROUND() brings down to 18.52 where
+     * the order charges 18.53. The list, its amount filter and its sort on the amount read
+     * the cent the order model answers.
+     */
+    public function testALineSoldByMeasureUnderTheRoundingOfSumsIsListedAtTheCentTheOrderIsCharged(): void
+    {
+        $this->givenConfig(self::ROUNDING_MODE, '2');
+        $this->givenConfig(self::FLOAT_LINE_ROUNDING_PIVOT, '0');
+
+        $order = $this->orderWith([['price' => '14.820000', 'tax' => '0.000000', 'quantity' => 1.25]], '0', '0');
+        $orderId = (int) $order->getId();
+
+        self::assertSame(18.53, $order->getTotalAmount());
+        self::assertSame(18.53, $this->orders->findTotalAmountByOrder([$orderId])[$orderId]);
+        self::assertSame('18.53', $this->sqlTotalOf($orderId));
+        self::assertContains($orderId, $this->orderIdsOfAtLeast(18.53), 'The amount filter has to keep the order from its own amount.');
+    }
+
+    /**
+     * The orders placed before the 3.4 upgrade were invoiced on the floating point
+     * figure, and Order::getTotalAmount() keeps reading them that way: 18.52.
+     */
+    public function testAnOrderPlacedBeforeTheLineTotalsWereRoundedAsDecimalsKeepsItsAmount(): void
+    {
+        $this->givenConfig(self::ROUNDING_MODE, '2');
+
+        $order = $this->orderWith([['price' => '14.820000', 'tax' => '0.000000', 'quantity' => 1.25]], '0', '0');
+        $orderId = (int) $order->getId();
+
+        $this->givenConfig(self::FLOAT_LINE_ROUNDING_PIVOT, (string) $orderId);
+        $order->reload(true, $this->getPropelConnection());
+
+        self::assertSame(18.52, $order->getTotalAmount());
+        self::assertSame(18.52, $this->orders->findTotalAmountByOrder([$orderId])[$orderId]);
+        self::assertSame('18.52', $this->sqlTotalOf($orderId));
+        self::assertNotContains($orderId, $this->orderIdsOfAtLeast(18.53));
+    }
+
     public function testAWholePageOfAmountsCostsOneQuery(): void
     {
         $orders = [
@@ -142,6 +234,8 @@ final class OrderListTotalsTest extends IntegrationTestCase
         $orderIds = array_map(static fn (Order $order): int => (int) $order->getId(), $orders);
 
         $totals = [];
+        // The first read of the configuration loads the whole table: the set-up of the test, not the cost of a page.
+        ConfigQuery::read(self::ROUNDING_MODE);
         $queries = QueryCounter::count(function () use ($orderIds, &$totals): void {
             $totals = $this->orders->findTotalAmountByOrder($orderIds);
         });
@@ -205,6 +299,38 @@ final class OrderListTotalsTest extends IntegrationTestCase
     {
         ConfigQuery::write(self::LEGACY_ROUNDING_PIVOT, (string) $orderId);
         $this->legacyPivotWritten = true;
+    }
+
+    private function givenConfig(string $name, string $value): void
+    {
+        if (!\array_key_exists($name, $this->configBefore)) {
+            $this->configBefore[$name] = ConfigQuery::create()->findOneByName($name)?->getValue();
+        }
+
+        ConfigQuery::write($name, $value);
+    }
+
+    /**
+     * The amount the list sorts and filters on, read the way the list reads it.
+     */
+    private function sqlTotalOf(int $orderId): string
+    {
+        $statement = $this->getPropelConnection()->prepare(
+            'SELECT ROUND('.OrderFilters::totalAmountSqlExpression().', 2) FROM `order` WHERE '.OrderTableMap::COL_ID.' = ?',
+        );
+        $statement->execute([$orderId]);
+
+        return number_format((float) $statement->fetchColumn(), 2, '.', '');
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function orderIdsOfAtLeast(float $amount): array
+    {
+        $query = (new OrderFilters(minAmount: $amount))->applyTo(OrderQuery::create());
+
+        return array_map('intval', $query->select([OrderTableMap::COL_ID])->find($this->getPropelConnection())->getData());
     }
 
     /**

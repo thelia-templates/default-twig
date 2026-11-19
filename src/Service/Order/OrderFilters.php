@@ -16,6 +16,7 @@ namespace BackOfficeDefaultTwigBundle\Service\Order;
 
 use Propel\Runtime\ActiveQuery\Criteria;
 use Symfony\Component\HttpFoundation\Request;
+use Thelia\Model\ConfigQuery;
 use Thelia\Model\Map\OrderTableMap;
 use Thelia\Model\OrderQuery;
 
@@ -33,7 +34,9 @@ final readonly class OrderFilters
     public const DEFAULT_SORT = 'created_at';
     public const DEFAULT_DIRECTION = 'desc';
     public const ALLOWED_DIRECTIONS = ['asc', 'desc'];
-    public const ALLOWED_SORTS = ['id', 'ref', 'created_at', 'amount'];
+    // No sort on the amount: the total is computed per order, and sorting a whole shop on it
+    // is a costly query. A link still asking for it falls back on the default sort.
+    public const ALLOWED_SORTS = ['id', 'ref', 'created_at'];
 
     public const TRISTATE_WITH = 'with';
     public const TRISTATE_WITHOUT = 'without';
@@ -481,29 +484,50 @@ final readonly class OrderFilters
      */
     public static function taxedItemsTotalSqlExpression(): string
     {
+        $textPromoPricePivot = (int) ConfigQuery::read('last_text_promo_price_order_id', 0);
+
+        // An order placed while order_product.promo_price was a text keeps the total it was
+        // invoiced with (Order::promoPriceOperand()): the whole total is read the other way
+        // for it, the choice is not made on the unit price, whose type an IF would turn.
+        // A core that knows no such pivot reads 0 here, and the expression is unchanged.
+        if ($textPromoPricePivot <= 0) {
+            return 'COALESCE('.self::itemsTotalByRoundingRuleSqlExpression(false).', 0)';
+        }
+
+        return 'COALESCE(CASE WHEN '.OrderTableMap::COL_ID.' <= '.$textPromoPricePivot
+            .' THEN '.self::itemsTotalByRoundingRuleSqlExpression(true)
+            .' ELSE '.self::itemsTotalByRoundingRuleSqlExpression(false).' END, 0)';
+    }
+
+    private static function itemsTotalByRoundingRuleSqlExpression(bool $textPromoPrice): string
+    {
         $legacyPivot = OrderRoundingRule::legacyPivot();
         $sumOfRoundingsPivot = OrderRoundingRule::sumOfRoundingsPivot();
+        $floatLineRoundingPivot = OrderRoundingRule::floatLineRoundingPivot();
         $roundsLineTotals = OrderRoundingRule::RoundingOfSums === OrderRoundingRule::shopRule();
 
         $frozenBranches = [];
 
         if ($legacyPivot > 0) {
             $frozenBranches[] = 'WHEN '.OrderTableMap::COL_ID.' <= '.$legacyPivot
-                .' THEN '.self::legacyItemsTotalSqlExpression();
+                .' THEN '.self::legacyItemsTotalSqlExpression($textPromoPrice);
         }
 
         if ($roundsLineTotals && $sumOfRoundingsPivot > 0) {
             $frozenBranches[] = 'WHEN '.OrderTableMap::COL_ID.' <= '.$sumOfRoundingsPivot
-                .' THEN '.self::itemsTotalSqlExpression(false);
+                .' THEN '.self::itemsTotalSqlExpression(false, $textPromoPrice);
         }
 
-        $currentRule = self::itemsTotalSqlExpression($roundsLineTotals);
+        if ($roundsLineTotals && $floatLineRoundingPivot > 0) {
+            $frozenBranches[] = 'WHEN '.OrderTableMap::COL_ID.' <= '.$floatLineRoundingPivot
+                .' THEN '.self::itemsTotalSqlExpression(true, $textPromoPrice, false);
+        }
 
-        $itemsTotal = [] === $frozenBranches
+        $currentRule = self::itemsTotalSqlExpression($roundsLineTotals, $textPromoPrice);
+
+        return [] === $frozenBranches
             ? $currentRule
             : 'CASE '.implode(' ', $frozenBranches).' ELSE '.$currentRule.' END';
-
-        return 'COALESCE('.$itemsTotal.', 0)';
     }
 
     /**
@@ -511,10 +535,17 @@ final readonly class OrderFilters
      * order: rounding the unit amounts before multiplying by the quantity is the
      * historical rule, rounding the line total instead is what a shop selling by
      * weight or by volume needs.
+     *
+     * The quantity is a DOUBLE, and so is a line total: 1.25 x 14.82 is 18.52499…, which
+     * ROUND() brings down to 18.52 where the order charges 18.53. The line is brought back
+     * to a decimal at six places before it is rounded, as Order::buildTotalAmountQuery()
+     * does, unless the order was invoiced on the floating point figure (placed before the
+     * 3.4 upgrade, see OrderRoundingRule::floatLineRoundingPivot()), or read with a text
+     * promotional price, as Order::buildTotalAmountQuery() keeps them.
      */
-    private static function itemsTotalSqlExpression(bool $roundLineTotals): string
+    private static function itemsTotalSqlExpression(bool $roundLineTotals, bool $textPromoPrice, bool $asDecimal = true): string
     {
-        $unitPrice = 'IF(op.was_in_promo = 1, op.promo_price, op.price)';
+        $unitPrice = 'IF(op.was_in_promo = 1, '.self::promoPriceOperand($textPromoPrice).', op.price)';
         $unitTax = 'IF(op.was_in_promo = 1, opt.promo_amount, opt.amount)';
 
         if (!$roundLineTotals) {
@@ -522,14 +553,17 @@ final readonly class OrderFilters
             $unitTax = 'ROUND('.$unitTax.', 2)';
         }
 
-        $lineTotal = 'op.quantity * ('.$unitPrice.' + (
+        // The quantity as it was sold, three decimals at most, the way Order::getTotalAmount()
+        // reads it: the column is a binary float, and 0.7 kept as 0.69999998 would land a
+        // line on the cent below the one charged.
+        $lineTotal = 'ROUND(op.quantity, 3) * ('.$unitPrice.' + (
             SELECT COALESCE(SUM('.$unitTax.'), 0)
             FROM order_product_tax opt
             WHERE opt.order_product_id = op.id
         ))';
 
         if ($roundLineTotals) {
-            $lineTotal = 'ROUND('.$lineTotal.', 2)';
+            $lineTotal = 'ROUND('.($asDecimal && !$textPromoPrice ? 'CAST('.$lineTotal.' AS DECIMAL(20,6))' : $lineTotal).', 2)';
         }
 
         return '(
@@ -546,11 +580,11 @@ final readonly class OrderFilters
      * summing the two apart and summing them per line land on different sides of a
      * half-cent tie.
      */
-    private static function legacyItemsTotalSqlExpression(): string
+    private static function legacyItemsTotalSqlExpression(bool $textPromoPrice): string
     {
         return '(
             (
-                SELECT SUM(op.quantity * IF(op.was_in_promo = 1, op.promo_price, op.price))
+                SELECT SUM(op.quantity * IF(op.was_in_promo = 1, '.self::promoPriceOperand($textPromoPrice).', op.price))
                 FROM order_product op
                 WHERE op.order_id = '.OrderTableMap::COL_ID.'
             )
@@ -561,6 +595,15 @@ final readonly class OrderFilters
                 WHERE op.order_id = '.OrderTableMap::COL_ID.'
             )
         )';
+    }
+
+    /**
+     * The promotional price as Order::promoPriceOperand() reads it: a text for an order placed
+     * while the column was one.
+     */
+    private static function promoPriceOperand(bool $textPromoPrice): string
+    {
+        return $textPromoPrice ? 'COALESCE(CAST(op.promo_price AS CHAR), \'\')' : 'op.promo_price';
     }
 
     /**

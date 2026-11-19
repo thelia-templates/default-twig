@@ -22,6 +22,7 @@ use BackOfficeDefaultTwigBundle\Repository\OrderRepository;
 use BackOfficeDefaultTwigBundle\Repository\OrderReturnRepository;
 use BackOfficeDefaultTwigBundle\Repository\ProductRepository;
 use BackOfficeDefaultTwigBundle\Repository\PublicationRepository;
+use BackOfficeDefaultTwigBundle\Repository\SubscriptionRepository;
 use BackOfficeDefaultTwigBundle\Service\Bundle\UnsellableBundleCounter;
 use BackOfficeDefaultTwigBundle\Service\Catalog\ProductFilters;
 use BackOfficeDefaultTwigBundle\Service\I18n\MoneyFormatter;
@@ -29,6 +30,7 @@ use BackOfficeDefaultTwigBundle\Service\Listing\FolderListQuery;
 use BackOfficeDefaultTwigBundle\Service\Order\OrderAccess;
 use BackOfficeDefaultTwigBundle\Service\Publication\ContentPublicationSupport;
 use BackOfficeDefaultTwigBundle\Service\Publication\PublicationStateFilter;
+use BackOfficeDefaultTwigBundle\Service\Subscription\SubscriptionSupport;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -87,6 +89,8 @@ final readonly class DashboardStatsProvider
         private ClockInterface $clock,
         private UnsellableBundleCounter $unsellableBundles,
         private StockSettings $stockSettings,
+        private SubscriptionSupport $subscriptionSupport,
+        private SubscriptionRepository $subscriptions,
     ) {
     }
 
@@ -105,8 +109,11 @@ final readonly class DashboardStatsProvider
             $previousRevenue = $this->orders->getRevenue($previous);
             $previousOrderCount = $this->orders->countOrders($previous);
 
-            $aov = $orderCount > 0 ? $revenue / $orderCount : 0.0;
-            $previousAov = $previousOrderCount > 0 ? $previousRevenue / $previousOrderCount : 0.0;
+            // The revenue counts the paid orders only: so does what it is divided by.
+            $revenueOrderCount = $this->orders->countRevenueOrders($range);
+            $previousRevenueOrderCount = $this->orders->countRevenueOrders($previous);
+            $aov = $revenueOrderCount > 0 ? $revenue / $revenueOrderCount : 0.0;
+            $previousAov = $previousRevenueOrderCount > 0 ? $previousRevenue / $previousRevenueOrderCount : 0.0;
 
             $kpis[] = new Kpi(
                 label: $this->translator->trans('Revenue'),
@@ -133,6 +140,20 @@ final readonly class DashboardStatsProvider
                 icon: 'bi-receipt',
                 accent: 'success',
                 testid: 'kpi-aov',
+            );
+        }
+
+        // The monthly recurring revenue exists only on a core that carries the subscriptions,
+        // for an administrator who may see them: one aggregate query.
+        if ($this->subscriptionSupport->isAvailable() && $this->canView(SubscriptionSupport::RESOURCE)) {
+            $kpis[] = new Kpi(
+                label: $this->translator->trans('Monthly recurring revenue'),
+                value: $this->formatCurrency($this->subscriptions->monthlyRecurringRevenue(), $locale),
+                variationPercent: null,
+                icon: 'bi-arrow-repeat',
+                accent: 'info',
+                href: $this->urls->generate('admin.subscription.list'),
+                testid: 'kpi-mrr',
             );
         }
 

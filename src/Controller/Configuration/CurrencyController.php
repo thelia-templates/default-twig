@@ -344,6 +344,15 @@ final class CurrencyController
         /** @var list<Currency> $currencies */
         $currencies = iterator_to_array($query->find(), false);
 
+        // The edit forms keep the model locale they save under; then the page, sorted and read, is in the admin language.
+        $editForms = [];
+        foreach ($currencies as $currency) {
+            $editForms[$currency->getId()] = $this->createEditForm($currency)->createView();
+            if ($request !== null) {
+                $currency->setLocale($request->getLocale());
+            }
+        }
+
         // Currency name is an i18n field (no SQL column), so order it in PHP on the resolved label.
         if ($sort->field === 'name') {
             usort($currencies, static fn (Currency $a, Currency $b): int => strcasecmp((string) $a->getName(), (string) $b->getName()));
@@ -352,11 +361,9 @@ final class CurrencyController
             }
         }
         $rows = [];
-        $editForms = [];
 
         foreach ($currencies as $currency) {
             $rows[] = $this->currencyToRow($currency);
-            $editForms[$currency->getId()] = $this->createEditForm($currency)->createView();
         }
 
         $createForm = $this->formFactory->createNamed('thelia_currency_create', CurrencyType::class, null, [

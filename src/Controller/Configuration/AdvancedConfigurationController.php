@@ -29,6 +29,7 @@ use Thelia\Core\Event\Cache\CacheEvent;
 use Thelia\Core\Event\TheliaEvents;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
+use Thelia\Core\Template\TemplateDefinition;
 use Thelia\Model\ConfigQuery;
 use Thelia\Tools\TokenProvider;
 use Twig\Environment;
@@ -41,6 +42,12 @@ final class AdvancedConfigurationController
     private const LEGACY_RESOURCE = 'admin.cache';
     private const RESOURCES = [self::RESOURCE, self::LEGACY_RESOURCE];
     private const REDIRECT_ROUTE = 'admin.configuration.advanced';
+    private const ASSET_COPY_DIRECTORIES = [
+        TemplateDefinition::FRONT_OFFICE_SUBDIR,
+        TemplateDefinition::BACK_OFFICE_SUBDIR,
+        TemplateDefinition::PDF_SUBDIR,
+        TemplateDefinition::EMAIL_SUBDIR,
+    ];
 
     public function __construct(
         private readonly AdminAccessChecker $access,
@@ -75,9 +82,15 @@ final class AdvancedConfigurationController
     #[Route('/flush-assets', name: '.flush-assets', methods: ['POST'])]
     public function flushAssets(Request $request): RedirectResponse
     {
+        // Only the copies that a page view makes again (assets of modules and templates, under
+        // assets/<template type>/). The rest of assets/ is the output of asset-map:compile: outside
+        // debug mode nothing serves the sources, so emptying it leaves both sites without styles.
         return $this->dispatchCacheClear(
             $request,
-            $this->webDir().'assets',
+            array_map(
+                fn (string $type): string => $this->webDir().'assets'.\DIRECTORY_SEPARATOR.$type,
+                self::ASSET_COPY_DIRECTORIES,
+            ),
             'Web assets cache cleared.',
         );
     }
@@ -106,7 +119,10 @@ final class AdvancedConfigurationController
         return new RedirectResponse($this->urls->generate(self::REDIRECT_ROUTE));
     }
 
-    private function dispatchCacheClear(Request $request, string $dir, string $successMessage): RedirectResponse
+    /**
+     * @param string|list<string> $dirs
+     */
+    private function dispatchCacheClear(Request $request, string|array $dirs, string $successMessage): RedirectResponse
     {
         if ($denied = $this->access->checkAny(self::RESOURCES, AccessManager::UPDATE)) {
             return new RedirectResponse($this->urls->generate(self::REDIRECT_ROUTE));
@@ -114,7 +130,9 @@ final class AdvancedConfigurationController
 
         try {
             $this->tokens->checkToken((string) $request->request->get('_token', ''));
-            $this->events->dispatch(new CacheEvent($dir), TheliaEvents::CACHE_CLEAR);
+            foreach ((array) $dirs as $dir) {
+                $this->events->dispatch(new CacheEvent($dir), TheliaEvents::CACHE_CLEAR);
+            }
             $this->flash($request, 'success', $successMessage);
         } catch (\Throwable $exception) {
             $this->flash($request, 'danger', AdminFailureMessage::of($exception, $this->translator));

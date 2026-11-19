@@ -576,16 +576,21 @@ final class FileController
     private function renderForm(string $kind, string $parentType, int $parentId): Response
     {
         $resource = $this->resources->getResource($parentType);
-        if ($denied = $this->access->check($resource, [], AccessManager::UPDATE)) {
+        if ($denied = $this->access->check($resource, [], AccessManager::VIEW)) {
             return $denied;
         }
+
+        // Rendered as a sub-request of the sheet of the parent: a refusal here would break the whole
+        // sheet, so a reader gets the list without the upload forms.
+        $canUpload = $this->access->canUpdate($resource);
 
         return new Response($this->twig->render('@BackOfficeDefaultTwig/file/_form.html.twig', [
             'kind' => $kind,
             'parent_type' => $parentType,
             'parent_id' => $parentId,
+            'can_upload' => $canUpload,
             'urls' => $this->urlsFor($kind, $parentType),
-            'video_form' => $this->showsVideos($kind, $parentType)
+            'video_form' => $canUpload && $this->showsVideos($kind, $parentType)
                 ? $this->formFactory->createNamed(VideoType::NAME, VideoType::class, ['visible' => true])->createView()
                 : null,
         ]));

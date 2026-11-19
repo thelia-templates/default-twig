@@ -17,6 +17,8 @@ namespace BackOfficeDefaultTwigBundle\Controller;
 use BackOfficeDefaultTwigBundle\DTO\Dashboard\DateRange;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\Report\ConversionReportProvider;
+use BackOfficeDefaultTwigBundle\Service\Report\SalesReportProvider;
+use BackOfficeDefaultTwigBundle\Service\Report\SalesReportsContext;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -31,6 +33,7 @@ final class ReportsController
     public function __construct(
         private readonly AdminAccessChecker $access,
         private readonly ConversionReportProvider $conversionReports,
+        private readonly SalesReportProvider $salesReports,
         private readonly Environment $twig,
     ) {
     }
@@ -57,6 +60,53 @@ final class ReportsController
         return new Response($this->twig->render('@BackOfficeDefaultTwig/reports/conversion.html.twig', [
             'report' => $report,
             'current_tab' => $currentTab,
+        ]));
+    }
+
+    #[Route('/admin/reports/sales/category', name: SalesReportProvider::ROUTE_CATEGORY, methods: ['GET'])]
+    public function salesByCategory(Request $request): Response
+    {
+        return $this->sales(SalesReportProvider::TAB_CATEGORY, $request);
+    }
+
+    #[Route('/admin/reports/sales/product', name: SalesReportProvider::ROUTE_PRODUCT, methods: ['GET'])]
+    public function salesByProduct(Request $request): Response
+    {
+        return $this->sales(SalesReportProvider::TAB_PRODUCT, $request);
+    }
+
+    #[Route('/admin/reports/sales/customer', name: SalesReportProvider::ROUTE_CUSTOMER, methods: ['GET'])]
+    public function salesByCustomer(Request $request): Response
+    {
+        return $this->sales(SalesReportProvider::TAB_CUSTOMER, $request);
+    }
+
+    private function sales(string $tab, Request $request): Response
+    {
+        // The customers are personal data: their tab follows the customer permission alone, the
+        // other tabs the order permission.
+        if ($denied = $this->access->check(SalesReportProvider::resourceOf($tab), [], AccessManager::VIEW)) {
+            return $denied;
+        }
+
+        if (!SalesReportsContext::coreHasSalesReports()) {
+            return new Response($this->twig->render('@BackOfficeDefaultTwig/reports/sales.html.twig', ['report' => null, 'current_tab' => $tab]));
+        }
+
+        $report = $this->salesReports->compute(
+            $tab,
+            DateRange::fromRequest($request),
+            'paid' !== $request->query->get('scope'),
+            SalesReportProvider::customerSort($request->query->getString('sort') ?: null),
+            $request->query->getString('dir') ?: null,
+            max(1, $request->query->getInt('page', 1)),
+            $request->getLocale(),
+            $request->query->getBoolean('refresh'),
+        );
+
+        return new Response($this->twig->render('@BackOfficeDefaultTwig/reports/sales.html.twig', [
+            'report' => $report,
+            'current_tab' => $tab,
         ]));
     }
 }

@@ -887,8 +887,8 @@ td.bo-datatable__details-col {
     white-space: normal;
 }
 
-// The e-mail under the customer name in the return queue gives way first when the table
-// is short of room; the full address stays in its title.
+// The e-mail under the customer name in the order list and the return queue gives way
+// first when the table is short of room; the full address stays in its title.
 .bo-order-customer--compact .text-truncate {
     max-width: 11rem;
 }
@@ -2134,6 +2134,11 @@ main[data-testid="bo-main"] {
     min-height: 0;
 }
 
+// The flag before a customer name names its country on hover; it is not text to select.
+.bo-country-flag {
+    cursor: default;
+}
+
 // ---------- Order list ----------
 
 .bo-order-customer {
@@ -2142,8 +2147,6 @@ main[data-testid="bo-main"] {
 }
 
 .bo-order-items {
-    font-weight: 500;
-
     &[data-bs-toggle="tooltip"] {
         cursor: help;
     }
@@ -2156,6 +2159,7 @@ main[data-testid="bo-main"] {
     text-align: start;
 }
 
+// Payment and delivery module of a row.
 .bo-order-module {
     display: inline-flex;
     align-items: center;
@@ -2651,6 +2655,35 @@ tr.bo-order-row--urgent {
     max-width: max-content;
 }
 
+// The "..." of a row carries `dropdown-toggle`, which Bootstrap leaves its end corners to
+// although its menu follows it in the group; the caret that class draws is not wanted.
+.bo-row-menu__toggle::after {
+    display: none;
+}
+
+// From the breakpoint where the "..." gives way to the actions it holds, it is hidden but
+// still the last child of the group: the button before it would keep the square end
+// Bootstrap gives a middle child. @content gives the end corners back, per direction.
+// The selector only ties with the rule it corrects (Bootstrap's `.btn-group > .btn:not(:last-child)`
+// here, the button-group block of _rtl.scss there): it wins by coming after it, so this file
+// keeps importing Bootstrap first and _rtl.scss calls the mixin after its own button-group rules.
+@mixin bo-row-menu-hidden-after {
+    @each $breakpoint in map-keys($grid-breakpoints) {
+        @if $breakpoint != "xs" {
+            @include media-breakpoint-up($breakpoint) {
+                .btn-group > .btn:has(+ .bo-row-menu.d-#{$breakpoint}-none) {
+                    @content;
+                }
+            }
+        }
+    }
+}
+
+@include bo-row-menu-hidden-after {
+    border-top-right-radius: var(--#{$prefix}btn-border-radius);
+    border-bottom-right-radius: var(--#{$prefix}btn-border-radius);
+}
+
 // A row action that is offered but cannot run: the reason wraps under the label,
 // so it reads without hovering and without opening a second surface. The selector has to
 // out-specify the `white-space: nowrap` the dropdown applies to every other action.
@@ -2806,6 +2839,11 @@ tr.bo-order-row--urgent {
 
         > div {
             width: 11rem;
+        }
+
+        // The longest wording of the policy ("Vendre jusqu'à une limite (précommande)") has to be readable in its select.
+        > div.bo-combinations-grid__stock-policy {
+            width: min(100%, 19rem);
         }
 
         .form-label {
@@ -3167,6 +3205,20 @@ form[data-bo-unsaved-changes-dirty] .bo-combinations-savebar {
 
 [dir="rtl"] .bo-side-panel.bo-side-panel--folded {
     transform: translateX(-100%);
+}
+
+// The quantity rules of a combination, in its row's panel and in the default
+// combination's card: fields wide enough for "0,125" or a unit's name, wrapping
+// on a phone instead of widening the grid.
+.bo-quantity-rules {
+    // The panel sits in a grid cell, which keeps its text on one line: a label
+    // longer than its field would run over the next one.
+    white-space: normal;
+}
+
+.bo-quantity-rules__field {
+    width: 11rem;
+    max-width: 100%;
 }
 
 // ---------- Reports: conversion funnel ----------
