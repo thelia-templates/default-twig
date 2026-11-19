@@ -71,7 +71,7 @@ final readonly class CombinationsTabContextBuilder
     public function build(Product $product, ?int $currencyId = null, ?string $uiLocale = null): array
     {
         $uiLocale ??= $this->defaultLocale();
-        $locale = $this->defaultLocale();
+        $locale = $uiLocale;
         $currency = $this->resolveCurrency($currencyId);
         $rows = [];
         $hasCombinations = false;

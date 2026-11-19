@@ -71,7 +71,7 @@ final class ModuleController
     }
 
     #[Route('/modules', name: 'module', methods: ['GET'])]
-    public function list(): Response
+    public function list(Request $request): Response
     {
         if ($denied = $this->access->check(self::RESOURCE, [], AccessManager::VIEW)) {
             return $denied;
@@ -79,7 +79,7 @@ final class ModuleController
 
         return new Response($this->twig->render(
             self::LIST_TEMPLATE,
-            $this->listPresenter->buildListContext($this->defaultLocale()),
+            $this->listPresenter->buildListContext($request->getLocale()),
         ));
     }
 

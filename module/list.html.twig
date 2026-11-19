@@ -25,9 +25,9 @@
             <div>
                 <h1 class="h3 mb-1">{{ 'Modules management'|trans }}</h1>
                 <p class="text-muted small mb-0" data-testid="modules-summary">
-                    <span data-bo-modules-list-target="summaryTotal">{{ total_count }}</span> {{ 'modules'|trans }}
-                    · <span data-bo-modules-list-target="summaryActive">{{ active_count }}</span> {{ 'active'|trans }}
-                    · <span data-bo-modules-list-target="summaryInactive">{{ inactive_count }}</span> {{ 'inactive'|trans }}
+                    <span data-bo-modules-list-target="summaryTotal">{{ '%count% module|%count% modules'|trans({'%count%': total_count}) }}</span>
+                    · <span data-bo-modules-list-target="summaryActive">{{ '%count% active'|trans({'%count%': active_count}) }}</span>
+                    · <span data-bo-modules-list-target="summaryInactive">{{ '%count% inactive'|trans({'%count%': inactive_count}) }}</span>
                 </p>
             </div>
             <div class="d-flex flex-wrap align-items-center gap-2">

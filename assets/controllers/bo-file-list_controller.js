@@ -11,6 +11,7 @@ export default class extends Controller {
         // sequence: a drop posts the whole order instead of one position.
         reorderUrl: String,
         token: String,
+        confirmDelete: String,
         sortable: { type: Boolean, default: false },
     };
 
@@ -255,7 +256,7 @@ export default class extends Controller {
         button.disabled = true;
 
         const id = String(event.params.id);
-        if (!confirm('Are you sure?')) {
+        if (!confirm(this.hasConfirmDeleteValue ? this.confirmDeleteValue : 'Are you sure?')) {
             button.disabled = false;
             return;
         }
