@@ -1,0 +1,421 @@
+<?php
+
+declare(strict_types=1);
+
+/*
+ * This file is part of the Thelia package.
+ * http://www.thelia.net
+ *
+ * (c) OpenStudio <info@thelia.net>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace BackOfficeDefaultTwigBundle\Tests\Http;
+
+use Propel\Runtime\Propel;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Thelia\Core\Security\AccessManager;
+use Thelia\Core\Security\Resource\AdminResources;
+use Thelia\Domain\Search\Dictionary\SearchTermRedirectValidator;
+use Thelia\Model\ConfigQuery;
+use Thelia\Model\LangQuery;
+use Thelia\Model\SearchSynonym;
+use Thelia\Model\SearchSynonymQuery;
+use Thelia\Model\SearchTermRedirect;
+use Thelia\Model\SearchTermRedirectQuery;
+use Thelia\Test\FixtureFactory;
+use Thelia\Test\WebIntegrationTestCase;
+use Thelia\Tests\Support\BackOffice\AdminSessionInjector;
+
+final class SearchDictionaryBackOfficeTest extends WebIntegrationTestCase
+{
+    private const SYNONYMS_URL = '/admin/configuration/search-synonyms';
+    private const REDIRECTS_URL = '/admin/configuration/search-redirects';
+
+    private AdminSessionInjector $injector;
+
+    private FixtureFactory $factory;
+
+    private int $languageId;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        if (ConfigQuery::read('active-admin-template') !== 'default-twig') {
+            self::markTestSkipped('The Twig back-office is not the active admin template of the test shop: its routes are not registered.');
+        }
+
+        Propel::disableInstancePooling();
+
+        $this->injector = new AdminSessionInjector();
+        $this->getService(EventDispatcherInterface::class)->addSubscriber($this->injector);
+
+        $this->factory = new FixtureFactory($this->getPropelConnection());
+        $admin = $this->factory->admin();
+        $admin->eraseCredentials();
+        $this->injector->setAdmin($admin);
+
+        $this->languageId = (int) LangQuery::create()->findOneByByDefault(1)?->getId();
+    }
+
+    protected function tearDown(): void
+    {
+        Propel::enableInstancePooling();
+
+        if (isset($this->injector)) {
+            $this->getService(EventDispatcherInterface::class)->removeSubscriber($this->injector);
+            $this->injector->clear();
+        }
+
+        parent::tearDown();
+    }
+
+    public function testTheTwoListsShowTheEntriesOfTheFilteredLanguage(): void
+    {
+        (new SearchSynonym())->setLangId($this->languageId)->setTerm('b239sweater')->setSynonyms("jumper\npullover")->setBidirectional(1)->setActive(1)->save($this->getPropelConnection());
+        (new SearchTermRedirect())->setLangId($this->languageId)->setTerm('b239promo')->setTargetType('url')->setUrl('/b239-offers')->setActive(1)->save($this->getPropelConnection());
+
+        $this->assertPageRenders(self::SYNONYMS_URL.'?language_id='.$this->languageId);
+        $page = $this->client->getCrawler()->filter('[data-testid="search-synonyms-page"]')->text();
+        self::assertStringContainsString('b239sweater', $page);
+        self::assertStringContainsString('jumper, pullover', $page);
+
+        $this->assertPageRenders(self::REDIRECTS_URL.'?language_id='.$this->languageId);
+        $page = $this->client->getCrawler()->filter('[data-testid="search-redirects-page"]')->text();
+        self::assertStringContainsString('b239promo', $page);
+        self::assertStringContainsString('/b239-offers', $page);
+    }
+
+    public function testAnAdministratorWithoutTheConfigurationRightIsRefused(): void
+    {
+        $nobody = $this->factory->restrictedAdmin([AdminResources::CUSTOMER => [AccessManager::VIEW]]);
+        $nobody->eraseCredentials();
+        $this->injector->setAdmin($nobody);
+
+        $this->client->request('GET', self::SYNONYMS_URL);
+        self::assertSame(403, $this->client->getResponse()->getStatusCode());
+
+        $this->client->request('GET', self::REDIRECTS_URL);
+        self::assertSame(403, $this->client->getResponse()->getStatusCode());
+
+        $this->client->request('POST', self::SYNONYMS_URL.'/create', ['thelia_search_synonym_create' => [
+            'lang_id' => (string) $this->languageId,
+            'term' => 'b239denied',
+            'synonyms' => 'refused',
+        ]]);
+        self::assertSame(403, $this->client->getResponse()->getStatusCode());
+        self::assertNull(SearchSynonymQuery::create()->findOneByTerm('b239denied'));
+    }
+
+    public function testTheMerchantCreatesASynonymByPost(): void
+    {
+        $token = $this->formToken(self::SYNONYMS_URL.'?language_id='.$this->languageId, 'thelia_search_synonym_create');
+
+        $this->client->request('POST', self::SYNONYMS_URL.'/create', ['thelia_search_synonym_create' => [
+            'lang_id' => (string) $this->languageId,
+            'term' => 'b239hoodie',
+            'synonyms' => "sweatshirt\r\nhooded top\r\n",
+            'bidirectional' => '1',
+            'active' => '1',
+            '_token' => $token,
+        ]]);
+
+        $synonym = SearchSynonymQuery::create()->findOneByTerm('b239hoodie');
+        self::assertNotNull($synonym, 'The synonym is created.');
+        self::assertSame(['sweatshirt', 'hooded top'], explode("\n", (string) $synonym->getSynonyms()));
+        self::assertSame(1, $synonym->getBidirectional());
+        self::assertSame($this->languageId, $synonym->getLangId());
+        self::assertTrue($this->client->getResponse()->isRedirect(self::SYNONYMS_URL.'?language_id='.$this->languageId));
+    }
+
+    public function testASynonymPostedWithoutTheFormTokenIsNotCreated(): void
+    {
+        $this->client->request('POST', self::SYNONYMS_URL.'/create', ['thelia_search_synonym_create' => [
+            'lang_id' => (string) $this->languageId,
+            'term' => 'b239notoken',
+            'synonyms' => 'refused',
+            'active' => '1',
+        ]]);
+
+        self::assertNull(SearchSynonymQuery::create()->findOneByTerm('b239notoken'));
+    }
+
+    public function testTheMerchantDeletesASynonym(): void
+    {
+        $synonym = (new SearchSynonym())->setLangId($this->languageId)->setTerm('b239delete')->setSynonyms('gone')->setActive(1);
+        $synonym->save($this->getPropelConnection());
+
+        $this->client->request('POST', self::SYNONYMS_URL.'/delete', [
+            '_token' => $this->backOfficeToken(self::SYNONYMS_URL.'?language_id='.$this->languageId),
+            'search_synonym_id' => (string) $synonym->getId(),
+            'language_id' => (string) $this->languageId,
+        ]);
+
+        self::assertNull(SearchSynonymQuery::create()->findOneByTerm('b239delete'));
+        self::assertTrue($this->client->getResponse()->isRedirect(self::SYNONYMS_URL.'?language_id='.$this->languageId));
+    }
+
+    public function testAnAdministratorWhoCannotUpdateCannotImport(): void
+    {
+        $creator = $this->factory->restrictedAdmin([AdminResources::CONFIG => [AccessManager::VIEW, AccessManager::CREATE]]);
+        $creator->eraseCredentials();
+        $this->injector->setAdmin($creator);
+
+        $this->client->request('POST', self::SYNONYMS_URL.'/import', ['language_id' => (string) $this->languageId]);
+
+        self::assertSame(403, $this->client->getResponse()->getStatusCode());
+    }
+
+    public function testTheLanguageSwitcherGoesBackToTheFirstPage(): void
+    {
+        $other = LangQuery::create()->filterByByDefault(0)->findOne();
+        self::assertNotNull($other, 'The shop has a language other than its default one.');
+
+        $crawler = $this->client->request('GET', self::SYNONYMS_URL.'?language_id='.$this->languageId.'&page=4');
+        $link = (string) $crawler->filter('[data-testid="bo-language-switcher-'.$other->getCode().'"]')->attr('href');
+
+        self::assertStringContainsString('language_id='.$other->getId(), $link);
+        self::assertStringNotContainsString('page=', $link);
+    }
+
+    public function testARedirectionToAnExternalAddressIsRefusedAndTheReasonIsShown(): void
+    {
+        $token = $this->formToken(self::REDIRECTS_URL.'?language_id='.$this->languageId, 'thelia_search_redirect_create');
+
+        $this->client->request('POST', self::REDIRECTS_URL.'/create', ['thelia_search_redirect_create' => [
+            'lang_id' => (string) $this->languageId,
+            'term' => 'b239evil',
+            'target_type' => 'url',
+            'url' => 'https://evil.example/',
+            'active' => '1',
+            '_token' => $token,
+        ]]);
+
+        self::assertNull(SearchTermRedirectQuery::create()->findOneByTerm('b239evil'), 'Nothing is created.');
+        self::assertTrue($this->client->getResponse()->isRedirect(self::REDIRECTS_URL.'?language_id='.$this->languageId));
+
+        $crawler = $this->client->followRedirect();
+        self::assertCount(1, $crawler->filter('[data-testid="bo-flash-danger"]'), 'The refusal is shown as an error.');
+        self::assertStringContainsString('path of the shop', $crawler->filter('[data-testid="bo-flash-danger"]')->text());
+        self::assertCount(1, $crawler->filter('[data-testid="search-redirect-create-reopen"]'), 'The creation dialog opens again.');
+        self::assertSame('b239evil', $crawler->filter('[data-testid="search-redirect-create-form"] input[name="thelia_search_redirect_create[term]"]')->attr('value'), 'The entry is kept.');
+        self::assertSame('https://evil.example/', $crawler->filter('[data-testid="search-redirect-create-form"] input[name="thelia_search_redirect_create[url]"]')->attr('value'));
+        self::assertStringContainsString('must be a path of the shop, starting with a single slash', $crawler->filter('[data-testid="search-redirect-create-form"]')->text(), 'The refusal is shown in the dialog.');
+
+        $crawler = $this->client->request('GET', self::REDIRECTS_URL.'?language_id='.$this->languageId);
+        self::assertCount(0, $crawler->filter('[data-testid="search-redirect-create-reopen"]'), 'The dialog opens again once only.');
+        self::assertSame('', (string) $crawler->filter('[data-testid="search-redirect-create-form"] input[name="thelia_search_redirect_create[term]"]')->attr('value'));
+    }
+
+    public function testARefusedSynonymOpensItsDialogAgainWithTheEntry(): void
+    {
+        $token = $this->formToken(self::SYNONYMS_URL.'?language_id='.$this->languageId, 'thelia_search_synonym_create');
+
+        $this->client->request('POST', self::SYNONYMS_URL.'/create', ['thelia_search_synonym_create' => [
+            'lang_id' => (string) $this->languageId,
+            'term' => 'b239same',
+            'synonyms' => 'B239SAME',
+            'active' => '1',
+            '_token' => $token,
+        ]]);
+
+        self::assertNull(SearchSynonymQuery::create()->findOneByTerm('b239same'), 'Nothing is created.');
+        $crawler = $this->client->followRedirect();
+
+        self::assertCount(1, $crawler->filter('[data-testid="search-synonym-create-reopen"]'), 'The creation dialog opens again.');
+        self::assertSame('b239same', $crawler->filter('[data-testid="search-synonym-create-form"] input[name="thelia_search_synonym_create[term]"]')->attr('value'));
+        self::assertStringContainsString('B239SAME', $crawler->filter('[data-testid="search-synonym-create-form"] textarea[name="thelia_search_synonym_create[synonyms]"]')->text());
+    }
+
+    public function testTheImportFormsKeepTheFilteredLanguage(): void
+    {
+        $other = LangQuery::create()->filterByByDefault(0)->findOne();
+        self::assertNotNull($other, 'The shop has a language other than its default one.');
+
+        foreach (['search-synonym-import' => self::SYNONYMS_URL, 'search-redirect-import' => self::REDIRECTS_URL] as $testid => $url) {
+            $crawler = $this->client->request('GET', $url.'?language_id='.$other->getId());
+
+            self::assertSame((string) $other->getId(), $crawler->filter('[data-testid="'.$testid.'-form"] input[name="language_id"]')->attr('value'), $testid);
+        }
+    }
+
+    public function testACsvFileOfSynonymsIsImported(): void
+    {
+        $page = (string) $this->client->request('GET', self::SYNONYMS_URL.'?language_id='.$this->languageId)->html();
+        self::assertSame(1, preg_match('/<meta name="bo-token" content="([^"]+)"/', $page, $matches), 'The page renders the back-office token.');
+
+        $path = tempnam(sys_get_temp_dir(), 'b239');
+        self::assertIsString($path);
+        $locale = (string) LangQuery::create()->findPk($this->languageId)?->getLocale();
+        file_put_contents($path, "locale;term;synonyms;bidirectional\n".$locale.";b239import;alpha|beta;1\n".$locale.";b239import2;gamma;0\n");
+
+        try {
+            $this->client->request('POST', self::SYNONYMS_URL.'/import', ['_token' => $matches[1], 'language_id' => (string) $this->languageId], [
+                'file' => new UploadedFile($path, 'synonyms.csv', 'text/csv', null, true),
+            ]);
+        } finally {
+            @unlink($path);
+        }
+
+        self::assertTrue($this->client->getResponse()->isRedirect(self::SYNONYMS_URL.'?language_id='.$this->languageId));
+        $imported = SearchSynonymQuery::create()->findOneByTerm('b239import');
+        self::assertNotNull($imported, 'The first line is imported.');
+        self::assertSame("alpha\nbeta", $imported->getSynonyms());
+        self::assertNotNull(SearchSynonymQuery::create()->findOneByTerm('b239import2'), 'The second line is imported.');
+
+        $crawler = $this->client->followRedirect();
+        self::assertStringContainsString('2 created', $crawler->filter('[data-testid="bo-flash-success"]')->text());
+    }
+
+    public function testARedirectionOfACommonWordIsRefusedUntilTheMerchantConfirmsIt(): void
+    {
+        $this->commonWord('b239everywhere');
+        $token = $this->formToken(self::REDIRECTS_URL.'?language_id='.$this->languageId, 'thelia_search_redirect_create');
+        $fields = [
+            'lang_id' => (string) $this->languageId,
+            'term' => 'b239everywhere',
+            'target_type' => 'url',
+            'url' => '/b239-everywhere',
+            'active' => '1',
+            '_token' => $token,
+        ];
+
+        $this->client->request('POST', self::REDIRECTS_URL.'/create', ['thelia_search_redirect_create' => $fields]);
+
+        self::assertNull(SearchTermRedirectQuery::create()->findOneByTerm('b239everywhere'), 'Nothing is created before the confirmation.');
+        $crawler = $this->client->followRedirect();
+        self::assertStringContainsString('Tick the confirmation', $crawler->filter('[data-testid="bo-flash-danger"]')->text());
+        self::assertCount(1, $crawler->filter('[data-testid="search-redirect-create-form"] input[name="thelia_search_redirect_create[confirm_common_term]"]'), 'The dialog offers the confirmation.');
+
+        $fields['_token'] = $this->formToken(self::REDIRECTS_URL.'?language_id='.$this->languageId, 'thelia_search_redirect_create');
+        $this->client->request('POST', self::REDIRECTS_URL.'/create', ['thelia_search_redirect_create' => $fields + ['confirm_common_term' => '1']]);
+
+        self::assertSame(1, SearchTermRedirectQuery::create()->findOneByTerm('b239everywhere')?->getActive(), 'The confirmed redirection is created.');
+    }
+
+    public function testAnInactiveRedirectionOfACommonWordNeedsNoConfirmation(): void
+    {
+        $this->commonWord('b239dormant');
+        $token = $this->formToken(self::REDIRECTS_URL.'?language_id='.$this->languageId, 'thelia_search_redirect_create');
+
+        $this->client->request('POST', self::REDIRECTS_URL.'/create', ['thelia_search_redirect_create' => [
+            'lang_id' => (string) $this->languageId,
+            'term' => 'b239dormant',
+            'target_type' => 'url',
+            'url' => '/b239-dormant',
+            '_token' => $token,
+        ]]);
+
+        self::assertSame(0, SearchTermRedirectQuery::create()->findOneByTerm('b239dormant')?->getActive());
+    }
+
+    public function testARedirectionPostedWithoutItsTokenChangesNothing(): void
+    {
+        $redirect = (new SearchTermRedirect())->setLangId($this->languageId)->setTerm('b239kept')->setTargetType('url')->setUrl('/b239-kept')->setActive(1);
+        $redirect->save($this->getPropelConnection());
+        $fields = ['lang_id' => (string) $this->languageId, 'term' => 'b239notoken', 'target_type' => 'url', 'url' => '/b239-no-token', 'active' => '1'];
+
+        $this->client->request('POST', self::REDIRECTS_URL.'/create', ['thelia_search_redirect_create' => $fields]);
+        $this->client->request('POST', self::REDIRECTS_URL.'/save', ['thelia_search_redirect_update' => ['id' => (string) $redirect->getId()] + $fields]);
+        $this->client->request('POST', self::REDIRECTS_URL.'/toggle/'.$redirect->getId());
+        $this->client->request('POST', self::REDIRECTS_URL.'/delete', ['search_redirect_id' => (string) $redirect->getId()]);
+
+        self::assertNull(SearchTermRedirectQuery::create()->findOneByTerm('b239notoken'));
+        $kept = SearchTermRedirectQuery::create()->findPk($redirect->getId());
+        self::assertNotNull($kept, 'The redirection is not deleted.');
+        self::assertSame('b239kept', $kept->getTerm());
+        self::assertSame(1, $kept->getActive());
+    }
+
+    public function testAnAdministratorWithoutTheConfigurationRightCannotWriteARedirection(): void
+    {
+        $redirect = (new SearchTermRedirect())->setLangId($this->languageId)->setTerm('b239guarded')->setTargetType('url')->setUrl('/b239-guarded')->setActive(1);
+        $redirect->save($this->getPropelConnection());
+        $token = $this->backOfficeToken(self::SYNONYMS_URL.'?language_id='.$this->languageId);
+        $nobody = $this->factory->restrictedAdmin([AdminResources::CUSTOMER => [AccessManager::VIEW, AccessManager::CREATE, AccessManager::UPDATE, AccessManager::DELETE]]);
+        $nobody->eraseCredentials();
+        $this->injector->setAdmin($nobody);
+        $fields = ['lang_id' => (string) $this->languageId, 'term' => 'b239intruder', 'target_type' => 'url', 'url' => '/b239-intruder', 'active' => '1', '_token' => $token];
+
+        $this->client->request('POST', self::REDIRECTS_URL.'/create', ['thelia_search_redirect_create' => $fields]);
+        self::assertSame(403, $this->client->getResponse()->getStatusCode());
+        $this->client->request('POST', self::REDIRECTS_URL.'/save', ['thelia_search_redirect_update' => ['id' => (string) $redirect->getId()] + $fields]);
+        self::assertSame(403, $this->client->getResponse()->getStatusCode());
+        $this->client->request('POST', self::REDIRECTS_URL.'/toggle/'.$redirect->getId(), ['_token' => $token]);
+        self::assertSame(403, $this->client->getResponse()->getStatusCode());
+        $this->client->request('POST', self::REDIRECTS_URL.'/delete', ['search_redirect_id' => (string) $redirect->getId(), '_token' => $token]);
+        self::assertSame(403, $this->client->getResponse()->getStatusCode());
+        $this->client->request('POST', self::REDIRECTS_URL.'/import', ['_token' => $token, 'language_id' => (string) $this->languageId]);
+        self::assertSame(403, $this->client->getResponse()->getStatusCode());
+
+        self::assertNull(SearchTermRedirectQuery::create()->findOneByTerm('b239intruder'));
+        $kept = SearchTermRedirectQuery::create()->findPk($redirect->getId());
+        self::assertSame('b239guarded', $kept?->getTerm());
+        self::assertSame(1, $kept?->getActive());
+    }
+
+    public function testTheImportOfRedirectionsWarnsAboutAWordManyProductsBear(): void
+    {
+        $locale = (string) LangQuery::create()->findPk($this->languageId)?->getLocale();
+        $category = $this->factory->category();
+        $taxRule = $this->factory->taxRule();
+        $currency = $this->factory->currency();
+
+        foreach (range(1, SearchTermRedirectValidator::COMMON_TERM_THRESHOLD + 1) as $index) {
+            $this->factory->product($category, $taxRule, $currency, ['title' => 'B239commonword chair '.$index, 'locale' => $locale]);
+        }
+
+        $token = $this->backOfficeToken(self::REDIRECTS_URL.'?language_id='.$this->languageId);
+        $path = tempnam(sys_get_temp_dir(), 'b239');
+        self::assertIsString($path);
+        file_put_contents($path, $locale.";b239commonword;url;/b239-common\n".$locale.";b239rareword;url;/b239-rare\n");
+
+        try {
+            $this->client->request('POST', self::REDIRECTS_URL.'/import', ['_token' => $token, 'language_id' => (string) $this->languageId], [
+                'file' => new UploadedFile($path, 'redirects.csv', 'text/csv', null, true),
+            ]);
+        } finally {
+            @unlink($path);
+        }
+
+        self::assertTrue($this->client->getResponse()->isRedirect(self::REDIRECTS_URL.'?language_id='.$this->languageId));
+        $warning = $this->client->followRedirect()->filter('[data-testid="bo-flash-warning"]');
+
+        self::assertGreaterThan(0, $warning->count(), 'The import warns about the common word.');
+        self::assertStringContainsString('b239commonword', $warning->text());
+        self::assertStringNotContainsString('b239rareword', $warning->text());
+    }
+
+    private function commonWord(string $word): void
+    {
+        $locale = (string) LangQuery::create()->findPk($this->languageId)?->getLocale();
+        $category = $this->factory->category();
+        $taxRule = $this->factory->taxRule();
+        $currency = $this->factory->currency();
+
+        foreach (range(1, SearchTermRedirectValidator::COMMON_TERM_THRESHOLD + 1) as $index) {
+            $this->factory->product($category, $taxRule, $currency, ['title' => $word.' chair '.$index, 'locale' => $locale]);
+        }
+    }
+
+    private function backOfficeToken(string $page): string
+    {
+        $html = (string) $this->client->request('GET', $page)->html();
+        self::assertSame(1, preg_match('/<meta name="bo-token" content="([^"]+)"/', $html, $matches), 'The page renders the back-office token.');
+
+        return $matches[1];
+    }
+
+    private function formToken(string $page, string $formName): string
+    {
+        $crawler = $this->client->request('GET', $page);
+        $token = $crawler->filter(\sprintf('input[name="%s[_token]"]', $formName));
+        self::assertGreaterThan(0, $token->count(), \sprintf('The page renders the %s form.', $formName));
+
+        return (string) $token->attr('value');
+    }
+}
