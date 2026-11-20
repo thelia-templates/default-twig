@@ -37,6 +37,7 @@
                             <th class="text-end">{{ 'Price'|trans }} ({{ currency.symbol }})</th>
                             <th class="text-end">{{ 'Sale price'|trans }} ({{ currency.symbol }})</th>
                             <th class="text-end">{{ 'Stock'|trans }}</th>
+                            <th class="text-end">{{ 'Low stock threshold'|trans }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -50,7 +51,7 @@
                                                name="{{ field.name }}[{{ row.id }}]" value="{{ field.value }}"
                                                placeholder="{{ field.placeholder }}"
                                                class="form-control form-control-sm text-end ms-auto" style="max-width:9rem"
-                                               aria-label="{{ (field.name == 'price' ? 'Price' : field.name == 'promo_price' ? 'Sale price' : 'Stock')|trans }} - {{ row.ref }}"
+                                               aria-label="{{ (field.name == 'price' ? 'Price' : field.name == 'promo_price' ? 'Sale price' : field.name == 'quantity' ? 'Stock' : 'Low stock threshold')|trans }} - {{ row.ref }}"
                                                data-testid="sale-unit-values-{{ field.name }}-{{ row.id }}">
                                         <small class="d-block text-muted" data-testid="sale-unit-values-{{ field.name }}-source-{{ row.id }}">
                                             {{ field.hint|trans(field.hint_parameters) }}

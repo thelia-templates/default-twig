@@ -93,6 +93,7 @@ final class ProductSaleUnitValuesController
         $prices = $form->all('price');
         $promoPrices = $form->all('promo_price');
         $quantities = $form->all('quantity');
+        $lowStockThresholds = $form->all('low_stock_threshold');
         $refused = [];
         $written = false;
 
@@ -111,6 +112,7 @@ final class ProductSaleUnitValuesController
                     self::stringOrNull($prices[$pseId] ?? null),
                     self::stringOrNull($promoPrices[$pseId] ?? null),
                     self::stringOrNull($quantities[$pseId] ?? null),
+                    self::stringOrNull($lowStockThresholds[$pseId] ?? null),
                 ) || $written;
             } catch (\InvalidArgumentException) {
                 $refused[] = (string) $pse->getRef();
@@ -128,7 +130,7 @@ final class ProductSaleUnitValuesController
 
         if ([] !== $refused) {
             $this->flash($request, 'warning', $this->translator->trans(
-                'Not saved for %refs%: amounts must be numbers, and a promo price needs a price.',
+                'Not saved for %refs%: amounts must be numbers, a promo price needs a price and a low stock threshold needs a stock.',
                 ['%refs%' => implode(', ', $refused)],
             ));
         } else {

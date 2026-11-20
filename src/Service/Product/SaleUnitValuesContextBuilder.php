@@ -16,6 +16,7 @@ namespace BackOfficeDefaultTwigBundle\Service\Product;
 
 use BackOfficeDefaultTwigBundle\Repository\CurrencyRepository;
 use BackOfficeDefaultTwigBundle\Repository\SaleUnitRepository;
+use Thelia\Domain\Catalog\Stock\StockSettings;
 use Thelia\Model\SaleUnitProductPrice;
 
 /**
@@ -32,10 +33,13 @@ final readonly class SaleUnitValuesContextBuilder
     public const HINT_NATIONAL_WAS = 'National: %value%';
     public const HINT_CONVERTED = 'Converted from %currency%';
     public const HINT_SAME_AS_PRICE = 'Same as the price';
+    public const HINT_COMBINATION_THRESHOLD = 'Threshold of the combination';
+    public const HINT_SHOP_THRESHOLD = 'Threshold of the shop';
 
     public function __construct(
         private SaleUnitRepository $saleUnits,
         private CurrencyRepository $currencies,
+        private StockSettings $stockSettings,
     ) {
     }
 
@@ -95,6 +99,7 @@ final readonly class SaleUnitValuesContextBuilder
                     $this->priceField($own, $fromDefault, $rate, $defaultCode, $row['price'] ?? null),
                     $this->promoPriceField($own, $fromDefault, $rate, $defaultCode, $row['sale_price'] ?? null),
                     self::field('quantity', self::number($stock?->getQuantity()), self::number($row['quantity'] ?? null)),
+                    $this->thresholdField($stock?->getLowStockThreshold(), $row['low_stock_threshold'] ?? null),
                 ],
             ];
         }
@@ -145,6 +150,23 @@ final readonly class SaleUnitValuesContextBuilder
         }
 
         return self::field('promo_price', null, self::number($national));
+    }
+
+    /**
+     * The threshold the stock of the unit runs low on: its own, else the one of the combination,
+     * else the one of the shop, shown in its place.
+     *
+     * @return array<string, mixed>
+     */
+    private function thresholdField(?float $own, mixed $combination): array
+    {
+        $inherited = null === $combination || '' === $combination
+            ? [self::number($this->stockSettings->lowStockThreshold()), self::HINT_SHOP_THRESHOLD]
+            : [self::number($combination), self::HINT_COMBINATION_THRESHOLD];
+
+        return null === $own
+            ? self::field('low_stock_threshold', null, $inherited[0], $inherited[1])
+            : self::field('low_stock_threshold', self::number($own), $inherited[0], $inherited[1]);
     }
 
     /**
