@@ -46,7 +46,8 @@ final readonly class CustomerListRowPresenter
     }
 
     /**
-     * @param list<Tag> $tags
+     * @param list<Tag>                         $tags
+     * @param array{id: int, name: string}|null $company the company the customer belongs to, null for none or when the administrator may not view the companies
      *
      * @return array<string, mixed>
      */
@@ -61,6 +62,7 @@ final readonly class CustomerListRowPresenter
         string $countryTitle,
         array $tags,
         string $groupLabel = '',
+        ?array $company = null,
     ): array {
         $customerId = (int) $customer->getId();
         $firstname = (string) $customer->getFirstname();
@@ -75,6 +77,7 @@ final readonly class CustomerListRowPresenter
             'name_html' => $this->renderName($customerId, $firstname, $lastname, $email, $countryIso, $countryTitle),
             'phone_html' => $this->renderPhone($phone),
             'group_html' => $this->renderGroup($groupLabel),
+            'company_html' => $this->renderCompany($company),
             'orders_html' => $this->renderOrders($customerId, $orderCount),
             'total_spent_html' => $this->renderTotalSpent($totalSpent, $orderCount, $locale),
             'last_order_html' => $this->renderLastOrder($lastOrderAt),
@@ -136,6 +139,22 @@ final readonly class CustomerListRowPresenter
         }
 
         return \sprintf('<span class="badge text-bg-light bo-customer-group">%s</span>', htmlspecialchars($label));
+    }
+
+    /**
+     * @param array{id: int, name: string}|null $company
+     */
+    private function renderCompany(?array $company): string
+    {
+        if ($company === null) {
+            return '<span class="text-muted">-</span>';
+        }
+
+        return \sprintf(
+            '<a href="%s" class="text-decoration-none" data-testid="bo-customer-company-link">%s</a>',
+            htmlspecialchars($this->urls->generate('admin.company.view', ['company_id' => $company['id']])),
+            htmlspecialchars($company['name']),
+        );
     }
 
     private function renderOrders(int $customerId, int $count): string
