@@ -17,18 +17,21 @@ namespace BackOfficeDefaultTwigBundle\Service\Product;
 use BackOfficeDefaultTwigBundle\Repository\SaleUnitRepository;
 use Propel\Runtime\Propel;
 use Thelia\Model\Map\SaleUnitProductPriceTableMap;
+use Thelia\Domain\SaleUnit\Stock\SaleUnitStockWriter;
 use Thelia\Model\SaleUnitProductPrice;
-use Thelia\Model\SaleUnitProductSaleElements;
 
 /**
- * Writes the price and the stock one sale unit keeps of a combination. An empty value
- * removes the unit's own row, and the national value applies again: that fallback is the
- * rule of the whole feature, the own row the exception.
+ * Writes the price, the stock and the low stock threshold one sale unit keeps of a
+ * combination. An empty value removes the unit's own row, and the national value applies
+ * again: that fallback is the rule of the whole feature, the own row the exception. The
+ * stock goes through the core, which tells a change of it to the listeners of the stock
+ * (the low stock alert).
  */
 final readonly class SaleUnitValuesWriter
 {
     public function __construct(
         private SaleUnitRepository $saleUnits,
+        private SaleUnitStockWriter $stockWriter,
     ) {
     }
 
@@ -38,16 +41,21 @@ final readonly class SaleUnitValuesWriter
      *
      * @return bool whether a row was written or deleted
      *
-     * @throws \InvalidArgumentException when a promo price comes without a price, or a value is not a number
+     * @throws \InvalidArgumentException when a promo price comes without a price, a threshold without a stock, or a value is not a number
      */
-    public function save(int $saleUnitId, int $currencyId, int $productSaleElementsId, ?string $price, ?string $promoPrice, ?string $quantity): bool
+    public function save(int $saleUnitId, int $currencyId, int $productSaleElementsId, ?string $price, ?string $promoPrice, ?string $quantity, ?string $lowStockThreshold = null): bool
     {
         $price = self::decimal($price, allowNegative: false);
         $promoPrice = self::decimal($promoPrice, allowNegative: false);
         $quantity = self::decimal($quantity, allowNegative: true);
+        $lowStockThreshold = self::decimal($lowStockThreshold, allowNegative: false);
 
         if (null === $price && null !== $promoPrice) {
             throw new \InvalidArgumentException('A promo price needs a price.');
+        }
+
+        if (null === $quantity && null !== $lowStockThreshold) {
+            throw new \InvalidArgumentException('A low stock threshold needs a stock.');
         }
 
         $connection = Propel::getConnection(SaleUnitProductPriceTableMap::DATABASE_NAME);
@@ -72,19 +80,13 @@ final readonly class SaleUnitValuesWriter
                     ->save($connection) > 0;
             }
 
-            $stockRow = $this->saleUnits->findStock($saleUnitId, $productSaleElementsId);
-            if (null === $quantity) {
-                if (null !== $stockRow) {
-                    $stockRow->delete($connection);
-                    $written = true;
-                }
-            } else {
-                $written = ($stockRow ?? (new SaleUnitProductSaleElements())
-                    ->setSaleUnitId($saleUnitId)
-                    ->setProductSaleElementsId($productSaleElementsId))
-                    ->setQuantity($quantity)
-                    ->save($connection) > 0 || $written;
-            }
+            $written = $this->stockWriter->write(
+                $saleUnitId,
+                $productSaleElementsId,
+                null === $quantity ? null : (float) $quantity,
+                null === $lowStockThreshold ? null : (float) $lowStockThreshold,
+                $connection,
+            ) || $written;
 
             $connection->commit();
         } catch (\Throwable $throwable) {

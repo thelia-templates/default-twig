@@ -25,6 +25,7 @@ use Thelia\Model\AdminLogQuery;
 use Thelia\Model\ConfigQuery;
 use Thelia\Model\Currency;
 use Thelia\Model\CurrencyQuery;
+use Thelia\Model\Map\SaleUnitProductSaleElementsTableMap;
 use Thelia\Model\Product;
 use Thelia\Model\ProductPriceQuery;
 use Thelia\Model\ProductSaleElements;
@@ -77,6 +78,7 @@ final class SaleUnitBackOfficeTest extends WebIntegrationTestCase
             $this->getService(EventDispatcherInterface::class)->removeSubscriber($this->injector);
             $this->injector->clear();
         }
+        ConfigQuery::resetCache();
 
         parent::tearDown();
     }
@@ -365,6 +367,53 @@ final class SaleUnitBackOfficeTest extends WebIntegrationTestCase
         self::assertStringContainsString('a promo price needs a price', $crawler->filter('.alert-warning')->text(''));
     }
 
+    /**
+     * The stock of a unit runs low on its own threshold, else on the one of the combination, else
+     * on the one of the shop: the field shows the one that applies in its place.
+     */
+    public function testTheThresholdOfTheStockOfAUnitIsSavedAndShowsTheOneItReplaces(): void
+    {
+        ConfigQuery::write('low_stock_threshold', '9');
+        $saleUnit = $this->saleUnit('north');
+        [$product, $pse] = $this->productWithACombination();
+        $currency = $this->defaultCurrency();
+        $field = '[data-testid="sale-unit-values-low_stock_threshold-'.$pse->getId().'"]';
+        $source = '[data-testid="sale-unit-values-low_stock_threshold-source-'.$pse->getId().'"]';
+
+        $crawler = $this->client->request('GET', '/admin/products/combinations/tab?product_id='.$product->getId());
+        self::assertSame('9', $crawler->filter($field)->attr('placeholder'), 'No threshold anywhere: the one of the shop.');
+        self::assertSame('Threshold of the shop', trim($crawler->filter($source)->text('')));
+
+        $pse->setLowStockThreshold(4.0)->save();
+        $crawler = $this->client->request('GET', '/admin/products/combinations/tab?product_id='.$product->getId());
+        self::assertSame('4', $crawler->filter($field)->attr('placeholder'), 'The threshold of the combination stands in for the one of the unit.');
+        self::assertSame('Threshold of the combination', trim($crawler->filter($source)->text('')));
+
+        $this->saveValues($product, $saleUnit, $currency, $pse, price: '', promoPrice: '', quantity: '12', lowStockThreshold: '2,5');
+
+        $stock = SaleUnitProductSaleElementsQuery::create()->filterBySaleUnitId($saleUnit->getId())->findOneByProductSaleElementsId($pse->getId());
+        self::assertSame(2.5, $stock?->getLowStockThreshold());
+        $crawler = $this->client->request('GET', '/admin/products/combinations/tab?product_id='.$product->getId());
+        self::assertSame('2.5', $crawler->filter($field)->attr('value'));
+
+        $this->saveValues($product, $saleUnit, $currency, $pse, price: '', promoPrice: '', quantity: '12', lowStockThreshold: '');
+
+        SaleUnitProductSaleElementsTableMap::clearInstancePool();
+        self::assertNull(SaleUnitProductSaleElementsQuery::create()->filterBySaleUnitId($saleUnit->getId())->findOneByProductSaleElementsId($pse->getId())?->getLowStockThreshold(), 'An emptied threshold gives the stock back to the one it replaced.');
+    }
+
+    public function testAThresholdWithoutAStockIsRefused(): void
+    {
+        $saleUnit = $this->saleUnit('north');
+        [$product, $pse] = $this->productWithACombination();
+
+        $this->saveValues($product, $saleUnit, $this->defaultCurrency(), $pse, price: '', promoPrice: '', quantity: '', lowStockThreshold: '3');
+
+        self::assertSame(0, SaleUnitProductSaleElementsQuery::create()->filterBySaleUnitId($saleUnit->getId())->count());
+        $crawler = $this->client->followRedirect();
+        self::assertStringContainsString('a low stock threshold needs a stock', $crawler->filter('.alert-warning')->text(''));
+    }
+
     public function testTheOrderListFiltersOnASaleUnitAndTheSheetNamesIt(): void
     {
         $north = $this->saleUnit('north');
@@ -418,8 +467,10 @@ final class SaleUnitBackOfficeTest extends WebIntegrationTestCase
         return $saleUnit;
     }
 
-    private function saveValues(Product $product, SaleUnit $saleUnit, Currency $currency, ProductSaleElements $pse, string $price, string $promoPrice, string $quantity): void
+    private function saveValues(Product $product, SaleUnit $saleUnit, Currency $currency, ProductSaleElements $pse, string $price, string $promoPrice, string $quantity, ?string $lowStockThreshold = null): void
     {
+        $threshold = null === $lowStockThreshold ? [] : ['low_stock_threshold' => [$pse->getId() => $lowStockThreshold]];
+
         $this->client->request('POST', '/admin/product/sale-unit-values/save', [
             '_token' => $this->sessionToken(),
             'product_id' => $product->getId(),
@@ -428,6 +479,7 @@ final class SaleUnitBackOfficeTest extends WebIntegrationTestCase
             'price' => [$pse->getId() => $price],
             'promo_price' => [$pse->getId() => $promoPrice],
             'quantity' => [$pse->getId() => $quantity],
+            ...$threshold,
         ]);
 
         self::assertTrue($this->client->getResponse()->isRedirection());
