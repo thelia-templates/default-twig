@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace BackOfficeDefaultTwigBundle\Tests\Http;
 
+use BackOfficeDefaultTwigBundle\Tests\Support\CombinationGridFields;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Thelia\Model\ConfigQuery;
 use Thelia\Model\Currency;
@@ -35,7 +36,6 @@ use Thelia\Tests\Support\BackOffice\AdminSessionInjector;
 final class ProductCombinationIdentifiersTest extends WebIntegrationTestCase
 {
     private const COMBINATIONS_URL = '/admin/product/combinations/update';
-    private const DEFAULT_PRICE_URL = '/admin/product/default-price/update';
 
     private AdminSessionInjector $injector;
 
@@ -87,6 +87,7 @@ final class ProductCombinationIdentifiersTest extends WebIntegrationTestCase
         self::assertCount(1, $refusals, implode(' | ', $refusals));
         self::assertStringContainsString($refused->getRef(), $refusals[0]);
         self::assertStringContainsString('check digit', $refusals[0]);
+        self::assertStringEndsWith('None of the changes of this combination were saved.', $refusals[0]);
 
         self::assertSame(7.0, (float) $this->fresh($refused)->getQuantity(), 'The refused row is not saved at all.');
         self::assertSame('', (string) $this->fresh($refused)->getEanCode());
@@ -125,27 +126,151 @@ final class ProductCombinationIdentifiersTest extends WebIntegrationTestCase
         self::assertCount(1, $crawler->filter(\sprintf('[data-testid="combinations-mpn-%d"]', $combination->getId())));
     }
 
-    public function testTheDefaultFormSavesThePartNumberAndTheManufacturerThenClearsThem(): void
+    public function testEachFieldOfTheGridLandsOnTheCombinationItIsNamedBy(): void
+    {
+        $this->loginFullAdmin();
+        $brand = $this->factory->brand();
+        [$product, $first] = $this->productWithACombination();
+        $second = $this->factory->productSaleElement($product, ['quantity' => 7]);
+        $this->factory->productPrice($second, $this->defaultCurrency());
+
+        // The lines come in another order than the fields: a line moved without reload.
+        $payload = [
+            '_token' => $this->tokenOf($product, 'combinations-form'),
+            'product_id' => $product->getId(),
+            'tax_rule' => $product->getTaxRuleId(),
+            'product_sale_element_id' => [$second->getId(), $first->getId()],
+            'reference' => [$first->getId() => $first->getRef(), $second->getId() => $second->getRef()],
+            'quantity' => [$first->getId() => 11, $second->getId() => 22],
+            'mpn' => [$first->getId() => 'MPN-FIRST', $second->getId() => 'MPN-SECOND'],
+            'manufacturer_brand_id' => [$first->getId() => $brand->getId(), $second->getId() => 0],
+            'isnew' => [$second->getId() => 1],
+        ];
+        $this->client->request('POST', self::COMBINATIONS_URL, $payload);
+
+        self::assertSame(302, $this->client->getResponse()->getStatusCode());
+        self::assertSame(11.0, (float) $this->fresh($first)->getQuantity());
+        self::assertSame(22.0, (float) $this->fresh($second)->getQuantity());
+        self::assertSame('MPN-FIRST', $this->fresh($first)->getMpn());
+        self::assertSame('MPN-SECOND', $this->fresh($second)->getMpn());
+        self::assertSame($brand->getId(), $this->fresh($first)->getManufacturerBrandId());
+        self::assertNull($this->fresh($second)->getManufacturerBrandId());
+        self::assertFalse((bool) $this->fresh($first)->getNewness());
+        self::assertTrue((bool) $this->fresh($second)->getNewness());
+    }
+
+    public function testAForgedArrayInPlaceOfAValueKeepsTheStoredOne(): void
+    {
+        $this->loginFullAdmin();
+        [$product, $pse] = $this->productWithACombination();
+        $pse->setWeight(2.5)->setEanCode('4006381333931')->save($this->getPropelConnection());
+        $quantity = (float) $pse->getQuantity();
+
+        $payload = [
+            '_token' => $this->tokenOf($product, 'combinations-form'),
+            'product_id' => $product->getId(),
+            'tax_rule' => $product->getTaxRuleId(),
+        ] + CombinationGridFields::of([[$pse, ['reference' => $pse->getRef()]]]);
+        // The code keeps its stored value: an "Array" code would make the core refuse the whole row, weight included.
+        $payload['ean_code'] = [$pse->getId() => '4006381333931'];
+        $payload['weight'] = [$pse->getId() => ['9']];
+        $payload['quantity'] = [$pse->getId() => ['99']];
+        $this->client->request('POST', self::COMBINATIONS_URL, $payload);
+
+        self::assertSame(2.5, (float) $this->fresh($pse)->getWeight(), 'Not 1.0, the number an array casts to.');
+        self::assertSame($quantity, (float) $this->fresh($pse)->getQuantity(), 'Not 1.0 either.');
+    }
+
+    public function testACopyOfTheFoldedFieldsThatStillNamesThemByPlaceIsReadByPlace(): void
+    {
+        $this->loginFullAdmin();
+        $brand = $this->factory->brand();
+        [$product, $first] = $this->productWithACombination();
+        $second = $this->factory->productSaleElement($product, ['quantity' => 7]);
+        $this->factory->productPrice($second, $this->defaultCurrency());
+
+        $payload = [
+            '_token' => $this->tokenOf($product, 'combinations-form'),
+            'product_id' => $product->getId(),
+            'tax_rule' => $product->getTaxRuleId(),
+        ] + CombinationGridFields::of([
+            [$first, ['reference' => $first->getRef(), 'quantity' => 7]],
+            [$second, ['reference' => $second->getRef(), 'quantity' => 7]],
+        ]);
+        // A project copy of _combination_more_fields made before the fields were named by id.
+        $payload['mpn'] = ['MPN-FIRST', 'MPN-SECOND'];
+        $payload['manufacturer_brand_id'] = [0, $brand->getId()];
+        $this->client->request('POST', self::COMBINATIONS_URL, $payload);
+
+        self::assertSame(302, $this->client->getResponse()->getStatusCode());
+        self::assertSame('MPN-FIRST', $this->fresh($first)->getMpn());
+        self::assertSame('MPN-SECOND', $this->fresh($second)->getMpn());
+        self::assertNull($this->fresh($first)->getManufacturerBrandId());
+        self::assertSame($brand->getId(), $this->fresh($second)->getManufacturerBrandId());
+    }
+
+    public function testACopyOfTheGridThatStillNamesItsFieldsByPlaceSavesNothingAndSaysWhy(): void
+    {
+        $this->loginFullAdmin();
+        [$product, $pse] = $this->productWithACombination();
+        $pse->setWeight(2.5)->save($this->getPropelConnection());
+        $quantity = (float) $pse->getQuantity();
+
+        // A project copy of the grid made before its fields were named by their combination.
+        $this->client->request('POST', self::COMBINATIONS_URL, [
+            '_token' => $this->tokenOf($product, 'combinations-form'),
+            'product_id' => $product->getId(),
+            'tax_rule' => $product->getTaxRuleId(),
+            'product_sale_element_id' => [$pse->getId()],
+            'reference' => [$pse->getRef()],
+            'price' => ['10'],
+            'quantity' => ['99'],
+            'weight' => ['9'],
+        ]);
+
+        self::assertSame(302, $this->client->getResponse()->getStatusCode());
+        self::assertSame($quantity, (float) $this->fresh($pse)->getQuantity(), 'Read by id from a list, the stock would be written 0.');
+        self::assertSame(2.5, (float) $this->fresh($pse)->getWeight());
+        $crawler = $this->client->followRedirect();
+        self::assertStringContainsString('by their place', $crawler->filter('[data-testid="bo-flash-danger"]')->text());
+    }
+
+    public function testTheGridNamesItsFieldsByTheIdOfTheCombination(): void
+    {
+        $this->loginFullAdmin();
+        [$product, $combination] = $this->productWithACombination();
+        $id = $combination->getId();
+
+        $crawler = $this->client->request('GET', '/admin/products/combinations/tab?product_id='.$product->getId());
+        $row = $crawler->filter(\sprintf('tbody[data-testid="combinations-row-%d"]', $id));
+
+        foreach (['reference', 'quantity', 'price', 'weight', 'sale_price', 'ean_code', 'mpn', 'manufacturer_brand_id', 'out_of_stock_policy', 'preorder_limit', 'restock_date', 'low_stock_threshold', 'isnew', 'onsale', 'visible'] as $name) {
+            self::assertCount(1, $row->filter(\sprintf('[name="%s[%d]"]', $name, $id)), $name);
+        }
+        self::assertCount(0, $row->filter('[name$="[]"]:not([name="product_sale_element_id[]"])'), 'No field of the grid is read by its place.');
+    }
+
+    public function testAProductWithoutCombinationSavesThePartNumberAndTheManufacturerThenClearsThem(): void
     {
         $this->loginFullAdmin();
         $brand = $this->factory->brand();
         [$product, $pse] = $this->productWithoutCombination();
 
-        $this->postDefault($product, $pse, ['mpn' => ' SM-G991B ', 'manufacturer_brand_id' => $brand->getId()]);
+        $this->postSimpleProduct($product, $pse, ['mpn' => ' SM-G991B ', 'manufacturer_brand_id' => $brand->getId()]);
         self::assertSame('SM-G991B', $this->fresh($pse)->getMpn());
         self::assertSame($brand->getId(), $this->fresh($pse)->getManufacturerBrandId());
 
-        $this->postDefault($product, $pse, ['mpn' => '', 'manufacturer_brand_id' => 0]);
+        $this->postSimpleProduct($product, $pse, ['mpn' => '', 'manufacturer_brand_id' => 0]);
         self::assertNull($this->fresh($pse)->getMpn());
         self::assertNull($this->fresh($pse)->getManufacturerBrandId(), 'Back to the brand of the product.');
     }
 
-    public function testTheDefaultFormRefusesAnElevenDigitCodeWithTheLengthsAccepted(): void
+    public function testAProductWithoutCombinationRefusesAnElevenDigitCodeWithTheLengthsAccepted(): void
     {
         $this->loginFullAdmin();
         [$product, $pse] = $this->productWithoutCombination();
 
-        $this->postDefault($product, $pse, ['ean_code' => '03600029145', 'quantity' => 99]);
+        $this->postSimpleProduct($product, $pse, ['ean_code' => '03600029145', 'quantity' => 99]);
 
         $refusals = $this->flashes()['danger'];
         self::assertCount(1, $refusals);
@@ -188,14 +313,16 @@ final class ProductCombinationIdentifiersTest extends WebIntegrationTestCase
             'tax_rule' => $product->getTaxRuleId(),
         ];
 
-        foreach ($rows as [$pse, $values]) {
-            $payload['product_sale_element_id'][] = $pse->getId();
-            $payload['reference'][] = $pse->getRef();
-            $payload['quantity'][] = $values['quantity'] ?? $pse->getQuantity();
-            $payload['ean_code'][] = $values['ean_code'] ?? '';
-            $payload['mpn'][] = $values['mpn'] ?? '';
-            $payload['manufacturer_brand_id'][] = $values['manufacturer_brand_id'] ?? 0;
-        }
+        $payload += CombinationGridFields::of(array_map(
+            static fn (array $row): array => [$row[0], $row[1] + [
+                'reference' => $row[0]->getRef(),
+                'quantity' => $row[0]->getQuantity(),
+                'ean_code' => '',
+                'mpn' => '',
+                'manufacturer_brand_id' => 0,
+            ]],
+            $rows,
+        ));
 
         $this->client->request('POST', self::COMBINATIONS_URL, $payload);
     }
@@ -203,16 +330,14 @@ final class ProductCombinationIdentifiersTest extends WebIntegrationTestCase
     /**
      * @param array<string, mixed> $values
      */
-    private function postDefault(Product $product, ProductSaleElements $pse, array $values): void
+    private function postSimpleProduct(Product $product, ProductSaleElements $pse, array $values): void
     {
-        $this->client->request('POST', self::DEFAULT_PRICE_URL, $values + [
-            '_token' => $this->tokenOf($product, 'default-pse-form'),
+        $this->client->request('POST', self::COMBINATIONS_URL, [
+            '_token' => $this->tokenOf($product, 'combinations-form'),
             'product_id' => $product->getId(),
-            'product_sale_element_id' => $pse->getId(),
-            'reference' => $pse->getRef(),
             'tax_rule' => $product->getTaxRuleId(),
-            'quantity' => 7,
-        ]);
+            'default_pse' => $pse->getId(),
+        ] + CombinationGridFields::of([[$pse, $values + ['reference' => $pse->getRef(), 'quantity' => 7]]]));
 
         self::assertSame(302, $this->client->getResponse()->getStatusCode());
     }

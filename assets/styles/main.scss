@@ -2724,16 +2724,66 @@ tr.bo-order-row--urgent {
 
 // One <tbody> per combination. The grid scrolls sideways in its `.table-responsive` rather
 // than squeezing a price or a barcode below what it takes to read it.
+// A table set on the white of a card: a darker header, and a line between two items (one <tbody> each) rather than under every row.
+.table.bo-card-table {
+    // Separate borders: a collapsed table rounds no corner.
+    border-collapse: separate;
+    border-spacing: 0;
+    // Read by the sale box of the grid to keep its prices in line.
+    --bo-card-table-padding-x: clamp(.25rem, .6vw, .9rem);
+
+    > thead > tr > th,
+    > tbody > tr > td {
+        padding-inline: var(--bo-card-table-padding-x);
+    }
+
+    > thead > tr > th {
+        --bs-table-bg: #{$gray-200};
+        color: #3a3a3a;
+        border-bottom: var(--bs-border-width) solid var(--bs-border-color);
+        // High enough for the bulk edit's "select all" box: a cell height is a minimum, the header would grow.
+        height: 3rem;
+    }
+
+    // Rounded at the top, like the card.
+    > thead > tr > th:first-child {
+        border-start-start-radius: var(--bs-border-radius);
+    }
+
+    > thead > tr > th:last-child {
+        border-start-end-radius: var(--bs-border-radius);
+    }
+
+    > tbody > tr > td {
+        vertical-align: bottom;
+        padding-block: .2rem;
+    }
+
+    > tbody > tr:first-child > td {
+        vertical-align: middle;
+        padding-block-start: .6rem;
+    }
+
+    > tbody + tbody > tr:first-child > td {
+        border-block-start: var(--bs-border-width) solid var(--bs-border-color);
+    }
+
+    // The cell naming an item: a long name wraps instead of widening its column.
+    .bo-card-table__item {
+        white-space: normal;
+    }
+
+    .input-group {
+        flex-wrap: nowrap;
+    }
+}
+
 .table.bo-combinations-grid {
     .bo-combinations-grid__number { min-width: 5.5rem; }
     .bo-combinations-grid__ref { min-width: 9rem; }
     .bo-combinations-grid__gtin { min-width: 10.5rem; }
     .bo-combinations-grid__mpn { min-width: 9rem; }
     .bo-combinations-grid__brand { min-width: 10rem; }
-
-    // Separate borders: the sale box rounds its corners, which a collapsed table does not draw.
-    border-collapse: separate;
-    border-spacing: 0;
 
     // Each column takes a share of the card and a field grows up to its cap; the prices have none,
     // so that the sale box stays filled.
@@ -2743,22 +2793,10 @@ tr.bo-order-row--urgent {
     .bo-combinations-grid__col-price { width: 13%; }
     // 1% asks the table for the least width.
     .bo-combinations-grid__col-actions { width: 1%; }
-    // Read by the sale box to keep its prices in line.
-    --bo-grid-cell-padding-x: clamp(.25rem, .6vw, .9rem);
-
-    > thead > tr > th,
-    > tbody > tr > td {
-        padding-inline: var(--bo-grid-cell-padding-x);
-    }
-
     // Without the line of the lists' pinned actions: on a grid that does not scroll it would stand alone.
     > tbody > tr > td.bo-combinations-grid__actions {
         box-shadow: none;
         white-space: nowrap;
-    }
-
-    > tbody > tr:first-child > td {
-        vertical-align: middle;
     }
 
     .bo-combinations-grid__identifiers > .bo-combinations-grid__field { max-width: 22rem; }
@@ -2779,19 +2817,6 @@ tr.bo-order-row--urgent {
             flex-shrink: 0;
             margin: 0;
         }
-    }
-
-    .input-group {
-        flex-wrap: nowrap;
-    }
-
-    > tbody > tr > td {
-        vertical-align: bottom;
-        padding-block: .2rem;
-    }
-
-    > tbody > tr:first-child > td {
-        padding-block-start: .6rem;
     }
 
     // A line of its own: in the last line of fields, the air would sit inside the sale box.
@@ -2821,13 +2846,6 @@ tr.bo-order-row--urgent {
         background-color: var(--bs-gray-200);
     }
 
-    // The borderless grid dropped the header line of the DataTable lists.
-    > thead > tr > th {
-        border-bottom-width: var(--bs-border-width);
-        // High enough for the bulk edit's "select all" box: a cell height is a minimum, the header would grow.
-        height: 3rem;
-    }
-
     .bo-combinations-grid__more-fields {
         display: flex;
         flex-wrap: wrap;
@@ -2849,20 +2867,190 @@ tr.bo-order-row--urgent {
         }
     }
 
+    .bo-combinations-grid__stock,
+    .bo-combinations-grid__with-hint {
+        display: flex;
+        align-items: center;
+        gap: .25rem;
+
+        > .input-group {
+            flex: 1 1 auto;
+            width: auto;
+        }
+
+        // Hidden unit: keep the round corners.
+        > .input-group > .form-control:has(+ .input-group-text[hidden]) {
+            border-start-end-radius: var(--bs-border-radius-sm);
+            border-end-end-radius: var(--bs-border-radius-sm);
+        }
+    }
+
+    .bo-combinations-grid__sellable,
+    .bo-combinations-grid__hint {
+        --bs-btn-padding-x: .3rem;
+        --bs-btn-padding-y: .1rem;
+        --bs-btn-color: var(--bs-secondary-color);
+        --bs-btn-hover-color: var(--bs-emphasis-color);
+        --bs-btn-border-color: transparent;
+        flex-shrink: 0;
+        line-height: 1;
+
+        &[data-state="held"],
+        &[data-state="pre"] { --bs-btn-color: var(--bs-warning-text-emphasis); }
+        &[data-state="none"] { --bs-btn-color: var(--bs-danger-text-emphasis); }
+    }
+
+    // Conditional lines (low stock, reference price).
+    > tbody > tr.bo-combinations-grid__extra > td:not(.bo-combinations-grid__handle-cont) {
+        padding-block: .2rem;
+        white-space: normal;
+    }
+
+    .bo-combinations-grid__extra-box {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: .35rem .6rem;
+        padding: .3rem .6rem;
+        border-radius: var(--bs-border-radius);
+        font-size: .8rem;
+
+        // Bootstrap's subtle backgrounds, half see-through: a line under a combination, not an alert.
+        &--info {
+            background-color: rgba($info-bg-subtle, .55);
+            color: var(--bs-info-text-emphasis);
+        }
+
+        &--warning {
+            background-color: rgba($warning-bg-subtle, .55);
+            color: var(--bs-warning-text-emphasis);
+        }
+
+        &--danger {
+            background-color: rgba($danger-bg-subtle, .55);
+            color: var(--bs-danger-text-emphasis);
+        }
+
+        .btn-link {
+            --bs-btn-font-size: .8rem;
+        }
+    }
+
+    .bo-combinations-grid__facts {
+        display: inline-flex;
+        flex-wrap: wrap;
+        column-gap: .5rem;
+    }
+
+    .bo-combinations-grid__fact + .bo-combinations-grid__fact::before {
+        content: "·";
+        margin-inline-end: .5rem;
+    }
+
+    .bo-combinations-grid__extra-slot {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+
+        // The theme sizes every .form-label at .9rem: larger than the text of the line.
+        .form-label {
+            font-size: .75rem;
+            color: inherit;
+        }
+
+        .form-control {
+            width: auto;
+        }
+    }
+
+    // The fold: three sections, two fields per line.
+    .bo-combinations-grid__fold {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+        gap: .75rem 1.5rem;
+        padding-block: .6rem .8rem;
+        white-space: normal;
+
+        .bo-combinations-grid__more-fields,
+        .bo-quantity-rules {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: .5rem .75rem;
+            padding-block: 0;
+
+            > div {
+                width: auto;
+                min-width: 0;
+            }
+
+            // Label, control, help: rows shared by the fields of a line, so that the controls line up.
+            @supports (grid-template-rows: subgrid) {
+                row-gap: .75rem;
+
+                > div {
+                    display: grid;
+                    grid-row: span 3;
+                    grid-template-rows: subgrid;
+                    row-gap: .35rem;
+
+                    > * {
+                        align-self: start;
+                    }
+
+                    > .form-label {
+                        align-self: end;
+                        margin-bottom: 0;
+                    }
+                }
+            }
+        }
+
+        .bo-combinations-grid__more-fields > div.bo-combinations-grid__stock-policy,
+        .bo-quantity-rules__note {
+            grid-column: 1 / -1;
+        }
+    }
+
+    .bo-combinations-grid__fold-section {
+        min-width: 0;
+        margin: 0;
+        padding: 0;
+        border: 0;
+
+        // The title and its line run a little wider than the fields under them.
+        > :not(legend) {
+            padding-inline: .5rem;
+        }
+
+        > legend {
+            float: none;
+            width: 100%;
+            margin-bottom: .5rem;
+            padding-block-end: .25rem;
+            border-block-end: var(--bs-border-width) solid var(--bs-border-color);
+            font-size: .72rem;
+            font-weight: 600;
+            letter-spacing: .05em;
+            text-transform: uppercase;
+            color: var(--bs-emphasis-color);
+        }
+    }
+
+    // product.combinations-row lines follow the fold.
+    > tbody:has(> tr.bo-combinations-grid__fold-line[hidden]) > tr.bo-combinations-grid__module-lines,
+    > tbody:has(> tr.bo-combinations-grid__fold-line[hidden]) > tr.bo-combinations-grid__module-lines ~ tr:not(.bo-combinations-grid__band-end) {
+        display: none;
+    }
+
     // Separator between combinations only; the first and last are transparent so that a drop there draws its line.
     > tbody > tr:first-child > td {
         border-block-start: 2px solid transparent;
-    }
-
-    > tbody + tbody > tr:first-child > td {
-        border-block-start-color: var(--bs-secondary-border-subtle);
     }
 
     > tbody:last-of-type > tr.bo-combinations-grid__band-end > td {
         border-block-end: 2px solid transparent;
     }
 
-    // A long title runs over the empty cells of its line instead of widening the first column.
     .bo-combinations-grid__identity {
         white-space: normal;
     }
@@ -2892,7 +3080,8 @@ tr.bo-order-row--urgent {
         --bo-promo-padding: .35rem;
         vertical-align: middle;
         padding-block: var(--bo-promo-padding);
-        background-color: var(--bs-gray-200);
+        // Lighter than the header of the grid.
+        background-color: #{mix($gray-100, $gray-200)};
         transition: background-color .15s ease;
 
         @media (prefers-reduced-motion: reduce) {
@@ -2900,7 +3089,7 @@ tr.bo-order-row--urgent {
         }
 
         .form-control[readonly] {
-            background-color: var(--bs-gray-100);
+            background-color: var(--bs-secondary-bg);
             color: var(--bs-secondary-color);
         }
     }
@@ -2917,7 +3106,7 @@ tr.bo-order-row--urgent {
     // The rest of the cell padding is a transparent border the background stops at. Physical radii, two
     // each: flow-relative ones take one, which would make the inner corner oval (mirrored in _rtl.scss).
     > tbody > tr > td.bo-combinations-grid__promo--end {
-        --bo-promo-end-gap: max(0px, calc(var(--bo-grid-cell-padding-x) - var(--bo-promo-padding)));
+        --bo-promo-end-gap: max(0px, calc(var(--bo-card-table-padding-x) - var(--bo-promo-padding)));
         padding-inline-end: var(--bo-promo-padding);
         border-inline-end: var(--bo-promo-end-gap) solid transparent;
         background-clip: padding-box;
@@ -2940,6 +3129,11 @@ tr.bo-order-row--urgent {
     }
 
     > tbody:has(.bo-combinations-grid__visibility:not(:checked)) .bo-combinations-grid__name {
+        color: var(--bs-secondary-color);
+    }
+
+    &.bo-combinations-grid--simple .bo-combinations-grid__name {
+        font-weight: 500;
         color: var(--bs-secondary-color);
     }
 
@@ -2985,6 +3179,7 @@ tr.bo-order-row--urgent {
     // The separator on the side where the drag lands takes the color, not a line inside the fields.
     > tbody.bo-sortable-target:not(.bo-sortable-target--after) > tr:first-child > td,
     > tbody.bo-sortable-target--after + tbody > tr:first-child > td {
+        border-block-start-width: 2px;
         border-block-start-color: var(--bs-primary);
     }
 
@@ -3014,6 +3209,133 @@ tr.bo-order-row--urgent {
     }
 }
 
+.bo-combinations-tax-rule {
+    max-width: 16.25rem;
+}
+
+.bo-other-prices {
+    // At the foot of the header, whose border is their line; the theme's margin under .nav-tabs would lift them off it.
+    .bo-other-prices__tabs {
+        margin-top: .75rem;
+        margin-bottom: calc(-1 * var(--bs-card-cap-padding-y));
+        border-bottom: 0;
+        --bs-nav-tabs-link-active-bg: var(--bs-card-bg);
+        --bs-nav-tabs-link-active-border-color: #{$card-border-color} #{$card-border-color} var(--bs-card-bg);
+    }
+
+    .nav-link {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+    }
+
+    .bo-other-prices__dot {
+        display: none;
+        width: .45rem;
+        height: .45rem;
+        border-radius: 50%;
+        background-color: var(--bs-warning);
+    }
+
+    .bo-other-prices__dot-label {
+        display: none;
+    }
+
+    .nav-link[data-dirty] {
+        .bo-other-prices__dot { display: inline-block; }
+        .bo-other-prices__dot-label { display: inline; }
+    }
+}
+
+.table.bo-group-prices {
+    // Every group column takes the same width; past the card, the table scrolls sideways.
+    .bo-group-prices__col-group {
+        width: 9.5rem;
+        min-width: 9.5rem;
+        max-width: 9.5rem;
+    }
+
+    .bo-group-prices__col-label,
+    .bo-group-prices__col-catalog {
+        width: 1%;
+        white-space: nowrap;
+    }
+
+    .bo-group-prices__group {
+        display: flex;
+        align-items: center;
+        gap: .35rem;
+    }
+
+    .bo-group-prices__group-name {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .bo-group-prices__discount {
+        flex-shrink: 0;
+        font-weight: 600;
+    }
+
+    .bo-group-prices__row-label {
+        white-space: nowrap;
+        vertical-align: middle;
+    }
+
+    // Same as the labels of the fields of the grid (GTIN, MPN…).
+    .bo-group-prices__label {
+        font-size: .72rem;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        color: var(--bs-secondary-color);
+    }
+
+    .bo-group-prices__catalog {
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+
+    .form-control {
+        min-width: 0;
+    }
+
+    .form-control::placeholder {
+        color: var(--bs-secondary-color);
+        font-style: italic;
+    }
+
+    // A price of the group's own, typed or saved, against the grey of what the catalog gives.
+    .form-control:not(:placeholder-shown) {
+        background-color: var(--bs-info-bg-subtle);
+        font-weight: 600;
+    }
+}
+
+.bo-other-prices__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: .75rem;
+    margin-bottom: .75rem;
+}
+
+// A grid wider than the screen scrolls sideways: its folds keep to the visible width and stay in view.
+@supports (width: 1cqi) {
+    .bo-combinations-scroll {
+        container-type: inline-size;
+    }
+
+    .bo-combinations-scroll .bo-combinations-grid__fold {
+        position: sticky;
+        inset-inline-start: 0;
+        // Less the handle column the fold starts after.
+        max-width: calc(100cqi - 3rem);
+    }
+}
+
 // `overflow: hidden` would make the card the box the save bar sticks to, never the screen.
 .card.bo-combinations-card {
     overflow: clip;
@@ -3036,6 +3358,83 @@ tr.bo-order-row--urgent {
 
 form[data-bo-unsaved-changes-dirty] .bo-combinations-savebar {
     display: flex;
+}
+
+// Per combination, a line of catalog figures over a line of the sale unit's fields, labelled like the fields of the grid.
+.table.bo-sale-unit-values {
+    // The value columns keep a set width: the room left goes to the name column. Past their
+    // minimum, on a phone, the table scrolls sideways instead of crushing them.
+    .bo-sale-unit-values__col-value {
+        width: 12rem;
+        min-width: 9rem;
+    }
+
+    .bo-sale-unit-values__col-name {
+        min-width: 10rem;
+    }
+
+    > tbody > tr > td > .input-group {
+        min-width: 8rem;
+    }
+
+    > tbody > tr > td {
+        vertical-align: middle;
+    }
+
+    > tbody > tr > td.bo-card-table__item {
+        vertical-align: top;
+    }
+
+    .bo-sale-unit-values__col-legend,
+    .bo-sale-unit-values__legend {
+        width: 1%;
+    }
+
+    .bo-sale-unit-values__legend {
+        vertical-align: middle;
+    }
+
+    .bo-sale-unit-values__label {
+        display: block;
+        max-width: 10rem;
+        margin: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: .72rem;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        color: var(--bs-secondary-color);
+    }
+}
+
+.bo-effective-prices__search {
+    width: auto;
+    flex: 1 1 18rem;
+    max-width: 32rem;
+}
+
+.table.bo-effective-prices__table > tbody > tr > td {
+    vertical-align: middle;
+    padding-block: .45rem;
+}
+
+// The effective prices read what is saved: said as soon as a form of the page holds changes.
+.bo-effective-prices__unsaved {
+    display: none;
+}
+
+body:has(form[data-bo-unsaved-changes-dirty]) .bo-effective-prices__unsaved {
+    display: flex;
+}
+
+// Offered once something is changed, as on the grid.
+.bo-group-prices__discard {
+    display: none;
+}
+
+form[data-bo-unsaved-changes-dirty] .bo-group-prices__discard {
+    display: inline-block;
 }
 
 .bo-combinations-savebar__discard {
@@ -3159,6 +3558,43 @@ form[data-bo-unsaved-changes-dirty] .bo-combinations-savebar {
     overscroll-behavior: contain;
 }
 
+.bo-side-panel__section {
+    min-width: 0;
+    margin: 0 0 .75rem;
+    padding: 0 0 .75rem;
+    border: 0;
+    border-block-end: var(--bs-border-width) solid var(--bs-border-color-translucent);
+
+    // The title runs a little wider than the fields under it.
+    > :not(legend) {
+        padding-inline: .5rem;
+    }
+
+    // A label on two lines keeps the fields of its row on one line.
+    > .row > * {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+    }
+
+    &:last-child {
+        margin-bottom: 0;
+        padding-bottom: 0;
+        border-block-end: 0;
+    }
+
+    > legend {
+        float: none;
+        width: 100%;
+        margin-bottom: .4rem;
+        font-size: .72rem;
+        font-weight: 600;
+        letter-spacing: .05em;
+        text-transform: uppercase;
+        color: var(--bs-emphasis-color);
+    }
+}
+
 // Grey of its own: the theme backgrounds are white (`--bs-secondary-bg` too), as are the fields it lies on.
 // Two classes: the TheliaBlocks editor loads a Tailwind preflight after this sheet that makes every
 // `[type="button"]` transparent, and wins over a single class.
@@ -3205,13 +3641,20 @@ form[data-bo-unsaved-changes-dirty] .bo-combinations-savebar {
     transform: translateX(-100%);
 }
 
-// The quantity rules of a combination, in its row's panel and in the default
-// combination's card: fields wide enough for "0,125" or a unit's name, wrapping
-// on a phone instead of widening the grid.
+// The quantity rules of a combination, in the fold of its line: fields wide enough
+// for "0,125" or a unit's name, wrapping on a phone instead of widening the grid.
 .bo-quantity-rules {
-    // The panel sits in a grid cell, which keeps its text on one line: a label
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: 1.5rem;
+    row-gap: .5rem;
+    // The fold sits in a grid cell, which keeps its text on one line: a label
     // longer than its field would run over the next one.
     white-space: normal;
+}
+
+.bo-quantity-rules__note {
+    width: 100%;
 }
 
 .bo-quantity-rules__field {

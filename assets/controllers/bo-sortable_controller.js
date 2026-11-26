@@ -10,9 +10,7 @@ import { tokenBody } from '../lib/post-request.js';
  * configured URL (the token in the request body), then reloads the page so the server-rendered table
  * reflects the persisted order.
  *
- * With `json` set, the URL answers in JSON and the page is not reloaded, so typed fields are kept;
- * the `reindexedFields` (read by row index, `onsale[2]`) take the index of their new place. A failed
- * move reveals `failureElement` and stops the moves after it, whose positions would be wrong.
+ * With `json` set, the URL answers in JSON and the page is not reloaded, so typed fields are kept. A failed move reveals `failureElement` and stops the moves after it, whose positions would be wrong.
  * `disabled` freezes dragging while the handles serve another use (a selection box).
  */
 export default class extends Controller {
@@ -23,7 +21,6 @@ export default class extends Controller {
         item: { type: String, default: 'tr[data-row-id]' },
         json: { type: Boolean, default: false },
         failureElement: String,
-        reindexedFields: { type: Array, default: [] },
         disabled: { type: Boolean, default: false },
     };
 
@@ -154,7 +151,6 @@ export default class extends Controller {
             return;
         }
 
-        this.reindexRows();
         this.pending = this.pending.then(() => this.persistAsJson(rowId, newPosition));
     }
 
@@ -223,15 +219,5 @@ export default class extends Controller {
         if (failure) {
             failure.hidden = false;
         }
-    }
-
-    reindexRows() {
-        this.rows().forEach((row, index) => {
-            this.reindexedFieldsValue.forEach((name) => {
-                row.querySelectorAll(`[name^="${name}["]`).forEach((field) => {
-                    field.name = field.name.replace(/\[\d+\]$/, `[${index}]`);
-                });
-            });
-        });
     }
 }

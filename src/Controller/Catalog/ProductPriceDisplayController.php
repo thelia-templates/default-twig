@@ -101,7 +101,7 @@ final class ProductPriceDisplayController
             return new RedirectResponse($this->urls->generate('admin.products.default'));
         }
 
-        $redirect = new RedirectResponse($this->urls->generate('admin.products.update', ['product_id' => $productId, 'current_tab' => 'pse']));
+        $redirect = new RedirectResponse($this->urls->generate('admin.products.update', ['product_id' => $productId, 'current_tab' => 'pse', 'other_prices_tab' => 'display']));
 
         try {
             $this->tokens->checkToken((string) $form->get('_token', ''));

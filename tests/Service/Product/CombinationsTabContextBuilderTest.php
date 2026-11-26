@@ -165,16 +165,14 @@ final class CombinationsTabContextBuilderTest extends IntegrationTestCase
         self::assertNull($rows[(int) $unpricedSaleElement->getId()]['price_with_tax'], 'No price, no price with taxes either.');
     }
 
-    public function testAProductSoldByThePieceKeepsTheQuantityRulesOutOfSight(): void
+    public function testAProductSoldByThePieceReadsTheDefaultsOfASaleByThePiece(): void
     {
         $this->givenCombination(0, 's', 'blue');
 
         $context = (new CombinationsTabContextBuilder())->build($this->product, null, 'fr_FR');
 
-        self::assertFalse($context['has_quantity_rules']);
         foreach ($context['pse_rows'] as $row) {
             self::assertSame(['1', '1', 0, '', '', ''], [$row['min_quantity'], $row['quantity_step'], $row['quantity_decimals'], $row['unit_quantity'], $row['reference_unit_quantity'], $row['unit_code']]);
-            self::assertFalse($row['has_quantity_rule']);
         }
     }
 
@@ -216,8 +214,7 @@ final class CombinationsTabContextBuilderTest extends IntegrationTestCase
         $french = (new CombinationsTabContextBuilder())->build($this->product, null, 'fr_FR');
         $row = array_column($french['pse_rows'], null, 'id')[(int) $bottle->getId()];
 
-        self::assertTrue($french['has_quantity_rules']);
-        self::assertSame(['2', '6', 0, '0,75', '1', 'l', true], [$row['min_quantity'], $row['quantity_step'], $row['quantity_decimals'], $row['unit_quantity'], $row['reference_unit_quantity'], $row['unit_code'], $row['has_quantity_rule']]);
+        self::assertSame(['2', '6', 0, '0,75', '1', 'l'], [$row['min_quantity'], $row['quantity_step'], $row['quantity_decimals'], $row['unit_quantity'], $row['reference_unit_quantity'], $row['unit_code']]);
         self::assertSame([0, 1, 2, 3], $french['decimals_choices']);
         self::assertSame(['pc', 'kg', 'g', 'l', 'ml', 'm', 'cm', 'm2', 'm3'], array_column($french['unit_choices'], 'code'));
         self::assertContains('kilogramme (kg)', array_column($french['unit_choices'], 'label'));

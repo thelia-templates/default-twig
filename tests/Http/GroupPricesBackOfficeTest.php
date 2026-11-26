@@ -25,6 +25,7 @@ use Thelia\Model\CustomerGroup;
 use Thelia\Model\CustomerGroupProductPrice;
 use Thelia\Model\CustomerGroupProductPriceQuery;
 use Thelia\Model\Product;
+use Thelia\Model\ProductPriceQuery;
 use Thelia\Model\ProductSaleElements;
 use Thelia\Model\ProductSaleElementsQuery;
 use Thelia\Test\FixtureFactory;
@@ -81,6 +82,7 @@ final class GroupPricesBackOfficeTest extends WebIntegrationTestCase
         $crawler = $this->client->request('GET', '/admin/products/combinations/tab?product_id='.$product->getId());
 
         self::assertCount(1, $crawler->filter('[data-testid="group-prices-section"]'));
+        self::assertStringContainsString('The sale price of a group always applies', $crawler->filter('[data-testid="group-prices-promo-note"]')->text());
         foreach ($groups as $group) {
             self::assertCount(1, $crawler->filter('[data-testid="group-prices-group-'.$group->getId().'"]'));
             foreach (['price', 'promo_price'] as $field) {
@@ -194,6 +196,7 @@ final class GroupPricesBackOfficeTest extends WebIntegrationTestCase
         $crawler = $this->client->request('GET', '/admin/products/combinations/tab?product_id='.$product->getId());
         self::assertCount(1, $crawler->filter('[data-testid="group-prices-section"]'));
         self::assertCount(0, $crawler->filter('[data-testid="group-prices-submit"]'));
+        self::assertCount(0, $crawler->filter('[data-testid="group-prices-discard"]'));
 
         $this->injector->setAdmin($this->restrictedAdmin([AdminResources::PRODUCT => [AccessManager::VIEW, AccessManager::UPDATE], AdminResources::CUSTOMER_GROUP => [AccessManager::VIEW]]));
         $this->save($product, $currency, [$pse->getId() => [$group->getId() => ['price' => '10', 'promo_price' => '']]], token: $token, expectedStatus: 403);
@@ -206,6 +209,7 @@ final class GroupPricesBackOfficeTest extends WebIntegrationTestCase
         $this->injector->setAdmin($this->restrictedAdmin([AdminResources::PRODUCT => [AccessManager::VIEW, AccessManager::UPDATE], AdminResources::CUSTOMER_GROUP => [AccessManager::VIEW, AccessManager::UPDATE]]));
         $crawler = $this->client->request('GET', '/admin/products/combinations/tab?product_id='.$product->getId());
         self::assertCount(1, $crawler->filter('[data-testid="group-prices-submit"]'));
+        self::assertSame('reset', $crawler->filter('[data-testid="group-prices-discard"]')->attr('type'), 'The changes can be cancelled.');
     }
 
     public function testAnAdministratorRestrictedToASaleUnitCannotPriceTheGroups(): void
@@ -241,8 +245,32 @@ final class GroupPricesBackOfficeTest extends WebIntegrationTestCase
         $price = $crawler->filter('[data-testid="group-prices-price-'.$pse->getId().'-'.$group->getId().'"]');
         self::assertSame('', (string) $price->attr('value'));
         self::assertSame('20', $price->attr('placeholder'));
+        self::assertSame('Converted from '.$default->getCode(), $price->attr('title'));
         self::assertSame('16', $crawler->filter('[data-testid="group-prices-promo_price-'.$pse->getId().'-'.$group->getId().'"]')->attr('placeholder'));
-        self::assertStringContainsString('Converted from '.$default->getCode(), $crawler->filter('[data-testid="group-prices-price-source-'.$pse->getId().'-'.$group->getId().'"]')->text());
+    }
+
+    public function testAnEmptyFieldShowsWhatTheGroupPaysFromTheCatalog(): void
+    {
+        $discounted = $this->factory->customerGroup(discount: 10.0);
+        $priced = $this->factory->customerGroup();
+        [$product, $pse] = $this->productWithACombination();
+        $currency = $this->defaultCurrency();
+        $pse->setPromo(1)->save($this->getPropelConnection());
+        ProductPriceQuery::create()->filterByProductSaleElementsId($pse->getId())->findOne($this->getPropelConnection())
+            ?->setPromoPrice('20')->save($this->getPropelConnection());
+        $this->save($product, $currency, [$pse->getId() => [$priced->getId() => ['price' => '24', 'promo_price' => '']]]);
+
+        $crawler = $this->client->request('GET', '/admin/products/combinations/tab?product_id='.$product->getId());
+        $field = static fn (string $name, CustomerGroup $group) => $crawler->filter('[data-testid="group-prices-'.$name.'-'.$pse->getId().'-'.$group->getId().'"]');
+
+        self::assertSame('22.5', $field('price', $discounted)->attr('placeholder'), 'The catalog price less the discount of the group.');
+        self::assertSame('20', $field('promo_price', $discounted)->attr('placeholder'), 'The catalog promotion, cheaper than the discounted price.');
+        self::assertSame(' ', $field('promo_price', $priced)->attr('placeholder'), 'A price of its own comes without the catalog promotion.');
+        self::assertStringContainsString('10', $crawler->filter('[data-testid="group-prices-discount-'.$discounted->getId().'"]')->text());
+        self::assertCount(0, $crawler->filter('[data-testid="group-prices-discount-'.$priced->getId().'"]'), 'No badge without a discount.');
+        self::assertCount(1, $crawler->filter('[data-testid="group-prices-onsale-'.$pse->getId().'"]'));
+        self::assertStringContainsString('25', $crawler->filter('[data-testid="group-prices-catalog-price-'.$pse->getId().'"]')->text());
+        self::assertStringContainsString('20', $crawler->filter('[data-testid="group-prices-catalog-promo-'.$pse->getId().'"]')->text());
     }
 
     public function testAPriceTypedInASecondaryCurrencyIsKeptApartFromTheDefaultOne(): void

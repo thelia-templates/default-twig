@@ -83,10 +83,11 @@ final class ProductCombinationSellableTest extends WebIntegrationTestCase
 
         $crawler = $this->tab($product);
 
-        $note = $crawler->filter('[data-testid="combinations-sellable-'.$combination->getId().'"]');
-        self::assertCount(1, $note);
-        self::assertStringContainsString('Sellable: 5', $note->text());
-        $tooltip = $crawler->filter('[data-testid="combinations-sellable-hint-'.$combination->getId().'"]')->attr('title');
+        $icon = $crawler->filter('[data-testid="combinations-sellable-'.$combination->getId().'"]');
+        self::assertCount(1, $icon);
+        self::assertSame('held', $icon->attr('data-state'), 'What may be sold differs from the stock: the icon says so.');
+        self::assertSame('Sellable: 5 (stock 10)', $icon->attr('aria-label'));
+        $tooltip = $icon->attr('title');
         self::assertStringContainsString('Held by the carts: 5 in 2 cart(s)', (string) $tooltip);
         self::assertStringContainsString(substr($this->untilOf($near), 0, 16), (string) $tooltip, 'The nearest expiry is the one of the first cart.');
         self::assertStringContainsString('10', $crawler->filter('#combination-'.$combination->getId().'-quantity')->attr('value') ?? '', 'The stock field still edits the physical stock.');
@@ -98,10 +99,11 @@ final class ProductCombinationSellableTest extends WebIntegrationTestCase
         $combination->setOutOfStockPolicy(OutOfStockPolicy::Unlimited->value)->save($this->getPropelConnection());
         $this->hold($product, $combination, 4, '+ INTERVAL 5 MINUTE');
 
-        $note = $this->tab($product)->filter('[data-testid="combinations-sellable-'.$combination->getId().'"]');
+        $icon = $this->tab($product)->filter('[data-testid="combinations-sellable-'.$combination->getId().'"]');
 
-        self::assertStringContainsString('Sellable: unlimited', $note->text());
-        self::assertStringNotContainsString('Sellable: 6', $note->text());
+        self::assertSame('unlimited', $icon->attr('data-state'));
+        self::assertSame('Sellable without limit', $icon->attr('aria-label'));
+        self::assertStringContainsString('Sales go on at zero stock.', (string) $icon->attr('title'));
     }
 
     public function testTheCombinationOfABundleShowsNoSellableFigure(): void
@@ -125,11 +127,13 @@ final class ProductCombinationSellableTest extends WebIntegrationTestCase
 
         $crawler = $this->tab($product);
 
-        self::assertStringContainsString('Sellable: 7', $crawler->filter('[data-testid="combinations-sellable-'.$combination->getId().'"]')->text());
-        self::assertStringContainsString('No cart holds any unit', (string) $crawler->filter('[data-testid="combinations-sellable-hint-'.$combination->getId().'"]')->attr('title'));
+        $icon = $crawler->filter('[data-testid="combinations-sellable-'.$combination->getId().'"]');
+        self::assertSame('sync', $icon->attr('data-state'), 'The same as the stock: the icon stays grey.');
+        self::assertSame('Sellable: 7, like the stock', $icon->attr('aria-label'));
+        self::assertStringContainsString('No cart holds any unit', (string) $icon->attr('title'));
     }
 
-    public function testTheNoteIsInAnExistingCellAndTheGridGainsNoLineAndNoColumn(): void
+    public function testTheIconIsAtTheEndOfTheStockLineAndTheGridGainsNoColumn(): void
     {
         [$product, $combination] = $this->productWithACombination(10);
         $other = $this->factory->productSaleElement($product, ['quantity' => 4]);
@@ -141,10 +145,44 @@ final class ProductCombinationSellableTest extends WebIntegrationTestCase
         self::assertSame(8, $columns, 'The 8 columns of the grid.');
         foreach ([$combination, $other] as $pse) {
             $row = \sprintf('tbody[data-row-id="%d"] > tr', $pse->getId());
-            self::assertCount(6, $grid->filter($row), 'The five lines of a combination and the panel of its quantity rules.');
-            self::assertCount(1, $grid->filter($row.'#pse-quantity-rules-'.$pse->getId()), 'The sixth line is the panel of the quantity rules.');
-            self::assertCount(1, $grid->filter($row.' > td.bo-combinations-grid__logistics [data-testid="combinations-sellable-'.$pse->getId().'"]'), 'Inside the cell of the stock field.');
+            self::assertCount(7, $grid->filter($row), 'The three lines of a combination, its two lines shown when they have something to say, its fold and the air under it.');
+            self::assertCount(1, $grid->filter($row.' > td.bo-combinations-grid__logistics .bo-combinations-grid__stock [data-testid="combinations-sellable-'.$pse->getId().'"]'), 'At the end of the stock field.');
         }
+    }
+
+    public function testTheIconSaysWhenNothingIsLeftAndWhenThePreorderSells(): void
+    {
+        [$product, $combination] = $this->productWithACombination(0);
+
+        self::assertSame('none', $this->tab($product)->filter('[data-testid="combinations-sellable-'.$combination->getId().'"]')->attr('data-state'));
+
+        $combination->setOutOfStockPolicy(OutOfStockPolicy::Limited->value)->setPreorderLimit(4.0)->save($this->getPropelConnection());
+        $icon = $this->tab($product)->filter('[data-testid="combinations-sellable-'.$combination->getId().'"]');
+        self::assertSame('pre', $icon->attr('data-state'));
+        self::assertSame('Sellable: 4 on preorder', $icon->attr('aria-label'));
+    }
+
+    public function testTheLowStockLineShowsAtOrUnderTheThresholdWithItsWording(): void
+    {
+        ConfigQuery::write('low_stock_threshold', '5');
+        [$product, $combination] = $this->productWithACombination(5);
+        $id = $combination->getId();
+
+        $crawler = $this->tab($product);
+        $line = $crawler->filter('[data-testid="combinations-low-stock-'.$id.'"]');
+        self::assertNull($line->attr('hidden'), 'At the threshold of the shop, as the core alerts.');
+        self::assertSame('Low stock: 5, threshold 5 (shop).', $crawler->filter('[data-testid="combinations-low-stock-text-'.$id.'"]')->text());
+        self::assertCount(1, $line->filter('label[for="combination-'.$id.'-restock-date"]'), 'The restock date is offered in the line.');
+
+        $combination->setLowStockThreshold(2.0)->save($this->getPropelConnection());
+        $crawler = $this->tab($product);
+        self::assertNotNull($crawler->filter('[data-testid="combinations-low-stock-'.$id.'"]')->attr('hidden'), 'Its own threshold wins over the one of the shop.');
+        $note = $crawler->filter('[data-testid="combinations-row-'.$id.'"] [data-bo-combination-band-target="restockMoved"]');
+        self::assertNotNull($note->attr('hidden'), 'The note on the moved restock date waits for a low stock.');
+        self::assertStringNotContainsString('d-', (string) $note->attr('class'), 'No display utility: its !important would beat [hidden].');
+
+        $combination->setQuantity(0)->save($this->getPropelConnection());
+        self::assertSame('Out of stock, sales are blocked.', $this->tab($product)->filter('[data-testid="combinations-low-stock-text-'.$id.'"]')->text());
     }
 
     public function testTheFiguresOfAnyNumberOfCombinationsCostTheSameQueries(): void

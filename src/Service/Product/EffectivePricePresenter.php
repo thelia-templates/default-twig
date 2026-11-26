@@ -16,6 +16,9 @@ namespace BackOfficeDefaultTwigBundle\Service\Product;
 
 use BackOfficeDefaultTwigBundle\Repository\CustomerGroupRepository;
 use Propel\Runtime\ActiveQuery\Criteria;
+use Propel\Runtime\Exception\PropelException;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Thelia\Domain\Catalog\Product\ClosedCategoryProductRule;
 use Thelia\Domain\Catalog\Restriction\CatalogRestrictionRule;
@@ -24,12 +27,15 @@ use Thelia\Domain\Pricing\CustomerPrice\ResolvedPrice;
 use Thelia\Domain\Pricing\EffectivePrice;
 use Thelia\Domain\Pricing\PriceList\PriceListResolverInterface;
 use Thelia\Domain\Pricing\PriceVisibility\PriceVisibilityResolver;
+use Thelia\Domain\Taxation\TaxEngine\Calculator;
+use Thelia\Model\CountryQuery;
 use Thelia\Model\Currency;
 use Thelia\Model\Customer;
 use Thelia\Model\PriceListQuery;
 use Thelia\Model\Product;
 use Thelia\Model\ProductQuery;
 use Thelia\Model\ProductSaleElementsQuery;
+use Thelia\Model\TaxRuleQuery;
 
 /**
  * What a customer (or a visitor) pays for each combination of a product, laid out for the
@@ -45,6 +51,8 @@ use Thelia\Model\ProductSaleElementsQuery;
  * the assortment (the two rules the storefront narrows its queries with) decide whether the price
  * shows and whether the product is reachable at all. A hidden price is not resolved here, and a
  * combination is bought only when the mode lets the customer buy it and the resolver does.
+ *
+ * Every amount comes as saved, without taxes, and with the taxes of the product in the default country.
  */
 final readonly class EffectivePricePresenter
 {
@@ -60,11 +68,12 @@ final readonly class EffectivePricePresenter
         private CatalogRestrictionRule $assortmentRule,
         private ClosedCategoryProductRule $closedCategoryRule,
         private TranslatorInterface $translator,
+        private LoggerInterface $logger = new NullLogger(),
     ) {
     }
 
     /**
-     * @return array{group: string, status: string, rows: list<array<string, mixed>>}
+     * @return array{group: string, taxed: bool, status: string, rows: list<array<string, mixed>>}
      */
     public function present(Product $product, Currency $currency, ?Customer $customer, string $locale): array
     {
@@ -90,7 +99,8 @@ final readonly class EffectivePricePresenter
         $resolved = $shown ? $this->prices->resolve($pseIds, $currency, $customer) : [];
         $tiersByCombination = $shown ? $this->priceLists->tiersFor($pseIds, $currency, $customer) : [];
         $labels = $this->labeler->labelsFor($pseIds, $locale);
-        $priceListCodes = $this->priceListCodes($resolved);
+        $priceListNames = $this->priceListNames($resolved, $locale);
+        $taxed = $this->taxedPriceOf($product);
 
         $rows = [];
         foreach ($saleElements as $saleElement) {
@@ -105,21 +115,29 @@ final readonly class EffectivePricePresenter
             $price = $resolved[$pseId] ?? null;
             $tiers = $tiersByCombination[$pseId] ?? [];
 
+            $catalogPromo = null !== $catalog && 1 === (int) $saleElement->getPromo() && $catalog->getPromoPrice() > 0.0 && $catalog->getPromoPrice() !== $catalog->getPrice() ? $catalog->getPromoPrice() : null;
+            $charged = $price?->chargedPrice();
+
             $rows[] = [
                 'id' => $pseId,
                 'ref' => (string) $saleElement->getRef(),
                 'label' => $labels[$pseId] ?? CombinationLabeler::DEFAULT_LABEL,
                 'catalog_price' => self::number($catalog?->getPrice()),
-                'catalog_promo_price' => null !== $catalog && 1 === (int) $saleElement->getPromo() && $catalog->getPromoPrice() > 0.0 && $catalog->getPromoPrice() !== $catalog->getPrice() ? self::number($catalog->getPromoPrice()) : null,
-                'price' => null === $price ? null : self::number($price->chargedPrice()),
-                'source' => null === $price ? null : $this->sourceLabel($price, $priceListCodes),
+                'catalog_price_with_tax' => self::taxedNumber($catalog?->getPrice(), $taxed($catalog?->getPrice())),
+                'catalog_promo_price' => self::number($catalogPromo),
+                'catalog_promo_price_with_tax' => self::taxedNumber($catalogPromo, $taxed($catalogPromo)),
+                'price' => self::number($charged),
+                'price_with_tax' => self::taxedNumber($charged, $taxed($charged)),
+                'source' => null === $price ? null : $this->sourceLabel($price, $priceListNames),
                 'purchasable' => null !== $price && $price->purchasable,
-                'tiers' => array_map(static fn (array $tier): array => ['quantity' => $tier['minQuantity'], 'price' => self::number($tier['untaxedPrice'])], $tiers),
+                'tiers' => array_map(static fn (array $tier): array => ['quantity' => $tier['minQuantity'], 'price' => self::number($tier['untaxedPrice']), 'price_with_tax' => self::taxedNumber($tier['untaxedPrice'], $taxed($tier['untaxedPrice']))], $tiers),
             ];
         }
 
         return [
             'group' => CustomerGroupRepository::titleOf($this->prices->customerGroupOf($customer), $locale),
+            // Whether the customer is shown the prices with taxes, as its group says.
+            'taxed' => $this->prices->displaysTaxedPrices($customer),
             'status' => $status,
             'rows' => $rows,
         ];
@@ -148,11 +166,13 @@ final readonly class EffectivePricePresenter
     }
 
     /**
+     * The title the merchant gave each list, its code when the title is missing in this language.
+     *
      * @param array<int, ResolvedPrice> $resolved
      *
-     * @return array<int, string> price list id => code
+     * @return array<int, string> price list id => name
      */
-    private function priceListCodes(array $resolved): array
+    private function priceListNames(array $resolved, string $locale): array
     {
         $ids = [];
         foreach ($resolved as $price) {
@@ -165,20 +185,21 @@ final readonly class EffectivePricePresenter
             return [];
         }
 
-        $codes = [];
-        foreach (PriceListQuery::create()->filterById(array_values($ids), Criteria::IN)->select(['Id', 'Code'])->find() as $row) {
-            $codes[(int) $row['Id']] = (string) $row['Code'];
+        $names = [];
+        foreach (PriceListQuery::create()->filterById(array_values($ids), Criteria::IN)->find() as $list) {
+            $title = trim((string) $list->setLocale($locale)->getTitle());
+            $names[(int) $list->getId()] = '' !== $title ? $title : (string) $list->getCode();
         }
 
-        return $codes;
+        return $names;
     }
 
     /**
-     * @param array<int, string> $priceListCodes
+     * @param array<int, string> $priceListNames
      */
-    private function sourceLabel(ResolvedPrice $price, array $priceListCodes): string
+    private function sourceLabel(ResolvedPrice $price, array $priceListNames): string
     {
-        $code = null === $price->priceListId ? '' : ($priceListCodes[$price->priceListId] ?? '#'.$price->priceListId);
+        $code = null === $price->priceListId ? '' : ($priceListNames[$price->priceListId] ?? '#'.$price->priceListId);
 
         if (ResolvedPrice::SOURCE_PRICE_LIST === $price->source) {
             return $this->translator->trans('Price list %code%', ['%code%' => $code]);
@@ -195,6 +216,69 @@ final readonly class EffectivePricePresenter
         };
 
         return '' === $code ? $source : $source.' ('.$this->translator->trans('closed by the exclusive price list %code%', ['%code%' => $code]).')';
+    }
+
+    /**
+     * Null when the rule cannot be applied, never the untaxed amount; the failure is logged, so
+     * that a fault of the calculator does not pass for a product without a price with taxes.
+     *
+     * @return \Closure(float|string|null): ?float
+     */
+    private function taxedPriceOf(Product $product): \Closure
+    {
+        $taxRule = TaxRuleQuery::create()->findPk((int) $product->getTaxRuleId());
+        $country = CountryQuery::create()->findOneByByDefault(1);
+        $calculator = null;
+        if (null !== $taxRule && null !== $country) {
+            try {
+                $calculator = (new Calculator())->loadTaxRule($taxRule, $country, $product);
+            } catch (PropelException $databaseFailure) {
+                throw $databaseFailure;
+            } catch (\Throwable $failure) {
+                $this->logTaxFailure($product, $failure);
+                $calculator = null;
+            }
+        }
+
+        return function (float|string|null $amount) use ($calculator, $product): ?float {
+            if (null === $amount || '' === $amount || null === $calculator) {
+                return null;
+            }
+
+            try {
+                return round((float) $calculator->getTaxedPrice((float) $amount), 6);
+            } catch (PropelException $databaseFailure) {
+                throw $databaseFailure;
+            } catch (\Throwable $failure) {
+                $this->logTaxFailure($product, $failure);
+
+                return null;
+            }
+        };
+    }
+
+    private function logTaxFailure(Product $product, \Throwable $failure): void
+    {
+        $this->logger->warning('The effective prices of a product show no price with taxes: its tax rule could not be applied.', [
+            'product_id' => $product->getId(),
+            'exception' => $failure,
+        ]);
+    }
+
+    /**
+     * With as many decimals as the price without taxes, two at least: 9.99 gives 11.99, not the
+     * 11.988 the tax computes, and a price of a fraction of a cent keeps its digits.
+     */
+    private static function taxedNumber(mixed $untaxed, ?float $taxed): ?string
+    {
+        $text = self::number($untaxed);
+        if (null === $text || null === $taxed) {
+            return null;
+        }
+
+        $decimals = \strlen($text) - (int) strpos($text, '.') - 1;
+
+        return number_format(round($taxed, $decimals), $decimals, '.', '');
     }
 
     private static function number(mixed $value): ?string

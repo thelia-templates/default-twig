@@ -269,18 +269,37 @@ The two hooks that were already there keep their contract, which is not a column
 - `product.combinations-list-caption` (context `location`) is rendered above the grid, inside the form of the
   combinations, right after `product.before-combinations`;
 - `product.combinations-row` (context `pse_id`, `pse`, `idx`, `product`, `product_id`) is rendered inside a line of
-  the combination, where a module returns its own `<tr>` lines. They come under the combination, after its other
-  lines. Nothing is rendered, and no line added, for a combination the module returns nothing for.
+  the combination, where a module returns its own `<tr>` lines. They come under the combination, after its fold, and
+  are shown and hidden with it: a field there is out of sight while the fold is closed, so it is never `required`.
+  Nothing is rendered, and no line added, for a combination the module returns nothing for.
 
-The other fields of a combination, folded under it, come from `catalog/product/_combination_more_fields.html.twig`. A
-theme or a project that overrides the back office adds its fields there, in a copy of that file, without copying the
-whole tab.
+Every field the three lines of a combination leave out sits in one fold under it, in three sections: the stock at
+zero and the restock (`catalog/product/_combination_stock_fields.html.twig`), the quantities and units
+(`_combination_quantity_rules.html.twig`) and the identifiers (`_combination_more_fields.html.twig`). A theme or a
+project that overrides the back office changes a section in a copy of its file, without copying the whole tab; the
+identifiers are where it adds its own fields. Every field of the grid is named by its combination (`mpn[12]`); a copy
+made when the part number and the manufacturer were still named by their place (`mpn[]`, `manufacturer_brand_id[]`)
+is still read, by place, for these two fields only. A copy of the whole tab that still names the fields of its lines
+by place (`quantity[]`, `price[]`) saves nothing, and the page says so: read by combination, its stock and weight
+would be written empty.
+
+Two routes are gone: `admin.product.combination.defaut-price.update`, since a product without combination is saved
+by the route of the grid, and `admin.product.combination.quantity-rules.add-to-all`, since bulk edit fills the
+quantities of the ticked combinations. `QuantityRuleSubmission::fromFields()` went with the first one.
+
+A product without combination is shown as a grid of one line, its default combination, saved by the same route as
+the grid; its reference follows the one of the product and cannot be typed. The hooks of the grid
+(`product.combinations-table-header`, `-table-row`, `product.combinations-row`, `product.before-combinations`,
+`product.combinations-list-caption`, `product.after-combinations`) are not rendered for it. Its modules add their
+fields through `product.details-pricing-form`, `product.details-details-form` and `product.details-promotion-form`
+(context `product`, `pse`, `product_sale_element_id`, `location`), rendered in that order in a section of its fold,
+inside the form of the grid: never a `<form>`, never a `required` field.
 
 What a module adds to the grid is sent with it. The theme does not save it: the module listens to
 `TheliaEvents::PRODUCT_UPDATE_PRODUCT_SALE_ELEMENT`, dispatched for each combination the grid saves (not for one left
 without a price), and reads its fields from the current request (`RequestStack`): the event does not carry them. It
-names them by the combination (`mymodule_stock[12]`), **never by `idx`**, their place in the grid: dragging the
-combinations renumbers only the fields of the grid itself.
+names them by the combination (`mymodule_stock[12]`), as the grid names its own, **never by `idx`**, their place in
+the grid, which dragging the combinations changes without renaming anything.
 
 ```php
 public function onCombinationsTableRow(HookRenderEvent $event): void

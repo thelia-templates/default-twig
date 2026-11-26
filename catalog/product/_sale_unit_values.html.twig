@@ -1,12 +1,16 @@
-{#- The prices and stocks one sale unit keeps of the combinations of the product.
-    An empty field is the national value, shown in its place; emptying a field gives
-    the combination back to the national value. -#}
+{#- The prices and stocks one sale unit keeps of the combinations; an empty field shows in grey the value that applies, a filled one is tinted. -#}
 {% set values = sale_unit_values %}
-<div class="card mb-3" data-testid="sale-unit-values-section">
-    <div class="card-header d-flex justify-content-between align-items-end gap-2 flex-wrap">
+<div class="bo-other-prices__panel" data-testid="sale-unit-values-section">
+    <div class="bo-other-prices__head">
         <div>
-            <h2 class="h6 mb-1">{{ 'Prices and stock per sale unit'|trans }}</h2>
-            <p class="small text-muted mb-0">{{ 'An empty field takes the value shown in grey, the national one unless said otherwise. Empty a field to go back to it.'|trans }}</p>
+            <h2 class="visually-hidden">{{ 'Prices and stock per sale unit'|trans }}</h2>
+            <div class="d-grid gap-2">
+                <p class="small text-muted mb-0">{{ 'An empty field keeps the catalog value. Prices are without taxes.'|trans }}</p>
+                <p class="alert alert-light border small d-flex align-items-baseline gap-2 py-2 px-3 mb-0" data-testid="sale-unit-values-promo-note">
+                    <i class="bi bi-info-circle" aria-hidden="true"></i>
+                    <span>{{ 'The sale price of a sale unit applies only while the combination is on promotion in the catalog.'|trans }}</span>
+                </p>
+            </div>
         </div>
         <div>
             <label class="form-label mb-1" for="sale-unit-values-switcher">{{ 'Sale unit'|trans }}</label>
@@ -14,60 +18,83 @@
                     data-testid="sale-unit-values-switcher"
                     onchange="window.location.assign(this.value)">
                 {% for option in values.sale_units %}
-                    <option value="{{ path('admin.products.update', { product_id: product.id, current_tab: 'pse', sale_unit_id: option.id, combinations_currency_id: values.currency_id }) }}"{% if option.id == values.sale_unit.id %} selected{% endif %}>
-                        {{ option.title }}{% if not option.active %} ({{ 'inactive'|trans }}){% endif %}
+                    <option value="{{ path('admin.products.update', { product_id: product.id, current_tab: 'pse', sale_unit_id: option.id, combinations_currency_id: values.currency_id, other_prices_tab: 'sale-units' }) }}#other-prices"{% if option.id == values.sale_unit.id %} selected{% endif %}>
+                        {{ option.title }}{% if not option.active %} ({{ 'inactive sale unit'|trans }}){% endif %}
                     </option>
                 {% endfor %}
             </select>
         </div>
     </div>
-    <div class="card-body">
-        <form method="post" action="{{ path('admin.product.sale-unit-values.save') }}" data-testid="sale-unit-values-form">
+    <div>
+        <form method="post" action="{{ path('admin.product.sale-unit-values.save') }}" data-testid="sale-unit-values-form" data-bo-unsaved-changes-target="form">
             <input type="hidden" name="_token" value="{{ assignToken() }}">
             <input type="hidden" name="product_id" value="{{ product.id }}">
             <input type="hidden" name="sale_unit_id" value="{{ values.sale_unit.id }}">
             <input type="hidden" name="currency_id" value="{{ values.currency_id }}">
 
+            {% set labels = { price: 'Price excl. taxes', promo_price: 'Sale price excl. taxes', quantity: 'Stock' } %}
             <div class="table-responsive">
-                <table class="table table-sm align-middle" data-testid="sale-unit-values-table">
+                <table class="table table-borderless bo-card-table bo-group-prices bo-sale-unit-values" data-testid="sale-unit-values-table">
                     <thead class="table-light">
                         <tr>
-                            <th>{{ 'Combination'|trans }}</th>
-                            <th>{{ 'Reference'|trans }}</th>
-                            <th class="text-end">{{ 'Price'|trans }} ({{ currency.symbol }})</th>
-                            <th class="text-end">{{ 'Sale price'|trans }} ({{ currency.symbol }})</th>
-                            <th class="text-end">{{ 'Stock'|trans }}</th>
+                            <th class="bo-sale-unit-values__col-name">{{ 'Combination'|trans }}</th>
+                            <th class="bo-sale-unit-values__col-legend"><span class="visually-hidden">{{ 'Source'|trans }}</span></th>
+                            {% for label in labels %}
+                                <th class="bo-sale-unit-values__col-value">{{ label|trans }}</th>
+                            {% endfor %}
                         </tr>
                     </thead>
-                    <tbody>
-                        {% for row in values.rows %}
-                            <tr data-testid="sale-unit-values-row-{{ row.id }}">
-                                <td><small>{{ row.label == 'default' ? 'Default combination'|trans : row.label }}</small></td>
-                                <td><small class="text-muted">{{ row.ref }}</small></td>
+                    {% for row in values.rows %}
+                        <tbody data-testid="sale-unit-values-row-{{ row.id }}">
+                            <tr>
+                                <td class="bo-card-table__item" rowspan="2">
+                                    <span class="fw-semibold">{{ row.label == 'default' ? 'Default combination'|trans : row.label }}</span>
+                                    <span class="d-block small text-body-secondary">{{ row.ref }}</span>
+                                    {% if row.onsale %}
+                                        <span class="d-block small fw-semibold text-primary" data-testid="sale-unit-values-onsale-{{ row.id }}">{{ 'On promotion in the catalog'|trans }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="bo-sale-unit-values__legend"><span class="bo-sale-unit-values__label">{{ 'Catalog'|trans }}</span></td>
                                 {% for field in row.fields %}
-                                    <td class="text-end">
-                                        <input type="text" inputmode="decimal" autocomplete="off"
-                                               name="{{ field.name }}[{{ row.id }}]" value="{{ field.value }}"
-                                               placeholder="{{ field.placeholder }}"
-                                               class="form-control form-control-sm text-end ms-auto" style="max-width:9rem"
-                                               aria-label="{{ (field.name == 'price' ? 'Price' : field.name == 'promo_price' ? 'Sale price' : 'Stock')|trans }} - {{ row.ref }}"
-                                               data-testid="sale-unit-values-{{ field.name }}-{{ row.id }}">
-                                        <small class="d-block text-muted" data-testid="sale-unit-values-{{ field.name }}-source-{{ row.id }}">
-                                            {{ field.hint|trans(field.hint_parameters) }}
-                                        </small>
+                                    {% set catalog = field.name == 'price' ? row.price : (field.name == 'quantity' ? row.quantity : (row.onsale ? row.sale_price : null)) %}
+                                    <td>
+                                        <span class="d-block text-end bo-group-prices__catalog" data-testid="sale-unit-values-catalog-{{ field.name }}-{{ row.id }}">
+                                            {{- catalog is not null ? catalog ~ (field.name != 'quantity' ? ' ' ~ currency.symbol) : '-' -}}
+                                        </span>
                                     </td>
                                 {% endfor %}
                             </tr>
-                        {% endfor %}
-                    </tbody>
+                            <tr>
+                                <td class="bo-sale-unit-values__legend"><span class="bo-sale-unit-values__label" title="{{ values.sale_unit.title }}">{{ values.sale_unit.title }}</span></td>
+                                {% for field in row.fields %}
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="text" inputmode="decimal" autocomplete="off"
+                                                   name="{{ field.name }}[{{ row.id }}]" value="{{ field.value }}"
+                                                   placeholder="{{ field.placeholder ?? ' ' }}"
+                                                   {%- if field.hint %} title="{{ field.hint|trans(field.hint_parameters) }}"{% endif %}
+                                                   class="form-control text-end"
+                                                   aria-label="{{ labels[field.name]|trans }} - {{ row.ref }}"
+                                                   data-testid="sale-unit-values-{{ field.name }}-{{ row.id }}">
+                                            {% if field.name != 'quantity' %}<span class="input-group-text">{{ currency.symbol }}</span>{% endif %}
+                                        </div>
+                                    </td>
+                                {% endfor %}
+                            </tr>
+                        </tbody>
+                    {% endfor %}
                 </table>
             </div>
-            <p class="small text-muted">{{ 'The sale price applies while the combination is on sale. Left empty next to a price, the sale unit sells at that price.'|trans }}</p>
 
             {% if is_granted('UPDATE', 'admin.sale-unit') and is_granted('UPDATE', 'admin.product') %}
-                <button type="submit" class="btn btn-primary" data-testid="sale-unit-values-submit">
-                    <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save the values of this sale unit'|trans }}
-                </button>
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="submit" class="btn btn-primary" data-testid="sale-unit-values-submit">
+                        <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save the values of this sale unit'|trans }}
+                    </button>
+                    <button type="reset" class="btn btn-outline-secondary bo-group-prices__discard" data-testid="sale-unit-values-discard">
+                        <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> {{ 'Cancel the changes'|trans }}
+                    </button>
+                </div>
             {% endif %}
         </form>
     </div>

@@ -109,6 +109,21 @@ final readonly class CustomerGroupRepository
     }
 
     /**
+     * The choices of {@see findChoices()}, each with the discount rate the group applies to the catalog, in %.
+     *
+     * @return list<array{id: int, label: string, discount: float}>
+     */
+    public function findChoicesWithDiscount(string $locale): array
+    {
+        $choices = [];
+        foreach (self::withLocalizedTitle(CustomerGroupQuery::create(), $locale)->orderByPosition()->orderById()->find() as $group) {
+            $choices[] = ['id' => (int) $group->getId(), 'label' => self::titleOf($group, $locale), 'discount' => $group->effectiveDiscountRate()];
+        }
+
+        return $choices;
+    }
+
+    /**
      * The given ids that are groups: an id a stale form still posts is dropped here rather
      * than refused by the database.
      *

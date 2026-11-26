@@ -169,10 +169,12 @@ final class ModuleTabTest extends WebIntegrationTestCase
     }
 
     /**
-     * @return list<string> the ids of the panes shown
+     * @return list<string> the ids of the panes of the sheet shown, not those of the tabs a pane holds (the other prices of a product)
      */
     private function shownPanes(Crawler $crawler): array
     {
-        return $crawler->filter('.tab-pane.show.active')->each(static fn (Crawler $pane): string => (string) $pane->attr('id'));
+        $panes = $crawler->filter('.tab-pane.show.active')->each(static fn (Crawler $pane): ?string => [] === array_filter($pane->ancestors()->each(static fn (Crawler $ancestor): bool => \in_array('tab-pane', explode(' ', (string) $ancestor->attr('class')), true))) ? (string) $pane->attr('id') : null);
+
+        return array_values(array_filter($panes, static fn (?string $id): bool => $id !== null));
     }
 }

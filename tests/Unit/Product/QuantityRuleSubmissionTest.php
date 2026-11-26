@@ -22,6 +22,7 @@ use Symfony\Component\HttpFoundation\InputBag;
 use Symfony\Component\Translation\IdentityTranslator;
 use Thelia\Domain\Catalog\Quantity\InvalidQuantityRuleException;
 use Thelia\Domain\Catalog\Quantity\QuantityPolicy;
+use Thelia\Domain\Catalog\Quantity\QuantityRule;
 use Thelia\Domain\Catalog\Quantity\UnitCode;
 use Thelia\Domain\Catalog\Quantity\UnreadableQuantityException;
 
@@ -43,7 +44,6 @@ final class QuantityRuleSubmissionTest extends TestCase
         $form = new InputBag(['min_quantity' => [12 => '2'], 'quantity_step' => [12 => '6']]);
 
         self::assertNull($this->submission()->fromGrid($form, 13));
-        self::assertNull($this->submission()->fromFields(new InputBag(['quantity' => '7'])));
     }
 
     public function testEachRowReadsTheFieldsKeyedByItsOwnCombination(): void
@@ -68,7 +68,7 @@ final class QuantityRuleSubmissionTest extends TestCase
 
     public function testEmptyFieldsAreTheRulesOfAProductSoldByThePiece(): void
     {
-        $rule = $this->submission()->fromFields(new InputBag(['min_quantity' => '', 'quantity_step' => ' ', 'quantity_decimals' => '', 'unit_code' => '']));
+        $rule = $this->submission()->fromGrid(new InputBag(['min_quantity' => [12 => ''], 'quantity_step' => [12 => ' '], 'quantity_decimals' => [12 => ''], 'unit_code' => [12 => '']]), 12);
 
         self::assertNotNull($rule);
         self::assertSame([1.0, 1.0, 0, null], [$rule->minQuantity, $rule->step, $rule->decimals, $rule->unitCode]);
@@ -99,6 +99,82 @@ final class QuantityRuleSubmissionTest extends TestCase
         $this->expectException($refusal);
 
         $this->submission()->read($values);
+    }
+
+    public function testARefusalNamesTheFieldByItsLabelInTheForm(): void
+    {
+        $this->expectException(InvalidQuantityRuleException::class);
+        $this->expectExceptionMessage('« Sold by » cannot carry more decimals than « Decimals of a quantity » allows (0).');
+
+        $this->submission()->read(['quantity_step' => '0,5', 'quantity_decimals' => '0']);
+    }
+
+    public function testAZeroNamesTheFieldByItsLabelInTheForm(): void
+    {
+        $this->expectException(InvalidQuantityRuleException::class);
+        $this->expectExceptionMessage('« Content of one unit sold » must be greater than zero.');
+
+        $this->submission()->read(['unit_quantity' => '0']);
+    }
+
+    /**
+     * Minimum, step, decimals, content, reference quantity: limits on both sides of each rule of the core.
+     *
+     * @return iterable<string, array{float, float, int, ?float, ?float}>
+     */
+    public static function limits(): iterable
+    {
+        yield 'by the piece' => [1.0, 1.0, 0, null, null];
+        yield 'from 6, by 6' => [6.0, 6.0, 0, null, null];
+        yield 'half a piece' => [1.0, 0.5, 0, null, null];
+        yield 'a minimum with decimals sold by the piece' => [1.5, 1.0, 0, null, null];
+        yield 'by the quarter of a kilogram' => [0.25, 0.25, 2, null, null];
+        yield 'a step finer than the decimals' => [0.25, 0.255, 2, null, null];
+        yield 'a minimum of zero' => [0.0, 1.0, 0, null, null];
+        yield 'a step of zero' => [1.0, 0.0, 0, null, null];
+        yield 'a negative minimum' => [-1.0, 1.0, 0, null, null];
+        yield 'a content of 75 cl per litre' => [1.0, 1.0, 0, 0.75, 1.0];
+        yield 'a content of zero' => [1.0, 1.0, 0, 0.0, 1.0];
+        yield 'a reference quantity of zero' => [1.0, 1.0, 0, 0.75, 0.0];
+        yield 'three decimals' => [0.001, 0.001, 3, null, null];
+    }
+
+    /**
+     * The back office checks the rules before the core to name the field by its label: the copy
+     * must accept and refuse exactly what the core does, or it drifts unnoticed.
+     */
+    #[DataProvider('limits')]
+    public function testTheCheckOfTheBackOfficeAgreesWithTheCore(float $minimum, float $step, int $decimals, ?float $content, ?float $reference): void
+    {
+        $text = static fn (?float $value): string => null === $value ? '' : rtrim(rtrim(number_format($value, 6, '.', ''), '0'), '.');
+
+        try {
+            new QuantityRule(minQuantity: $minimum, step: $step, decimals: $decimals, unitQuantity: $content, referenceUnitQuantity: $reference);
+            $coreAccepts = true;
+        } catch (InvalidQuantityRuleException) {
+            $coreAccepts = false;
+        }
+
+        try {
+            $this->submission()->read([
+                'min_quantity' => $text($minimum),
+                'quantity_step' => $text($step),
+                'quantity_decimals' => (string) $decimals,
+                'unit_quantity' => $text($content),
+                'reference_unit_quantity' => $text($reference),
+                'unit_code' => '',
+            ]);
+            $refusal = null;
+        } catch (InvalidQuantityRuleException $exception) {
+            $refusal = $exception->getMessage();
+        }
+
+        if ($coreAccepts) {
+            self::assertNull($refusal, 'The core accepts it, the back office refuses it: '.$refusal);
+        } else {
+            // The core refuses through the back office anyway: the refusal must be the back office's, which names the field by its label.
+            self::assertStringStartsWith('«', (string) $refusal, 'The core refuses it before the back office names the field: '.$refusal);
+        }
     }
 
     private function submission(): QuantityRuleSubmission

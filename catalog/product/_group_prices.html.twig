@@ -1,74 +1,93 @@
-{#- The prices the customer groups keep of their own for the combinations of the product.
-    An empty field is no price of its own: the catalog price applies to the group. -#}
+{#- The prices the customer groups keep of their own; an empty field shows in grey what the group pays from the catalog, a filled one is tinted. -#}
 {% set grid = group_prices %}
-<div class="card mb-3" data-testid="group-prices-section">
-    <div class="card-header">
-        <h2 class="h6 mb-1">{{ 'Prices per customer group'|trans }}</h2>
-        <p class="small text-muted mb-0">{{ 'An empty field means the group has no price of its own: the catalog price applies. Prices are without taxes.'|trans }}</p>
+<div class="bo-other-prices__panel" data-testid="group-prices-section">
+    <div class="bo-other-prices__head">
+        <h2 class="visually-hidden">{{ 'Prices per customer group'|trans }}</h2>
+        <div class="d-grid gap-2">
+            <p class="small text-muted mb-0">{{ 'An empty field keeps the catalog price, less the discount of the group. Prices are without taxes.'|trans }}</p>
+            <p class="alert alert-light border small d-flex align-items-baseline gap-2 py-2 px-3 mb-0" data-testid="group-prices-promo-note">
+                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                <span>{{ 'The sale price of a group always applies'|trans }} {{ 'as soon as it is below its price, even when the combination is not on promotion.'|trans }}</span>
+            </p>
+        </div>
     </div>
-    <div class="card-body">
-        <form method="post" action="{{ path('admin.product.group-prices.save') }}" data-testid="group-prices-form">
+    <div>
+        <form method="post" action="{{ path('admin.product.group-prices.save') }}" data-testid="group-prices-form" data-bo-unsaved-changes-target="form">
             <input type="hidden" name="_token" value="{{ assignToken() }}">
             <input type="hidden" name="product_id" value="{{ product.id }}">
             <input type="hidden" name="currency_id" value="{{ grid.currency_id }}">
 
             <div class="table-responsive">
-                <table class="table table-sm align-middle bo-combinations-grid" data-testid="group-prices-table">
+                <table class="table table-borderless bo-card-table bo-group-prices" data-testid="group-prices-table">
                     <thead class="table-light">
                         <tr>
-                            <th rowspan="2">{{ 'Combination'|trans }}</th>
-                            <th rowspan="2" class="text-end">{{ 'Catalog price'|trans }} ({{ currency.symbol }})</th>
+                            <th class="bo-group-prices__col-label"><span class="visually-hidden">{{ 'Combination'|trans }}</span></th>
+                            <th class="bo-group-prices__col-catalog">{{ 'Catalog'|trans }}</th>
                             {% for group in grid.groups %}
-                                <th colspan="2" class="text-center" data-testid="group-prices-group-{{ group.id }}">{{ group.label }}</th>
-                            {% endfor %}
-                        </tr>
-                        <tr>
-                            {% for group in grid.groups %}
-                                <th class="text-end">{{ 'Price'|trans }} ({{ currency.symbol }})</th>
-                                <th class="text-end">{{ 'Sale price'|trans }} ({{ currency.symbol }})</th>
+                                <th class="bo-group-prices__col-group" data-testid="group-prices-group-{{ group.id }}">
+                                    <div class="bo-group-prices__group">
+                                        <span class="bo-group-prices__group-name" title="{{ group.label }}">{{ group.label }}</span>
+                                        {% if group.discount > 0 %}
+                                            <span class="badge rounded-pill bg-success-subtle text-success-emphasis border border-success-subtle bo-group-prices__discount"
+                                                  data-bs-toggle="tooltip" title="{{ 'Discount of the group on the catalog price'|trans }}"
+                                                  data-testid="group-prices-discount-{{ group.id }}">−{{ group.discount|format_number }} %</span>
+                                        {% endif %}
+                                    </div>
+                                </th>
                             {% endfor %}
                         </tr>
                     </thead>
-                    <tbody>
-                        {% for row in grid.rows %}
-                            <tr data-testid="group-prices-row-{{ row.id }}">
-                                <td>
-                                    <small>{{ row.label == 'default' ? 'Default combination'|trans : row.label }}</small>
-                                    <small class="d-block text-muted">{{ row.ref }}</small>
-                                </td>
-                                <td class="text-end">
-                                    <small>{{ row.price ?? '-' }}</small>
-                                    {% if row.sale_price is not null and row.sale_price != row.price %}
-                                        <small class="d-block text-muted">{{ row.sale_price }}</small>
+                    {% for row in grid.rows %}
+                        <tbody data-testid="group-prices-row-{{ row.id }}">
+                            <tr>
+                                <td class="bo-card-table__item" colspan="{{ 2 + grid.groups|length }}">
+                                    <span class="fw-semibold">{{ row.label == 'default' ? 'Default combination'|trans : row.label }}</span>
+                                    <span class="small text-body-secondary ms-2">{{ row.ref }}</span>
+                                    {% if row.onsale %}
+                                        <span class="small fw-semibold text-primary ms-2" data-testid="group-prices-onsale-{{ row.id }}">{{ 'On promotion in the catalog'|trans }}</span>
                                     {% endif %}
                                 </td>
-                                {% for cell in row.cells %}
-                                    {% for field in cell.fields %}
-                                        <td class="text-end">
-                                            <input type="text" inputmode="decimal" autocomplete="off"
-                                                   name="group_price[{{ row.id }}][{{ cell.group_id }}][{{ field.name }}]" value="{{ field.value }}"
-                                                   placeholder="{{ field.placeholder }}"
-                                                   class="form-control form-control-sm text-end ms-auto bo-combinations-grid__number"
-                                                   aria-label="{{ (field.name == 'price' ? 'Price' : 'Sale price')|trans }} - {{ row.ref }}"
-                                                   data-testid="group-prices-{{ field.name }}-{{ row.id }}-{{ cell.group_id }}">
-                                            {% if field.hint %}
-                                                <small class="d-block text-muted" data-testid="group-prices-{{ field.name }}-source-{{ row.id }}-{{ cell.group_id }}">
-                                                    {{ field.hint|trans(field.hint_parameters) }}
-                                                </small>
-                                            {% endif %}
+                            </tr>
+                            {% for field_name in ['price', 'promo_price'] %}
+                                <tr>
+                                    <td class="bo-group-prices__row-label">
+                                        <span class="bo-group-prices__label">{{ (field_name == 'price' ? 'Price excl. taxes' : 'Sale price excl. taxes')|trans }}</span>
+                                    </td>
+                                    <td class="text-end bo-group-prices__catalog" data-testid="group-prices-catalog-{{ field_name == 'price' ? 'price' : 'promo' }}-{{ row.id }}">
+                                        {%- set catalog = field_name == 'price' ? row.price : (row.onsale ? row.sale_price : null) -%}
+                                        {{ catalog is not null ? catalog ~ ' ' ~ currency.symbol : '-' }}
+                                    </td>
+                                    {% for cell in row.cells %}
+                                        {% set field = cell.fields|filter(candidate => candidate.name == field_name)|first %}
+                                        <td>
+                                            <div class="input-group input-group-sm">
+                                                <input type="text" inputmode="decimal" autocomplete="off"
+                                                       name="group_price[{{ row.id }}][{{ cell.group_id }}][{{ field.name }}]" value="{{ field.value }}"
+                                                       placeholder="{{ field.placeholder ?? ' ' }}"
+                                                       {%- if field.hint %} title="{{ field.hint|trans(field.hint_parameters) }}"{% endif %}
+                                                       class="form-control text-end"
+                                                       aria-label="{{ (field.name == 'price' ? 'Price' : 'Sale price')|trans }} - {{ row.ref }}"
+                                                       data-testid="group-prices-{{ field.name }}-{{ row.id }}-{{ cell.group_id }}">
+                                                <span class="input-group-text">{{ currency.symbol }}</span>
+                                            </div>
                                         </td>
                                     {% endfor %}
-                                {% endfor %}
-                            </tr>
-                        {% endfor %}
-                    </tbody>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    {% endfor %}
                 </table>
             </div>
 
             {% if group_prices_can_edit|default(false) %}
-                <button type="submit" class="btn btn-primary" data-testid="group-prices-submit">
-                    <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save the customer group prices'|trans }}
-                </button>
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="submit" class="btn btn-primary" data-testid="group-prices-submit">
+                        <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save the customer group prices'|trans }}
+                    </button>
+                    <button type="reset" class="btn btn-outline-secondary bo-group-prices__discard" data-testid="group-prices-discard">
+                        <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> {{ 'Cancel the changes'|trans }}
+                    </button>
+                </div>
             {% endif %}
         </form>
     </div>

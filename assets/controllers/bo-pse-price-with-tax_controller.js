@@ -181,6 +181,8 @@ export default class extends Controller {
                 return true;
             }
             output.value = String(Number(result.toFixed(6)));
+            // Set by the script, the field fires no change: the line of the price per unit of measure listens for one.
+            output.dispatchEvent(new Event('change', { bubbles: true }));
             this.failures.delete(source);
             this.failures.delete(output);
             this.showError(this.failures.size > 0);

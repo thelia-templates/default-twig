@@ -243,8 +243,8 @@ final class ProductCombinationPositionTest extends WebIntegrationTestCase
         $sortable = $crawler->filter('table[data-testid="combinations-table"][data-controller~="bo-sortable"]');
         self::assertGreaterThan(0, $sortable->count(), 'The combinations table is not sortable.');
         self::assertSame('tbody[data-row-id]', $sortable->attr('data-bo-sortable-item-value'));
-        // combinationUpdate() reads these boxes by row index: a row moved without reload takes the index of its new place.
-        self::assertSame(['onsale', 'isnew', 'visible'], json_decode((string) $sortable->attr('data-bo-sortable-reindexed-fields-value'), true));
+        // Every field of the grid is named by its combination: a row moved without reload has nothing to renumber.
+        self::assertNull($sortable->attr('data-bo-sortable-reindexed-fields-value'));
 
         return (string) $sortable->attr('data-bo-sortable-token-value');
     }

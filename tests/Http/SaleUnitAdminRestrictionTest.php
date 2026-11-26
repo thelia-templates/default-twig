@@ -323,7 +323,8 @@ final class SaleUnitAdminRestrictionTest extends WebIntegrationTestCase
         $this->client->request('POST', '/admin/product/combinations/update', ['_token' => $token, 'product_id' => $product->getId(), 'price' => [$pse->getId() => '1'], 'quantity' => [$pse->getId() => '99']]);
         self::assertSame(403, $this->client->getResponse()->getStatusCode());
 
-        $this->client->request('POST', '/admin/product/default-price/update', ['_token' => $token, 'product_id' => $product->getId(), 'product_sale_element_id' => $pse->getId(), 'price' => '1', 'quantity' => '99']);
+        // Its line named, the way the grid posts the one line of a product without combination.
+        $this->client->request('POST', '/admin/product/combinations/update', ['_token' => $token, 'product_id' => $product->getId(), 'default_pse' => $pse->getId(), 'product_sale_element_id' => [$pse->getId()], 'price' => [$pse->getId() => '1'], 'quantity' => [$pse->getId() => '99']]);
         self::assertSame(403, $this->client->getResponse()->getStatusCode());
 
         foreach (['/admin/product/combination/add', '/admin/product/combination/build', '/admin/product/combination/delete', '/admin/product/product-sale-element-position', '/admin/products/create'] as $url) {

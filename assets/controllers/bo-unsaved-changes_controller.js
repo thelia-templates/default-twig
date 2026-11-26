@@ -33,6 +33,7 @@ export default class extends Controller {
         this.dirtyForms = new Set();
         this.pendingUrl = null;
         this.onFieldChange = (event) => this.fieldChanged(event);
+        this.onOutsideFieldChange = (event) => this.outsideFieldChanged(event);
         this.onSubmit = (event) => this.submitted(event);
         this.onReset = (event) => this.markClean(event.currentTarget);
         this.onLinkClick = (event) => this.guard(event);
@@ -46,12 +47,17 @@ export default class extends Controller {
         }
         // Heard once the submit has gone through the listeners of the form, which may hold it back.
         document.addEventListener('submit', this.onSubmit);
+        // A field outside its form (form="…") does not bubble through it.
+        this.element.addEventListener('input', this.onOutsideFieldChange);
+        this.element.addEventListener('change', this.onOutsideFieldChange);
     }
 
     disconnect() {
         this.linkTargets.forEach((link) => link.removeEventListener('click', this.onLinkClick));
         window.removeEventListener('beforeunload', this.onBeforeUnload);
         document.removeEventListener('submit', this.onSubmit);
+        this.element.removeEventListener('input', this.onOutsideFieldChange);
+        this.element.removeEventListener('change', this.onOutsideFieldChange);
     }
 
     formTargetConnected(form) {
@@ -78,6 +84,13 @@ export default class extends Controller {
             return;
         }
         this.markDirty(form);
+    }
+
+    outsideFieldChanged(event) {
+        const form = 'form' in event.target ? event.target.form : null;
+        if (form && this.formTargets.includes(form) && !form.contains(event.target)) {
+            this.markDirty(form);
+        }
     }
 
     markDirty(form) {

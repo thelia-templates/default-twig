@@ -1,0 +1,51 @@
+{#- The other prices under the grid, one tab each (only those with content); a save comes back to its tab (other_prices_tab). -#}
+{% set panels = [] %}
+{% if sale_unit_values|default(null) is not null %}
+    {% set panels = panels|merge([{ key: 'sale-units', label: 'Sale units'|trans, html: include('@BackOfficeDefaultTwig/catalog/product/_sale_unit_values.html.twig') }]) %}
+{% endif %}
+{% if group_prices|default(null) is not null %}
+    {% set panels = panels|merge([{ key: 'groups', label: 'Customer groups'|trans, html: include('@BackOfficeDefaultTwig/catalog/product/_group_prices.html.twig') }]) %}
+{% endif %}
+{% set display_panel = render(controller('BackOfficeDefaultTwigBundle\\Controller\\Catalog\\ProductPriceDisplayController::panel', { product_id: product.id })) %}
+{% if display_panel|trim is not empty %}
+    {% set panels = panels|merge([{ key: 'display', label: 'Display of the prices'|trans, html: display_panel }]) %}
+{% endif %}
+{% if is_granted('VIEW', 'admin.pricing') and is_granted('VIEW', 'admin.customer') %}
+    {% set effective_panel = render(controller('BackOfficeDefaultTwigBundle\\Controller\\Catalog\\ProductEffectivePriceController::panel', { product_id: product.id, currency_id: currency.id })) %}
+    {% if effective_panel|trim is not empty %}
+        {% set panels = panels|merge([{ key: 'effective', label: 'Effective prices'|trans, html: effective_panel }]) %}
+    {% endif %}
+{% endif %}
+
+{% if panels is not empty %}
+    {% set active = panels|filter(panel => panel.key == other_prices_tab|default(''))|first %}
+    {% set active_key = active ? active.key : (panels|first).key %}
+    <div class="card mb-3 bo-other-prices" id="other-prices" data-testid="other-prices-section" data-controller="bo-other-prices">
+        <div class="card-header">
+            <h2 class="h5 mb-0">{{ 'Other prices'|trans }}</h2>
+            <ul class="nav nav-tabs bo-other-prices__tabs" role="tablist" data-testid="other-prices-tabs">
+                {% for panel in panels %}
+                    <li class="nav-item" role="presentation">
+                        <button type="button" class="nav-link{{ panel.key == active_key ? ' active' }}" id="other-prices-{{ panel.key }}-tab"
+                                data-bs-toggle="tab" data-bs-target="#other-prices-{{ panel.key }}" role="tab"
+                                aria-controls="other-prices-{{ panel.key }}" aria-selected="{{ panel.key == active_key ? 'true' : 'false' }}"
+                                data-bo-other-prices-target="tab" data-testid="other-prices-tab-{{ panel.key }}">
+                            {{ panel.label }}
+                            <span class="bo-other-prices__dot" aria-hidden="true"></span>
+                            <span class="visually-hidden bo-other-prices__dot-label">{{ 'changed'|trans }}</span>
+                        </button>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="card-body tab-content">
+            {% for panel in panels %}
+                <div class="tab-pane{{ panel.key == active_key ? ' show active' }}" id="other-prices-{{ panel.key }}" role="tabpanel"
+                     aria-labelledby="other-prices-{{ panel.key }}-tab" tabindex="0"
+                     data-bo-other-prices-target="panel" data-testid="other-prices-panel-{{ panel.key }}">
+                    {{ panel.html|raw }}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endif %}

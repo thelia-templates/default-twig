@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace BackOfficeDefaultTwigBundle\Tests\Http;
 
+use BackOfficeDefaultTwigBundle\Tests\Support\CombinationGridFields;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
@@ -38,8 +39,7 @@ use Thelia\Tests\Support\BackOffice\AdminSessionInjector;
 final class ProductCombinationQuantityRulesTest extends WebIntegrationTestCase
 {
     private const GRID_URL = '/admin/product/combinations/update';
-    private const APPLY_TO_ALL_URL = '/admin/product/combinations/quantity-rules/add-to-all';
-    private const DEFAULT_URL = '/admin/product/default-price/update';
+    private const FORMER_APPLY_TO_ALL_URL = '/admin/product/combinations/quantity-rules/add-to-all';
     private const PREVIEW_URL = '/admin/product/calculate-reference-price';
 
     private AdminSessionInjector $injector;
@@ -74,7 +74,7 @@ final class ProductCombinationQuantityRulesTest extends WebIntegrationTestCase
         parent::tearDown();
     }
 
-    public function testAProductSoldByThePieceShowsTheTabAsBeforeWithTheSettingsOutOfSight(): void
+    public function testTheRulesOfEachCombinationAreInItsFoldWithoutASwitchNorAButton(): void
     {
         $this->loginFullAdmin();
         [$product, $first] = $this->productWithCombinations(1);
@@ -82,13 +82,16 @@ final class ProductCombinationQuantityRulesTest extends WebIntegrationTestCase
         $crawler = $this->client->request('GET', '/admin/products/combinations/tab?product_id='.$product->getId());
 
         self::assertSame(200, $this->client->getResponse()->getStatusCode());
-        self::assertNull($crawler->filter('[data-testid="combinations-quantity-rules-switch"]')->attr('checked'), 'The switch is off.');
-        self::assertNotNull($crawler->filter(\sprintf('[data-testid="combinations-quantity-rules-toggle-%d"]', $first->getId()))->attr('hidden'));
-        self::assertNotNull($crawler->filter('#pse-quantity-rules-'.$first->getId())->attr('hidden'), 'The panel is closed.');
-        self::assertSame('1', $crawler->filter(\sprintf('input[name="min_quantity[%d]"]', $first->getId()))->attr('value'));
-        self::assertSame('1', $crawler->filter(\sprintf('input[name="quantity_step[%d]"]', $first->getId()))->attr('value'));
-        self::assertSame('0', $crawler->filter(\sprintf('select[name="quantity_decimals[%d]"] option[selected]', $first->getId()))->attr('value'));
-        self::assertSame('', $crawler->filter(\sprintf('input[name="unit_quantity[%d]"]', $first->getId()))->attr('value'));
+        self::assertCount(0, $crawler->filter('[data-testid="combinations-quantity-rules-switch"]'), 'No switch: the rules are always in the fold.');
+        self::assertCount(0, $crawler->filter(\sprintf('[data-testid="combinations-quantity-rules-toggle-%d"]', $first->getId())), 'No button of their own among the actions.');
+        self::assertCount(0, $crawler->filter('#pse-quantity-rules-'.$first->getId()), 'No line of their own.');
+        $fold = $crawler->filter(\sprintf('tr#combination-%d-more[hidden] [data-testid="combinations-fold-quantities-%d"]', $first->getId(), $first->getId()));
+        self::assertCount(1, $fold, 'They are a section of the folded line.');
+        self::assertSame('1', $fold->filter(\sprintf('input[name="min_quantity[%d]"]', $first->getId()))->attr('value'));
+        self::assertSame('1', $fold->filter(\sprintf('input[name="quantity_step[%d]"]', $first->getId()))->attr('value'));
+        self::assertSame('0', $fold->filter(\sprintf('select[name="quantity_decimals[%d]"] option[selected]', $first->getId()))->attr('value'));
+        self::assertSame('', $fold->filter(\sprintf('input[name="unit_quantity[%d]"]', $first->getId()))->attr('value'));
+        self::assertCount(0, $crawler->filter('[data-testid^="quantity-rules-apply-to-all-"]'), 'Nothing gives the rules of one combination to every other.');
     }
 
     public function testAProductWithRulesShowsTheSettingsAndTheirValues(): void
@@ -99,7 +102,6 @@ final class ProductCombinationQuantityRulesTest extends WebIntegrationTestCase
 
         $crawler = $this->client->request('GET', '/admin/products/combinations/tab?product_id='.$product->getId());
 
-        self::assertNotNull($crawler->filter('[data-testid="combinations-quantity-rules-switch"]')->attr('checked'), 'The switch is on.');
         self::assertSame('2', $crawler->filter(\sprintf('input[name="min_quantity[%d]"]', $bottle->getId()))->attr('value'));
         self::assertSame('6', $crawler->filter(\sprintf('input[name="quantity_step[%d]"]', $bottle->getId()))->attr('value'));
         self::assertMatchesRegularExpression('/^0[.,]75$/', (string) $crawler->filter(\sprintf('input[name="unit_quantity[%d]"]', $bottle->getId()))->attr('value'));
@@ -107,22 +109,15 @@ final class ProductCombinationQuantityRulesTest extends WebIntegrationTestCase
         self::assertCount(9, $crawler->filter(\sprintf('select[name="unit_code[%d]"] option[value!=""]', $bottle->getId())), 'Every unit the core knows.');
     }
 
-    /**
-     * Switching "sold by measure" off puts the fields back to a sale by the piece (the
-     * controller bo-combination-quantity-rules posts these values): saved, the tab finds no
-     * rule left and renders the switch off.
-     */
-    public function testSavingTheDefaultsOfASaleByThePieceOverARuleBringsTheSwitchBackOff(): void
+    public function testTheAddressOfTheFormerApplyToEveryCombinationIsGone(): void
     {
         $this->loginFullAdmin();
-        [$product] = $this->productWithCombinations(1);
-        $bottle = $this->combinationOf($product, ['minQuantity' => 2, 'quantityStep' => 6, 'unitQuantity' => 0.75, 'referenceUnitQuantity' => 1, 'unitCode' => 'l']);
+        [$product, $source] = $this->productWithCombinations(1);
 
-        $this->postGrid($product, [[$bottle, ['min_quantity' => '1', 'quantity_step' => '1', 'quantity_decimals' => '0', 'unit_quantity' => '', 'reference_unit_quantity' => '', 'unit_code' => '']]]);
+        $this->postGrid($product, [[$source, ['quantity_step' => '6']]], self::FORMER_APPLY_TO_ALL_URL, ['quantity_rules_source' => $source->getId()]);
 
-        self::assertSame([], $this->flashes()['danger']);
-        $crawler = $this->client->request('GET', '/admin/products/combinations/tab?product_id='.$product->getId());
-        self::assertNull($crawler->filter('[data-testid="combinations-quantity-rules-switch"]')->attr('checked'));
+        self::assertSame(404, $this->client->getResponse()->getStatusCode());
+        self::assertSame('1.000000', $this->fresh($source)->getQuantityStep());
     }
 
     public function testTheGridSavesTheRulesOfEachRowWithoutShiftingThemToAnotherRow(): void
@@ -164,6 +159,7 @@ final class ProductCombinationQuantityRulesTest extends WebIntegrationTestCase
         $refusals = $this->flashes()['danger'];
         self::assertCount(1, $refusals, implode(' | ', $refusals));
         self::assertStringContainsString($refused->getRef(), $refusals[0]);
+        self::assertStringEndsWith('None of the changes of this combination were saved.', $refusals[0]);
         self::assertSame('1.000000', $this->fresh($refused)->getQuantityStep(), 'The refused row is not saved at all.');
         self::assertSame(7.0, (float) $this->fresh($refused)->getQuantity());
         self::assertSame('6.000000', $this->fresh($saved)->getQuantityStep());
@@ -201,81 +197,15 @@ final class ProductCombinationQuantityRulesTest extends WebIntegrationTestCase
         self::assertSame(7.0, (float) $this->fresh($combination)->getQuantity());
     }
 
-    public function testApplyingToEveryCombinationGivesTheTypedRulesToTheProductsCombinationsOnly(): void
-    {
-        $this->loginFullAdmin();
-        [$product, $source, $other] = $this->productWithCombinations(2);
-        [, $elsewhere] = $this->productWithCombinations(1);
-
-        $this->postGrid($product, [
-            [$source, ['min_quantity' => '2', 'quantity_step' => '6', 'unit_quantity' => '0,75', 'reference_unit_quantity' => '1', 'unit_code' => 'l']],
-            [$other, ['quantity' => 12]],
-            // An id of another product posted with the grid.
-            [$elsewhere, ['quantity' => 99]],
-        ], self::APPLY_TO_ALL_URL, ['quantity_rules_source' => $source->getId()]);
-
-        self::assertSame([], $this->flashes()['danger']);
-        self::assertSame(['2.000000', '6.000000', 0, '0.750000', '1.000000', 'l'], $this->ruleOf($this->fresh($source)));
-        self::assertSame(['2.000000', '6.000000', 0, '0.750000', '1.000000', 'l'], $this->ruleOf($this->fresh($other)));
-        self::assertSame(12.0, (float) $this->fresh($other)->getQuantity(), 'The rest of the grid is saved as typed.');
-
-        $elsewhere = $this->fresh($elsewhere);
-        self::assertSame(['1.000000', '1.000000', 0, null, null, null], $this->ruleOf($elsewhere), 'A combination of another product is left alone.');
-        self::assertSame(7.0, (float) $elsewhere->getQuantity());
-    }
-
-    public function testApplyingRulesTheCoreRefusesSavesNothing(): void
-    {
-        $this->loginFullAdmin();
-        [$product, $source, $other] = $this->productWithCombinations(2);
-
-        $this->postGrid($product, [
-            [$source, ['quantity_step' => '0', 'quantity' => 30]],
-            [$other, ['quantity' => 31]],
-        ], self::APPLY_TO_ALL_URL, ['quantity_rules_source' => $source->getId()]);
-
-        $refusals = $this->flashes()['danger'];
-        self::assertCount(1, $refusals);
-        self::assertStringContainsString($source->getRef(), $refusals[0]);
-        self::assertSame(7.0, (float) $this->fresh($other)->getQuantity());
-    }
-
-    public function testApplyingFromACombinationOfAnotherProductWritesNothing(): void
-    {
-        $this->loginFullAdmin();
-        [$product, $combination] = $this->productWithCombinations(1);
-        [, $elsewhere] = $this->productWithCombinations(1);
-
-        $this->postGrid($product, [[$combination, ['quantity_step' => '6', 'quantity' => 30]]], self::APPLY_TO_ALL_URL, ['quantity_rules_source' => $elsewhere->getId()]);
-
-        self::assertTrue($this->client->getResponse()->isRedirection());
-        self::assertSame('1.000000', $this->fresh($combination)->getQuantityStep());
-        self::assertSame(7.0, (float) $this->fresh($combination)->getQuantity());
-    }
-
-    public function testApplyingWithoutTheTokenWritesNothing(): void
-    {
-        $this->loginFullAdmin();
-        [$product, $source, $other] = $this->productWithCombinations(2);
-
-        $this->postGrid($product, [
-            [$source, ['quantity_step' => '6']],
-            [$other, []],
-        ], self::APPLY_TO_ALL_URL, ['quantity_rules_source' => $source->getId(), '_token' => 'forged']);
-
-        self::assertNotSame(302, $this->client->getResponse()->getStatusCode());
-        self::assertSame('1.000000', $this->fresh($other)->getQuantityStep());
-    }
-
-    public function testTheDefaultFormSavesTheRulesAndRefusesAnInvalidOne(): void
+    public function testAProductWithoutCombinationSavesTheRulesAndRefusesAnInvalidOne(): void
     {
         $this->loginFullAdmin();
         [$product, $pse] = $this->productWithoutCombination();
 
-        $this->postDefault($product, $pse, ['min_quantity' => '0,25', 'quantity_step' => '0,25', 'quantity_decimals' => '2', 'unit_code' => 'kg', 'reference_unit_quantity' => '1', 'unit_quantity' => '']);
+        $this->postSimpleProduct($product, $pse, ['min_quantity' => '0,25', 'quantity_step' => '0,25', 'quantity_decimals' => '2', 'unit_code' => 'kg', 'reference_unit_quantity' => '1', 'unit_quantity' => '']);
         self::assertSame(['0.250000', '0.250000', 2, null, '1.000000', 'kg'], $this->ruleOf($this->fresh($pse)));
 
-        $this->postDefault($product, $pse, ['quantity_decimals' => '4', 'quantity' => 99]);
+        $this->postSimpleProduct($product, $pse, ['quantity_decimals' => '4', 'quantity' => 99]);
         $refusals = $this->flashes()['danger'];
         self::assertCount(1, $refusals);
         self::assertStringContainsString($pse->getRef(), $refusals[0]);
@@ -301,6 +231,74 @@ final class ProductCombinationQuantityRulesTest extends WebIntegrationTestCase
         self::assertSame(13.32, $payload['result']);
         self::assertStringContainsString('13', (string) $payload['formatted']);
         self::assertStringEndsWith(' / l', (string) $payload['formatted']);
+    }
+
+    public function testThePreviewWritesTheLineOfACombinationSoldByMeasureAndOfOneSoldWithAContent(): void
+    {
+        $this->loginFullAdmin();
+        $query = ['price' => '9.99', 'tax_rule_id' => 0, 'currency_id' => $this->defaultCurrency()->getId(), 'unit_quantity' => '0,75', 'reference_unit_quantity' => '1', 'unit_code' => 'l'];
+
+        $this->client->request('GET', self::PREVIEW_URL, $query + ['min_quantity' => '0,5', 'quantity_step' => '0,25', 'quantity_decimals' => '2']);
+        $line = json_decode((string) $this->client->getResponse()->getContent(), true)['line'];
+        self::assertSame(['Price per unit of measure', 'Order'], array_column($line, 'label'), 'Sold by measure: no content.');
+        self::assertStringEndsWith(' / l incl. taxes', $line[0]['value']);
+        self::assertSame('from 0.50 l, by 0.25 l', $line[1]['value']);
+
+        $this->client->request('GET', self::PREVIEW_URL, $query + ['min_quantity' => '6', 'quantity_step' => '6', 'quantity_decimals' => '0', 'on_sale' => '1']);
+        $line = json_decode((string) $this->client->getResponse()->getContent(), true)['line'];
+        self::assertSame(['Price per unit of measure', 'Content', 'Order'], array_column($line, 'label'));
+        self::assertStringEndsWith('incl. taxes (sale price)', $line[0]['value']);
+        self::assertStringStartsWith('0', $line[1]['value']);
+        self::assertSame('from 6, by 6', $line[2]['value']);
+
+        $this->client->request('GET', self::PREVIEW_URL, $query + ['min_quantity' => '1', 'quantity_step' => '1', 'quantity_decimals' => '0']);
+        $line = json_decode((string) $this->client->getResponse()->getContent(), true)['line'];
+        self::assertSame(['Price per unit of measure', 'Content'], array_column($line, 'label'), 'From 1, by 1 goes without saying.');
+
+        $this->client->request('GET', self::PREVIEW_URL, ['unit_code' => ''] + $query);
+        self::assertNull(json_decode((string) $this->client->getResponse()->getContent(), true)['line'], 'Without a unit, no line.');
+    }
+
+    public function testTheLineOfTheReferencePriceAndTheUnitOfTheStockShowOnlyForACombinationWithAUnit(): void
+    {
+        $this->loginFullAdmin();
+        [$product, $piece] = $this->productWithCombinations(1);
+        $weighed = $this->combinationOf($product, ['quantityDecimals' => 2, 'unitQuantity' => 1, 'referenceUnitQuantity' => 1, 'unitCode' => 'kg']);
+
+        $crawler = $this->client->request('GET', '/admin/products/combinations/tab?product_id='.$product->getId());
+
+        self::assertNotNull($crawler->filter(\sprintf('[data-testid="combinations-reference-line-%d"]', $piece->getId()))->attr('hidden'));
+        self::assertNotNull($crawler->filter(\sprintf('[data-testid="combinations-stock-unit-%d"]', $piece->getId()))->attr('hidden'));
+        $line = $crawler->filter(\sprintf('[data-testid="combinations-reference-line-%d"]', $weighed->getId()));
+        self::assertNull($line->attr('hidden'), 'A combination sold with a unit has its line.');
+        self::assertStringContainsString('Price per unit of measure', $line->text(), 'Written by the server: shown at once, without a request per combination.');
+        self::assertStringContainsString(' / kg incl. taxes', $line->text());
+        self::assertCount(1, $line->filter('[data-action="bo-combination-band#openRules"]'), 'It opens the fold on the quantities.');
+        $unit = $crawler->filter(\sprintf('[data-testid="combinations-stock-unit-%d"]', $weighed->getId()));
+        self::assertNull($unit->attr('hidden'));
+        self::assertSame('kg', trim($unit->text()));
+        self::assertSame('kg', $crawler->filter(\sprintf('select[name="unit_code[%d]"] option[value="kg"]', $weighed->getId()))->attr('data-symbol'));
+    }
+
+    public function testTheRulesAreCheckedOnChangeSoThatABulkFillIsCheckedToo(): void
+    {
+        $this->loginFullAdmin();
+        [, $combination] = $this->productWithCombinations(1);
+        $crawler = $this->client->request('GET', '/admin/products/combinations/tab?product_id='.$combination->getProductId());
+
+        foreach (['min_quantity', 'quantity_step', 'unit_quantity', 'reference_unit_quantity'] as $field) {
+            $action = (string) $crawler->filter(\sprintf('input[name="%s[%d]"]', $field, $combination->getId()))->attr('data-action');
+            self::assertStringContainsString('change->bo-pse-reference-price#compute', $action, $field.': the bulk edit sends change, never blur.');
+        }
+    }
+
+    public function testAnArticleSoldByThePieceWithoutAContentHasNoLine(): void
+    {
+        $writer = $this->getService(\BackOfficeDefaultTwigBundle\Service\Product\ReferencePriceLineWriter::class);
+        $price = new \Thelia\Domain\Catalog\Quantity\ReferenceUnitPrice(10.0, 1.0, \Thelia\Domain\Catalog\Quantity\UnitCode::LITRE);
+
+        self::assertNull($writer->write(new \Thelia\Domain\Catalog\Quantity\QuantityRule(unitCode: \Thelia\Domain\Catalog\Quantity\UnitCode::LITRE), $price, 'en_US', 'EUR', false), 'Never "Content: 0 l".');
+        self::assertNotNull($writer->write(new \Thelia\Domain\Catalog\Quantity\QuantityRule(unitQuantity: 0.75, referenceUnitQuantity: 1.0, unitCode: \Thelia\Domain\Catalog\Quantity\UnitCode::LITRE), $price, 'en_US', 'EUR', false));
     }
 
     public function testThePreviewWritesTheUnitOfAReferenceQuantityOfAnArticleSoldByThePiece(): void
@@ -329,10 +327,18 @@ final class ProductCombinationQuantityRulesTest extends WebIntegrationTestCase
         $this->loginFullAdmin();
 
         $this->client->request('GET', self::PREVIEW_URL, ['price' => '9.99', 'unit_quantity' => '0,75', 'reference_unit_quantity' => '1', 'unit_code' => '']);
-        self::assertSame(['result' => null, 'formatted' => null], json_decode((string) $this->client->getResponse()->getContent(), true));
+        self::assertSame(['result' => null, 'formatted' => null, 'line' => null], json_decode((string) $this->client->getResponse()->getContent(), true));
 
         $this->client->request('GET', self::PREVIEW_URL, ['price' => '9.99', 'unit_quantity' => 'abc', 'reference_unit_quantity' => '1', 'unit_code' => 'l']);
         self::assertSame(422, $this->client->getResponse()->getStatusCode());
+
+        // A combination sold by the piece, not priced yet: no line, but its rules are still checked.
+        $noUnit = ['price' => '', 'unit_quantity' => '', 'reference_unit_quantity' => '', 'unit_code' => '', 'min_quantity' => '1', 'quantity_decimals' => '0'];
+        $this->client->request('GET', self::PREVIEW_URL, $noUnit + ['quantity_step' => '0,5']);
+        self::assertSame(422, $this->client->getResponse()->getStatusCode());
+        self::assertStringContainsString('Sold by', (string) json_decode((string) $this->client->getResponse()->getContent(), true)['error']);
+        $this->client->request('GET', self::PREVIEW_URL, $noUnit + ['quantity_step' => '1']);
+        self::assertSame(['result' => null, 'formatted' => null, 'line' => null], json_decode((string) $this->client->getResponse()->getContent(), true));
     }
 
     public function testAnAdministratorWhoMayOnlyViewProductsIsRefusedEveryWrite(): void
@@ -350,18 +356,15 @@ final class ProductCombinationQuantityRulesTest extends WebIntegrationTestCase
             '_token' => $gridToken,
             'product_id' => $product->getId(),
             'product_sale_element_id' => [$source->getId()],
-            'reference' => [$source->getRef()],
-            'quantity' => [7],
+            'reference' => [$source->getId() => $source->getRef()],
+            'quantity' => [$source->getId() => 7],
             'quantity_step' => [$source->getId() => '6'],
-            'quantity_rules_source' => $source->getId(),
         ];
 
-        foreach ([self::GRID_URL, self::APPLY_TO_ALL_URL] as $url) {
-            $this->client->request('POST', $url, $grid);
-            self::assertSame(403, $this->client->getResponse()->getStatusCode(), $url);
-        }
+        $this->client->request('POST', self::GRID_URL, $grid);
+        self::assertSame(403, $this->client->getResponse()->getStatusCode());
 
-        $this->client->request('POST', self::DEFAULT_URL, ['_token' => $gridToken, 'product_id' => $default->getProductId(), 'product_sale_element_id' => $default->getId(), 'quantity_step' => '6', 'quantity' => 7]);
+        $this->client->request('POST', self::GRID_URL, ['_token' => $gridToken, 'product_id' => $default->getProductId(), 'default_pse' => $default->getId()] + CombinationGridFields::of([[$default, ['quantity_step' => '6', 'quantity' => 7]]]));
         self::assertSame(403, $this->client->getResponse()->getStatusCode());
 
         self::assertSame('1.000000', $this->fresh($source)->getQuantityStep());
@@ -421,7 +424,7 @@ final class ProductCombinationQuantityRulesTest extends WebIntegrationTestCase
 
         $crawler = $this->client->request('GET', '/admin/products/combinations/tab?product_id='.$product->getId());
 
-        $preview = $crawler->filter('#pse-quantity-rules-'.$bottle->getId());
+        $preview = $crawler->filter(\sprintf('tbody[data-row-id="%d"]', $bottle->getId()));
         foreach (['sale-price-selector', 'on-sale-selector', 'price-selector'] as $name) {
             $selector = (string) $preview->attr('data-bo-pse-reference-price-'.$name.'-value');
             self::assertNotSame('', $selector, $name.' is declared.');
@@ -446,8 +449,8 @@ final class ProductCombinationQuantityRulesTest extends WebIntegrationTestCase
     }
 
     /**
-     * Posts the grid as the page posts it: the columns of the grid as parallel arrays, the
-     * quantity rules keyed by the id of their combination. A row given null posts no rule.
+     * Posts the grid as the page posts it: every field named by the id of its combination.
+     * A row given null posts no rule.
      *
      * @param list<array{ProductSaleElements, array<string, mixed>|null}> $rows
      * @param array<string, mixed>                                        $extra
@@ -464,11 +467,11 @@ final class ProductCombinationQuantityRulesTest extends WebIntegrationTestCase
         foreach ($rows as [$pse, $values]) {
             $id = (int) $pse->getId();
             $payload['product_sale_element_id'][] = $id;
-            $payload['reference'][] = $pse->getRef();
-            $payload['quantity'][] = $values['quantity'] ?? $pse->getQuantity();
-            $payload['ean_code'][] = '';
-            $payload['mpn'][] = '';
-            $payload['manufacturer_brand_id'][] = 0;
+            $payload['reference'][$id] = $pse->getRef();
+            $payload['quantity'][$id] = $values['quantity'] ?? $pse->getQuantity();
+            $payload['ean_code'][$id] = '';
+            $payload['mpn'][$id] = '';
+            $payload['manufacturer_brand_id'][$id] = 0;
 
             if ($values === null) {
                 continue;
@@ -485,16 +488,14 @@ final class ProductCombinationQuantityRulesTest extends WebIntegrationTestCase
     /**
      * @param array<string, mixed> $values
      */
-    private function postDefault(Product $product, ProductSaleElements $pse, array $values): void
+    private function postSimpleProduct(Product $product, ProductSaleElements $pse, array $values): void
     {
-        $this->client->request('POST', self::DEFAULT_URL, $values + [
-            '_token' => $this->tokenOf($product, 'default-pse-form'),
+        $this->client->request('POST', self::GRID_URL, [
+            '_token' => $this->tokenOf($product, 'combinations-form'),
             'product_id' => $product->getId(),
-            'product_sale_element_id' => $pse->getId(),
-            'reference' => $pse->getRef(),
             'tax_rule' => $product->getTaxRuleId(),
-            'quantity' => 7,
-        ]);
+            'default_pse' => $pse->getId(),
+        ] + CombinationGridFields::of([[$pse, $values + ['reference' => $pse->getRef(), 'quantity' => 7]]]));
 
         self::assertSame(302, $this->client->getResponse()->getStatusCode());
     }

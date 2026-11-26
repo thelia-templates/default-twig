@@ -24,12 +24,10 @@ use Thelia\Model\SaleUnitProductPrice;
  * its place: the unit's price in the default currency converted, else the national value.
  * A shop without any sale unit gets no section at all.
  *
- * Each field carries the hint shown under it as a translation key and its parameters.
+ * A field whose placeholder is not the national value says where it comes from, as a translation key and its parameters.
  */
 final readonly class SaleUnitValuesContextBuilder
 {
-    public const HINT_NATIONAL = 'National value';
-    public const HINT_NATIONAL_WAS = 'National: %value%';
     public const HINT_CONVERTED = 'Converted from %currency%';
     public const HINT_SAME_AS_PRICE = 'Same as the price';
 
@@ -91,9 +89,13 @@ final readonly class SaleUnitValuesContextBuilder
                 'id' => $pseId,
                 'label' => (string) $row['label'],
                 'ref' => (string) $row['ref'],
+                'price' => self::number($row['price'] ?? null),
+                'sale_price' => self::number($row['sale_price'] ?? null),
+                'quantity' => self::number($row['quantity'] ?? null),
+                'onsale' => (bool) ($row['onsale'] ?? false),
                 'fields' => [
                     $this->priceField($own, $fromDefault, $rate, $defaultCode, $row['price'] ?? null),
-                    $this->promoPriceField($own, $fromDefault, $rate, $defaultCode, $row['sale_price'] ?? null),
+                    $this->promoPriceField($own, $fromDefault, $rate, $defaultCode, $row['sale_price'] ?? null, (bool) ($row['onsale'] ?? false)),
                     self::field('quantity', self::number($stock?->getQuantity()), self::number($row['quantity'] ?? null)),
                 ],
             ];
@@ -129,8 +131,15 @@ final readonly class SaleUnitValuesContextBuilder
      *
      * @return array<string, mixed>
      */
-    private function promoPriceField(?SaleUnitProductPrice $own, ?SaleUnitProductPrice $fromDefault, float $rate, string $defaultCode, mixed $national): array
+    private function promoPriceField(?SaleUnitProductPrice $own, ?SaleUnitProductPrice $fromDefault, float $rate, string $defaultCode, mixed $national, bool $onSale): array
     {
+        // Off sale, the promo price of the unit applies to nothing: an empty field shows nothing in its place.
+        if (!$onSale) {
+            $promo = null === $own ? null : self::number($own->getPromoPrice());
+
+            return self::field('promo_price', $promo === self::number($own?->getPrice()) ? null : $promo, null);
+        }
+
         if (null !== $own) {
             $price = self::number($own->getPrice());
             $promo = self::number($own->getPromoPrice());
@@ -152,14 +161,8 @@ final readonly class SaleUnitValuesContextBuilder
      *
      * @return array{name: string, value: ?string, placeholder: ?string, hint: string, hint_parameters: array<string, string>}
      */
-    private static function field(string $name, ?string $value, ?string $fallback, ?string $hint = null, array $hintParameters = []): array
+    private static function field(string $name, ?string $value, ?string $fallback, string $hint = '', array $hintParameters = []): array
     {
-        if (null === $hint) {
-            [$hint, $hintParameters] = null === $value
-                ? [self::HINT_NATIONAL, []]
-                : [self::HINT_NATIONAL_WAS, ['%value%' => $fallback ?? '-']];
-        }
-
         return [
             'name' => $name,
             'value' => $value,

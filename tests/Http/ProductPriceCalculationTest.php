@@ -23,6 +23,7 @@ use Thelia\Model\Currency;
 use Thelia\Model\CurrencyQuery;
 use Thelia\Model\LangQuery;
 use Thelia\Model\Product;
+use Thelia\Model\ProductSaleElementsQuery;
 use Thelia\Model\TaxRule;
 use Thelia\Model\TaxRuleCountry;
 use Thelia\Test\FixtureFactory;
@@ -116,10 +117,39 @@ final class ProductPriceCalculationTest extends WebIntegrationTestCase
     public function testThePriceFormOfAProductSendsItsProduct(): void
     {
         $crawler = $this->client->request('GET', '/admin/products/combinations/tab?product_id='.$this->product->getId());
-        $form = $crawler->filter('form[data-testid="default-pse-form"]');
+        $form = $crawler->filter('form[data-testid="combinations-form"]');
 
-        self::assertGreaterThan(0, $form->count(), 'A product without combinations shows its price form.');
+        self::assertGreaterThan(0, $form->count(), 'A product without combinations shows the grid of its one line.');
         self::assertSame((string) $this->product->getId(), $form->attr('data-bo-pse-price-with-tax-product-id-value'));
+    }
+
+    public function testThePricePerUnitOfMeasureIsTaxedWithTheFeatureOfTheProductSent(): void
+    {
+        $this->client->request('GET', '/admin/product/calculate-reference-price', [
+            'price' => 10,
+            'tax_rule_id' => $this->taxRule->getId(),
+            'currency_id' => $this->defaultCurrency()->getId(),
+            'product_id' => $this->product->getId(),
+            'unit_quantity' => '1',
+            'reference_unit_quantity' => '1',
+            'unit_code' => 'kg',
+        ]);
+
+        self::assertResponseIsSuccessful();
+        self::assertSame(12.5, (float) $this->answer()['result'], 'Taxed like the price with taxes of the grid, eco-tax included.');
+    }
+
+    public function testTheLineOfACombinationSoldByMeasureIsTaxedWithTheFeatureOfItsProduct(): void
+    {
+        $combination = ProductSaleElementsQuery::create()->filterByProductId($this->product->getId())->findOne($this->getPropelConnection());
+        self::assertNotNull($combination);
+        $combination->setQuantityDecimals(2)->setUnitQuantity('1')->setReferenceUnitQuantity('1')->setUnitCode('kg')->save($this->getPropelConnection());
+
+        $crawler = $this->client->request('GET', '/admin/products/combinations/tab?product_id='.$this->product->getId());
+
+        $row = $crawler->filter(\sprintf('tbody[data-row-id="%d"]', $combination->getId()));
+        self::assertSame((string) $this->product->getId(), $row->attr('data-bo-pse-reference-price-product-id-value'), 'The preview sends the product too.');
+        self::assertStringContainsString('12.50', $crawler->filter(\sprintf('[data-testid="combinations-reference-line-%d"]', $combination->getId()))->text());
     }
 
     private function converted(float $price, string $action, ?Product $product): float

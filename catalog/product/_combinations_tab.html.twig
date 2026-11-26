@@ -1,41 +1,48 @@
-<div data-testid="product-combinations-tab" data-controller="bo-combination-quantity-rules">
+<div data-testid="product-combinations-tab">
     {{ safe_hook('product.combinations-tab.top', { product: product.id }) }}
 
     <div class="card mb-3 bo-combinations-card" data-testid="product-combinations-section"
          {%- if has_combinations %}
-         data-controller="bo-bulk-select bo-combinations-bulk-edit"
+         data-controller="bo-bulk-select bo-combinations-bulk-edit bo-combination-folds"
          data-bo-combinations-bulk-edit-active-class="bo-combinations-card--bulk"
          data-bo-combinations-bulk-edit-folded-class="bo-side-panel--folded"
          data-bo-combinations-bulk-edit-bo-pse-price-with-tax-outlet="form[data-testid='combinations-form']"
          {%- endif %}>
         <div class="card-header d-flex justify-content-between align-items-end gap-2 flex-wrap">
             {% if available_currencies|default([])|length > 1 %}
-                <div data-testid="combinations-currency-wrapper">
-                    <label class="form-label mb-1" for="combinations-currency-switcher">{{ 'Prices in currency'|trans }}</label>
-                    <select class="form-select form-select-sm" style="width:auto" id="combinations-currency-switcher"
-                            data-testid="combinations-currency-switcher"
-                            onchange="window.location.assign(this.value)">
-                        {% for option in available_currencies %}
-                            <option value="{{ path('admin.products.update', { product_id: product.id, current_tab: 'pse', combinations_currency_id: option.id, sale_unit_id: sale_unit_values.sale_unit.id|default(null) }) }}"{% if option.id == currency.id %} selected{% endif %}>{{ option.code }} ({{ option.symbol }})</option>
-                        {% endfor %}
-                    </select>
+                <div class="d-flex flex-wrap align-items-end gap-3">
+                    <div data-testid="combinations-currency-wrapper">
+                        <label class="form-label mb-1" for="combinations-currency-switcher">{{ 'Prices in currency'|trans }}</label>
+                        <select class="form-select form-select-sm" style="width:auto" id="combinations-currency-switcher"
+                                data-testid="combinations-currency-switcher"
+                                onchange="window.location.assign(this.value)">
+                            {% for option in available_currencies %}
+                                <option value="{{ path('admin.products.update', { product_id: product.id, current_tab: 'pse', combinations_currency_id: option.id, sale_unit_id: sale_unit_values.sale_unit.id|default(null) }) }}"{% if option.id == currency.id %} selected{% endif %}>{{ option.code }} ({{ option.symbol }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% if not currency.is_default and (has_combinations or default_pse is not null) %}
+                        <div class="form-check mb-1" data-testid="combinations-use-exchange-rate-wrapper">
+                            <input class="form-check-input" type="checkbox" id="combinations-use-exchange-rate" name="use_exchange_rate" value="1" form="combinations-form" data-testid="combinations-use-exchange-rate">
+                            <label class="form-check-label" for="combinations-use-exchange-rate">
+                                {{ 'Convert prices from the default currency using the exchange rate'|trans }}
+                            </label>
+                        </div>
+                    {% endif %}
                 </div>
             {% else %}
                 <span></span>
             {% endif %}
 
-            {# Out of sight while every combination sells by the piece, from one, one by one. #}
-            <div class="form-check form-switch mb-1" data-testid="combinations-quantity-rules-switch-wrapper">
-                <input class="form-check-input" type="checkbox" role="switch" id="combinations-quantity-rules-switch"
-                       data-bo-combination-quantity-rules-target="switch"
-                       data-action="change->bo-combination-quantity-rules#toggle"
-                       data-testid="combinations-quantity-rules-switch"{{ has_quantity_rules ? ' checked' }}>
-                <label class="form-check-label" for="combinations-quantity-rules-switch">{{ 'Sold by measure, by pack or from a minimum'|trans }}</label>
-            </div>
-
             {% if has_combinations or template_attributes is not empty %}
                 <div class="d-flex flex-wrap gap-2" data-testid="combinations-toolbar">
                     {% if has_combinations %}
+                        <div class="form-check form-switch mb-0 align-self-center">
+                            <input class="form-check-input" type="checkbox" role="switch" id="combinations-folds-toggle"
+                                   data-bo-combination-folds-target="toggle" data-action="change->bo-combination-folds#toggleAll"
+                                   data-testid="combinations-folds-toggle">
+                            <label class="form-check-label" for="combinations-folds-toggle">{{ 'Show every field'|trans }}</label>
+                        </div>
                         <button type="button" class="btn btn-outline-secondary" aria-controls="combinations-bulk-panel" aria-expanded="false"
                                 data-bo-combinations-bulk-edit-target="toggle" data-action="bo-combinations-bulk-edit#toggle"
                                 data-testid="combinations-bulk-toggle">
@@ -44,6 +51,9 @@
                         </button>
                     {% endif %}
                     {% if template_attributes is not empty %}
+                        {% if not has_combinations and default_pse is not null %}
+                            <span class="small text-body-secondary align-self-center" data-testid="combinations-empty-hint">{{ 'This product has no combination yet: the line below sets its price and its stock.'|trans }}</span>
+                        {% endif %}
                         <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#combination-creation-modal" data-testid="combination-create-btn">
                             <i class="bi bi-plus-circle" aria-hidden="true"></i> {{ 'Add a combination'|trans }}
                         </button>
@@ -56,8 +66,14 @@
         </div>
 
         <div class="card-body">
-            {% if has_combinations %}
-                <form method="post" action="{{ path('admin.product.combination.update') }}" data-testid="combinations-form"
+            {# A product without combination: a grid of one line, its default combination. #}
+            {% set simple = not has_combinations %}
+            {% if simple and default_pse is null %}
+                <div class="alert alert-warning" data-testid="default-pse-missing">
+                    {{ 'No default product sale element. Please contact your administrator.'|trans }}
+                </div>
+            {% else %}
+                <form method="post" action="{{ path('admin.product.combination.update') }}" id="combinations-form" data-testid="combinations-form"
                       data-bo-unsaved-changes-target="form"
                       data-controller="bo-pse-price-with-tax bo-combination-default"
                       data-bo-pse-price-with-tax-calc-url-value="{{ path('admin.product.calculate-price') }}"
@@ -67,50 +83,61 @@
                     <input type="hidden" name="_token" value="{{ assignToken() }}">
                     <input type="hidden" name="product_id" value="{{ product.id }}">
                     <input type="hidden" name="currency" value="{{ currency.id }}">
-                    <input type="hidden" name="visible_sent" value="1">
-
-                    <div class="row g-3 mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label required" for="combinations-tax-rule">
-                                <span class="bo-form-label__text">{{ 'Tax rule'|trans }}</span><span class="bo-form-label__required" aria-hidden="true">*</span>
-                            </label>
-                            <select class="form-select" id="combinations-tax-rule" name="tax_rule" required data-testid="combinations-tax-rule"
-                                    data-bo-pse-price-with-tax-target="taxRule" data-action="change->bo-pse-price-with-tax#onTaxRuleChange">
-                                <option value="">{{ 'Select a tax rule'|trans }}</option>
-                                {% for rule in tax_rules %}
-                                    <option value="{{ rule.id }}" {% if rule.id == tax_rule_id %}selected{% endif %}>{{ rule.title }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-
-                    {% if available_currencies|default([])|length > 1 and not currency.is_default %}
-                        <div class="form-check form-switch mb-2" data-testid="combinations-use-exchange-rate-wrapper">
-                            <input class="form-check-input" type="checkbox" id="combinations-use-exchange-rate" name="use_exchange_rate" value="1" data-testid="combinations-use-exchange-rate">
-                            <label class="form-check-label" for="combinations-use-exchange-rate">
-                                {{ 'Convert prices from the default currency using the exchange rate'|trans }}
-                            </label>
-                        </div>
-                    {% else %}
-                        <input type="hidden" name="use_exchange_rate" value="0">
+                    {% if not simple %}
+                        <input type="hidden" name="visible_sent" value="1">
                     {% endif %}
 
-                    {{ safe_hook('product.before-combinations', { location: 'product_before_combinations' }) }}
-                    {{ safe_hook('product.combinations-list-caption', { location: 'product_combinations_list_caption' }) }}
-
-                    <div id="combinations-sort-failure" data-testid="combinations-sort-failure" hidden>
-                        <div class="alert alert-danger d-flex align-items-center gap-2" role="alert">
-                            <span>{{ 'The new order of the combinations was not saved.'|trans }}</span>
-                            <a class="btn btn-sm btn-outline-danger" href="{{ path('admin.products.update', { product_id: product.id, current_tab: 'pse', combinations_currency_id: currency.id, sale_unit_id: sale_unit_values.sale_unit.id|default(null) }) }}">{{ 'Reload the grid'|trans }}</a>
-                        </div>
+                    <div class="mb-3 bo-combinations-tax-rule">
+                        <label class="form-label required" for="combinations-tax-rule">
+                            <span class="bo-form-label__text">{{ 'Tax rule'|trans }}</span><span class="bo-form-label__required" aria-hidden="true">*</span>
+                        </label>
+                        <select class="form-select" id="combinations-tax-rule" name="tax_rule" required data-testid="combinations-tax-rule"
+                                data-bo-pse-price-with-tax-target="taxRule" data-action="change->bo-pse-price-with-tax#onTaxRuleChange">
+                            <option value="">{{ 'Select a tax rule'|trans }}</option>
+                            {% for rule in tax_rules %}
+                                <option value="{{ rule.id }}" {% if rule.id == tax_rule_id %}selected{% endif %}>{{ rule.title }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
+
+                    {% if not simple %}
+                        {{ safe_hook('product.before-combinations', { location: 'product_before_combinations' }) }}
+                        {{ safe_hook('product.combinations-list-caption', { location: 'product_combinations_list_caption' }) }}
+
+                        <div id="combinations-sort-failure" data-testid="combinations-sort-failure" hidden>
+                            <div class="alert alert-danger d-flex align-items-center gap-2" role="alert">
+                                <span>{{ 'The new order of the combinations was not saved.'|trans }}</span>
+                                <a class="btn btn-sm btn-outline-danger" href="{{ path('admin.products.update', { product_id: product.id, current_tab: 'pse', combinations_currency_id: currency.id, sale_unit_id: sale_unit_values.sale_unit.id|default(null) }) }}">{{ 'Reload the grid'|trans }}</a>
+                            </div>
+                        </div>
+                    {% endif %}
 
                     <div class="alert alert-danger" role="alert" data-bo-pse-price-with-tax-target="error" data-testid="combinations-price-error" hidden>
                         {{ 'The price could not be converted with the tax rule. Type the price without taxes, or try again.'|trans }}
                     </div>
 
-                    <div class="table-responsive">
-                        <table class="table table-borderless bo-combinations-grid" data-testid="combinations-table"
+                    {# Also read by bo-combination-band. #}
+                    {% set band_texts = {
+                        unlimited: 'Sellable without limit'|trans,
+                        pre: 'Sellable: %available% on preorder'|trans,
+                        none: 'Sellable: 0'|trans,
+                        held: 'Sellable: %available% (stock %stock%)'|trans,
+                        sync: 'Sellable: %available%, like the stock'|trans,
+                        unlimitedBody: 'Sales go on at zero stock.'|trans,
+                        preBody: 'Stock at %stock%, preorder limit %limit%.'|trans,
+                        noneBody: 'Nothing to sell: the stock is run out or held.'|trans,
+                        heldByCarts: 'Held by the carts: %quantity% in %carts% cart(s), the nearest expiry is %date%.'|trans,
+                        notHeld: 'No cart holds any unit of this combination.'|trans,
+                        low: 'Low stock: %stock%, threshold %threshold%.'|trans,
+                        lowShop: 'Low stock: %stock%, threshold %threshold% (shop).'|trans,
+                        out0: 'Out of stock, sales are blocked.'|trans,
+                        out1: 'Out of stock, sales go on.'|trans,
+                        out2: 'Out of stock, preorder open, %limit% at most.'|trans,
+                    } %}
+                    <div class="table-responsive bo-combinations-scroll">
+                        <table class="table table-borderless bo-card-table bo-combinations-grid{{ simple ? ' bo-combinations-grid--simple' }}" data-testid="combinations-table"
+                               data-combination-band-texts="{{ band_texts|json_encode|e('html_attr') }}"
+                               {%- if not simple %}
                                data-controller="bo-sortable" data-bo-combinations-bulk-edit-target="sortable"
                                data-bo-sortable-item-value="tbody[data-row-id]"
                                data-bo-sortable-url-value="{{ path('admin.product.product-sale-element-position', { product_id: product.id }) }}"
@@ -118,80 +145,98 @@
                                data-bo-sortable-param-name-value="product_sale_element_id"
                                data-bo-sortable-json-value="true"
                                data-bo-sortable-failure-element-value="#combinations-sort-failure"
-                               data-bo-sortable-reindexed-fields-value="{{ ['onsale', 'isnew', 'visible']|json_encode|e('html_attr') }}">
+                               {%- endif %}>
                             <thead class="table-light">
                                 <tr>
                                     <th class="bo-sortable-grip bo-combinations-grid__col-handle">
-                                        <span class="visually-hidden bo-combinations-grid__grip">{{ 'Position'|trans }}</span>
-                                        <input type="checkbox" class="form-check-input bo-combinations-grid__select" form="combinations-bulk-edit" autocomplete="off"
-                                               data-bo-bulk-select-target="all" data-action="change->bo-bulk-select#toggleAll change->bo-combinations-bulk-edit#refresh"
-                                               aria-label="{{ 'Select all'|trans }}" data-testid="combinations-select-all">
+                                        {% if not simple %}
+                                            <span class="visually-hidden bo-combinations-grid__grip">{{ 'Position'|trans }}</span>
+                                            <input type="checkbox" class="form-check-input bo-combinations-grid__select" form="combinations-bulk-edit" autocomplete="off"
+                                                   data-bo-bulk-select-target="all" data-action="change->bo-bulk-select#toggleAll change->bo-combinations-bulk-edit#refresh"
+                                                   aria-label="{{ 'Select all'|trans }}" data-testid="combinations-select-all">
+                                        {% endif %}
                                     </th>
-                                    <th>{{ 'Combination'|trans }}</th>
+                                    <th>{{ simple ? 'Product'|trans : 'Combination'|trans }}</th>
                                     <th class="bo-combinations-grid__col-identifiers">{{ 'Identifiers'|trans }}</th>
                                     <th class="bo-combinations-grid__col-stock">{{ 'Stock and weight'|trans }}</th>
                                     <th class="bo-combinations-grid__col-promo"><span class="visually-hidden">{{ 'Promotion'|trans }}</span></th>
                                     <th class="bo-combinations-grid__col-price">{{ 'Price excl. taxes'|trans }}</th>
                                     <th class="bo-combinations-grid__col-price">{{ 'Price incl. taxes'|trans }}</th>
                                     {# A module returns its own <th> on product.combinations-table-header; counted, so that the lines spanning the grid span them too. #}
-                                    {% set module_headers %}{{ safe_hook('product.combinations-table-header', { location: 'product_combinations_table_header', product: product.id, product_id: product.id }) }}{% endset %}
+                                    {# Grid hooks are not rendered for a product without combination (product.details-* are). #}
+                                    {% set module_headers %}{% if not simple %}{{ safe_hook('product.combinations-table-header', { location: 'product_combinations_table_header', product: product.id, product_id: product.id }) }}{% endif %}{% endset %}
                                     {% set module_columns = (module_headers|split('<th')|length) - 1 %}
                                     {{ module_headers }}
                                     <th class="bo-combinations-grid__col-actions"><span class="visually-hidden">{{ 'Actions'|trans }}</span></th>
                                 </tr>
                             </thead>
-                            {% for row in pse_rows %}
+                            {% for row in simple ? [default_pse] : pse_rows %}
                                 {% set idx = loop.index0 %}
                                 {% set field_id = 'combination-' ~ row.id %}
                                 <tbody data-testid="combinations-row-{{ row.id }}" data-row-id="{{ row.id }}"
                                        data-bo-pse-price-with-tax-scope
-                                       data-controller="bo-virtual-toggle" data-bo-virtual-toggle-mode-value="readonly">
+                                       data-controller="bo-virtual-toggle bo-combination-band bo-pse-reference-price" data-bo-virtual-toggle-mode-value="readonly"
+                                       data-bo-combination-band-reserved-value="{{ row.sellable.reserved|default(0) }}"
+                                       data-bo-combination-band-carts-value="{{ row.sellable.cart_count|default(0) }}"
+                                       data-bo-combination-band-expiry-value="{{ row.sellable.next_expiry|default(null) ? row.sellable.next_expiry|date('Y-m-d H:i') }}"
+                                       data-bo-combination-band-measured-value="{{ row.sellable is not null ? 'true' : 'false' }}"
+                                       data-bo-combination-band-shop-threshold-value="{{ default_low_stock_threshold }}"
+                                       data-bo-combination-band-unlimited-policy-value="{{ unlimited_policy }}"
+                                       data-bo-combination-band-limited-policy-value="{{ limited_policy }}"
+                                       data-bo-pse-reference-price-calc-url-value="{{ path('admin.product.calculate-reference-price') }}"
+                                       data-bo-pse-reference-price-price-selector-value="#{{ field_id }}-price"
+                                       data-bo-pse-reference-price-sale-price-selector-value="#{{ field_id }}-sale-price"
+                                       data-bo-pse-reference-price-on-sale-selector-value="#{{ field_id }}-onsale"
+                                       data-bo-pse-reference-price-tax-rule-selector-value="[name=&quot;tax_rule&quot;]"
+                                       data-bo-pse-reference-price-currency-id-value="{{ currency.id }}"
+                                       data-bo-pse-reference-price-product-id-value="{{ product.id }}">
                                     <tr>
-                                        <td class="text-center bo-sortable-grip bo-combinations-grid__handle" rowspan="3" data-bo-sortable-handle title="{{ 'Drag to reorder'|trans }}">
-                                            <i class="bi bi-grip-vertical bo-combinations-grid__grip" aria-hidden="true"></i>
-                                            <label class="bo-combinations-grid__select" title="{{ 'Select %name%'|trans({ '%name%': row.label }) }}">
-                                                <input type="checkbox" class="form-check-input" form="combinations-bulk-edit" value="{{ row.id }}" autocomplete="off"
-                                                       data-bo-bulk-select-target="row" data-action="change->bo-bulk-select#onRow change->bo-combinations-bulk-edit#refresh"
-                                                       aria-label="{{ 'Select %name%'|trans({ '%name%': row.label }) }}" data-testid="combinations-select-{{ row.id }}">
-                                            </label>
-                                        </td>
+                                        {% if simple %}
+                                            <td rowspan="3"></td>
+                                        {% else %}
+                                            <td class="text-center bo-sortable-grip bo-combinations-grid__handle" rowspan="3" data-bo-sortable-handle title="{{ 'Drag to reorder'|trans }}">
+                                                <i class="bi bi-grip-vertical bo-combinations-grid__grip" aria-hidden="true"></i>
+                                                <label class="bo-combinations-grid__select" title="{{ 'Select %name%'|trans({ '%name%': row.label }) }}">
+                                                    <input type="checkbox" class="form-check-input" form="combinations-bulk-edit" value="{{ row.id }}" autocomplete="off"
+                                                           data-bo-bulk-select-target="row" data-action="change->bo-bulk-select#onRow change->bo-combinations-bulk-edit#refresh"
+                                                           aria-label="{{ 'Select %name%'|trans({ '%name%': row.label }) }}" data-testid="combinations-select-{{ row.id }}">
+                                                </label>
+                                            </td>
+                                        {% endif %}
                                         <td class="bo-combinations-grid__identity" colspan="6">
-                                            <span class="fw-semibold bo-combinations-grid__name">{{ row.label }}</span>
-                                            <span class="badge rounded-pill border border-success text-success bg-transparent ms-2" data-bo-combination-default-target="badge" data-pse-id="{{ row.id }}" data-testid="combinations-default-badge-{{ row.id }}"{% if not row.isdefault %} hidden{% endif %}>{{ 'By default'|trans }}</span>
+                                            {% if simple %}
+                                                <span class="bo-combinations-grid__name">{{ 'This product, without combination'|trans }}</span>
+                                            {% else %}
+                                                <span class="fw-semibold bo-combinations-grid__name">{{ row.label }}</span>
+                                                <span class="badge rounded-pill border border-success text-success bg-transparent ms-2" data-bo-combination-default-target="badge" data-pse-id="{{ row.id }}" data-testid="combinations-default-badge-{{ row.id }}"{% if not row.isdefault %} hidden{% endif %}>{{ 'By default'|trans }}</span>
+                                            {% endif %}
                                             <input type="radio" name="default_pse" value="{{ row.id }}" hidden {% if row.isdefault %}checked{% endif %}
                                                    aria-label="{{ 'Default combination'|trans }}"
                                                    data-bo-combination-default-target="radio" data-pse-id="{{ row.id }}">
-                                            {{ include('@BackOfficeDefaultTwig/catalog/product/_combination_stock_fields.html.twig', { row: row, field_id: field_id, stock_policies: stock_policies, limited_policy: limited_policy, default_low_stock_threshold: default_low_stock_threshold }, with_context = false) }}
                                         </td>
-                                        {# A module returns its own <td>, rowspan="3" to cover the three lines of the combination, on product.combinations-table-row. #}
-                                        {{ safe_hook('product.combinations-table-row', { pse_id: row.id, pse: row.id, idx: idx, product: product.id, product_id: product.id }) }}
+                                        {% if not simple %}
+                                            {# A module returns its own <td>, rowspan="3" to cover the three lines of the combination, on product.combinations-table-row. #}
+                                            {{ safe_hook('product.combinations-table-row', { pse_id: row.id, pse: row.id, idx: idx, product: product.id, product_id: product.id }) }}
+                                        {% endif %}
                                         {# datatable-sticky-actions is the lists' class: bo-overflow-dropdown lifts it above the next lines while the menu is open. #}
                                         <td class="text-end bo-combinations-grid__actions datatable-sticky-actions">
+                                            {% if not simple %}
                                             <div class="d-inline-flex align-items-center gap-1">
-                                                <input type="checkbox" class="btn-check bo-combinations-grid__visibility" id="{{ field_id }}-visible" name="visible[{{ idx }}]" value="1" autocomplete="off" data-bulk-field="visible"
+                                                <input type="checkbox" class="btn-check bo-combinations-grid__visibility" id="{{ field_id }}-visible" name="visible[{{ row.id }}]" value="1" autocomplete="off" data-bulk-field="visible"
                                                        {% if row.visible %}checked{% endif %} data-testid="combinations-visible-{{ row.id }}">
                                                 <label class="btn btn-sm btn-outline-success btn-icon" for="{{ field_id }}-visible" title="{{ 'Visible in the shop'|trans }}">
                                                     <i class="bi bi-eye" aria-hidden="true"></i><i class="bi bi-eye-slash" aria-hidden="true"></i>
                                                     <span class="visually-hidden">{{ 'Visible in the shop'|trans }}</span>
                                                 </label>
-                                                <button type="button" class="btn btn-sm {{ row.has_quantity_rule ? 'btn-outline-primary' : 'btn-outline-secondary' }} bo-datatable__details-toggle text-nowrap"
-                                                        data-controller="bo-datatable-details" data-action="click->bo-datatable-details#toggle"
-                                                        data-bo-combination-quantity-rules-target="toggleable"{{ has_quantity_rules ? '' : ' hidden' }}
-                                                        aria-expanded="false" aria-controls="pse-quantity-rules-{{ row.id }}"
-                                                        title="{{ 'Quantity rules and units'|trans }}"
-                                                        data-testid="combinations-quantity-rules-toggle-{{ row.id }}">
-                                                    <i class="bi bi-rulers" aria-hidden="true"></i>
-                                                    <span class="visually-hidden">{{ 'Quantity rules and units'|trans }}</span>
-                                                    <i class="bi bi-chevron-down" aria-hidden="true"></i>
-                                                </button>
                                                 {{ include('@BackOfficeDefaultTwig/catalog/product/_combination_row_actions.html.twig', { row: row, product: product }, with_context = false) }}
                                             </div>
+                                            {% endif %}
                                         </td>
                                     </tr>
                                     <tr>
                                         <td>
                                             <div class="form-check mb-0">
-                                                <input type="checkbox" class="form-check-input" id="{{ field_id }}-isnew" name="isnew[{{ idx }}]" value="1" data-bulk-field="isnew" {% if row.isnew %}checked{% endif %}>
+                                                <input type="checkbox" class="form-check-input" id="{{ field_id }}-isnew" name="isnew[{{ row.id }}]" value="1" data-bulk-field="isnew" {% if row.isnew %}checked{% endif %}>
                                                 <label class="form-check-label" for="{{ field_id }}-isnew">{{ 'New'|trans }}</label>
                                             </div>
                                         </td>
@@ -199,20 +244,39 @@
                                             <div class="bo-combinations-grid__field">
                                                 <label for="{{ field_id }}-ref">{{ 'Ref.'|trans }}</label>
                                                 <input type="hidden" name="product_sale_element_id[]" value="{{ row.id }}">
-                                                <input type="text" id="{{ field_id }}-ref" name="reference[]" value="{{ row.ref }}" class="form-control form-control-sm bo-combinations-grid__ref">
+                                                {% if simple %}
+                                                    {# Mirror of the product reference. #}
+                                                    <div class="bo-combinations-grid__with-hint">
+                                                        <input type="text" id="{{ field_id }}-ref" name="reference[{{ row.id }}]" value="{{ row.ref }}" class="form-control form-control-sm bo-combinations-grid__ref"
+                                                               readonly data-testid="combinations-ref-{{ row.id }}">
+                                                        <button type="button" class="btn btn-sm bo-combinations-grid__hint" data-bs-toggle="tooltip"
+                                                                title="{{ 'Follows the reference of the product'|trans }}" aria-label="{{ 'Follows the reference of the product'|trans }}"
+                                                                data-testid="combinations-ref-hint-{{ row.id }}">
+                                                            <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                                        </button>
+                                                    </div>
+                                                {% else %}
+                                                    <input type="text" id="{{ field_id }}-ref" name="reference[{{ row.id }}]" value="{{ row.ref }}" class="form-control form-control-sm bo-combinations-grid__ref">
+                                                {% endif %}
                                             </div>
                                         </td>
                                         <td class="bo-combinations-grid__logistics">
                                             <div class="bo-combinations-grid__field">
                                                 <label for="{{ field_id }}-quantity">{{ 'Stock'|trans }}</label>
-                                                <input type="number" step="any" id="{{ field_id }}-quantity" name="quantity[]" value="{{ row.quantity }}" data-bulk-field="quantity" class="form-control form-control-sm text-end bo-combinations-grid__number">
+                                                <div class="bo-combinations-grid__stock">
+                                                    <div class="input-group input-group-sm">
+                                                        <input type="number" step="any" id="{{ field_id }}-quantity" name="quantity[{{ row.id }}]" value="{{ row.quantity }}" data-bulk-field="quantity" class="form-control text-end bo-combinations-grid__number"
+                                                               data-bo-combination-band-target="quantity">
+                                                        <span class="input-group-text" data-bo-combination-band-target="stockUnit" data-testid="combinations-stock-unit-{{ row.id }}"{% if not (row.unit_symbol and row.quantity_decimals > 0) %} hidden{% endif %}>{{ row.unit_symbol }}</span>
+                                                    </div>
+                                                    {{ include('@BackOfficeDefaultTwig/catalog/product/_combination_sellable.html.twig', { row: row, texts: band_texts }, with_context = false) }}
+                                                </div>
                                             </div>
-                                            {{ include('@BackOfficeDefaultTwig/catalog/product/_combination_sellable.html.twig', { row: row, note_class: 'text-body-secondary bo-combinations-grid__note' }, with_context = false) }}
                                         </td>
                                         <td></td>
                                         <td>
                                             <div class="input-group input-group-sm">
-                                                <input type="number" step="any" id="{{ field_id }}-price" name="price[]" value="{{ row.price }}" data-bulk-field="price" class="form-control text-end bo-combinations-grid__number"{% if row.price is null %} required{% endif %}
+                                                <input type="number" step="any" id="{{ field_id }}-price" name="price[{{ row.id }}]" value="{{ row.price }}" data-bulk-field="price" class="form-control text-end bo-combinations-grid__number"{% if row.price is null %} required{% endif %}
                                                        aria-label="{{ 'Price excl. taxes'|trans }}"
                                                        data-bo-pse-price-with-tax-target="priceExcl"
                                                        data-action="blur->bo-pse-price-with-tax#onPriceExclBlur">
@@ -236,16 +300,17 @@
                                                     data-controller="bo-datatable-details"
                                                     data-action="click->bo-datatable-details#toggle"
                                                     aria-expanded="false" aria-controls="{{ field_id }}-more"
+                                                    title="{{ 'At zero stock, restock, threshold, quantities and units, manufacturer part number, manufacturer'|trans }}"
                                                     data-testid="combinations-more-toggle-{{ row.id }}">
                                                 <i class="bi bi-chevron-down" aria-hidden="true"></i>
                                                 <span class="bo-combinations-grid__more-closed">{{ 'Show the other fields'|trans }}</span>
-                                                <span class="bo-combinations-grid__more-open">{{ 'Hide'|trans }}</span>
+                                                <span class="bo-combinations-grid__more-open">{{ 'Hide the other fields'|trans }}</span>
                                             </button>
                                         </td>
                                         <td class="bo-combinations-grid__identifiers">
                                             <div class="bo-combinations-grid__field">
                                                 <label for="{{ field_id }}-gtin" title="{{ 'EAN-8, UPC-A, EAN-13 or GTIN-14'|trans }}">{{ 'GTIN'|trans }}</label>
-                                                <input type="text" id="{{ field_id }}-gtin" name="ean_code[]" value="{{ row.ean_code }}" maxlength="32" inputmode="numeric" autocomplete="off"
+                                                <input type="text" id="{{ field_id }}-gtin" name="ean_code[{{ row.id }}]" value="{{ row.ean_code }}" maxlength="32" inputmode="numeric" autocomplete="off"
                                                        class="form-control form-control-sm font-monospace bo-combinations-grid__gtin{% if row.gtin_shared_with is not empty %} border-warning{% endif %}"
                                                        data-testid="combinations-gtin-{{ row.id }}">
                                             </div>
@@ -260,21 +325,21 @@
                                             <div class="bo-combinations-grid__field">
                                                 <label for="{{ field_id }}-weight">{{ 'Weight'|trans }}</label>
                                                 <div class="input-group input-group-sm">
-                                                    <input type="number" step="any" id="{{ field_id }}-weight" name="weight[]" value="{{ row.weight }}" data-bulk-field="weight" class="form-control text-end bo-combinations-grid__number">
+                                                    <input type="number" step="any" id="{{ field_id }}-weight" name="weight[{{ row.id }}]" value="{{ row.weight }}" data-bulk-field="weight" class="form-control text-end bo-combinations-grid__number">
                                                     <span class="input-group-text">{{ 'Kg'|trans }}</span>
                                                 </div>
                                             </div>
                                         </td>
                                         <td class="bo-combinations-grid__promo bo-combinations-grid__promo--start">
                                             <div class="form-check mb-0">
-                                                <input type="checkbox" class="form-check-input" id="{{ field_id }}-onsale" name="onsale[{{ idx }}]" value="1" data-bulk-field="onsale" {% if row.onsale %}checked{% endif %}
+                                                <input type="checkbox" class="form-check-input" id="{{ field_id }}-onsale" name="onsale[{{ row.id }}]" value="1" data-bulk-field="onsale" {% if row.onsale %}checked{% endif %}
                                                        data-bo-virtual-toggle-target="trigger" data-action="change->bo-virtual-toggle#update">
                                                 <label class="form-check-label" for="{{ field_id }}-onsale">{{ 'On promotion'|trans }}</label>
                                             </div>
                                         </td>
                                         <td class="bo-combinations-grid__promo">
                                             <div class="input-group input-group-sm">
-                                                <input type="number" step="any" id="{{ field_id }}-sale-price" name="sale_price[]" value="{{ row.sale_price }}" data-bulk-field="sale-price" class="form-control text-end bo-combinations-grid__number"{% if not row.onsale %} readonly{% endif %}
+                                                <input type="number" step="any" id="{{ field_id }}-sale-price" name="sale_price[{{ row.id }}]" value="{{ row.sale_price }}" data-bulk-field="sale-price" class="form-control text-end bo-combinations-grid__number"{% if not row.onsale %} readonly{% endif %}
                                                        aria-label="{{ 'Sale price excluding taxes'|trans }}"
                                                        data-bo-virtual-toggle-target="field"
                                                        data-bo-pse-price-with-tax-target="salePriceExcl"
@@ -294,27 +359,76 @@
                                         </td>
                                         <td></td>
                                     </tr>
-                                    <tr id="{{ field_id }}-more" hidden data-testid="combinations-more-{{ row.id }}">
+                                    {# Conditional lines: full width, the module cells keep rowspan="3". #}
+                                    <tr class="bo-combinations-grid__extra" data-bo-pse-reference-price-target="line" data-testid="combinations-reference-line-{{ row.id }}"
+                                        {%- if row.reference_line is empty %} hidden{% endif %}>
                                         <td class="bo-combinations-grid__handle-cont"></td>
                                         <td colspan="{{ 7 + module_columns }}">
-                                            {{ include('@BackOfficeDefaultTwig/catalog/product/_combination_more_fields.html.twig', { row: row, field_id: field_id, brand_options: brand_options, product_brand_title: product_brand_title }, with_context = false) }}
+                                            <div class="bo-combinations-grid__extra-box bo-combinations-grid__extra-box--info">
+                                                <i class="bi bi-rulers" aria-hidden="true"></i>
+                                                <span class="bo-combinations-grid__facts" data-bo-pse-reference-price-target="lineText" aria-live="polite">
+                                                    {%- for part in row.reference_line|default([]) %}<span class="bo-combinations-grid__fact">{{ part.label }} <strong>{{ part.value }}</strong></span>{% endfor -%}
+                                                </span>
+                                                <button type="button" class="btn btn-link btn-sm p-0 align-baseline" data-action="bo-combination-band#openRules"
+                                                        data-testid="combinations-reference-line-edit-{{ row.id }}">{{ 'Edit'|trans }}</button>
+                                            </div>
                                         </td>
                                     </tr>
-                                    <tr class="bo-datatable__details" id="pse-quantity-rules-{{ row.id }}" data-detail-for="{{ row.id }}" hidden
-                                        data-controller="bo-pse-reference-price"
-                                        data-bo-pse-reference-price-calc-url-value="{{ path('admin.product.calculate-reference-price') }}"
-                                        data-bo-pse-reference-price-price-selector-value="#{{ field_id }}-price"
-                                        data-bo-pse-reference-price-sale-price-selector-value="#{{ field_id }}-sale-price"
-                                        data-bo-pse-reference-price-on-sale-selector-value="#{{ field_id }}-onsale"
-                                        data-bo-pse-reference-price-tax-rule-selector-value="[name=&quot;tax_rule&quot;]"
-                                        data-bo-pse-reference-price-currency-id-value="{{ currency.id }}">
+                                    {% set stock_unit = row.quantity_decimals > 0 ? row.unit_code : null %}
+                                    {% if row.quantity <= 0 %}
+                                        {% set low_text = band_texts['out' ~ row.out_of_stock_policy]|replace({ '%limit%': row.preorder_limit|default(0)|format_quantity(row.quantity_decimals, stock_unit) }) %}
+                                    {% else %}
+                                        {% set low_text = (row.low_stock_threshold is null ? band_texts.lowShop : band_texts.low)|replace({ '%stock%': row.quantity|format_quantity(row.quantity_decimals, stock_unit), '%threshold%': row.low_stock_threshold_applied|default(0)|format_quantity(row.quantity_decimals, stock_unit) }) %}
+                                    {% endif %}
+                                    <tr class="bo-combinations-grid__extra" data-bo-combination-band-target="lowLine" data-testid="combinations-low-stock-{{ row.id }}"
+                                        {%- if not row.low_stock %} hidden{% endif %}>
                                         <td class="bo-combinations-grid__handle-cont"></td>
                                         <td colspan="{{ 7 + module_columns }}">
-                                            {{ include('@BackOfficeDefaultTwig/catalog/product/_combination_quantity_rules.html.twig', { rule: row, keyed: true }) }}
+                                            <div class="bo-combinations-grid__extra-box bo-combinations-grid__extra-box--warning">
+                                                <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+                                                <span data-bo-combination-band-target="lowText" data-testid="combinations-low-stock-text-{{ row.id }}">{{ low_text }}</span>
+                                                <span class="bo-combinations-grid__extra-slot">
+                                                    <label class="form-label small mb-0" for="{{ field_id }}-restock-date">{{ 'Restock planned on'|trans }}</label>
+                                                    <span data-bo-combination-band-target="restockSlot"></span>
+                                                </span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr id="{{ field_id }}-more" class="bo-combinations-grid__fold-line" hidden data-testid="combinations-more-{{ row.id }}">
+                                        <td class="bo-combinations-grid__handle-cont"></td>
+                                        <td colspan="{{ 7 + module_columns }}">
+                                            <div class="bo-combinations-grid__fold">
+                                                <fieldset class="bo-combinations-grid__fold-section" data-testid="combinations-fold-stock-{{ row.id }}">
+                                                    <legend>{{ 'At zero stock and restock'|trans }}</legend>
+                                                    {{ include('@BackOfficeDefaultTwig/catalog/product/_combination_stock_fields.html.twig', { row: row, field_id: field_id, stock_policies: stock_policies, limited_policy: limited_policy, default_low_stock_threshold: default_low_stock_threshold }, with_context = false) }}
+                                                </fieldset>
+                                                <fieldset class="bo-combinations-grid__fold-section" data-testid="combinations-fold-quantities-{{ row.id }}">
+                                                    <legend>{{ 'Quantities and units'|trans }}</legend>
+                                                    {{ include('@BackOfficeDefaultTwig/catalog/product/_combination_quantity_rules.html.twig', { rule: row, unit_choices: unit_choices, decimals_choices: decimals_choices }, with_context = false) }}
+                                                </fieldset>
+                                                <fieldset class="bo-combinations-grid__fold-section" data-testid="combinations-fold-identifiers-{{ row.id }}">
+                                                    <legend>{{ 'Identifiers'|trans }}</legend>
+                                                    {{ include('@BackOfficeDefaultTwig/catalog/product/_combination_more_fields.html.twig', { row: row, field_id: field_id, brand_options: brand_options, product_brand_title: product_brand_title }, with_context = false) }}
+                                                </fieldset>
+                                                {% if simple %}
+                                                    {% set details_context = { product: product.id, pse: row.id, product_sale_element_id: row.id } %}
+                                                    {% set module_fields %}
+                                                        {{- safe_hook('product.details-pricing-form', details_context|merge({ location: 'product_details_pricing_form' })) -}}
+                                                        {{- safe_hook('product.details-details-form', details_context|merge({ location: 'product_details_details_form' })) -}}
+                                                        {{- safe_hook('product.details-promotion-form', details_context|merge({ location: 'product_details_promotion_form' })) -}}
+                                                    {% endset %}
+                                                    {% if module_fields|trim is not empty %}
+                                                        <fieldset class="bo-combinations-grid__fold-section bo-combinations-grid__fold-section--modules" data-testid="combinations-fold-modules-{{ row.id }}">
+                                                            <legend>{{ 'Added by the modules'|trans }}</legend>
+                                                            {{ module_fields }}
+                                                        </fieldset>
+                                                    {% endif %}
+                                                {% endif %}
+                                            </div>
                                         </td>
                                     </tr>
                                     {# product.combinations-row keeps its contract: it is rendered inside a line, where a module returns its own <tr> lines, as under the line of a combination before. #}
-                                    {% set module_lines %}{{ safe_hook('product.combinations-row', { pse_id: row.id, pse: row.id, idx: idx, product: product.id, product_id: product.id }) }}{% endset %}
+                                    {% set module_lines %}{% if not simple %}{{ safe_hook('product.combinations-row', { pse_id: row.id, pse: row.id, idx: idx, product: product.id, product_id: product.id }) }}{% endif %}{% endset %}
                                     {% if module_lines|trim is not empty %}
                                         <tr class="bo-combinations-grid__module-lines" data-testid="combinations-module-lines-{{ row.id }}">{{ module_lines }}</tr>
                                     {% endif %}
@@ -324,7 +438,9 @@
                         </table>
                     </div>
 
-                    {{ safe_hook('product.after-combinations', { location: 'product_after_combinations' }) }}
+                    {% if not simple %}
+                        {{ safe_hook('product.after-combinations', { location: 'product_after_combinations' }) }}
+                    {% endif %}
 
                     {# Shown by CSS once bo-unsaved-changes marks the form dirty. #}
                     <div class="bo-combinations-savebar" data-testid="combinations-savebar">
@@ -336,6 +452,7 @@
                         </button>
                     </div>
                 </form>
+                {% if not simple %}
                 {# The boxes of the grid and the fields of the panel belong to this form (form="combinations-bulk-edit"): never sent, not reset with the grid. #}
                 <dialog class="bo-side-panel" id="combinations-bulk-panel" aria-labelledby="combinations-bulk-panel-title"
                         data-bo-combinations-bulk-edit-target="panel"
@@ -370,28 +487,14 @@
                             </p>
                             <p class="small text-muted mb-1" data-bo-combinations-bulk-edit-target="emptyHint" data-testid="combinations-bulk-empty">{{ 'Tick the combinations to change in the grid.'|trans }}</p>
                             <p class="small text-muted">{{ 'Leave a field untouched to keep its current value.'|trans }}</p>
-                            <div class="row row-cols-1 row-cols-sm-2 g-2">
-                                <div class="col">
-                                    <label class="form-label small mb-1" for="combinations-bulk-quantity">{{ 'Stock'|trans }}</label>
-                                    <input type="number" step="any" id="combinations-bulk-quantity" class="form-control form-control-sm text-end"
-                                           data-bulk-field="quantity" data-bo-combinations-bulk-edit-target="field"
-                                           data-testid="combinations-bulk-quantity">
-                                </div>
-                                <div class="col">
-                                    <label class="form-label small mb-1" for="combinations-bulk-weight">{{ 'Weight'|trans }}</label>
-                                    <div class="input-group input-group-sm">
-                                        <input type="number" step="any" id="combinations-bulk-weight" class="form-control text-end"
-                                               data-bulk-field="weight" data-bo-combinations-bulk-edit-target="field"
-                                               data-testid="combinations-bulk-weight">
-                                        <span class="input-group-text">{{ 'Kg'|trans }}</span>
-                                    </div>
-                                </div>
+                            <fieldset class="bo-side-panel__section" data-testid="combinations-bulk-prices">
+                                <legend>{{ 'Prices'|trans }}</legend>
+                                <div class="row row-cols-1 row-cols-sm-2 g-2">
                                 <div class="col">
                                     <label class="form-label small mb-1" for="combinations-bulk-price">{{ 'Price excl. taxes'|trans }}</label>
                                     <div class="input-group input-group-sm">
                                         <input type="number" step="any" id="combinations-bulk-price" class="form-control text-end"
-                                               data-bulk-field="price" data-bo-combinations-bulk-edit-target="field"
-                                               data-action="input->bo-combinations-bulk-edit#onPriceInput blur->bo-combinations-bulk-edit#onPriceBlur"
+                                               data-bulk-field="price" data-bo-combinations-bulk-edit-target="field" data-action="input->bo-combinations-bulk-edit#onPriceInput blur->bo-combinations-bulk-edit#onPriceBlur"
                                                data-testid="combinations-bulk-price">
                                         <span class="input-group-text">{{ currency.symbol }}</span>
                                     </div>
@@ -400,8 +503,7 @@
                                     <label class="form-label small mb-1" for="combinations-bulk-price-incl">{{ 'Price incl. taxes'|trans }}</label>
                                     <div class="input-group input-group-sm">
                                         <input type="number" step="any" id="combinations-bulk-price-incl" class="form-control text-end"
-                                               data-bulk-field="price-incl" data-bo-combinations-bulk-edit-target="field"
-                                               data-action="input->bo-combinations-bulk-edit#onPriceInput blur->bo-combinations-bulk-edit#onPriceBlur"
+                                               data-bulk-field="price-incl" data-bo-combinations-bulk-edit-target="field" data-action="input->bo-combinations-bulk-edit#onPriceInput blur->bo-combinations-bulk-edit#onPriceBlur"
                                                data-testid="combinations-bulk-price-incl">
                                         <span class="input-group-text">{{ currency.symbol }}</span>
                                     </div>
@@ -420,8 +522,7 @@
                                     <label class="form-label small mb-1" for="combinations-bulk-sale-price">{{ 'Sale price excluding taxes'|trans }}</label>
                                     <div class="input-group input-group-sm">
                                         <input type="number" step="any" id="combinations-bulk-sale-price" class="form-control text-end"
-                                               data-bulk-field="sale-price" data-bo-combinations-bulk-edit-target="field"
-                                               data-action="input->bo-combinations-bulk-edit#onPriceInput blur->bo-combinations-bulk-edit#onPriceBlur"
+                                               data-bulk-field="sale-price" data-bo-combinations-bulk-edit-target="field" data-action="input->bo-combinations-bulk-edit#onPriceInput blur->bo-combinations-bulk-edit#onPriceBlur"
                                                data-testid="combinations-bulk-sale-price">
                                         <span class="input-group-text">{{ currency.symbol }}</span>
                                     </div>
@@ -430,27 +531,137 @@
                                     <label class="form-label small mb-1" for="combinations-bulk-sale-price-incl">{{ 'Sale price including taxes'|trans }}</label>
                                     <div class="input-group input-group-sm">
                                         <input type="number" step="any" id="combinations-bulk-sale-price-incl" class="form-control text-end"
-                                               data-bulk-field="sale-price-incl" data-bo-combinations-bulk-edit-target="field"
-                                               data-action="input->bo-combinations-bulk-edit#onPriceInput blur->bo-combinations-bulk-edit#onPriceBlur"
+                                               data-bulk-field="sale-price-incl" data-bo-combinations-bulk-edit-target="field" data-action="input->bo-combinations-bulk-edit#onPriceInput blur->bo-combinations-bulk-edit#onPriceBlur"
                                                data-testid="combinations-bulk-sale-price-incl">
                                         <span class="input-group-text">{{ currency.symbol }}</span>
                                     </div>
                                 </div>
+                                </div>
+                            </fieldset>
+                            <fieldset class="bo-side-panel__section" data-testid="combinations-bulk-stock">
+                                <legend>{{ 'Stock and weight'|trans }}</legend>
+                                <div class="row row-cols-1 row-cols-sm-2 g-2">
                                 <div class="col">
-                                    <label class="form-label small mb-1" for="combinations-bulk-isnew">{{ 'New'|trans }}</label>
-                                    <select id="combinations-bulk-isnew" class="form-select form-select-sm"
-                                            data-bulk-field="isnew" data-bo-combinations-bulk-edit-target="field"
-                                            data-testid="combinations-bulk-isnew">
+                                    <label class="form-label small mb-1" for="combinations-bulk-quantity">{{ 'Stock'|trans }}</label>
+                                    <input type="number" step="any" id="combinations-bulk-quantity" class="form-control form-control-sm text-end"
+                                               data-bulk-field="quantity" data-bo-combinations-bulk-edit-target="field"
+                                               data-testid="combinations-bulk-quantity">
+                                </div>
+                                <div class="col">
+                                    <label class="form-label small mb-1" for="combinations-bulk-weight">{{ 'Weight'|trans }}</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" step="any" id="combinations-bulk-weight" class="form-control text-end"
+                                               data-bulk-field="weight" data-bo-combinations-bulk-edit-target="field"
+                                               data-testid="combinations-bulk-weight">
+                                        <span class="input-group-text">{{ 'Kg'|trans }}</span>
+                                    </div>
+                                </div>
+                                </div>
+                            </fieldset>
+                            <fieldset class="bo-side-panel__section" data-testid="combinations-bulk-stock-settings">
+                                <legend>{{ 'At zero stock and restock'|trans }}</legend>
+                                <div class="row row-cols-1 row-cols-sm-2 g-2">
+                                <div class="col-12">
+                                    <label class="form-label small mb-1" for="combinations-bulk-policy">{{ 'At zero stock'|trans }}</label>
+                                    <select id="combinations-bulk-policy" class="form-select form-select-sm"
+                                            data-bulk-field="policy" data-bo-combinations-bulk-edit-target="field"
+                                            data-testid="combinations-bulk-policy">
+                                        <option value="">{{ 'Unchanged'|trans }}</option>
+                                        {% for policy in stock_policies %}
+                                            <option value="{{ policy.value }}">{{ policy.label|trans }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col">
+                                    <label class="form-label small mb-1" for="combinations-bulk-preorder-limit">{{ 'Preorder limit'|trans }}</label>
+                                    <input type="number" step="any" id="combinations-bulk-preorder-limit" class="form-control form-control-sm text-end"
+                                               data-bulk-field="preorder-limit" data-bo-combinations-bulk-edit-target="field"
+                                               data-testid="combinations-bulk-preorder-limit">
+                                </div>
+                                <div class="col">
+                                    <label class="form-label small mb-1" for="combinations-bulk-threshold">{{ 'Low stock threshold'|trans }}</label>
+                                    <input type="number" step="any" min="0" id="combinations-bulk-threshold" class="form-control form-control-sm text-end"
+                                               data-bulk-field="threshold" data-bo-combinations-bulk-edit-target="field"
+                                               data-testid="combinations-bulk-threshold">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label small mb-1" for="combinations-bulk-restock-date">{{ 'Restock date'|trans }}</label>
+                                    <input type="date" id="combinations-bulk-restock-date" class="form-control form-control-sm"
+                                               data-bulk-field="restock-date" data-bo-combinations-bulk-edit-target="field"
+                                               data-testid="combinations-bulk-restock-date">
+                                </div>
+                                </div>
+                            </fieldset>
+                            <fieldset class="bo-side-panel__section" data-testid="combinations-bulk-quantities">
+                                <legend>{{ 'Quantities and units'|trans }}</legend>
+                                <div class="row row-cols-1 row-cols-sm-2 g-2">
+                                <div class="col">
+                                    <label class="form-label small mb-1" for="combinations-bulk-unit">{{ 'Unit'|trans }}</label>
+                                    <select id="combinations-bulk-unit" class="form-select form-select-sm"
+                                            data-bulk-field="unit" data-bo-combinations-bulk-edit-target="field"
+                                            data-testid="combinations-bulk-unit">
+                                        <option value="">{{ 'Unchanged'|trans }}</option>
+                                        <option value="__none">{{ 'No unit'|trans }}</option>
+                                        {% for unit in unit_choices %}
+                                            <option value="{{ unit.code }}">{{ unit.label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col">
+                                    <label class="form-label small mb-1" for="combinations-bulk-unit-quantity">{{ 'Content of one unit sold'|trans }}</label>
+                                    <input type="number" step="any" id="combinations-bulk-unit-quantity" class="form-control form-control-sm text-end"
+                                               data-bulk-field="unit-quantity" data-bo-combinations-bulk-edit-target="field"
+                                               data-testid="combinations-bulk-unit-quantity">
+                                </div>
+                                <div class="col">
+                                    <label class="form-label small mb-1" for="combinations-bulk-decimals">{{ 'Decimals of a quantity'|trans }}</label>
+                                    <select id="combinations-bulk-decimals" class="form-select form-select-sm"
+                                            data-bulk-field="decimals" data-bo-combinations-bulk-edit-target="field"
+                                            data-testid="combinations-bulk-decimals">
+                                        <option value="">{{ 'Unchanged'|trans }}</option>
+                                        {% for decimals in decimals_choices %}
+                                            <option value="{{ decimals }}">{{ decimals == 0 ? '0, sold by the piece'|trans : '%decimals%, sold by measure'|trans({ '%decimals%': decimals }) }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col">
+                                    <label class="form-label small mb-1" for="combinations-bulk-min-quantity">{{ 'Minimum quantity'|trans }}</label>
+                                    <input type="number" step="any" id="combinations-bulk-min-quantity" class="form-control form-control-sm text-end"
+                                               data-bulk-field="min-quantity" data-bo-combinations-bulk-edit-target="field"
+                                               data-testid="combinations-bulk-min-quantity">
+                                </div>
+                                <div class="col">
+                                    <label class="form-label small mb-1" for="combinations-bulk-quantity-step">{{ 'Sold by'|trans }}</label>
+                                    <input type="number" step="any" id="combinations-bulk-quantity-step" class="form-control form-control-sm text-end"
+                                               data-bulk-field="quantity-step" data-bo-combinations-bulk-edit-target="field"
+                                               data-testid="combinations-bulk-quantity-step">
+                                </div>
+                                <div class="col">
+                                    <label class="form-label small mb-1" for="combinations-bulk-reference-quantity">{{ 'Price shown per'|trans }}</label>
+                                    <input type="number" step="any" id="combinations-bulk-reference-quantity" class="form-control form-control-sm text-end"
+                                               data-bulk-field="reference-quantity" data-bo-combinations-bulk-edit-target="field"
+                                               data-testid="combinations-bulk-reference-quantity">
+                                </div>
+                                </div>
+                            </fieldset>
+                            <fieldset class="bo-side-panel__section" data-testid="combinations-bulk-display">
+                                <legend>{{ 'Display'|trans }}</legend>
+                                <div class="row row-cols-1 row-cols-sm-2 g-2">
+                                <div class="col">
+                                    <label class="form-label small mb-1" for="combinations-bulk-visible">{{ 'Visible in the shop'|trans }}</label>
+                                    <select id="combinations-bulk-visible" class="form-select form-select-sm"
+                                            data-bulk-field="visible" data-bo-combinations-bulk-edit-target="field"
+                                            data-testid="combinations-bulk-visible">
                                         <option value="">{{ 'Unchanged'|trans }}</option>
                                         <option value="1">{{ 'Yes'|trans }}</option>
                                         <option value="0">{{ 'No'|trans }}</option>
                                     </select>
                                 </div>
                                 <div class="col">
-                                    <label class="form-label small mb-1" for="combinations-bulk-visible">{{ 'Visible in the shop'|trans }}</label>
-                                    <select id="combinations-bulk-visible" class="form-select form-select-sm"
-                                            data-bulk-field="visible" data-bo-combinations-bulk-edit-target="field"
-                                            data-testid="combinations-bulk-visible">
+                                    <label class="form-label small mb-1" for="combinations-bulk-isnew">{{ 'New'|trans }}</label>
+                                    <select id="combinations-bulk-isnew" class="form-select form-select-sm"
+                                            data-bulk-field="isnew" data-bo-combinations-bulk-edit-target="field"
+                                            data-testid="combinations-bulk-isnew">
                                         <option value="">{{ 'Unchanged'|trans }}</option>
                                         <option value="1">{{ 'Yes'|trans }}</option>
                                         <option value="0">{{ 'No'|trans }}</option>
@@ -468,246 +679,17 @@
                                         {% endfor %}
                                     </select>
                                 </div>
-                            </div>
+                                </div>
+                            </fieldset>
                         </div>
                     </form>
                 </dialog>
-            {% else %}
-                {% if default_pse is null %}
-                    <div class="alert alert-warning" data-testid="default-pse-missing">
-                        {{ 'No default product sale element. Please contact your administrator.'|trans }}
-                    </div>
-                {% else %}
-                    {% if template_attributes is not empty %}
-                        <div class="alert alert-info" data-testid="combinations-empty-hint">
-                            {{ 'This product has no combination yet. The default pricing below is used while no combination exists.'|trans }}
-                        </div>
-                    {% endif %}
-
-                    <form method="post" action="{{ path('admin.product.combination.defaut-price.update') }}"
-                          data-testid="default-pse-form"
-                          data-bo-unsaved-changes-target="form"
-                          data-controller="bo-pse-price-with-tax"
-                          data-bo-pse-price-with-tax-calc-url-value="{{ path('admin.product.calculate-price') }}"
-                          data-bo-pse-price-with-tax-product-id-value="{{ product.id }}">
-                        <input type="hidden" name="_token" value="{{ assignToken() }}">
-                        <input type="hidden" name="product_id" value="{{ product.id }}">
-                        <input type="hidden" name="product_sale_element_id" value="{{ default_pse.id }}">
-                        <input type="hidden" name="isdefault" value="1">
-                        <input type="hidden" name="reference" value="{{ default_pse.ref }}">
-                        <input type="hidden" name="currency" value="{{ currency.id }}">
-                        <input type="hidden" name="current_tab" value="pse">
-
-                        <p class="text-muted">{{ 'The default pricing is used when no combination is defined.'|trans }}</p>
-
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label required" for="default_pse_tax_rule">
-                                    <span class="bo-form-label__text">{{ 'Tax rule'|trans }}</span><span class="bo-form-label__required" aria-hidden="true">*</span>
-                                </label>
-                                <select class="form-select" id="default_pse_tax_rule" name="tax_rule" required
-                                        data-bo-pse-price-with-tax-target="taxRule"
-                                        data-action="change->bo-pse-price-with-tax#onTaxRuleChange">
-                                    <option value="">{{ 'Select a tax rule'|trans }}</option>
-                                    {% for rule in tax_rules %}
-                                        <option value="{{ rule.id }}" {% if rule.id == tax_rule_id %}selected{% endif %}>{{ rule.title }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="col-md-6 d-flex align-items-end">
-                                <span class="text-muted small">{{ 'Currency'|trans }} : <strong>{{ currency.name }}</strong> ({{ currency.symbol }})</span>
-                            </div>
-                        </div>
-
-                        <div class="alert alert-danger" role="alert" data-bo-pse-price-with-tax-target="error" data-testid="default-pse-price-error" hidden>
-                            {{ 'The price could not be converted with the tax rule. Type the price without taxes, or try again.'|trans }}
-                        </div>
-
-                        <div class="row g-3">
-                            <div class="col-md-4">
-                                <div class="card h-100">
-                                    <div class="card-body">
-                                        <h2 class="h6 mb-3" data-testid="default-pse-pricing-title">{{ 'Pricing'|trans }}</h2>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="default_pse_price">{{ 'Product price excluding taxes'|trans }}</label>
-                                            <div class="input-group">
-                                                <input type="number" step="any" id="default_pse_price" name="price" value="{{ default_pse.price }}" class="form-control" required
-                                                       data-bo-pse-price-with-tax-target="priceExcl"
-                                                       data-action="blur->bo-pse-price-with-tax#onPriceExclBlur">
-                                                <span class="input-group-text">{{ currency.symbol }}</span>
-                                            </div>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="default_pse_price_with_tax">{{ 'Product price including taxes'|trans }}</label>
-                                            <div class="input-group">
-                                                <input type="number" step="any" id="default_pse_price_with_tax" name="price_with_tax" value="" class="form-control" placeholder="{{ 'Auto-computed from price + tax rule'|trans }}"
-                                                       data-bo-pse-price-with-tax-target="priceIncl"
-                                                       data-action="blur->bo-pse-price-with-tax#onPriceInclBlur">
-                                                <span class="input-group-text">{{ currency.symbol }}</span>
-                                            </div>
-                                        </div>
-
-                                        {{ safe_hook('product.details-pricing-form', { product: product.id, location: 'product_details_pricing_form' }) }}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="col-md-4">
-                                <div class="card h-100">
-                                    <div class="card-body">
-                                        <h2 class="h6 mb-3" data-testid="default-pse-stock-title">{{ 'Stock'|trans }}</h2>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="default_pse_ean">{{ 'GTIN'|trans }}</label>
-                                            <input type="text" id="default_pse_ean" name="ean_code" value="{{ default_pse.ean_code }}" maxlength="32" inputmode="numeric" autocomplete="off"
-                                                   class="form-control{% if default_pse.gtin_shared_with is not empty %} border-warning{% endif %}"
-                                                   aria-describedby="default_pse_ean_help" data-testid="default-pse-gtin">
-                                            <div id="default_pse_ean_help" class="form-text">{{ 'EAN-8, UPC-A, EAN-13 or GTIN-14. The check digit is verified.'|trans }}</div>
-                                            {% if default_pse.gtin_shared_with is not empty %}
-                                                <div class="form-text text-warning-emphasis" data-testid="default-pse-gtin-shared">
-                                                    <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
-                                                    {{ 'Also carried by: %others%'|trans({ '%others%': default_pse.gtin_shared_with|join(', ') }) }}
-                                                </div>
-                                            {% endif %}
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="default_pse_mpn">{{ 'Manufacturer part number'|trans }}</label>
-                                            <input type="text" id="default_pse_mpn" name="mpn" value="{{ default_pse.mpn }}" maxlength="255" autocomplete="off" class="form-control" data-testid="default-pse-mpn">
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="default_pse_manufacturer">{{ 'Manufacturer'|trans }}</label>
-                                            <select id="default_pse_manufacturer" name="manufacturer_brand_id" class="form-select" data-testid="default-pse-manufacturer">
-                                                <option value="0">{{ product_brand_title is not null ? 'Brand of the product (%brand%)'|trans({ '%brand%': product_brand_title }) : 'Brand of the product'|trans }}</option>
-                                                {% for brand in brand_options %}
-                                                    <option value="{{ brand.id }}"{{ brand.id == default_pse.manufacturer_brand_id ? ' selected' }}>{{ brand.title }}</option>
-                                                {% endfor %}
-                                            </select>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="default_pse_weight">{{ 'Weight'|trans }}</label>
-                                            <div class="input-group">
-                                                <input type="number" step="any" id="default_pse_weight" name="weight" value="{{ default_pse.weight }}" class="form-control">
-                                                <span class="input-group-text">{{ 'Kg'|trans }}</span>
-                                            </div>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="default_pse_quantity">{{ 'Stock quantity'|trans }}</label>
-                                            <input type="number" step="any" id="default_pse_quantity" name="quantity" value="{{ default_pse.quantity }}" class="form-control" required>
-                                            {{ include('@BackOfficeDefaultTwig/catalog/product/_combination_sellable.html.twig', { row: default_pse, note_class: 'form-text' }, with_context = false) }}
-                                        </div>
-
-                                        <div class="mb-3" data-controller="bo-stock-policy" data-bo-stock-policy-limited-value="{{ limited_policy }}">
-                                            <label class="form-label" for="default_pse_out_of_stock_policy">{{ 'At zero stock'|trans }}</label>
-                                            <select id="default_pse_out_of_stock_policy" name="out_of_stock_policy" class="form-select"
-                                                    data-bo-stock-policy-target="policy" data-action="change->bo-stock-policy#toggle" data-testid="default-pse-policy">
-                                                {% for policy in stock_policies %}
-                                                    <option value="{{ policy.value }}"{{ policy.value == default_pse.out_of_stock_policy ? ' selected' }}>{{ policy.label|trans }}</option>
-                                                {% endfor %}
-                                            </select>
-                                            <div class="mt-2{{ default_pse.out_of_stock_policy != limited_policy ? ' d-none' }}" data-bo-stock-policy-target="limit">
-                                                <label class="form-label" for="default_pse_preorder_limit">{{ 'Preorder limit'|trans }}</label>
-                                                <input type="number" step="any" id="default_pse_preorder_limit" name="preorder_limit" value="{{ default_pse.preorder_limit }}" class="form-control" data-testid="default-pse-preorder-limit">
-                                                <div class="form-text">{{ 'Units that can be sold below zero.'|trans }}</div>
-                                            </div>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="default_pse_restock_date">{{ 'Restock date'|trans }}</label>
-                                            <input type="date" id="default_pse_restock_date" name="restock_date" value="{{ default_pse.restock_date }}" class="form-control" data-testid="default-pse-restock-date">
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="default_pse_low_stock_threshold">{{ 'Low stock threshold'|trans }}</label>
-                                            <input type="number" step="any" min="0" id="default_pse_low_stock_threshold" name="low_stock_threshold" value="{{ default_pse.low_stock_threshold }}" placeholder="{{ default_low_stock_threshold }}" class="form-control" data-testid="default-pse-low-stock-threshold">
-                                            <div class="form-text">{{ 'Empty: the threshold of the shop applies'|trans }}</div>
-                                        </div>
-
-                                        {{ safe_hook('product.details-details-form', { product: product.id, location: 'product_details_details_form' }) }}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="col-md-4">
-                                <div class="card h-100">
-                                    <div class="card-body">
-                                        <h2 class="h6 mb-3" data-testid="default-pse-promo-title">{{ 'Promotion'|trans }}</h2>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="default_pse_sale_price">{{ 'Sale price excluding taxes'|trans }}</label>
-                                            <div class="input-group">
-                                                <input type="number" step="any" id="default_pse_sale_price" name="sale_price" value="{{ default_pse.sale_price }}" class="form-control" required
-                                                       data-bo-pse-price-with-tax-target="salePriceExcl"
-                                                       data-action="blur->bo-pse-price-with-tax#onSalePriceExclBlur">
-                                                <span class="input-group-text">{{ currency.symbol }}</span>
-                                            </div>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="default_pse_sale_price_with_tax">{{ 'Sale price including taxes'|trans }}</label>
-                                            <div class="input-group">
-                                                <input type="number" step="any" id="default_pse_sale_price_with_tax" name="sale_price_with_tax" value="" class="form-control" placeholder="{{ 'Auto-computed from sale price + tax rule'|trans }}"
-                                                       data-bo-pse-price-with-tax-target="salePriceIncl"
-                                                       data-action="blur->bo-pse-price-with-tax#onSalePriceInclBlur">
-                                                <span class="input-group-text">{{ currency.symbol }}</span>
-                                            </div>
-                                        </div>
-
-                                        <div class="form-check mb-2">
-                                            <input type="checkbox" class="form-check-input" id="default_pse_onsale" name="onsale" value="1" {% if default_pse.onsale %}checked{% endif %}>
-                                            <label class="form-check-label" for="default_pse_onsale">{{ 'On sale'|trans }}</label>
-                                        </div>
-
-                                        <div class="form-check">
-                                            <input type="checkbox" class="form-check-input" id="default_pse_isnew" name="isnew" value="1" {% if default_pse.isnew %}checked{% endif %}>
-                                            <label class="form-check-label" for="default_pse_isnew">{{ 'New product'|trans }}</label>
-                                        </div>
-
-                                        {{ safe_hook('product.details-promotion-form', { product: product.id, location: 'product_details_promotion_form' }) }}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="card mt-3" data-bo-combination-quantity-rules-target="toggleable"{{ has_quantity_rules ? '' : ' hidden' }}
-                             data-testid="default-pse-quantity-rules"
-                             data-controller="bo-pse-reference-price"
-                             data-bo-pse-reference-price-calc-url-value="{{ path('admin.product.calculate-reference-price') }}"
-                             data-bo-pse-reference-price-price-selector-value="#default_pse_price"
-                             data-bo-pse-reference-price-tax-rule-selector-value="#default_pse_tax_rule"
-                             data-bo-pse-reference-price-currency-id-value="{{ currency.id }}">
-                            <div class="card-body">
-                                <h2 class="h6 mb-3">{{ 'Quantity rules and units'|trans }}</h2>
-                                {{ include('@BackOfficeDefaultTwig/catalog/product/_combination_quantity_rules.html.twig', { rule: default_pse, keyed: false }) }}
-                            </div>
-                        </div>
-
-                        <div class="text-end mt-3">
-                            <button type="submit" class="btn btn-primary" data-testid="default-pse-submit">
-                                <i class="bi bi-check2" aria-hidden="true"></i> {{ 'Save'|trans }}
-                            </button>
-                        </div>
-                    </form>
                 {% endif %}
             {% endif %}
         </div>
     </div>
 
-    {% if sale_unit_values|default(null) is not null %}
-        {{ include('@BackOfficeDefaultTwig/catalog/product/_sale_unit_values.html.twig') }}
-    {% endif %}
-
-    {% if group_prices|default(null) is not null %}
-        {{ include('@BackOfficeDefaultTwig/catalog/product/_group_prices.html.twig') }}
-    {% endif %}
-
-    {{ render(controller('BackOfficeDefaultTwigBundle\\Controller\\Catalog\\ProductPriceDisplayController::panel', { product_id: product.id })) }}
-    {% if is_granted('VIEW', 'admin.pricing') and is_granted('VIEW', 'admin.customer') %}{{ render(controller('BackOfficeDefaultTwigBundle\\Controller\\Catalog\\ProductEffectivePriceController::panel', { product_id: product.id, currency_id: currency.id })) }}{% endif %}
+    {{ include('@BackOfficeDefaultTwig/catalog/product/_other_prices.html.twig') }}
 
     {% component 'BoConfirmDialog' with {
         id: 'pse-delete-modal',

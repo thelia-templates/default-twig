@@ -39,7 +39,7 @@ final readonly class CombinationIdentifierNotices
      */
     public function refused(\InvalidArgumentException $refusal): void
     {
-        $this->flash('danger', $refusal->getMessage());
+        $this->flash('danger', $refusal->getMessage().' '.$this->translator->trans('None of the changes of this combination were saved.'));
     }
 
     /**
@@ -51,7 +51,7 @@ final readonly class CombinationIdentifierNotices
         $this->flash('danger', $this->translator->trans(
             'Combination %ref%: %reason%',
             ['%ref%' => $reference, '%reason%' => $refusal->getMessage()],
-        ));
+        ).' '.$this->translator->trans('None of the changes of this combination were saved.'));
     }
 
     /**

@@ -23,15 +23,14 @@ use Thelia\Model\Currency;
 /**
  * The prices the customer groups keep of their own for the combinations of a product, laid
  * out as one cell per combination and group. An empty field means the group has no price of
- * its own: when the group priced the combination in the default currency, the field then shows
- * that price converted, in grey; else the field says the catalog price applies.
+ * its own: it shows in grey what the group pays then, the price of the default currency
+ * converted, else the catalog price less the discount of the group.
  * A shop without any customer group gets no section at all.
  *
- * Each field carries the hint shown under it as a translation key and its parameters.
+ * A converted placeholder carries where it comes from as a translation key and its parameters.
  */
 final readonly class GroupPricesContextBuilder
 {
-    public const HINT_NONE = 'No price of its own';
     public const HINT_CONVERTED = 'Converted from %currency%';
 
     public function __construct(
@@ -46,14 +45,14 @@ final readonly class GroupPricesContextBuilder
      * @param list<array<string, mixed>> $combinationRows the rows of the combinations tab, catalog prices in $currencyId
      *
      * @return array{
-     *     groups: list<array{id: int, label: string}>,
+     *     groups: list<array{id: int, label: string, discount: float}>,
      *     currency_id: int,
-     *     rows: list<array{id: int, label: string, ref: string, price: ?string, sale_price: ?string, cells: list<array{group_id: int, fields: list<array<string, mixed>>}>}>
+     *     rows: list<array{id: int, label: string, ref: string, price: ?string, sale_price: ?string, onsale: bool, cells: list<array{group_id: int, fields: list<array<string, mixed>>}>}>
      * }|null
      */
     public function build(array $combinationRows, int $currencyId, string $locale): ?array
     {
-        $groups = $this->customerGroups->findChoices($locale);
+        $groups = $this->customerGroups->findChoicesWithDiscount($locale);
         if ([] === $groups) {
             return null;
         }
@@ -70,6 +69,9 @@ final readonly class GroupPricesContextBuilder
         $rows = [];
         foreach ($combinationRows as $row) {
             $pseId = (int) $row['id'];
+            $catalogPrice = self::number($row['price'] ?? null);
+            $catalogPromo = self::number($row['sale_price'] ?? null);
+            $onSale = (bool) ($row['onsale'] ?? false);
             $cells = [];
             foreach ($groups as $group) {
                 $own = $prices[$group['id']][$pseId][$currencyId] ?? null;
@@ -78,12 +80,19 @@ final readonly class GroupPricesContextBuilder
                     $own = null;
                 }
                 $fromDefault = $converts ? ($prices[$group['id']][$pseId][$defaultId] ?? null) : null;
+                [$catalogPriceForGroup, $catalogPromoForGroup] = self::catalogForGroup(
+                    $catalogPrice,
+                    $catalogPromo,
+                    $onSale,
+                    $group['discount'],
+                    null !== self::number($own?->getPrice() ?? $fromDefault?->getPrice()),
+                );
 
                 $cells[] = [
                     'group_id' => $group['id'],
                     'fields' => [
-                        $this->field('price', $own?->getPrice(), $fromDefault?->getPrice(), $currency, $defaultCode),
-                        $this->field('promo_price', $own?->getPromoPrice(), $fromDefault?->getPromoPrice(), $currency, $defaultCode),
+                        $this->field('price', $own?->getPrice(), $fromDefault?->getPrice(), $catalogPriceForGroup, $currency, $defaultCode),
+                        $this->field('promo_price', $own?->getPromoPrice(), $fromDefault?->getPromoPrice(), $catalogPromoForGroup, $currency, $defaultCode),
                     ],
                 ];
             }
@@ -92,8 +101,9 @@ final readonly class GroupPricesContextBuilder
                 'id' => $pseId,
                 'label' => (string) $row['label'],
                 'ref' => (string) $row['ref'],
-                'price' => self::number($row['price'] ?? null),
-                'sale_price' => self::number($row['sale_price'] ?? null),
+                'price' => $catalogPrice,
+                'sale_price' => $catalogPromo,
+                'onsale' => $onSale,
                 'cells' => $cells,
             ];
         }
@@ -102,30 +112,46 @@ final readonly class GroupPricesContextBuilder
     }
 
     /**
+     * As the core resolves it: the catalog promotion never comes with a price of the group's own.
+     *
+     * @return array{?string, ?string}
+     */
+    private static function catalogForGroup(?string $price, ?string $promo, bool $onSale, float $discount, bool $groupHasPrice): array
+    {
+        if (null === $price) {
+            return [null, null];
+        }
+
+        $discounted = (float) $price * (1 - $discount / 100);
+        $promoApplies = !$groupHasPrice && $onSale && null !== $promo && (float) $promo < $discounted;
+
+        return [self::number(round($discounted, 6)), $promoApplies ? $promo : null];
+    }
+
+    /**
      * Each of the two prices is read on its own, as the core does: one typed here wins,
-     * else the one of the default currency converted at the rates of the shop.
+     * else the one of the default currency converted at the rates of the shop, else the catalog.
      *
      * @return array{name: string, value: ?string, placeholder: ?string, hint: string, hint_parameters: array<string, string>}
      */
-    private function field(string $name, mixed $own, mixed $inDefaultCurrency, ?Currency $currency, string $defaultCode): array
+    private function field(string $name, mixed $own, mixed $inDefaultCurrency, ?string $catalog, ?Currency $currency, string $defaultCode): array
     {
         $value = self::number($own);
         if (null !== $value) {
             return ['name' => $name, 'value' => $value, 'placeholder' => null, 'hint' => '', 'hint_parameters' => []];
         }
 
-        if (null === $inDefaultCurrency || null === $currency) {
-            return ['name' => $name, 'value' => null, 'placeholder' => null, 'hint' => self::HINT_NONE, 'hint_parameters' => []];
+        $converted = null === $inDefaultCurrency || null === $currency ? null : $this->converter->fromDefaultCurrency((float) $inDefaultCurrency, $currency);
+        if (null === $converted) {
+            return ['name' => $name, 'value' => null, 'placeholder' => $catalog, 'hint' => '', 'hint_parameters' => []];
         }
-
-        $converted = $this->converter->fromDefaultCurrency((float) $inDefaultCurrency, $currency);
 
         return [
             'name' => $name,
             'value' => null,
             'placeholder' => self::number($converted),
-            'hint' => null === $converted ? self::HINT_NONE : self::HINT_CONVERTED,
-            'hint_parameters' => null === $converted ? [] : ['%currency%' => $defaultCode],
+            'hint' => self::HINT_CONVERTED,
+            'hint_parameters' => ['%currency%' => $defaultCode],
         ];
     }
 

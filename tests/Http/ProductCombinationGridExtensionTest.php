@@ -125,8 +125,8 @@ final class ProductCombinationGridExtensionTest extends WebIntegrationTestCase
 
         foreach ([$combination, $other] as $pse) {
             $lines = $this->widthsOfTheLines($grid->filter(\sprintf('tbody[data-row-id="%d"]', $pse->getId())));
-            self::assertCount(6, $lines);
-            self::assertSame(array_fill(0, 6, $columns), $lines, 'Each line of the combination, the folded fields and the air under it included, spans the grid.');
+            self::assertCount(7, $lines);
+            self::assertSame(array_fill(0, 7, $columns), $lines, 'Each line of the combination, the lines shown when they have something to say, the fold and the air under it included, spans the grid.');
         }
     }
 
@@ -161,6 +161,87 @@ final class ProductCombinationGridExtensionTest extends WebIntegrationTestCase
         self::assertCount(2, $grid->filter('tbody > tr.module-line'));
     }
 
+    public function testTheLinesOfTheRowHookAreShownAndHiddenWithTheFold(): void
+    {
+        [$product, $combination] = $this->productWithACombination();
+        $this->listen(self::LINES_HOOK_EVENT, static function (HookRenderEvent $event): void {
+            $event->add('<tr class="module-line"><td colspan="3">Purchase price</td><td><input name="purchase_price[1]"></td></tr>');
+        });
+
+        $block = $this->tab($product)->filter(\sprintf('tbody[data-row-id="%d"]', $combination->getId()));
+        $fold = $block->children('tr.bo-combinations-grid__fold-line');
+        self::assertCount(1, $fold);
+        self::assertNotNull($fold->attr('hidden'), 'The fold is closed at first.');
+        self::assertCount(1, $fold->nextAll()->filter('tr.bo-combinations-grid__module-lines'), 'The lines of the module come after the fold, which the style reads to hide them with it.');
+
+        $style = (string) file_get_contents(\dirname(__DIR__, 2).'/assets/styles/main.scss');
+        self::assertStringContainsString('> tbody:has(> tr.bo-combinations-grid__fold-line[hidden]) > tr.bo-combinations-grid__module-lines ~ tr:not(.bo-combinations-grid__band-end)', $style);
+    }
+
+    public function testTheFoldKeepsToTheVisibleWidthOfAGridThatScrollsSideways(): void
+    {
+        [$product] = $this->productWithACombination();
+
+        self::assertCount(1, $this->tab($product)->filter('.table-responsive.bo-combinations-scroll > table[data-testid="combinations-table"]'));
+
+        $style = (string) file_get_contents(\dirname(__DIR__, 2).'/assets/styles/main.scss');
+        self::assertMatchesRegularExpression('/@supports \(width: 1cqi\) \{\s*\.bo-combinations-scroll \{\s*container-type: inline-size;/', $style, 'Older browsers keep the fold as it was.');
+        self::assertStringContainsString('max-width: calc(100cqi - 3rem);', $style);
+    }
+
+    public function testNoFieldTheFoldHidesIsRequired(): void
+    {
+        [$product, $combination] = $this->productWithACombination();
+
+        $fold = $this->tab($product)->filter(\sprintf('tr#combination-%d-more', $combination->getId()));
+
+        self::assertGreaterThan(0, $fold->filter('input, select')->count());
+        self::assertCount(0, $fold->filter('[required]'), 'A required field out of sight would block the save without saying why.');
+    }
+
+    public function testTheHooksOfTheGridAreNotRenderedForAProductWithoutCombination(): void
+    {
+        [$product] = $this->productWithoutCombination();
+        $rendered = [];
+        foreach ([self::HEADER_HOOK_EVENT => '<th>Module</th>', self::ROW_HOOK_EVENT => '<td rowspan="3">Module</td>', self::LINES_HOOK_EVENT => '<tr><td>Module</td></tr>', self::CAPTION_HOOK_EVENT => '<p>Module</p>'] as $event => $html) {
+            $this->listen($event, static function (HookRenderEvent $hook) use ($event, $html, &$rendered): void {
+                $rendered[] = $event;
+                $hook->add($html);
+            });
+        }
+
+        $form = $this->tab($product)->filter('form[data-testid="combinations-form"]');
+
+        self::assertCount(1, $form, 'The product is shown as a grid of one line.');
+        self::assertSame([], $rendered, 'Its modules write through the hooks of the product, not those of the combinations.');
+        $columns = array_sum($form->filter('thead > tr > th')->each(static fn (Crawler $cell): int => (int) ($cell->attr('colspan') ?? 1)));
+        self::assertSame(8, $columns);
+    }
+
+    public function testTheDetailsHooksOfAProductWithoutCombinationAreInItsFoldAndKnowTheCombination(): void
+    {
+        [$product, $pse] = $this->productWithoutCombination();
+        $id = (int) $pse->getId();
+
+        $tab = $this->tab($product);
+        self::assertCount(0, $tab->filter(\sprintf('[data-testid="combinations-fold-modules-%d"]', $id)), 'No section while no module adds a field.');
+
+        $contexts = [];
+        foreach (['pricing', 'details', 'promotion'] as $name) {
+            $this->listen('hook.'.TemplateDefinition::BACK_OFFICE.'.product.details-'.$name.'-form', static function (HookRenderEvent $hook) use ($name, &$contexts): void {
+                $contexts[$name] = [$hook->getArgument('product'), $hook->getArgument('pse'), $hook->getArgument('product_sale_element_id'), $hook->getArgument('location')];
+                $hook->add(\sprintf('<div class="mb-3" data-testid="module-%s"><input name="purchase_price_%s"></div>', $name, $name));
+            });
+        }
+
+        $section = $this->tab($product)->filter(\sprintf('form[data-testid="combinations-form"] tr#combination-%d-more [data-testid="combinations-fold-modules-%d"]', $id, $id));
+        self::assertCount(1, $section, 'The fields of the modules are a section of the fold, inside the form of the grid.');
+        self::assertSame(['module-pricing', 'module-details', 'module-promotion'], $section->filter('[data-testid^="module-"]')->each(static fn (Crawler $field): string => (string) $field->attr('data-testid')));
+        foreach (['pricing', 'details', 'promotion'] as $name) {
+            self::assertSame([$product->getId(), $id, $id, 'product_details_'.$name.'_form'], $contexts[$name] ?? null, $name.' knows the product and its combination.');
+        }
+    }
+
     public function testTheRowHookRendersNothingAroundACombinationItLeavesEmpty(): void
     {
         [$product] = $this->productWithACombination();
@@ -168,7 +249,7 @@ final class ProductCombinationGridExtensionTest extends WebIntegrationTestCase
         $grid = $this->tab($product)->filter('table[data-testid="combinations-table"]');
 
         self::assertCount(0, $grid->filter('tr.bo-combinations-grid__module-lines'));
-        self::assertCount(6, $grid->filter('tbody[data-row-id] > tr'));
+        self::assertCount(7, $grid->filter('tbody[data-row-id] > tr'));
     }
 
     public function testTheCaptionHookKeepsItsPlaceAndItsContext(): void
@@ -196,8 +277,8 @@ final class ProductCombinationGridExtensionTest extends WebIntegrationTestCase
         [$product, $combination] = $this->productWithACombination();
 
         $folded = $this->tab($product)->filter(\sprintf('tr[data-testid="combinations-more-%d"] .bo-combinations-grid__more-fields', $combination->getId()));
-        self::assertCount(1, $folded->filter('input[name="mpn[]"]'));
-        self::assertCount(1, $folded->filter('select[name="manufacturer_brand_id[]"]'));
+        self::assertCount(1, $folded->filter(\sprintf('input[name="mpn[%d]"]', $combination->getId())));
+        self::assertCount(1, $folded->filter(\sprintf('select[name="manufacturer_brand_id[%d]"]', $combination->getId())));
 
         // An override is a copy of the template: it renders with what the tab hands it, nothing else.
         $html = $this->getService(Environment::class)->render('@BackOfficeDefaultTwig/catalog/product/_combination_more_fields.html.twig', [
@@ -268,6 +349,18 @@ final class ProductCombinationGridExtensionTest extends WebIntegrationTestCase
         $this->factory->attributeCombination($combination, $this->factory->attributeAv($attribute, ['title' => 'Large']));
 
         return [$product, $combination];
+    }
+
+    /**
+     * @return array{Product, ProductSaleElements}
+     */
+    private function productWithoutCombination(): array
+    {
+        $product = $this->factory->product($this->factory->category(), $this->factory->taxRule(), $this->defaultCurrency(), ['basePrice' => 25.0]);
+        $pse = ProductSaleElementsQuery::create()->filterByProductId($product->getId())->findOne($this->getPropelConnection());
+        self::assertNotNull($pse);
+
+        return [$product, $pse];
     }
 
     private function defaultCurrency(): Currency

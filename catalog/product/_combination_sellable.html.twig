@@ -1,19 +1,27 @@
-{# What a combination may still sell (its stock and what its sale mode allows below zero, less what the carts hold), under its stock field, and in a tooltip what the carts hold.
-   Nothing is added when the figures were not read. Expects: row (row.id, row.sellable: unlimited, available, reserved, cart_count, next_expiry;
-   row.quantity_decimals and row.unit_code write them in the unit the combination is sold in), note_class (classes of the line). #}
+{# Sellable icon at the end of the stock line, colored when it differs from the stock; nothing for a bundle. Redrawn by bo-combination-band.
+   Expects: row (row.id, row.quantity, row.preorder_limit, row.sellable: unlimited, available, reserved, cart_count, next_expiry; row.sellable_state,
+   row.sellable_available; row.quantity_decimals and row.unit_code write the figures in the unit the combination is sold in), texts (the wordings, by state). #}
 {% if row.sellable is not null %}
     {% set sellable = row.sellable %}
     {% set decimals = row.quantity_decimals|default(0) %}
-    {% set unit_code = row.unit_code|default(null) %}
+    {% set unit_code = decimals > 0 ? row.unit_code|default(null) : null %}
+    {% set state = row.sellable_state %}
+    {% set figures = {
+        '%available%': row.sellable_available|format_quantity(decimals, unit_code),
+        '%stock%': row.quantity|format_quantity(decimals, unit_code),
+        '%limit%': row.preorder_limit|default(0)|format_quantity(decimals, unit_code),
+    } %}
+    {% set head = texts[state]|replace(figures) %}
     {% if sellable.reserved > 0 %}
-        {% set held_hint = 'Held by the carts: %quantity% in %carts% cart(s), the nearest expiry is %date%.'|trans({ '%quantity%': sellable.reserved|format_quantity(decimals, unit_code), '%carts%': sellable.cart_count, '%date%': sellable.next_expiry|date('Y-m-d H:i') }) %}
+        {% set held = texts.heldByCarts|replace({ '%quantity%': sellable.reserved|format_quantity(decimals, unit_code), '%carts%': sellable.cart_count, '%date%': sellable.next_expiry|date('Y-m-d H:i') }) %}
     {% else %}
-        {% set held_hint = 'No cart holds any unit of this combination.'|trans %}
+        {% set held = texts.notHeld %}
     {% endif %}
-    <small class="d-block {{ note_class }}" data-testid="combinations-sellable-{{ row.id }}">
-        <span tabindex="0" data-bs-toggle="tooltip" title="{{ held_hint }}" data-testid="combinations-sellable-hint-{{ row.id }}">
-            {% if sellable.unlimited %}{{ 'Sellable: unlimited'|trans }}{% else %}{# A combination sold by the piece sells whole pieces: half of one left under a preorder limit is none. #}{{ 'Sellable: %quantity%'|trans({ '%quantity%': (decimals > 0 ? sellable.available : sellable.available|round(0, 'floor'))|format_quantity(decimals, unit_code) }) }}{% endif %}
-            <i class="bi bi-info-circle" aria-hidden="true"></i>
-        </span>
-    </small>
+    {% set body = (texts[state ~ 'Body']|default('') ? texts[state ~ 'Body']|replace(figures) ~ ' ' : '') ~ held %}
+    {% set icons = { unlimited: 'bi-infinity', pre: 'bi-clock-history', none: 'bi-cart-x', held: 'bi-cart-fill', sync: 'bi-cart' } %}
+    <button type="button" class="btn btn-sm bo-combinations-grid__sellable" data-state="{{ state }}"
+            data-bs-toggle="tooltip" data-bs-html="true" title="{{ '<strong>' ~ head|e ~ '</strong> ' ~ body|e }}" aria-label="{{ head }}"
+            data-bo-combination-band-target="sellable" data-testid="combinations-sellable-{{ row.id }}">
+        <i class="bi {{ icons[state] }}" aria-hidden="true" data-bo-combination-band-target="sellableIcon"></i>
+    </button>
 {% endif %}

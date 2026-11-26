@@ -198,8 +198,11 @@ final class SaleUnitBackOfficeTest extends WebIntegrationTestCase
 
         $crawler = $this->client->request('GET', '/admin/products/combinations/tab?product_id='.$product->getId());
         self::assertCount(1, $crawler->filter('[data-testid="sale-unit-values-section"]'));
+        self::assertStringEndsWith('#other-prices', (string) $crawler->filter('[data-testid="sale-unit-values-switcher"] option')->first()->attr('value'), 'Another sale unit brings the page back to the card.');
         self::assertSame('25', $crawler->filter('[data-testid="sale-unit-values-price-'.$pse->getId().'"]')->attr('placeholder'), 'The national price stands in for an empty field.');
         self::assertSame('', (string) $crawler->filter('[data-testid="sale-unit-values-price-'.$pse->getId().'"]')->attr('value'));
+        self::assertStringContainsString('25', $crawler->filter('[data-testid="sale-unit-values-catalog-price-'.$pse->getId().'"]')->text(), 'The catalog value faces the field.');
+        self::assertSame('7', $crawler->filter('[data-testid="sale-unit-values-catalog-quantity-'.$pse->getId().'"]')->text());
 
         $this->saveValues($product, $saleUnit, $currency, $pse, price: '19,5', promoPrice: '', quantity: '3');
 
@@ -231,9 +234,14 @@ final class SaleUnitBackOfficeTest extends WebIntegrationTestCase
         $this->saveValues($product, $saleUnit, $currency, $pse, price: '19.5', promoPrice: '', quantity: '');
 
         $crawler = $this->client->request('GET', '/admin/products/combinations/tab?product_id='.$product->getId());
+        self::assertSame(' ', $crawler->filter('[data-testid="sale-unit-values-promo_price-'.$pse->getId().'"]')->attr('placeholder'), 'Off sale, the promo price of the unit applies to nothing: no value in its place.');
+
+        $pse->setPromo(1)->save($this->getPropelConnection());
+        $crawler = $this->client->request('GET', '/admin/products/combinations/tab?product_id='.$product->getId());
         $promoField = $crawler->filter('[data-testid="sale-unit-values-promo_price-'.$pse->getId().'"]');
         self::assertSame('', (string) $promoField->attr('value'), 'A promo price equal to the price is shown empty.');
         self::assertSame('19.5', $promoField->attr('placeholder'));
+        self::assertSame('Same as the price', $promoField->attr('title'));
 
         // The merchant only changes the price and sends the promo field as the screen showed it.
         $this->saveValues($product, $saleUnit, $currency, $pse, price: '22', promoPrice: (string) $promoField->attr('value'), quantity: '');
@@ -246,6 +254,7 @@ final class SaleUnitBackOfficeTest extends WebIntegrationTestCase
     {
         $saleUnit = $this->saleUnit('north');
         [$product, $pse] = $this->productWithACombination();
+        $pse->setPromo(1)->save($this->getPropelConnection());
         $default = $this->defaultCurrency();
         $other = $this->factory->currency(['code' => 'XTS', 'symbol' => 'X', 'rate' => (float) $default->getRate() * 2]);
 
@@ -255,7 +264,7 @@ final class SaleUnitBackOfficeTest extends WebIntegrationTestCase
         $price = $crawler->filter('[data-testid="sale-unit-values-price-'.$pse->getId().'"]');
         self::assertSame('', (string) $price->attr('value'));
         self::assertSame('20', $price->attr('placeholder'), 'The unit price of the default currency, converted, applies.');
-        self::assertStringContainsString('Converted from '.$default->getCode(), $crawler->filter('[data-testid="sale-unit-values-price-source-'.$pse->getId().'"]')->text());
+        self::assertSame('Converted from '.$default->getCode(), $price->attr('title'));
         self::assertSame('16', $crawler->filter('[data-testid="sale-unit-values-promo_price-'.$pse->getId().'"]')->attr('placeholder'));
     }
 
@@ -277,6 +286,7 @@ final class SaleUnitBackOfficeTest extends WebIntegrationTestCase
         $this->injector->setAdmin($this->restrictedAdmin([AdminResources::PRODUCT => [AccessManager::VIEW, AccessManager::UPDATE], AdminResources::SALE_UNIT => [AccessManager::VIEW, AccessManager::UPDATE]]));
         $crawler = $this->client->request('GET', '/admin/products/combinations/tab?product_id='.$product->getId());
         self::assertCount(1, $crawler->filter('[data-testid="sale-unit-values-submit"]'));
+        self::assertSame('reset', $crawler->filter('[data-testid="sale-unit-values-discard"]')->attr('type'), 'The changes can be cancelled.');
     }
 
     public function testAnUnknownCurrencyIsRefusedWithoutAnError(): void

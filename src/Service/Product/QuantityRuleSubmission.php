@@ -19,6 +19,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 use Thelia\Domain\Catalog\Quantity\InvalidQuantityRuleException;
 use Thelia\Domain\Catalog\Quantity\QuantityPolicy;
 use Thelia\Domain\Catalog\Quantity\QuantityRule;
+use Thelia\Domain\Catalog\Quantity\QuantityScale;
 use Thelia\Domain\Catalog\Quantity\UnitCode;
 use Thelia\Domain\Catalog\Quantity\UnreadableQuantityException;
 
@@ -80,26 +81,6 @@ final readonly class QuantityRuleSubmission
     }
 
     /**
-     * The rule of the default combination's form, whose fields are not arrays.
-     *
-     * @throws InvalidQuantityRuleException
-     * @throws UnreadableQuantityException
-     * @throws UnknownUnitCodeException
-     */
-    public function fromFields(InputBag $form): ?QuantityRule
-    {
-        $values = [];
-        foreach (self::FIELDS as $field) {
-            if ($form->has($field)) {
-                $value = $form->all()[$field];
-                $values[$field] = \is_scalar($value) ? (string) $value : '';
-            }
-        }
-
-        return $this->read($values);
-    }
-
-    /**
      * @param array<string, string> $values the posted fields, by name
      *
      * @throws InvalidQuantityRuleException
@@ -118,12 +99,31 @@ final readonly class QuantityRuleSubmission
         $quantities = new QuantityRule(decimals: max(0, min(self::UNIT_READING, $decimals)));
         $units = new QuantityRule(decimals: self::UNIT_READING);
 
+        $minimum = $this->number($values[self::MIN_QUANTITY] ?? '', $quantities) ?? 1.0;
+        $step = $this->number($values[self::QUANTITY_STEP] ?? '', $quantities) ?? 1.0;
+        $unitQuantity = $this->number($values[self::UNIT_QUANTITY] ?? '', $units);
+        $referenceUnitQuantity = $this->number($values[self::REFERENCE_UNIT_QUANTITY] ?? '', $units);
+
+        // Checked here first: the refusals of the core do not know the labels of the form.
+        if ($decimals >= 0 && $decimals <= QuantityScale::MAXIMUM_DECIMALS) {
+            foreach (['Sold by' => $step, 'Minimum quantity' => $minimum, 'Content of one unit sold' => $unitQuantity, 'Price shown per' => $referenceUnitQuantity] as $label => $quantity) {
+                if (null !== $quantity && QuantityScale::micro($quantity) <= 0) {
+                    throw new InvalidQuantityRuleException($this->translator->trans('« %field% » must be greater than zero.', ['%field%' => $this->translator->trans($label)]));
+                }
+            }
+            foreach (['Sold by' => $step, 'Minimum quantity' => $minimum] as $label => $quantity) {
+                if (!QuantityScale::fits($quantity, $decimals)) {
+                    throw new InvalidQuantityRuleException($this->translator->trans('« %field% » cannot carry more decimals than « %decimals_field% » allows (%decimals%).', ['%field%' => $this->translator->trans($label), '%decimals_field%' => $this->translator->trans('Decimals of a quantity'), '%decimals%' => (string) $decimals]));
+                }
+            }
+        }
+
         return new QuantityRule(
-            minQuantity: $this->number($values[self::MIN_QUANTITY] ?? '', $quantities) ?? 1.0,
-            step: $this->number($values[self::QUANTITY_STEP] ?? '', $quantities) ?? 1.0,
+            minQuantity: $minimum,
+            step: $step,
             decimals: $decimals,
-            unitQuantity: $this->number($values[self::UNIT_QUANTITY] ?? '', $units),
-            referenceUnitQuantity: $this->number($values[self::REFERENCE_UNIT_QUANTITY] ?? '', $units),
+            unitQuantity: $unitQuantity,
+            referenceUnitQuantity: $referenceUnitQuantity,
             unitCode: $this->unitCode($values[self::UNIT_CODE] ?? ''),
         );
     }

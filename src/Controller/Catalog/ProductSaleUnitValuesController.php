@@ -80,6 +80,7 @@ final class ProductSaleUnitValuesController
             'current_tab' => 'pse',
             'sale_unit_id' => $saleUnit->getId(),
             'combinations_currency_id' => $currency->getId(),
+            'other_prices_tab' => 'sale-units',
         ]));
 
         try {

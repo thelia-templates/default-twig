@@ -76,6 +76,7 @@ final class ProductGroupPricesController
             'product_id' => $productId,
             'current_tab' => 'pse',
             'combinations_currency_id' => $currency->getId(),
+            'other_prices_tab' => 'groups',
         ]));
 
         try {

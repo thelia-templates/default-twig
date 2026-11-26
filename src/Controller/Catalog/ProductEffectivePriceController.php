@@ -16,6 +16,8 @@ namespace BackOfficeDefaultTwigBundle\Controller\Catalog;
 
 use BackOfficeDefaultTwigBundle\Repository\CatalogRestrictionRepository;
 use BackOfficeDefaultTwigBundle\Repository\CurrencyRepository;
+use BackOfficeDefaultTwigBundle\Repository\CustomerGroupRepository;
+use BackOfficeDefaultTwigBundle\Repository\CustomerRepository;
 use BackOfficeDefaultTwigBundle\Service\Admin\AdminAccessChecker;
 use BackOfficeDefaultTwigBundle\Service\CatalogRestriction\BoundedSearch;
 use BackOfficeDefaultTwigBundle\Service\Product\EffectivePricePresenter;
@@ -41,7 +43,8 @@ final class ProductEffectivePriceController
         private readonly AdminAccessChecker $access,
         private readonly CurrencyRepository $currencies,
         private readonly CatalogRestrictionRepository $restrictions,
-        private readonly BoundedSearch $search,
+        private readonly CustomerRepository $customers,
+        private readonly CustomerGroupRepository $customerGroups,
         private readonly EffectivePricePresenter $presenter,
         private readonly RequestStack $requests,
         private readonly Environment $twig,
@@ -71,13 +74,24 @@ final class ProductEffectivePriceController
             return new Response('', Response::HTTP_NO_CONTENT);
         }
 
-        $search = trim((string) $query->get('effective_customer_q', ''));
+        $locale = $request->getLocale();
+        // The field stops at 100 characters; a longer term typed in the address goes no further into the search.
+        $search = mb_substr(trim((string) $query->get('effective_customer_q', '')), 0, 100);
         $customerId = (int) $query->get('effective_customer_id', 0);
+        $results = 0 === $customerId ? $this->customers->findMatchingForPrices($search) : [];
+        // A search that finds a single customer opens it.
+        if (1 === \count($results)) {
+            $customerId = $results[0]['id'];
+            $results = [];
+        }
         $customer = $customerId > 0 ? $this->restrictions->customer($customerId) : null;
         $visitor = '1' === (string) $query->get('effective_visitor', '');
         $subject = null !== $customer ? 'customer' : ($visitor ? 'visitor' : null);
+        if ([] !== $results) {
+            $groups = array_column($this->customerGroups->findChoices($locale), 'label', 'id');
+            $results = array_map(static fn (array $result): array => $result + ['group' => $groups[$result['group_id']] ?? ''], $results);
+        }
 
-        $locale = $request->getLocale();
         $prices = null === $subject ? null : $this->presenter->present($product, $currency, $customer, $locale);
 
         return new Response($this->twig->render('@BackOfficeDefaultTwig/catalog/product/_effective_prices.html.twig', [
@@ -86,8 +100,9 @@ final class ProductEffectivePriceController
             'subject' => $subject,
             'customer_label' => null === $customer ? null : ($this->restrictions->customerLabels([$customerId])[$customerId] ?? '#'.$customerId),
             'search' => $search,
-            'results' => $this->search->customers($search),
+            'results' => $results,
             'search_minimum' => BoundedSearch::MINIMUM_LENGTH,
+            'search_limit' => BoundedSearch::LIMIT,
             'prices' => $prices,
         ]));
     }

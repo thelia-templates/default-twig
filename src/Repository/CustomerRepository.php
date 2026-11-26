@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace BackOfficeDefaultTwigBundle\Repository;
 
 use BackOfficeDefaultTwigBundle\DTO\Dashboard\DateRange;
+use BackOfficeDefaultTwigBundle\Service\CatalogRestriction\BoundedSearch;
 use BackOfficeDefaultTwigBundle\Service\Customer\CustomerFilters;
 use BackOfficeDefaultTwigBundle\Service\Order\OrderAccess;
 use BackOfficeDefaultTwigBundle\Service\Order\OrderFilters;
@@ -55,6 +56,38 @@ final readonly class CustomerRepository
         private OrderRepository $orders,
         private OrderAccess $orderAccess,
     ) {
+    }
+
+    /**
+     * @return list<array{id: int, firstname: string, lastname: string, email: string, ref: string, group_id: int}>
+     */
+    public function findMatchingForPrices(string $term): array
+    {
+        if (!BoundedSearch::accepts($term)) {
+            return [];
+        }
+
+        $rows = BoundedSearch::customersMatching($term)
+            ->orderByLastname()
+            ->orderByFirstname()
+            ->orderById()
+            ->limit(BoundedSearch::LIMIT)
+            ->select(['Id', 'Firstname', 'Lastname', 'Email', 'Ref', 'CustomerGroupId'])
+            ->find();
+
+        $customers = [];
+        foreach ($rows as $row) {
+            $customers[] = [
+                'id' => (int) $row['Id'],
+                'firstname' => (string) $row['Firstname'],
+                'lastname' => (string) $row['Lastname'],
+                'email' => (string) $row['Email'],
+                'ref' => (string) $row['Ref'],
+                'group_id' => (int) $row['CustomerGroupId'],
+            ];
+        }
+
+        return $customers;
     }
 
     public function countAll(): int
